@@ -13,3 +13,239 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum AuthType {
+  NONE
+  API_KEY
+  BEARER_TOKEN
+  BASIC_AUTH
+  OAUTH2
+  CUSTOM
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  ERROR
+  PENDING
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum LogLevel {
+  INFO
+  WARNING
+  ERROR
+  DEBUG
+}
+
+// User Management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  apiConnections ApiConnection[]
+  workflows      Workflow[]
+  executions     WorkflowExecution[]
+  auditLogs      AuditLog[]
+  credentials    ApiCredential[]
+
+  @@map("users")
+}
+
+// API Connection Management
+model ApiConnection {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  description     String?
+  baseUrl         String
+  authType        AuthType
+  authConfig      Json     // Encrypted authentication configuration
+  documentationUrl String?
+  status          Status   @default(ACTIVE)
+  lastTested      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoints    Endpoint[]
+  workflows    WorkflowStep[]
+  credentials  ApiCredential[]
+
+  @@unique([userId, name])
+  @@map("api_connections")
+}
+
+// API Endpoints
+model Endpoint {
+  id              String   @id @default(cuid())
+  apiConnectionId String
+  path            String
+  method          String   // GET, POST, PUT, DELETE, PATCH
+  summary         String?
+  description     String?
+  parameters      Json     // OpenAPI parameters
+  requestBody     Json?    // OpenAPI request body
+  responses       Json     // OpenAPI responses
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  apiConnection ApiConnection @relation(fields: [apiConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([apiConnectionId, path, method])
+  @@map("endpoints")
+}
+
+// Workflow Management
+model Workflow {
+  id          String        @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  status      WorkflowStatus @default(DRAFT)
+  isPublic    Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps      WorkflowStep[]
+  executions WorkflowExecution[]
+
+  @@unique([userId, name])
+  @@map("workflows")
+}
+
+// Workflow Steps
+model WorkflowStep {
+  id           String   @id @default(cuid())
+  workflowId   String
+  apiConnectionId String?
+  stepOrder    Int
+  name         String
+  description  String?
+  action       String   // The action to perform (e.g., "GET /users", "POST /data")
+  parameters   Json     // Step-specific parameters
+  conditions   Json?    // Conditional logic for step execution
+  retryConfig  Json?    // Retry configuration
+  timeout      Int?     // Timeout in seconds
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  workflow     Workflow      @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  apiConnection ApiConnection? @relation(fields: [apiConnectionId], references: [id])
+
+  @@unique([workflowId, stepOrder])
+  @@map("workflow_steps")
+}
+
+// Workflow Execution
+model WorkflowExecution {
+  id          String          @id @default(cuid())
+  workflowId  String
+  userId      String
+  status      ExecutionStatus @default(PENDING)
+  startedAt   DateTime        @default(now())
+  completedAt DateTime?
+  error       String?
+  result      Json?           // Final execution result
+  metadata    Json?           // Additional execution metadata
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Relations
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs     ExecutionLog[]
+
+  @@map("workflow_executions")
+}
+
+// Execution Logs
+model ExecutionLog {
+  id                String   @id @default(cuid())
+  executionId       String
+  stepOrder         Int?
+  stepName          String?
+  level             LogLevel @default(INFO)
+  message           String
+  data              Json?    // Additional log data
+  timestamp         DateTime @default(now())
+
+  // Relations
+  execution WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@map("execution_logs")
+}
+
+// Audit Logging
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // CREATE, UPDATE, DELETE, EXECUTE, etc.
+  resource  String   // The resource being acted upon
+  resourceId String? // ID of the resource
+  details   Json?    // Additional details about the action
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+// API Credentials (Encrypted)
+model ApiCredential {
+  id              String   @id @default(cuid())
+  userId          String
+  apiConnectionId String
+  encryptedData   String   // Encrypted credential data
+  keyId           String   // Encryption key identifier
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiConnection ApiConnection @relation(fields: [apiConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, apiConnectionId])
+  @@map("api_credentials")
+}
