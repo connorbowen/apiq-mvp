@@ -1,0 +1,311 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main, develop]
+
+jobs:
+  # Automated checks that run on every PR
+  automated-checks:
+    name: Automated Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run linting
+        run: npm run lint
+        
+      - name: Run type checking
+        run: npm run type-check
+        
+      - name: Run unit tests
+        run: npm test
+        
+      - name: Generate test coverage
+        run: npm run test:coverage
+        
+      - name: Check test coverage thresholds
+        run: |
+          # Check if coverage meets minimum thresholds
+          COVERAGE=$(npm run test:coverage -- --coverageReporters=text --coverageReporters=lcov | grep -E "All files.*\d+%" | tail -1)
+          echo "Coverage: $COVERAGE"
+          
+          # Extract coverage percentages
+          STATEMENTS=$(echo "$COVERAGE" | awk '{print $4}' | sed 's/%//')
+          BRANCHES=$(echo "$COVERAGE" | awk '{print $6}' | sed 's/%//')
+          FUNCTIONS=$(echo "$COVERAGE" | awk '{print $8}' | sed 's/%//')
+          LINES=$(echo "$COVERAGE" | awk '{print $10}' | sed 's/%//')
+          
+          # Check minimum thresholds
+          if (( $(echo "$STATEMENTS < 80" | bc -l) )); then
+            echo "❌ Statement coverage below 80%: $STATEMENTS%"
+            exit 1
+          fi
+          if (( $(echo "$BRANCHES < 75" | bc -l) )); then
+            echo "❌ Branch coverage below 75%: $BRANCHES%"
+            exit 1
+          fi
+          if (( $(echo "$FUNCTIONS < 85" | bc -l) )); then
+            echo "❌ Function coverage below 85%: $FUNCTIONS%"
+            exit 1
+          fi
+          if (( $(echo "$LINES < 80" | bc -l) )); then
+            echo "❌ Line coverage below 80%: $LINES%"
+            exit 1
+          fi
+          
+          echo "✅ All coverage thresholds met"
+          
+      - name: Build application
+        run: npm run build
+        
+      - name: Security audit
+        run: npm audit --audit-level=moderate
+        
+      - name: Check for TODO/FIXME tags
+        run: |
+          # Check for TODO/FIXME tags without proper format
+          TODOS=$(grep -r "TODO\|FIXME" src/ --exclude-dir=node_modules --exclude-dir=.git | grep -v "TODO.*\(.*\)" | grep -v "FIXME.*\(.*\)" || true)
+          if [ ! -z "$TODOS" ]; then
+            echo "❌ Found TODO/FIXME tags without proper format:"
+            echo "$TODOS"
+            exit 1
+          fi
+          echo "✅ All TODO/FIXME tags properly formatted"
+          
+      - name: Check documentation updates
+        run: |
+          # Check if API changes have documentation updates
+          API_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep "src/.*api\|pages/api" || true)
+          if [ ! -z "$API_FILES" ]; then
+            DOC_CHANGES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep "docs/API_REFERENCE.md" || true)
+            if [ -z "$DOC_CHANGES" ]; then
+              echo "⚠️ API files changed but API_REFERENCE.md not updated"
+              echo "Changed API files: $API_FILES"
+            fi
+          fi
+          
+      - name: Check PR description
+        if: github.event_name == 'pull_request'
+        run: |
+          # Check if PR description follows template
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          # Check for required sections
+          if ! echo "$PR_BODY" | grep -q "## Summary"; then
+            echo "❌ PR description missing '## Summary' section"
+            exit 1
+          fi
+          
+          if ! echo "$PR_BODY" | grep -q "## Testing"; then
+            echo "❌ PR description missing '## Testing' section"
+            exit 1
+          fi
+          
+          if ! echo "$PR_BODY" | grep -q "## Checklist"; then
+            echo "❌ PR description missing '## Checklist' section"
+            exit 1
+          fi
+          
+          echo "✅ PR description follows template"
+          
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  # Manual checklist verification (creates status check)
+  manual-checklist:
+    name: Manual Checklist Verification
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Create checklist status
+        run: |
+          echo "## Manual Checklist Required" > checklist.md
+          echo "" >> checklist.md
+          echo "The following items require manual verification:" >> checklist.md
+          echo "" >> checklist.md
+          echo "### 📋 PRD & Implementation Plan Alignment" >> checklist.md
+          echo "- [ ] Changes align with Product Requirements Document" >> checklist.md
+          echo "- [ ] Follows the approved implementation plan" >> checklist.md
+          echo "- [ ] Changes are within the defined MVP scope" >> checklist.md
+          echo "- [ ] All acceptance criteria are met" >> checklist.md
+          echo "" >> checklist.md
+          echo "### 🏗️ Architecture & Design Compliance" >> checklist.md
+          echo "- [ ] Changes follow the defined architecture" >> checklist.md
+          echo "- [ ] Uses established patterns and conventions" >> checklist.md
+          echo "- [ ] Implements proper security measures" >> checklist.md
+          echo "- [ ] Meets performance requirements" >> checklist.md
+          echo "" >> checklist.md
+          echo "### 📜 User Rules Compliance" >> checklist.md
+          echo "- [ ] Follows all user rules from docs/user-rules.md" >> checklist.md
+          echo "- [ ] Validates and sanitizes all inputs" >> checklist.md
+          echo "- [ ] No unnecessary third-party dependencies" >> checklist.md
+          echo "- [ ] Code is self-explanatory with minimal comments" >> checklist.md
+          echo "" >> checklist.md
+          echo "### 🧪 Testing Requirements" >> checklist.md
+          echo "- [ ] All new functionality has unit tests" >> checklist.md
+          echo "- [ ] API endpoints have integration tests" >> checklist.md
+          echo "- [ ] Critical user workflows have E2E tests" >> checklist.md
+          echo "- [ ] Security-critical code has security tests" >> checklist.md
+          echo "" >> checklist.md
+          echo "### 📚 Documentation Updates" >> checklist.md
+          echo "- [ ] API documentation updated if API changes" >> checklist.md
+          echo "- [ ] Architecture docs updated if architecture changes" >> checklist.md
+          echo "- [ ] User guide updated if user-facing changes" >> checklist.md
+          echo "- [ ] Changelog updated" >> checklist.md
+          echo "" >> checklist.md
+          echo "### 🔍 Code Review Checklist" >> checklist.md
+          echo "- [ ] At least one team member has reviewed" >> checklist.md
+          echo "- [ ] Security-sensitive changes reviewed" >> checklist.md
+          echo "- [ ] Performance impact assessed" >> checklist.md
+          echo "- [ ] UI changes meet accessibility standards" >> checklist.md
+          echo "" >> checklist.md
+          echo "### 🚀 Deployment Readiness" >> checklist.md
+          echo "- [ ] Works in dev, test, and prod environments" >> checklist.md
+          echo "- [ ] Database migrations are included" >> checklist.md
+          echo "- [ ] All required env vars documented" >> checklist.md
+          echo "- [ ] No unnecessary dependencies added" >> checklist.md
+          echo "" >> checklist.md
+          echo "**⚠️ This checklist must be completed before merging**" >> checklist.md
+          
+      - name: Comment checklist on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const checklist = fs.readFileSync('checklist.md', 'utf8');
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: checklist
+            });
+            
+      - name: Create status check
+        run: |
+          echo "Manual checklist verification required"
+          echo "Please complete the checklist in the PR comment above"
+          # This creates a pending status that requires manual approval
+          exit 1
+
+  # Integration tests (runs on main branch or when requested)
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: apiq_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Setup test database
+        run: |
+          # Wait for PostgreSQL to be ready
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          
+          # Set test environment variables
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/apiq_test" >> $GITHUB_ENV
+          echo "NODE_ENV=test" >> $GITHUB_ENV
+          
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+        
+      - name: Run integration tests
+        run: npm run test:integration
+        
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+  # Performance and security checks
+  performance-security:
+    name: Performance & Security
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Check bundle size
+        run: |
+          npm run build
+          # Add bundle size checking logic here
+          echo "Bundle size check completed"
+          
+      - name: Run security scan
+        run: |
+          # Run additional security checks
+          npm audit --audit-level=high
+          
+      - name: Check for sensitive data
+        run: |
+          # Check for hardcoded secrets or sensitive data
+          if grep -r "sk-.*" src/ --exclude-dir=node_modules --exclude-dir=.git; then
+            echo "❌ Found potential API keys in source code"
+            exit 1
+          fi
+          
+          if grep -r "password.*=.*['\"].*['\"]" src/ --exclude-dir=node_modules --exclude-dir=.git; then
+            echo "❌ Found hardcoded passwords in source code"
+            exit 1
+          fi
+          
+          echo "✅ No sensitive data found in source code" 

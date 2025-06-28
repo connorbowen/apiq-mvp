@@ -16,6 +16,28 @@ APIQ transforms how developers and non-technical users interact with multiple AP
 - **🎯 Guided User Experience**: Onboarding, templates, and contextual help
 - **⚡ Real-time Execution**: Live workflow progress and error handling
 
+## 📊 Current Status
+
+### ✅ Completed
+- [x] Project scaffolding (Next.js + TypeScript + Tailwind)
+- [x] Database schema design and implementation
+- [x] PostgreSQL setup and configuration
+- [x] Prisma ORM integration
+- [x] Environment configuration
+- [x] Database connection testing
+
+### 🔄 In Progress
+- [ ] NextAuth.js authentication setup
+- [ ] User management system
+- [ ] API connection management
+
+### 📋 Planned
+- [ ] OpenAPI spec parsing
+- [ ] AI workflow generation
+- [ ] Workflow execution engine
+- [ ] Frontend UI components
+- [ ] Audit logging system
+
 ## 🏗️ Architecture
 
 ### Tech Stack
@@ -41,31 +63,20 @@ APIQ transforms how developers and non-technical users interact with multiple AP
 
 ```
 /apiq-mvp
-├── /pages                    # Next.js pages and API routes
-│   ├── /api                 # Serverless API endpoints
-│   │   ├── auth/[...nextauth].js    # NextAuth configuration
-│   │   ├── apiSpec.js               # OpenAPI spec ingestion
-│   │   ├── chat.js                  # AI chat/workflow API
-│   │   └── workflows.js             # Workflow management
-│   ├── index.js             # Landing page
-│   ├── dashboard.js         # Main application dashboard
-│   ├── add-api.js           # API connection form
-│   ├── explore-api.js       # API explorer
-│   ├── chat-ui.js           # Chat interface
-│   └── logs.js              # Audit log viewer
-├── /components              # Reusable React components
-│   ├── auth/                # Authentication components
-│   ├── api/                 # API management components
-│   ├── chat/                # Chat and workflow components
-│   └── ui/                  # Common UI components
-├── /lib                     # Utility functions and services
-│   ├── auth.js              # Authentication utilities
-│   ├── openai.js            # OpenAI client and functions
-│   ├── apiParser.js         # OpenAPI spec parsing
-│   ├── apiCaller.js         # External API calling
-│   └── logger.js            # Audit logging utilities
 ├── /prisma                  # Database schema and migrations
-│   └── schema.prisma        # Prisma schema definition
+│   ├── schema.prisma        # Prisma schema definition
+│   └── migrations/          # Database migration files
+├── /lib                     # Utility functions and services
+│   └── /database
+│       └── client.ts        # Prisma database client
+├── /scripts                 # Utility scripts
+│   └── test-db.ts          # Database testing script
+├── /docs                    # Project documentation
+│   ├── DATABASE_SETUP.md    # Database setup guide
+│   ├── QUICK_START.md       # Quick start guide
+│   └── ...                  # Other documentation
+├── /pages                   # Next.js pages and API routes
+├── /components              # Reusable React components
 ├── /styles                  # Global styles and Tailwind config
 └── /public                  # Static assets
 ```
@@ -75,8 +86,8 @@ APIQ transforms how developers and non-technical users interact with multiple AP
 ### Prerequisites
 
 - Node.js 18+ and npm
-- PostgreSQL database
-- OpenAI API key
+- PostgreSQL 15+
+- Git
 
 ### Installation
 
@@ -91,32 +102,100 @@ APIQ transforms how developers and non-technical users interact with multiple AP
    npm install
    ```
 
-3. **Set up environment variables**
+3. **Set up PostgreSQL**
    ```bash
-   cp env.example .env.local
-   ```
+   # Install PostgreSQL (macOS)
+   brew install postgresql@15
+   brew services start postgresql@15
    
-   Edit `.env.local` with your configuration:
-   ```env
-   DATABASE_URL="postgresql://user:pass@host:port/dbname"
-   NEXTAUTH_SECRET="your-secret-key"
-   NEXTAUTH_URL="http://localhost:3000"
-   OPENAI_API_KEY="sk-your-openai-key"
+   # Add to PATH
+   echo 'export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
+   
+   # Create database
+   createdb apiq
    ```
 
-4. **Set up the database**
+4. **Set up environment variables**
+   ```bash
+   cp env.example .env
+   
+   # Update database URL (replace with your username)
+   sed -i '' 's|DATABASE_URL=./data/apiq.db|DATABASE_URL="postgresql://connorbowen@localhost:5432/apiq"|' .env
+   ```
+
+5. **Set up the database**
    ```bash
    npx prisma migrate dev --name init
    npx prisma generate
    ```
 
-5. **Start the development server**
+6. **Test database connection**
+   ```bash
+   npx tsx scripts/test-db.ts
+   ```
+
+7. **Start the development server**
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
+8. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+### Environment Variables
+
+Required environment variables in `.env`:
+
+```bash
+# Database Configuration
+DATABASE_URL="postgresql://connorbowen@localhost:5432/apiq"
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+
+# OpenAI Configuration
+OPENAI_API_KEY=your-openai-api-key-here
+
+# Security Configuration
+ENCRYPTION_KEY=your-32-character-encryption-key-here
+
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-nextauth-secret-key-change-this-in-production
+```
+
+Generate secure keys:
+```bash
+# JWT Secret
+openssl rand -base64 32
+
+# Encryption Key
+openssl rand -hex 16
+
+# NextAuth Secret
+openssl rand -base64 32
+```
+
+## 🗄️ Database Schema
+
+### Current Tables
+- `users` - User accounts and authentication
+- `api_connections` - External API integrations
+- `endpoints` - OpenAPI endpoint definitions
+- `workflows` - Multi-step workflow definitions
+- `workflow_steps` - Individual workflow steps
+- `workflow_executions` - Runtime execution tracking
+- `execution_logs` - Detailed execution logging
+- `audit_logs` - Security and compliance logging
+- `api_credentials` - Encrypted credential storage
+
+### Database Connection
+- **Host**: localhost
+- **Port**: 5432
+- **Database**: apiq
+- **User**: connorbowen (system username)
+- **Connection String**: `postgresql://connorbowen@localhost:5432/apiq`
 
 ## 📖 User Guide
 
@@ -145,6 +224,23 @@ APIQ transforms how developers and non-technical users interact with multiple AP
 - `npm run lint` - Run ESLint
 - `npm run test` - Run tests
 - `npx prisma studio` - Open Prisma Studio for database management
+- `npx tsx scripts/test-db.ts` - Test database connection
+
+### Database Operations
+
+```bash
+# Run migrations
+npx prisma migrate dev
+
+# Reset database (WARNING: deletes all data)
+npx prisma migrate reset
+
+# Open Prisma Studio
+npx prisma studio
+
+# Test database connection
+npx tsx scripts/test-db.ts
+```
 
 ### Development Workflow
 
@@ -203,54 +299,49 @@ Every action in the system is logged for compliance and debugging:
 
 ## 🚀 Deployment
 
-### Production Deployment
+### Production Setup
 
-1. **Environment Setup**
-   ```bash
-   npm run build
-   npm start
-   ```
+1. **Database**: Use managed PostgreSQL service (AWS RDS, Supabase, etc.)
+2. **Environment**: Set production environment variables
+3. **SSL**: Enable HTTPS with SSL certificates
+4. **Monitoring**: Set up error tracking and performance monitoring
 
-2. **Database Migration**
-   ```bash
-   npx prisma migrate deploy
-   ```
+### Environment Variables (Production)
 
-3. **Environment Variables**
-   Ensure all production environment variables are set:
-   - `DATABASE_URL`
-   - `NEXTAUTH_SECRET`
-   - `NEXTAUTH_URL`
-   - `OPENAI_API_KEY`
+```bash
+NODE_ENV=production
+DATABASE_URL="postgresql://user:pass@host:port/dbname?sslmode=require"
+NEXTAUTH_URL="https://your-domain.com"
+NEXTAUTH_SECRET="your-production-secret"
+OPENAI_API_KEY="sk-your-openai-key"
+ENCRYPTION_KEY="your-production-encryption-key"
+```
 
-### Deployment Platforms
+## 📚 Documentation
 
-- **Vercel**: Recommended for Next.js applications
-- **AWS**: Lambda + RDS for serverless deployment
-- **Docker**: Containerized deployment for on-premise
+- **[Database Setup Guide](docs/DATABASE_SETUP.md)** - Complete database configuration
+- **[Quick Start Guide](docs/QUICK_START.md)** - Get up and running quickly
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and components
+- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Development workflow
+- **[API Reference](docs/API_REFERENCE.md)** - API documentation
+- **[User Guide](docs/USER_GUIDE.md)** - End-user documentation
 
-## 🤝 Support
+## 🤝 Contributing
 
-### Documentation
-
-- [API Reference](./docs/api-reference.md)
-- [User Guide](./docs/user-guide.md)
-- [Developer Guide](./docs/developer-guide.md)
-- [Security Guide](./docs/security-guide.md)
-
-### Community
-
-- [GitHub Issues](https://github.com/your-org/apiq-mvp/issues)
-- [Discussions](https://github.com/your-org/apiq-mvp/discussions)
-- [Contributing Guide](./CONTRIBUTING.md)
+We welcome contributions! Please see our [Contributing Guide](docs/CONTRIBUTING.md) for details.
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## 🆘 Support
 
-- Built with [Next.js](https://nextjs.org/)
-- Authentication powered by [NextAuth.js](https://next-auth.js.org/)
-- AI capabilities via [OpenAI](https://openai.com/)
-- Database management with [Prisma](https://www.prisma.io/) 
+- **Documentation**: Check the `/docs` directory
+- **Issues**: Create an issue in the repository
+- **Discussions**: Use GitHub Discussions for questions
+
+---
+
+**Current Version**: 0.1.0  
+**Last Updated**: December 2024  
+**Status**: Development (Database Setup Complete ✅) 

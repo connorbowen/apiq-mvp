@@ -1,0 +1,351 @@
+import OpenAI from 'openai';
+import { logError, logInfo, logDebug } from '../utils/logger';
+import { 
+  WorkflowGenerationRequest, 
+  WorkflowGenerationResponse, 
+  WorkflowStep, 
+  ApiConnection,
+  Workflow 
+} from '../types';
+
+/**
+ * OpenAI service for AI-powered workflow generation and execution
+ * Uses function calling to generate and execute multi-step API workflows
+ */
+
+export class OpenAIService {
+  private client: OpenAI;
+  private model: string;
+
+  constructor() {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('OPENAI_API_KEY environment variable is required');
+    }
+
+    this.client = new OpenAI({
+      apiKey,
+      dangerouslyAllowBrowser: false // Ensure server-side only
+    });
+
+    this.model = process.env.OPENAI_MODEL || 'gpt-4-turbo-preview';
+  }
+
+  /**
+   * Generate a workflow from natural language description
+   */
+  async generateWorkflow(request: WorkflowGenerationRequest): Promise<WorkflowGenerationResponse> {
+    try {
+      logInfo('Generating workflow from description', {
+        description: request.description.substring(0, 100) + '...',
+        apiConnectionsCount: request.apiConnections.length
+      });
+
+      const systemPrompt = this.buildSystemPrompt(request.apiConnections);
+      const userPrompt = this.buildUserPrompt(request.description, request.parameters);
+
+      const response = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        functions: [
+          {
+            name: 'create_workflow',
+            description: 'Create a new workflow with steps',
+            parameters: {
+              type: 'object',
+              properties: {
+                workflow: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    description: { type: 'string' }
+                  },
+                  required: ['name']
+                },
+                steps: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      stepOrder: { type: 'number' },
+                      name: { type: 'string' },
+                      description: { type: 'string' },
+                      action: { type: 'string' },
+                      apiConnectionId: { type: 'string' },
+                      parameters: { type: 'object' },
+                      conditions: { type: 'object' },
+                      retryConfig: { type: 'object' },
+                      timeout: { type: 'number' }
+                    },
+                    required: ['stepOrder', 'name', 'action']
+                  }
+                },
+                explanation: { type: 'string' }
+              },
+              required: ['workflow', 'steps', 'explanation']
+            }
+          }
+        ],
+        function_call: { name: 'create_workflow' },
+        temperature: 0.1,
+        max_tokens: 2000
+      });
+
+      const functionCall = response.choices[0]?.message?.function_call;
+      if (!functionCall || functionCall.name !== 'create_workflow') {
+        throw new Error('Failed to generate workflow: Invalid response from OpenAI');
+      }
+
+      const result = JSON.parse(functionCall.arguments);
+      
+      logInfo('Workflow generated successfully', {
+        workflowName: result.workflow.name,
+        stepsCount: result.steps.length
+      });
+
+      return {
+        workflow: result.workflow as Workflow,
+        steps: result.steps as WorkflowStep[],
+        explanation: result.explanation
+      };
+
+    } catch (error) {
+      logError('Failed to generate workflow', error as Error, { request });
+      throw new Error(`Workflow generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Execute a workflow step using AI guidance
+   */
+  async executeWorkflowStep(
+    step: WorkflowStep,
+    apiConnection: ApiConnection,
+    previousResults: Record<string, any> = {},
+    context: Record<string, any> = {}
+  ): Promise<{ result?: any; nextStep?: string; error?: string }> {
+    try {
+      logDebug('Executing workflow step with AI guidance', {
+        stepId: step.id,
+        stepName: step.name,
+        apiConnectionId: apiConnection.id
+      });
+
+      const systemPrompt = this.buildExecutionPrompt(apiConnection, step);
+      const userPrompt = this.buildExecutionUserPrompt(step, previousResults, context);
+
+      const response = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        functions: [
+          {
+            name: 'execute_api_call',
+            description: 'Execute an API call with the specified parameters',
+            parameters: {
+              type: 'object',
+              properties: {
+                method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] },
+                url: { type: 'string' },
+                headers: { type: 'object' },
+                body: { type: 'object' },
+                query: { type: 'object' }
+              },
+              required: ['method', 'url']
+            }
+          },
+          {
+            name: 'handle_error',
+            description: 'Handle an error in workflow execution',
+            parameters: {
+              type: 'object',
+              properties: {
+                error: { type: 'string' },
+                shouldRetry: { type: 'boolean' },
+                nextStep: { type: 'string' }
+              },
+              required: ['error']
+            }
+          }
+        ],
+        temperature: 0.1,
+        max_tokens: 1000
+      });
+
+      const functionCall = response.choices[0]?.message?.function_call;
+      if (!functionCall) {
+        throw new Error('No function call returned from OpenAI');
+      }
+
+      const args = JSON.parse(functionCall.arguments);
+
+      if (functionCall.name === 'execute_api_call') {
+        // Execute the API call
+        const apiResult = await this.executeApiCall(args, apiConnection);
+        return { result: apiResult };
+      } else if (functionCall.name === 'handle_error') {
+        return { 
+          error: args.error,
+          nextStep: args.nextStep
+        };
+      }
+
+      throw new Error('Unknown function call returned from OpenAI');
+
+    } catch (error) {
+      logError('Failed to execute workflow step', error as Error, { step, apiConnection });
+      return { 
+        error: `Step execution failed: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      };
+    }
+  }
+
+  /**
+   * Execute an actual API call
+   */
+  private async executeApiCall(
+    callParams: any,
+    apiConnection: ApiConnection
+  ): Promise<any> {
+    const axios = await import('axios');
+    
+    const url = `${apiConnection.baseUrl}${callParams.url}`;
+    const config = {
+      method: callParams.method,
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        ...callParams.headers
+      },
+      params: callParams.query,
+      data: callParams.body
+    };
+
+    // Add authentication based on apiConnection.authType
+    this.addAuthentication(config, apiConnection);
+
+    const response = await axios.default(config);
+    return response.data;
+  }
+
+  /**
+   * Add authentication to API call
+   */
+  private addAuthentication(config: any, apiConnection: ApiConnection): void {
+    switch (apiConnection.authType) {
+      case 'API_KEY':
+        config.headers['X-API-Key'] = apiConnection.authConfig.apiKey;
+        break;
+      case 'BEARER_TOKEN':
+        config.headers['Authorization'] = `Bearer ${apiConnection.authConfig.token}`;
+        break;
+      case 'BASIC_AUTH':
+        const credentials = Buffer.from(
+          `${apiConnection.authConfig.username}:${apiConnection.authConfig.password}`
+        ).toString('base64');
+        config.headers['Authorization'] = `Basic ${credentials}`;
+        break;
+      // Add other auth types as needed
+    }
+  }
+
+  /**
+   * Build system prompt for workflow generation
+   */
+  private buildSystemPrompt(apiConnections: ApiConnection[]): string {
+    const apiDocs = apiConnections.map(conn => `
+API: ${conn.name}
+Base URL: ${conn.baseUrl}
+Description: ${conn.description || 'No description available'}
+Auth Type: ${conn.authType}
+`).join('\n');
+
+    return `You are an AI assistant that helps create multi-step API workflows. You have access to the following APIs:
+
+${apiDocs}
+
+Your task is to:
+1. Understand the user's workflow requirements
+2. Break them down into logical steps
+3. Map each step to appropriate API calls
+4. Handle data flow between steps
+5. Include error handling and retry logic where appropriate
+
+Create workflows that are:
+- Efficient and minimize API calls
+- Robust with proper error handling
+- Well-documented with clear step descriptions
+- Flexible to handle different input parameters
+
+Use the create_workflow function to return your response.`;
+  }
+
+  /**
+   * Build user prompt for workflow generation
+   */
+  private buildUserPrompt(description: string, parameters?: Record<string, any>): string {
+    let prompt = `Create a workflow for: ${description}`;
+    
+    if (parameters && Object.keys(parameters).length > 0) {
+      prompt += `\n\nParameters: ${JSON.stringify(parameters, null, 2)}`;
+    }
+    
+    return prompt;
+  }
+
+  /**
+   * Build system prompt for workflow execution
+   */
+  private buildExecutionPrompt(apiConnection: ApiConnection, step: WorkflowStep): string {
+    return `You are executing a workflow step for the API: ${apiConnection.name}
+
+Step: ${step.name}
+Description: ${step.description || 'No description'}
+Action: ${step.action}
+
+Your task is to:
+1. Parse the action and determine the appropriate API call
+2. Use the provided context and previous results to build the request
+3. Execute the API call with proper parameters
+4. Handle any errors gracefully
+5. Return the result or indicate the next step
+
+Available API endpoints and their documentation should be used to make the correct API calls.`;
+  }
+
+  /**
+   * Build user prompt for workflow execution
+   */
+  private buildExecutionUserPrompt(
+    step: WorkflowStep,
+    previousResults: Record<string, any>,
+    context: Record<string, any>
+  ): string {
+    return `Execute this step: ${step.name}
+
+Step parameters: ${JSON.stringify(step.parameters, null, 2)}
+Previous results: ${JSON.stringify(previousResults, null, 2)}
+Context: ${JSON.stringify(context, null, 2)}
+
+Please execute the appropriate API call and return the result.`;
+  }
+
+  /**
+   * Validate OpenAI configuration
+   */
+  validateConfig(): boolean {
+    if (!process.env.OPENAI_API_KEY) {
+      logError('OpenAI API key not configured');
+      return false;
+    }
+    return true;
+  }
+}
+
+// Export singleton instance
+export const openaiService = new OpenAIService(); 
