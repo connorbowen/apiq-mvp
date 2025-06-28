@@ -1,9 +1,20 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, request } from '@playwright/test'
+
+const BASE_URL = 'http://localhost:3000'
+
+// Helper to create a connection
+async function createConnection(apiRequest, data) {
+  const response = await apiRequest.post('/api/connections', {
+    data,
+    headers: { 'Content-Type': 'application/json' }
+  })
+  return response
+}
 
 test.describe('APIQ Application E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the home page before each test
-    await page.goto('http://localhost:3000')
+    await page.goto(BASE_URL)
   })
 
   test.describe('Home Page', () => {
@@ -63,7 +74,7 @@ test.describe('APIQ Application E2E Tests', () => {
       const href = await firstLink.getAttribute('href')
       if (href && !href.startsWith('#')) {
         await firstLink.click()
-        await expect(page).not.toHaveURL('http://localhost:3000/')
+        await expect(page).not.toHaveURL(BASE_URL)
       }
     })
 
@@ -166,7 +177,7 @@ test.describe('APIQ Application E2E Tests', () => {
   test.describe('Performance', () => {
     test('should load within acceptable time', async ({ page }) => {
       const startTime = Date.now()
-      await page.goto('http://localhost:3000')
+      await page.goto(BASE_URL)
       const loadTime = Date.now() - startTime
       
       expect(loadTime).toBeLessThan(5000) // Should load within 5 seconds
@@ -183,7 +194,7 @@ test.describe('APIQ Application E2E Tests', () => {
 
   test.describe('Error Handling', () => {
     test('should handle 404 errors gracefully', async ({ page }) => {
-      const response = await page.goto('http://localhost:3000/nonexistent-page')
+      const response = await page.goto(`${BASE_URL}/nonexistent-page`)
       expect(response?.status()).toBe(404)
       
       // Should show a proper error page
@@ -195,7 +206,7 @@ test.describe('APIQ Application E2E Tests', () => {
       await page.context().setOffline(true)
       
       try {
-        await page.goto('http://localhost:3000')
+        await page.goto(BASE_URL)
         // Should handle offline state gracefully
         await expect(page.locator('body')).toBeVisible()
       } finally {
@@ -206,7 +217,7 @@ test.describe('APIQ Application E2E Tests', () => {
 
   test.describe('Security', () => {
     test('should have proper security headers', async ({ page }) => {
-      const response = await page.goto('http://localhost:3000')
+      const response = await page.goto(BASE_URL)
       const headers = response?.headers()
       
       // Check for security headers
@@ -289,5 +300,163 @@ test.describe('APIQ Application E2E Tests', () => {
       const response = await page.request.get('/api/nonexistent')
       expect(response.status()).toBe(404)
     })
+  })
+
+  test.describe('APIQ End-to-End Flow', () => {
+    test('Create connection, ingest OpenAPI, list endpoints, delete endpoints (ADMIN)', async ({ request }) => {
+      // 1. Create API connection with Petstore spec
+      const createRes = await createConnection(request, {
+        name: 'Petstore E2E',
+        baseUrl: 'https://petstore.swagger.io/v2',
+        documentationUrl: 'https://petstore.swagger.io/v2/swagger.json',
+        authType: 'NONE'
+      })
+      expect(createRes.status()).toBe(201)
+      const createData = await createRes.json()
+      expect(createData.success).toBe(true)
+      const connectionId = createData.data.id
+      expect(connectionId).toBeTruthy()
+
+      // 2. Wait for ingestion to complete (simulate, or poll if async)
+      // For this test, assume immediate
+      expect(createData.data.ingestionStatus).toMatch(/SUCCEEDED|PENDING/)
+
+      // 3. List endpoints
+      const listRes = await request.get(`${BASE_URL}/api/connections/${connectionId}/endpoints`)
+      expect(listRes.status()).toBe(200)
+      const listData = await listRes.json()
+      expect(listData.success).toBe(true)
+      expect(Array.isArray(listData.data)).toBe(true)
+      expect(listData.data.length).toBeGreaterThan(0)
+
+      // 4. Filter endpoints
+      const filterRes = await request.get(`${BASE_URL}/api/connections/${connectionId}/endpoints?method=GET&path=/pet`)
+      expect(filterRes.status()).toBe(200)
+      const filterData = await filterRes.json()
+      expect(filterData.success).toBe(true)
+      expect(Array.isArray(filterData.data)).toBe(true)
+
+      // 5. Delete endpoints (ADMIN)
+      const deleteRes = await request.delete(`${BASE_URL}/api/connections/${connectionId}/endpoints`)
+      expect(deleteRes.status()).toBe(200)
+      const deleteData = await deleteRes.json()
+      expect(deleteData.success).toBe(true)
+
+      // 6. Confirm endpoints deleted
+      const confirmRes = await request.get(`${BASE_URL}/api/connections/${connectionId}/endpoints`)
+      expect(confirmRes.status()).toBe(200)
+      const confirmData = await confirmRes.json()
+      expect(confirmData.success).toBe(true)
+      expect(confirmData.data.length).toBe(0)
+    })
+
+    test('Should not allow duplicate connection names for the same user', async ({ request }) => {
+      // Create the first connection
+      const res1 = await request.post('/api/connections', {
+        data: {
+          name: 'Duplicate E2E',
+          baseUrl: 'https://api.dup.com',
+          authType: 'NONE'
+        },
+        headers: { 'Content-Type': 'application/json' }
+      });
+      expect(res1.status()).toBe(201);
+      const data1 = await res1.json();
+      expect(data1.success).toBe(true);
+
+      // Attempt to create a duplicate
+      const res2 = await request.post('/api/connections', {
+        data: {
+          name: 'Duplicate E2E',
+          baseUrl: 'https://api.dup.com',
+          authType: 'NONE'
+        },
+        headers: { 'Content-Type': 'application/json' }
+      });
+      expect(res2.status()).toBe(400);
+      const data2 = await res2.json();
+      expect(data2.success).toBe(false);
+      expect(data2.error).toMatch(/already exists/i);
+    })
+
+    test.skip('Non-admin user cannot delete endpoints (RBAC)', async ({ request }) => {
+      // This test is a placeholder for when real authentication is implemented.
+      // It should simulate a non-admin user and expect a 403 Forbidden response.
+      // For now, RBAC is hardcoded to treat test-user-123 as ADMIN.
+      // When auth is ready, set the user context to a non-admin and run this test.
+
+      // 1. Create a connection as a non-admin (simulate via auth header or session)
+      // 2. Attempt to delete endpoints for that connection
+      // 3. Expect 403 Forbidden
+
+      // Example:
+      // const res = await request.delete(`/api/connections/${connectionId}/endpoints`, { headers: { Authorization: 'Bearer non-admin-token' } });
+      // expect(res.status()).toBe(403);
+    })
+
+    test('Create connection with invalid OpenAPI spec should set ingestionStatus: FAILED', async ({ request }) => {
+      const res = await request.post('/api/connections', {
+        data: {
+          name: 'Invalid Spec E2E',
+          baseUrl: 'https://api.invalid.com',
+          documentationUrl: 'https://api.invalid.com/swagger.json',
+          authType: 'NONE'
+        },
+        headers: { 'Content-Type': 'application/json' }
+      });
+      expect(res.status()).toBe(201);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      expect(data.data.ingestionStatus).toBe('FAILED');
+    })
+
+    test('List endpoints for a connection with no endpoints should return empty array', async ({ request }) => {
+      // Create a connection with no OpenAPI spec
+      const res = await request.post('/api/connections', {
+        data: {
+          name: 'No Endpoints E2E',
+          baseUrl: 'https://api.noendpoints.com',
+          authType: 'NONE'
+        },
+        headers: { 'Content-Type': 'application/json' }
+      });
+      expect(res.status()).toBe(201);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      const connectionId = data.data.id;
+
+      // List endpoints
+      const listRes = await request.get(`/api/connections/${connectionId}/endpoints`);
+      expect(listRes.status()).toBe(200);
+      const listData = await listRes.json();
+      expect(listData.success).toBe(true);
+      expect(Array.isArray(listData.data)).toBe(true);
+      expect(listData.data.length).toBe(0);
+    });
+
+    test('Filter endpoints with no match should return empty array', async ({ request }) => {
+      // Create a connection with Petstore spec
+      const res = await request.post('/api/connections', {
+        data: {
+          name: 'Filter No Match E2E',
+          baseUrl: 'https://petstore.swagger.io/v2',
+          documentationUrl: 'https://petstore.swagger.io/v2/swagger.json',
+          authType: 'NONE'
+        },
+        headers: { 'Content-Type': 'application/json' }
+      });
+      expect(res.status()).toBe(201);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      const connectionId = data.data.id;
+
+      // Filter with no match
+      const filterRes = await request.get(`/api/connections/${connectionId}/endpoints?method=PATCH&path=/doesnotexist`);
+      expect(filterRes.status()).toBe(200);
+      const filterData = await filterRes.json();
+      expect(filterData.success).toBe(true);
+      expect(Array.isArray(filterData.data)).toBe(true);
+      expect(filterData.data.length).toBe(0);
+    });
   })
 }) 
