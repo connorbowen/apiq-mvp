@@ -411,12 +411,10 @@ Use descriptive branch names following this pattern:
 
 **Examples:**
 ```bash
-feature/user-authentication
-fix/api-rate-limiting
-docs/api-reference-update
-refactor/database-queries
-test/workflow-execution
-chore/dependency-update
+feature/user-profile
+bugfix/rate-limiter-issue
+enhancement/improve-encryption
+docs/update-api-reference
 ```
 
 ### Commit Message Guidelines
@@ -442,17 +440,10 @@ Follow the [Conventional Commits](https://www.conventionalcommits.org/) specific
 
 **Examples:**
 ```bash
-feat(auth): add two-factor authentication support
-
-fix(api): resolve rate limiting issue with external APIs
-
-docs(api): update API reference with new endpoints
-
-refactor(database): optimize user queries with proper indexing
-
-test(workflow): add comprehensive workflow execution tests
-
-chore(deps): update dependencies to latest versions
+feat(auth): add JWT token validation
+fix(api): resolve rate limiter edge case
+docs(readme): update installation instructions
+test(encryption): add performance benchmarks
 ```
 
 ### Development Workflow
@@ -829,33 +820,35 @@ Any other context about the feature request.
 ### PR Template
 
 ```markdown
-## Description
-Brief description of changes made.
+## Summary
+Brief description of changes
 
-## Type of Change
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
+## Changes Made
+- [ ] Change 1
+- [ ] Change 2
+- [ ] Change 3
 
 ## Testing
-- [ ] Unit tests pass
-- [ ] Integration tests pass
-- [ ] E2E tests pass
-- [ ] Manual testing completed
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] E2E tests added/updated
+- [ ] All tests pass
+
+## Documentation
+- [ ] API docs updated
+- [ ] User guide updated
+- [ ] README updated
+- [ ] Changelog updated
 
 ## Checklist
-- [ ] Code follows style guidelines
-- [ ] Self-review completed
-- [ ] Documentation updated
-- [ ] No console.log statements
-- [ ] No sensitive data in code
+- [ ] Follows PRD and implementation plan
+- [ ] Complies with architecture design
+- [ ] Follows all user rules
+- [ ] Includes comprehensive tests
+- [ ] Updates documentation
+- [ ] Ready for review
 
-## Screenshots (if applicable)
-Add screenshots to help explain your changes.
-
-## Additional Notes
-Any additional information that reviewers should know.
+Closes #issue-number
 ```
 
 ### PR Review Process
@@ -933,4 +926,283 @@ We are committed to providing a welcoming and inclusive environment for all cont
 - **Email**: maintainers@apiq.com
 - **GitHub**: [@apiq/maintainers](https://github.com/orgs/apiq/teams/maintainers)
 
-Thank you for contributing to APIQ! Your contributions help make our platform better for everyone. 🚀 
+## Development Workflow
+
+### 1. Branch Naming Convention
+Use descriptive branch names following the pattern:
+```
+feature/user-profile
+bugfix/rate-limiter-issue
+enhancement/improve-encryption
+docs/update-api-reference
+```
+
+### 2. Commit Message Guidelines
+Follow conventional commit format:
+```
+type(scope): description
+
+feat(auth): add JWT token validation
+fix(api): resolve rate limiter edge case
+docs(readme): update installation instructions
+test(encryption): add performance benchmarks
+```
+
+## Pre-Merge Checklist
+
+**⚠️ REQUIRED: All items must be completed before merging any PR**
+
+### 📋 PRD & Implementation Plan Alignment
+- [ ] **PRD Compliance**: Changes align with Product Requirements Document (`docs/prd.md`)
+- [ ] **Implementation Plan**: Follows the approved implementation plan (`docs/implementation-plan.md`)
+- [ ] **Feature Scope**: Changes are within the defined MVP scope
+- [ ] **User Stories**: Implements or supports defined user stories
+- [ ] **Acceptance Criteria**: All acceptance criteria are met
+
+### 🏗️ Architecture & Design Compliance
+- [ ] **Architecture Alignment**: Changes follow the defined architecture (`docs/ARCHITECTURE.md`)
+- [ ] **Design Patterns**: Uses established patterns and conventions
+- [ ] **Database Schema**: Follows Prisma schema design principles
+- [ ] **API Design**: Adheres to RESTful API guidelines
+- [ ] **Security Model**: Implements proper security measures
+- [ ] **Performance**: Meets performance requirements
+
+### 📜 User Rules Compliance
+- [ ] **Code Quality**: Follows all user rules from `docs/user-rules.md`
+- [ ] **Security**: Validates and sanitizes all inputs
+- [ ] **Performance**: No unnecessary third-party dependencies
+- [ ] **Testing**: Includes comprehensive tests (no mocking in prod)
+- [ ] **Documentation**: Code is self-explanatory with minimal comments
+- [ ] **Git Practices**: Descriptive branch names, small PRs (<300 lines)
+
+### 🧪 Testing Requirements
+- [ ] **Unit Tests**: All new functionality has unit tests
+- [ ] **Integration Tests**: API endpoints have integration tests
+- [ ] **E2E Tests**: Critical user workflows have E2E tests
+- [ ] **Test Coverage**: Maintains or improves test coverage
+- [ ] **All Tests Pass**: `npm test` passes without failures
+- [ ] **Performance Tests**: New features include performance benchmarks
+- [ ] **Security Tests**: Security-critical code has security tests
+
+### 📚 Documentation Updates
+- [ ] **API Documentation**: Updated `docs/API_REFERENCE.md` if API changes
+- [ ] **Architecture Docs**: Updated `docs/ARCHITECTURE.md` if architecture changes
+- [ ] **User Guide**: Updated `docs/USER_GUIDE.md` if user-facing changes
+- [ ] **README**: Updated main README if needed
+- [ ] **Changelog**: Added entry to `docs/CHANGELOG.md`
+- [ ] **Comments**: Added TODO/FIXME tags for temporary code
+
+### 🔍 Code Review Checklist
+- [ ] **Code Review**: At least one team member has reviewed
+- [ ] **Security Review**: Security-sensitive changes reviewed
+- [ ] **Performance Review**: Performance impact assessed
+- [ ] **Accessibility**: UI changes meet accessibility standards
+- [ ] **Cross-browser**: Tested across supported browsers
+- [ ] **Mobile Responsive**: UI works on mobile devices
+
+### 🚀 Deployment Readiness
+- [ ] **Environment Config**: Works in dev, test, and prod environments
+- [ ] **Database Migrations**: Prisma migrations are included
+- [ ] **Environment Variables**: All required env vars documented
+- [ ] **Dependencies**: No unnecessary dependencies added
+- [ ] **Build Process**: `npm run build` succeeds
+- [ ] **Linting**: `npm run lint` passes without errors
+
+## Automated Checks
+
+The following checks run automatically on every PR:
+
+### CI/CD Pipeline
+```yaml
+# .github/workflows/pr-check.yml
+name: PR Checks
+on: [pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:coverage
+      - run: npm run build
+      - run: npm run type-check
+```
+
+### Required Status Checks
+- [ ] **Linting**: ESLint passes
+- [ ] **Type Checking**: TypeScript compilation succeeds
+- [ ] **Unit Tests**: All unit tests pass
+- [ ] **Test Coverage**: Coverage meets minimum thresholds
+- [ ] **Build**: Production build succeeds
+- [ ] **Security Scan**: No security vulnerabilities detected
+
+## Manual Review Process
+
+### 1. Self-Review
+Before requesting review, complete a self-review:
+- [ ] Run all tests locally
+- [ ] Check code coverage
+- [ ] Verify documentation updates
+- [ ] Test in different environments
+- [ ] Review for security issues
+
+### 2. Peer Review
+Request review from team members:
+- [ ] **Code Quality**: Logic, structure, and best practices
+- [ ] **Architecture**: Design patterns and system integration
+- [ ] **Security**: Input validation, authentication, authorization
+- [ ] **Performance**: Efficiency and resource usage
+- [ ] **Testing**: Test coverage and quality
+
+### 3. Final Review
+Before merging:
+- [ ] **PRD Alignment**: Verify against product requirements
+- [ ] **Implementation Plan**: Check against approved plan
+- [ ] **User Rules**: Ensure compliance with all rules
+- [ ] **Documentation**: All docs updated and accurate
+- [ ] **Testing**: All tests pass and coverage maintained
+
+## Issue Guidelines
+
+### Creating Issues
+Follow the established format:
+- **Title**: Start with verb, present tense, ≤8 words
+- **Summary**: 1-2 sentences describing the change
+- **Acceptance Criteria**: 2-4 bullet points with checkboxes
+- **Context**: Link to relevant documentation
+- **Labels**: Add appropriate labels (backend, frontend, bug, enhancement)
+
+### Example Issue
+```markdown
+Title: Add Yelp API integration
+
+Summary: Integrate Yelp API to fetch restaurant data for APIQ orchestrator.
+
+Acceptance Criteria:
+- [ ] Yelp API client implemented with proper error handling
+- [ ] Restaurant search endpoint returns formatted results
+- [ ] Rate limiting respects Yelp API limits
+- [ ] Tests cover success and error scenarios
+
+Context: See API_REFERENCE.md for endpoint specifications
+
+Labels: backend, enhancement
+```
+
+## Pull Request Guidelines
+
+### PR Description Template
+```markdown
+## Summary
+Brief description of changes
+
+## Changes Made
+- [ ] Change 1
+- [ ] Change 2
+- [ ] Change 3
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] E2E tests added/updated
+- [ ] All tests pass
+
+## Documentation
+- [ ] API docs updated
+- [ ] User guide updated
+- [ ] README updated
+- [ ] Changelog updated
+
+## Checklist
+- [ ] Follows PRD and implementation plan
+- [ ] Complies with architecture design
+- [ ] Follows all user rules
+- [ ] Includes comprehensive tests
+- [ ] Updates documentation
+- [ ] Ready for review
+
+Closes #issue-number
+```
+
+## Code Standards
+
+### TypeScript
+- Use strict TypeScript configuration
+- Prefer interfaces over types for object shapes
+- Use proper type annotations
+- Avoid `any` type unless absolutely necessary
+
+### React/Next.js
+- Use functional components with hooks
+- Follow Next.js best practices
+- Implement proper error boundaries
+- Use proper TypeScript types for props
+
+### API Design
+- Follow RESTful conventions
+- Use proper HTTP status codes
+- Implement consistent error responses
+- Include proper validation
+
+### Database
+- Use Prisma for all database operations
+- Follow naming conventions
+- Implement proper migrations
+- Use transactions where appropriate
+
+## Security Guidelines
+
+### Input Validation
+- Validate all user inputs
+- Sanitize data before processing
+- Use parameterized queries
+- Implement proper CORS policies
+
+### Authentication & Authorization
+- Use secure authentication methods
+- Implement proper session management
+- Validate user permissions
+- Log security events
+
+### Data Protection
+- Encrypt sensitive data
+- Use secure communication protocols
+- Implement proper key management
+- Follow data privacy regulations
+
+## Performance Guidelines
+
+### Code Performance
+- Optimize database queries
+- Implement proper caching
+- Use efficient algorithms
+- Monitor resource usage
+
+### Frontend Performance
+- Optimize bundle size
+- Implement lazy loading
+- Use proper image optimization
+- Monitor Core Web Vitals
+
+## Getting Help
+
+### Resources
+- [Architecture Documentation](docs/ARCHITECTURE.md)
+- [API Reference](docs/API_REFERENCE.md)
+- [Testing Guide](docs/TESTING.md)
+- [User Rules](docs/user-rules.md)
+- [Implementation Plan](docs/implementation-plan.md)
+
+### Questions
+- Create an issue for questions
+- Use the discussion tab for general topics
+- Contact the team for urgent matters
+
+---
+
+Thank you for contributing to APIQ! Your contributions help make this project better for everyone. 
