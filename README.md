@@ -16,27 +16,36 @@ APIQ transforms how developers and non-technical users interact with multiple AP
 - **🎯 Guided User Experience**: Onboarding, templates, and contextual help
 - **⚡ Real-time Execution**: Live workflow progress and error handling
 
-## 📊 Current Status
+## ✅ Current Status
 
-### ✅ Completed
-- [x] Project scaffolding (Next.js + TypeScript + Tailwind)
-- [x] Database schema design and implementation
-- [x] PostgreSQL setup and configuration
-- [x] Prisma ORM integration
-- [x] Environment configuration
-- [x] Database connection testing
+### ✅ Completed Features
+- [x] Project scaffolding (Next.js + TypeScript + Prisma)
+- [x] Database schema and migrations
+- [x] Environment configuration and validation
+- [x] Database connection and testing utilities
+- [x] API connection management (CRUD operations)
+- [x] OpenAPI specification parsing and validation
+- [x] Endpoint extraction and storage
+- [x] Endpoint listing with filtering capabilities
+- [x] Error handling and logging system
+- [x] Health check endpoints
+- [x] Test user creation and management
+- [x] Comprehensive documentation
 
 ### 🔄 In Progress
 - [ ] NextAuth.js authentication setup
 - [ ] User management system
-- [ ] API connection management
-
-### 📋 Planned
-- [ ] OpenAPI spec parsing
-- [ ] AI workflow generation
-- [ ] Workflow execution engine
+- [ ] RBAC (Role-Based Access Control)
 - [ ] Frontend UI components
+- [ ] Workflow execution engine
+
+### 📋 Planned Features
+- [ ] AI-powered workflow orchestration
+- [ ] Multi-step API workflow execution
+- [ ] Background job queuing
 - [ ] Audit logging system
+- [ ] E2E testing suite
+- [ ] Rate limiting and security enhancements
 
 ## 🏗️ Architecture
 
@@ -55,9 +64,10 @@ APIQ transforms how developers and non-technical users interact with multiple AP
 1. **Authentication Layer**: NextAuth.js handles user sessions and SSO
 2. **API Connection Manager**: Secure storage and management of API credentials
 3. **OpenAPI Parser**: Dynamic fetching and parsing of API specifications
-4. **AI Orchestrator**: OpenAI integration for natural language interpretation
-5. **Workflow Engine**: Multi-step execution with data flow between APIs
-6. **Audit System**: Comprehensive logging of all user actions and API calls
+4. **Endpoint Extractor**: Extracts and stores API endpoints from OpenAPI specs
+5. **AI Orchestrator**: OpenAI integration for natural language interpretation
+6. **Workflow Engine**: Multi-step execution with data flow between APIs
+7. **Audit System**: Comprehensive logging of all user actions and API calls
 
 ## 📁 Project Structure
 
@@ -67,15 +77,27 @@ APIQ transforms how developers and non-technical users interact with multiple AP
 │   ├── schema.prisma        # Prisma schema definition
 │   └── migrations/          # Database migration files
 ├── /lib                     # Utility functions and services
-│   └── /database
-│       └── client.ts        # Prisma database client
+│   ├── /database
+│   │   └── client.ts        # Prisma database client
+│   ├── /api
+│   │   ├── endpoints.ts     # Endpoint extraction utilities
+│   │   └── parser.ts        # OpenAPI parsing utilities
+│   └── /services
+│       └── openaiService.ts # OpenAI integration
 ├── /scripts                 # Utility scripts
-│   └── test-db.ts          # Database testing script
+│   ├── test-db.ts          # Database testing script
+│   ├── create-test-user.js # Test user creation script
+│   └── startup.sh          # Automated startup script
 ├── /docs                    # Project documentation
 │   ├── DATABASE_SETUP.md    # Database setup guide
 │   ├── QUICK_START.md       # Quick start guide
+│   ├── TROUBLESHOOTING.md   # Troubleshooting guide
 │   └── ...                  # Other documentation
 ├── /pages                   # Next.js pages and API routes
+│   └── /api
+│       ├── /connections     # API connection management
+│       │   └── /[id]/endpoints # Endpoint listing and filtering
+│       └── /health          # Health check endpoints
 ├── /components              # Reusable React components
 ├── /styles                  # Global styles and Tailwind config
 └── /public                  # Static assets
@@ -89,7 +111,7 @@ APIQ transforms how developers and non-technical users interact with multiple AP
 - PostgreSQL 15+
 - Git
 
-### Installation
+### Installation & Setup
 
 1. **Clone the repository**
    ```bash
@@ -126,62 +148,104 @@ APIQ transforms how developers and non-technical users interact with multiple AP
 
 5. **Set up the database**
    ```bash
-   npx prisma migrate dev --name init
+   # Run migrations
+   npx prisma migrate deploy
+   
+   # Generate Prisma client
    npx prisma generate
    ```
 
-6. **Test database connection**
+6. **Create test user**
+   ```bash
+   # Create a test user for development
+   node scripts/create-test-user.js
+   ```
+
+7. **Test database connection**
    ```bash
    npx tsx scripts/test-db.ts
    ```
 
-7. **Start the development server**
+8. **Start the development server**
    ```bash
    npm run dev
    ```
 
-8. **Open your browser**
+9. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-### Environment Variables
+### 🔄 Development Workflow
 
-Required environment variables in `.env`:
+When making schema changes:
 
+1. **Update Prisma schema** (`prisma/schema.prisma`)
+2. **Create and run migration**
+   ```bash
+   npx prisma migrate dev --name <migration-name>
+   ```
+3. **Regenerate Prisma client**
+   ```bash
+   npx prisma generate
+   ```
+4. **Clear Next.js cache (if needed)**
+   ```bash
+   rm -rf .next
+   ```
+5. **Restart development server**
+   ```bash
+   # Stop current server (Ctrl+C)
+   npm run dev
+   ```
+
+### 🧪 Testing API Endpoints
+
+Test the API connection creation:
 ```bash
-# Database Configuration
-DATABASE_URL="postgresql://connorbowen@localhost:5432/apiq"
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-
-# OpenAI Configuration
-OPENAI_API_KEY=your-openai-api-key-here
-
-# Security Configuration
-ENCRYPTION_KEY=your-32-character-encryption-key-here
-
-# NextAuth Configuration
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-nextauth-secret-key-change-this-in-production
+curl -X POST http://localhost:3000/api/connections \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Petstore API",
+    "baseUrl": "https://petstore.swagger.io/v2",
+    "documentationUrl": "https://petstore.swagger.io/v2/swagger.json",
+    "authType": "NONE"
+  }'
 ```
 
-Generate secure keys:
+List API connections:
 ```bash
-# JWT Secret
-openssl rand -base64 32
+curl http://localhost:3000/api/connections
+```
 
-# Encryption Key
-openssl rand -hex 16
+List endpoints for a connection:
+```bash
+curl http://localhost:3000/api/connections/<connection-id>/endpoints
+```
 
-# NextAuth Secret
-openssl rand -base64 32
+Filter endpoints by method:
+```bash
+curl "http://localhost:3000/api/connections/<connection-id>/endpoints?method=GET"
+```
+
+Filter endpoints by path:
+```bash
+curl "http://localhost:3000/api/connections/<connection-id>/endpoints?path=/pet"
+```
+
+Filter endpoints by summary:
+```bash
+curl "http://localhost:3000/api/connections/<connection-id>/endpoints?summary=pet"
+```
+
+Combine multiple filters:
+```bash
+curl "http://localhost:3000/api/connections/<connection-id>/endpoints?method=GET&path=/pet"
 ```
 
 ## 🗄️ Database Schema
 
 ### Current Tables
 - `users` - User accounts and authentication
-- `api_connections` - External API integrations
+- `api_connections` - External API integrations (with ingestion status tracking)
 - `endpoints` - OpenAPI endpoint definitions
 - `workflows` - Multi-step workflow definitions
 - `workflow_steps` - Individual workflow steps
@@ -339,6 +403,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Documentation**: Check the `/docs` directory
 - **Issues**: Create an issue in the repository
 - **Discussions**: Use GitHub Discussions for questions
+
+## Development & Testing
+
+- See [docs/QUICK_START.md](docs/QUICK_START.md) for setup and quick start.
+- See [docs/TESTING.md](docs/TESTING.md) for details on running authentication and integration tests, including the demo script and test users.
 
 ---
 

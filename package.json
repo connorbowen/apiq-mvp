@@ -19,11 +19,13 @@
     "test:e2e:headed": "playwright test --headed",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:ci": "npm run test:coverage && npm run test:e2e",
+    "startup": "./scripts/startup.sh",
     "db:test": "tsx scripts/test-db.ts",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "db:setup": "npm run db:migrate && npm run db:generate && node scripts/create-test-user.js"
   },
   "keywords": [
     "api",
@@ -38,12 +40,15 @@
   "author": "APIQ Team",
   "license": "MIT",
   "dependencies": {
+    "@apidevtools/swagger-parser": "^12.0.0",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "^6.10.1",
     "@tailwindcss/postcss": "^4.1.11",
+    "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",
     "crypto-js": "^4.2.0",
+    "jsonwebtoken": "^9.0.2",
     "next": "^14.2.30",
     "next-auth": "^4.24.11",
     "openai": "^4.20.1",
@@ -72,6 +77,7 @@
     "eslint-config-next": "14.0.4",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "node-fetch": "^3.3.2",
     "node-mocks-http": "^1.17.2",
     "postcss": "^8.5.6",
     "prettier": "^3.6.1",

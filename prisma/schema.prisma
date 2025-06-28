@@ -37,6 +37,12 @@ enum Status {
   PENDING
 }
 
+enum IngestionStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
 enum WorkflowStatus {
   DRAFT
   ACTIVE
@@ -83,18 +89,21 @@ model User {
 
 // API Connection Management
 model ApiConnection {
-  id              String   @id @default(cuid())
+  id              String           @id @default(cuid())
   userId          String
   name            String
   description     String?
   baseUrl         String
   authType        AuthType
-  authConfig      Json     // Encrypted authentication configuration
+  authConfig      Json             // Encrypted authentication configuration
   documentationUrl String?
-  status          Status   @default(ACTIVE)
+  status          Status           @default(ACTIVE)
+  ingestionStatus IngestionStatus  @default(PENDING)
+  rawSpec         String?          // Raw OpenAPI specification content
+  specHash        String?          // SHA-256 hash for change detection
   lastTested      DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   // Relations
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
