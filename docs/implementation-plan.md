@@ -191,101 +191,127 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
    });
    ```
 
-### Phase 2: API Management (Weeks 3-4)
-**Goal**: Enable users to connect and manage external APIs
+### Phase 1: Remaining Tasks & Checklist
 
-**Deliverables**:
-- [ ] API connection CRUD operations
-- [ ] OpenAPI specification parsing
-- [ ] Endpoint discovery and management
-- [ ] API testing and validation
-- [ ] Authentication configuration support
+- [ ] **Fix any Prisma/migration issues**
+  - Review all migrations and ensure the schema matches the codebase.
+  - Apply all migrations and re-generate the Prisma client.
+  - Confirm the database is up to date and error-free.
 
-**Technical Tasks**:
-1. **API Connection Management**
-   ```typescript
-   // pages/api/apis/index.ts
-   export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-     const session = await getServerSession(req, res, authOptions);
-     if (!session) {
-       return res.status(401).json({ error: 'Unauthorized' });
-     }
-   
-     if (req.method === 'POST') {
-       const { name, baseUrl, authType, authConfig, documentationUrl } = req.body;
-       
-       // Validate OpenAPI spec
-       const spec = await parseOpenApiSpec(documentationUrl);
-       
-       // Create API connection
-       const apiConnection = await prisma.apiConnection.create({
-         data: {
-           userId: session.user.id,
-           name,
-           baseUrl,
-           authType,
-           authConfig: encryptData(JSON.stringify(authConfig)),
-           documentationUrl
-         }
-       });
-       
-       // Extract and store endpoints
-       await extractAndStoreEndpoints(apiConnection.id, spec);
-       
-       return res.status(201).json({ success: true, data: apiConnection });
-     }
-   }
-   ```
+- [ ] **Review .env.example and environment config**
+  - Ensure all required environment variables are present and documented.
+  - Make sure no secrets or sensitive data are committed to the repo.
 
-2. **OpenAPI Parser Integration**
-   ```typescript
-   // lib/api/parser.ts
-   import SwaggerParser from '@apidevtools/swagger-parser';
-   
-   export const parseOpenApiSpec = async (url: string) => {
-     try {
-       const api = await SwaggerParser.parse(url);
-       
-       // Validate spec
-       if (!api.paths || Object.keys(api.paths).length === 0) {
-         throw new Error('No endpoints found in OpenAPI specification');
-       }
-       
-       return api;
-     } catch (error) {
-       throw new Error(`Failed to parse OpenAPI spec: ${error.message}`);
-     }
-   };
-   ```
+- [ ] **Test and document all scripts**
+  - Run all scripts in `scripts/` and confirm they work as expected.
+  - Remove obsolete or one-off scripts.
+  - Document usage in QUICK_START.md or README.md.
 
-3. **Endpoint Management**
-   ```typescript
-   // lib/api/endpoints.ts
-   export const extractAndStoreEndpoints = async (apiConnectionId: string, spec: any) => {
-     const endpoints = [];
-     
-     for (const [path, pathItem] of Object.entries(spec.paths)) {
-       for (const [method, operation] of Object.entries(pathItem)) {
-         if (['get', 'post', 'put', 'delete', 'patch'].includes(method)) {
-           endpoints.push({
-             apiConnectionId,
-             path,
-             method: method.toUpperCase(),
-             summary: operation.summary,
-             description: operation.description,
-             parameters: operation.parameters || [],
-             requestBody: operation.requestBody,
-             responses: operation.responses
-           });
-         }
-       }
-     }
-     
-     await prisma.endpoint.createMany({
-       data: endpoints
-     });
-   };
-   ```
+- [ ] **Ensure basic test coverage**
+  - Add unit/integration tests for foundational utilities and database logic.
+  - Make sure test data is isolated from dev/prod environments.
+
+- [ ] **Enforce linting and type safety**
+  - Run and fix any issues from `npm run lint` and `npm run type-check`.
+  - Ensure TypeScript types are up to date and used consistently.
+
+- [ ] **Update documentation**
+  - Ensure README.md and QUICK_START.md are current and accurate.
+  - Document setup, environment, and how to run the project.
+
+- [ ] **Ensure no mock/test data in production**
+  - Remove or isolate any mock/test logic so it is not included in production builds.
+
+- [ ] **Verify CI/CD runs checks**
+  - If CI is set up, ensure it runs lint, type-check, and tests on PRs.
+
+### Phase 2: API Management (Detailed Breakdown)
+
+**Goal:** Enable users to connect and manage external APIs, including automatic endpoint discovery from OpenAPI specs.
+
+#### Detailed Checklist
+
+- [ ] **Add Swagger-Parser dependency**
+  - [ ] Install `@apidevtools/swagger-parser`
+  - [ ] Add to package.json dependencies
+
+- [ ] **Scaffold DB tables & migration for ApiSpec, Endpoint**
+  - [ ] Create Prisma migration for ApiSpec table (if needed)
+  - [ ] Ensure Endpoint table exists and is properly linked
+  - [ ] Add `ingestionStatus` field to ApiConnection (PENDING, SUCCEEDED, FAILED)
+  - [ ] Add `rawSpec` and `specHash` fields for change detection
+  - [ ] Run migration to ensure utilities can compile
+
+- [ ] **Implement parsing utility**
+  - [ ] Create `src/lib/api/parser.ts`
+  - [ ] Implement `parseOpenApiSpec(url)` function
+  - [ ] Read spec into memory, validate, sanitize content
+  - [ ] Never store remote URL blindly - only sanitized content
+  - [ ] Handle errors for invalid/unreachable specs
+  - [ ] **Refinement**: Catch network timeouts and surface "spec unreachable" separately from "spec invalid"
+  - [ ] **Refinement**: Store raw spec + SHA-256 hash for change detection when re-syncing
+
+- [ ] **Implement extraction utility + transactional DB write**
+  - [ ] Create `src/lib/api/endpoints.ts`
+  - [ ] Implement `extractAndStoreEndpoints(apiConnectionId, spec)`
+  - [ ] Use Prisma transactions for atomic operations
+  - [ ] Extract: path, method, summary, parameters, request/response schemas
+  - [ ] **Refinement**: Include HTTP status codes and success schema (200/201) for auto-generating examples later
+  - [ ] **Refinement**: Wrap extraction + DB writes in transaction; rollback if any row fails
+
+- [ ] **Create POST /api/connections handler with full flow**
+  - [ ] Update existing `/api/connections` POST handler
+  - [ ] Integrate parsing and extraction utilities
+  - [ ] Handle optional `documentationUrl` parameter
+  - [ ] Implement full flow: parse → validate → store connection → extract endpoints
+  - [ ] **Refinement**: Add `ingestionStatus` field (PENDING, SUCCEEDED, FAILED) for UI progress signaling
+  - [ ] **Refinement**: For small specs keep inline; for large specs consider queuing background job (prevent HTTP timeout)
+
+- [ ] **Build GET /api/connections/[id]/endpoints route (list only)**
+  - [ ] Create `/api/connections/[id]/endpoints` API route
+  - [ ] Implement GET handler to list endpoints for a connection
+  - [ ] Include pagination if needed
+
+- [ ] **Add DELETE (optional)**
+  - [ ] Implement DELETE handler for endpoints (optional enhancement)
+  - [ ] Add proper cascade deletion if needed
+  - [ ] **Refinement**: Until supporting edits, expose DELETE to handle spec updates (wipe + re-insert easier than diff)
+  - [ ] **Refinement**: Protect with RBAC (ADMIN only)
+
+- [ ] **Tests (unit → integration → e2e)**
+  - [ ] Unit tests for parsing and extraction utilities
+  - [ ] Integration tests for API connection creation flow
+  - [ ] End-to-end tests for complete user journey
+  - [ ] **Refinement**: Add happy-path e2e: create connection → list endpoints → plan chat call using one endpoint (execute step can be stubbed)
+
+#### Cursor Rules & Security Notes
+
+**When utilities touch >3 files (e.g., new lib, API route, prisma schema):**
+- Include commit rationale referencing `/docs/implementation-plan.md §OpenAPI Flow`
+- Ensure parser reads spec into memory, validates, then only stores sanitized content
+- Never store remote URL blindly - only store validated, sanitized OpenAPI content
+
+**Security Considerations:**
+- Validate OpenAPI spec before storing
+- Sanitize all content before database storage
+- Use transactions for atomic operations
+- Handle errors gracefully without exposing internal details
+- Implement RBAC for sensitive operations (DELETE endpoints)
+- Store SHA-256 hashes for change detection and integrity
+
+### Phase 2: Remaining Tasks & Checklist
+
+- [ ] **Review/test RBAC on all endpoints**
+  - Confirm all sensitive operations are protected by role checks.
+  - Add/expand tests for negative/forbidden cases.
+
+- [ ] **Add more tests and documentation**
+  - Expand integration and e2e tests for edge/error cases.
+  - Ensure API docs and RBAC matrix are up to date.
+
+- [ ] **Plan migration to real authentication**
+  - Document what will need to change to move from mock auth to a real provider (e.g., NextAuth, hashed passwords, real user DB).
+  - Identify code that will need to be refactored or removed.
 
 ### Phase 3: AI Orchestration (Weeks 5-6)
 **Goal**: Implement AI-powered natural language to workflow translation
