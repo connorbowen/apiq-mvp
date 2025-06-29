@@ -1,5 +1,86 @@
 # APIQ Implementation Plan
 
+## Work Tracking: Planned, In Progress, Done
+
+> **Update this section as work progresses.**
+
+### Planned
+| Task | Owner | Notes |
+|------|-------|-------|
+| Implement OpenAPI spec caching |  | Use Redis or DB for 24h cache (configurable TTL, compression, max-size guard) |
+| Add regression test for spec fetch errors |  | UI + audit log, slow spec timeout, sanitized UI message |
+| Split auth test matrix (API Key, Bearer, OAuth2) |  | Different UI/test flows |
+| Scaffold minimal dashboard UI |  | Connections, Add, Audit Logs |
+| Pen-test credential storage |  | dotenv, Prisma @encrypted, or KMS |
+| Update docs/architecture.md with cache flow |  | Data-flow diagram, admin endpoint |
+
+### In Progress
+| Task | Owner | Notes |
+|------|-------|-------|
+| Test API integration (Phase 2.1) |  | `/lib/testApis.ts` + integration test |
+| Remove mocks, wire live OpenAPI fetch |  | Use axios + SwaggerParser, ensure Jest does not stub fetch |
+
+### Done
+| Task | Owner | Notes |
+|------|-------|-------|
+| Integration test for real/public APIs |  | Petstore, HTTPBin, JSONPlaceholder, GitHub |
+| Parser refactor to fetch with axios |  | Handles non-OpenAPI gracefully |
+| Rate limit simulation test |  | JSONPlaceholder burst test |
+| Health check for all test APIs |  | Base URL reachability |
+| Negative test for mock fixture presence |  | Enforced by `basic.test.ts` (fails CI if any mock files exist) |
+
+---
+
+## Phase 2: Implementation Steps & Guardrails
+
+### 1. Remove Mocks
+- Delete all mock fixtures related to OpenAPI specs (e.g., `.spec.mock.json`, `__mocks__` dirs).
+- Add a negative test (grep-based CI check) to assert no mock spec files remain.
+- Ensure Jest config does not stub fetch for spec URLs (no silent fallback to stale mocks).
+
+### 2. Cache Design & Logic
+- Use a 24h TTL for cache, configurable via `SPEC_CACHE_TTL_HOURS` env var (default: 24).
+- If using Prisma, compress large specs (gzip/zlib) before saving to DB.
+- Add a max-size guard (e.g., 5 MB) to prevent DoS via huge specs.
+
+### 3. Regression/Error Handling
+- Add/expand tests for 404, 500, invalid JSON, and cache hit/miss scenarios.
+- Add a "slow spec" test (>10s) to ensure fetch layer aborts gracefully.
+- Record failures in AuditLog and return sanitized UI message ("Spec unreachable, see logs").
+
+### 4. Documentation Update
+- Update `/docs/architecture.md` with a data-flow diagram: "Spec Fetch → Cache → Parser".
+- Document the admin endpoint for cache inspection/clearing.
+
+### 5. Admin/Debug Endpoint
+- Implement `/api/admin/spec-cache` GET (list) + DELETE (purge) endpoints.
+- Protect with ADMIN role middleware (RBAC).
+- Expose JSON `{url, fetchedAt, ttlRemaining}` and allow DELETE by URL.
+- Log each purge to AuditLog.
+
+---
+
+## Cursor-Ready Task Breakdown
+| Seq | Prompt for Cursor Agent | Target files | Outcome |
+|-----|------------------------|--------------|---------|
+| 1 | Delete all mock fixtures related to OpenAPI specs and ensure tests stub real HTTP. | tests/integration/api/connections.test.ts, any __mocks__ dirs | Clean tree, tests fail until cache added |
+| 2 | Add CachedSpec Prisma model (url:String@unique, etag:String?, json:Bytes, fetchedAt:DateTime). Generate migration. | prisma/schema.prisma | DB ready |
+| 3 | Create src/lib/api/specCache.ts with getSpec(url) { hit/miss logic, TTL env var, gzip compression }. Unit-test hit/miss & TTL. | new | Cache layer |
+| 4 | Refactor src/lib/api/parser.ts to call getSpec(url) instead of direct fetch. Handle validation errors. | existing | Transparent caching |
+| 5 | Augment integration tests: (a) 404 URL, (b) invalid JSON, (c) cache hit path. | tests/integration/api/testApis.test.ts | Coverage |
+| 6 | Extend src/utils/logger.ts to write failed fetch events to AuditLog. | existing | Traceability |
+| 7 | Implement admin route /pages/api/admin/spec-cache.ts GET (list) + DELETE (purge). Protect with ADMIN role middleware. | new | Ops tool |
+| 8 | Update /docs/implementation-plan.md and /docs/architecture.md with caching strategy, env var, and admin endpoint. | docs | Docs & rules sync |
+
+---
+
+## Final Checkpoints Before Merge
+- CI passes (Jest, ESLint, type-check).
+- AuditLog records both cache hits (as info) and fetch failures (as warn/error).
+- .cursor/rules compliance: commit messages with `feat(cache): …` and reference `implementation-plan.md §2`.
+
+---
+
 ## Overview
 
 This document outlines the detailed implementation plan for the APIQ NL-to-API Orchestrator MVP. The plan is structured in phases, with each phase building upon the previous one to deliver a fully functional, production-ready platform.

@@ -44,9 +44,6 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
-// Mock fetch globally
-global.fetch = jest.fn()
-
 // Mock console methods to reduce noise in tests
 global.console = {
   ...console,

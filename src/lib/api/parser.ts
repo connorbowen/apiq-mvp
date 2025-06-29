@@ -1,5 +1,6 @@
 import SwaggerParser from '@apidevtools/swagger-parser';
 import crypto from 'crypto';
+import axios from 'axios';
 import { logError, logInfo } from '../../utils/logger';
 
 export interface ParsedOpenApiSpec {
@@ -27,8 +28,36 @@ export const parseOpenApiSpec = async (url: string): Promise<ParsedOpenApiSpec> 
   try {
     logInfo('Parsing OpenAPI spec', { url });
 
-    // Fetch and parse the spec
-    const api = await SwaggerParser.parse(url) as any;
+    // First fetch the spec with axios
+    const response = await axios.get(url, {
+      timeout: 10000,
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'APIQ/1.0'
+      }
+    });
+
+    if (response.status !== 200) {
+      throw {
+        type: 'UNREACHABLE' as const,
+        message: `HTTP ${response.status}: Failed to fetch OpenAPI specification`,
+        details: { status: response.status }
+      };
+    }
+
+    const specData = response.data;
+
+    // Validate it's an object
+    if (typeof specData !== 'object' || specData === null) {
+      throw {
+        type: 'INVALID_SPEC' as const,
+        message: 'OpenAPI specification must be a JSON object',
+        details: { type: typeof specData }
+      };
+    }
+
+    // Parse and validate the spec with SwaggerParser
+    const api = await SwaggerParser.parse(specData) as any;
     
     // Validate the spec has required components
     if (!api.paths || Object.keys(api.paths).length === 0) {
@@ -70,23 +99,34 @@ export const parseOpenApiSpec = async (url: string): Promise<ParsedOpenApiSpec> 
     logError('Failed to parse OpenAPI spec', error, { url });
 
     // Handle specific error types
-    if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      throw {
-        type: 'UNREACHABLE' as const,
-        message: `Cannot reach the OpenAPI specification URL: ${error.message}`,
-        details: { code: error.code, message: error.message }
-      };
+    if (axios.isAxiosError(error)) {
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        throw {
+          type: 'UNREACHABLE' as const,
+          message: `Cannot reach the OpenAPI specification URL: ${error.message}`,
+          details: { code: error.code, message: error.message }
+        };
+      }
+
+      if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+        throw {
+          type: 'NETWORK_TIMEOUT' as const,
+          message: 'Request to OpenAPI specification timed out',
+          details: { code: error.code, message: error.message }
+        };
+      }
+
+      // Handle HTTP error responses
+      if (error.response) {
+        throw {
+          type: 'UNREACHABLE' as const,
+          message: `HTTP ${error.response.status}: Failed to fetch OpenAPI specification`,
+          details: { status: error.response.status, statusText: error.response.statusText }
+        };
+      }
     }
 
-    if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
-      throw {
-        type: 'NETWORK_TIMEOUT' as const,
-        message: 'Request to OpenAPI specification timed out',
-        details: { code: error.code, message: error.message }
-      };
-    }
-
-    if (error.message?.includes('SwaggerParser')) {
+    if (error.message?.includes('SwaggerParser') || error.message?.includes('OpenAPI')) {
       throw {
         type: 'INVALID_SPEC' as const,
         message: `Invalid OpenAPI specification: ${error.message}`,
