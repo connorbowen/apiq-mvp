@@ -88,9 +88,6 @@ export class DatabaseInitializer {
     // Create default admin user
     await this.createDefaultAdminUser();
 
-    // Create sample API connections (optional)
-    await this.createSampleApiConnections();
-
     logInfo('Initial data created successfully');
   }
 
@@ -145,83 +142,6 @@ export class DatabaseInitializer {
     } catch (error) {
       logError('Failed to create default admin user', error as Error);
       throw error;
-    }
-  }
-
-  /**
-   * Create sample API connections for demonstration
-   */
-  private static async createSampleApiConnections(): Promise<void> {
-    try {
-      // Only create sample data in development
-      if (process.env.NODE_ENV !== 'development') {
-        return;
-      }
-
-      const adminUser = await prisma.user.findFirst({
-        where: { role: 'SUPER_ADMIN' }
-      });
-
-      if (!adminUser) {
-        logWarn('No admin user found, skipping sample API connections');
-        return;
-      }
-
-      // Sample API connections
-      const sampleConnections = [
-        {
-          name: 'JSONPlaceholder API',
-          description: 'Free fake API for testing and prototyping',
-          baseUrl: 'https://jsonplaceholder.typicode.com',
-          authType: 'NONE' as const,
-          authConfig: {},
-          documentationUrl: 'https://jsonplaceholder.typicode.com/guide/'
-        },
-        {
-          name: 'OpenWeather API',
-          description: 'Weather data API',
-          baseUrl: 'https://api.openweathermap.org/data/2.5',
-          authType: 'API_KEY' as const,
-          authConfig: { apiKey: 'demo-key' },
-          documentationUrl: 'https://openweathermap.org/api'
-        },
-        {
-          name: 'GitHub API',
-          description: 'GitHub REST API v3',
-          baseUrl: 'https://api.github.com',
-          authType: 'BEARER_TOKEN' as const,
-          authConfig: { token: 'demo-token' },
-          documentationUrl: 'https://docs.github.com/en/rest'
-        }
-      ];
-
-      for (const connectionData of sampleConnections) {
-        const existingConnection = await prisma.apiConnection.findFirst({
-          where: {
-            userId: adminUser.id,
-            name: connectionData.name
-          }
-        });
-
-        if (!existingConnection) {
-          const connection = await prisma.apiConnection.create({
-            data: {
-              ...connectionData,
-              userId: adminUser.id,
-              status: 'ACTIVE'
-            }
-          });
-
-          logInfo('Sample API connection created', {
-            connectionId: connection.id,
-            name: connection.name
-          });
-        }
-      }
-
-    } catch (error) {
-      logWarn('Failed to create sample API connections', { error });
-      // Don't throw error for sample data
     }
   }
 

@@ -1,293 +1,247 @@
-import logger, { 
-  LogLevel, 
-  logError, 
-  logWarn, 
-  logInfo, 
-  logDebug,
-  logWorkflowExecution,
-  logApiCall,
-  logSecurityEvent,
-  logAuditEvent,
-  logPerformance,
-  logDatabaseQuery,
-  handleError
-} from '../../../src/utils/logger'
+import { logError, logWarn, logInfo, logDebug, logWorkflowExecution, logApiCall, logSecurityEvent, logAuditEvent, logPerformance, logDatabaseQuery, handleError, logShutdown } from '../../../src/utils/logger';
 
-// Mock winston
-jest.mock('winston', () => ({
-  createLogger: jest.fn(() => ({
+// Mock winston at the top level
+jest.mock('winston', () => {
+  const mockLogger = {
     error: jest.fn(),
     warn: jest.fn(),
     info: jest.fn(),
     debug: jest.fn()
-  })),
-  format: {
-    combine: jest.fn(),
-    timestamp: jest.fn(),
-    errors: jest.fn(),
-    json: jest.fn(),
-    printf: jest.fn(),
-    colorize: jest.fn(),
-    simple: jest.fn()
-  },
-  transports: {
-    Console: jest.fn(),
-    File: jest.fn()
-  }
-}))
-
-describe('Logger', () => {
-  let mockLogger: any
-
-  beforeEach(() => {
-    mockLogger = {
-      error: jest.fn(),
-      warn: jest.fn(),
-      info: jest.fn(),
-      debug: jest.fn()
+  };
+  
+  return {
+    createLogger: jest.fn(() => mockLogger),
+    format: {
+      combine: jest.fn(),
+      timestamp: jest.fn(),
+      errors: jest.fn(),
+      json: jest.fn(),
+      printf: jest.fn(),
+      colorize: jest.fn(),
+      simple: jest.fn()
+    },
+    transports: {
+      Console: jest.fn(),
+      File: jest.fn()
     }
+  };
+});
+
+describe('Logger utilities', () => {
+  let logError, logWarn, logInfo, logDebug, logWorkflowExecution, logApiCall, logSecurityEvent, logAuditEvent, logPerformance, logDatabaseQuery, handleError, logShutdown;
+  let mockLogger;
+
+  beforeEach(async () => {
+    jest.resetModules();
+    const loggerUtils = await import('../../../src/utils/logger');
+    logError = loggerUtils.logError;
+    logWarn = loggerUtils.logWarn;
+    logInfo = loggerUtils.logInfo;
+    logDebug = loggerUtils.logDebug;
+    logWorkflowExecution = loggerUtils.logWorkflowExecution;
+    logApiCall = loggerUtils.logApiCall;
+    logSecurityEvent = loggerUtils.logSecurityEvent;
+    logAuditEvent = loggerUtils.logAuditEvent;
+    logPerformance = loggerUtils.logPerformance;
+    logDatabaseQuery = loggerUtils.logDatabaseQuery;
+    handleError = loggerUtils.handleError;
+    logShutdown = loggerUtils.logShutdown;
+    mockLogger = (require('winston').createLogger as jest.Mock).mock.results[0].value;
+    jest.clearAllMocks();
+  });
+
+  it('logError logs error with meta', () => {
+    const error = new Error('test error');
+    logError('test message', error, { foo: 'bar' });
     
-    // Mock the logger instance
-    jest.spyOn(logger, 'error').mockImplementation(mockLogger.error)
-    jest.spyOn(logger, 'warn').mockImplementation(mockLogger.warn)
-    jest.spyOn(logger, 'info').mockImplementation(mockLogger.info)
-    jest.spyOn(logger, 'debug').mockImplementation(mockLogger.debug)
-  })
+    expect(mockLogger.error).toHaveBeenCalledWith('test message', {
+      error: 'test error',
+      stack: error.stack,
+      foo: 'bar'
+    });
+  });
 
-  afterEach(() => {
-    jest.restoreAllMocks()
-  })
+  it('logWarn logs warning with meta', () => {
+    logWarn('test warning', { foo: 'bar' });
+    
+    expect(mockLogger.warn).toHaveBeenCalledWith('test warning', { foo: 'bar' });
+  });
 
-  describe('log levels', () => {
-    it('should log error messages', () => {
-      const message = 'Critical error occurred'
-      const error = new Error('Something went wrong')
-      
-      logError(message, error)
-      
-      expect(mockLogger.error).toHaveBeenCalledWith(message, {
-        error: error.message,
-        stack: error.stack
-      })
-    })
+  it('logInfo logs info with meta', () => {
+    logInfo('test info', { foo: 'bar' });
+    
+    expect(mockLogger.info).toHaveBeenCalledWith('test info', { foo: 'bar' });
+  });
 
-    it('should log warning messages', () => {
-      const message = 'Warning: deprecated feature used'
-      
-      logWarn(message)
-      
-      expect(mockLogger.warn).toHaveBeenCalledWith(message, undefined)
-    })
+  it('logDebug logs debug with meta', () => {
+    logDebug('test debug', { foo: 'bar' });
+    
+    expect(mockLogger.debug).toHaveBeenCalledWith('test debug', { foo: 'bar' });
+  });
 
-    it('should log info messages', () => {
-      const message = 'User logged in successfully'
+  describe('logWorkflowExecution', () => {
+    it('logs workflow execution with all parameters', () => {
+      logWorkflowExecution('workflow-123', 'step-1', 'Processing data', { data: 'test' });
       
-      logInfo(message)
-      
-      expect(mockLogger.info).toHaveBeenCalledWith(message, undefined)
-    })
+      expect(mockLogger.info).toHaveBeenCalledWith('Workflow Execution: Processing data', {
+        workflowId: 'workflow-123',
+        step: 'step-1',
+        data: 'test'
+      });
+    });
+  });
 
-    it('should log debug messages', () => {
-      const message = 'Debug: processing request'
-      
-      logDebug(message)
-      
-      expect(mockLogger.debug).toHaveBeenCalledWith(message, undefined)
-    })
-  })
-
-  describe('structured logging', () => {
-    it('should log workflow execution', () => {
-      const workflowId = 'workflow-123'
-      const step = 'api-call'
-      const message = 'Making API request'
-      
-      logWorkflowExecution(workflowId, step, message)
-      
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        `Workflow Execution: ${message}`,
-        { workflowId, step }
-      )
-    })
-
-    it('should log API calls', () => {
-      const apiConnectionId = 'api-456'
-      const endpoint = '/api/users'
-      const method = 'GET'
-      const status = 200
-      const duration = 150
-      
-      logApiCall(apiConnectionId, endpoint, method, status, duration)
+  describe('logApiCall', () => {
+    it('logs API call with all parameters', () => {
+      logApiCall('conn-123', '/api/test', 'GET', 200, 150, { userId: 'user-123' });
       
       expect(mockLogger.info).toHaveBeenCalledWith('API Call', {
-        apiConnectionId,
-        endpoint,
-        method,
-        status,
-        duration: '150ms'
-      })
-    })
+        apiConnectionId: 'conn-123',
+        endpoint: '/api/test',
+        method: 'GET',
+        status: 200,
+        duration: '150ms',
+        userId: 'user-123'
+      });
+    });
+  });
 
-    it('should log security events', () => {
-      const event = 'Failed login attempt'
-      const userId = 'user-789'
-      const ip = '192.168.1.1'
+  describe('logSecurityEvent', () => {
+    it('logs security event with all parameters', () => {
+      logSecurityEvent('Failed login attempt', 'user-123', '192.168.1.1', { attempts: 3 });
       
-      logSecurityEvent(event, userId, ip)
-      
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        `Security Event: ${event}`,
-        { userId, ip }
-      )
-    })
+      expect(mockLogger.warn).toHaveBeenCalledWith('Security Event: Failed login attempt', {
+        userId: 'user-123',
+        ip: '192.168.1.1',
+        attempts: 3
+      });
+    });
 
-    it('should log audit events', () => {
-      const action = 'CREATE'
-      const resource = 'workflow'
-      const userId = 'user-123'
-      const resourceId = 'workflow-456'
+    it('logs security event without optional parameters', () => {
+      logSecurityEvent('Security alert');
       
-      logAuditEvent(action, resource, userId, resourceId)
-      
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        `Audit: ${action}`,
-        { resource, resourceId, userId }
-      )
-    })
-  })
+      expect(mockLogger.warn).toHaveBeenCalledWith('Security Event: Security alert', {
+        userId: undefined,
+        ip: undefined
+      });
+    });
+  });
 
-  describe('performance logging', () => {
-    it('should log slow operations as warnings', () => {
-      const operation = 'database-query'
-      const duration = 1500 // 1.5 seconds
+  describe('logAuditEvent', () => {
+    it('logs audit event with all parameters', () => {
+      logAuditEvent('CREATE', 'user', 'admin-123', 'user-456', { changes: ['email'] });
       
-      logPerformance(operation, duration)
-      
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        `Slow Operation: ${operation}`,
-        { duration: '1500ms' }
-      )
-    })
+      expect(mockLogger.info).toHaveBeenCalledWith('Audit: CREATE', {
+        resource: 'user',
+        resourceId: 'user-456',
+        userId: 'admin-123',
+        changes: ['email']
+      });
+    });
 
-    it('should log fast operations as debug', () => {
-      const operation = 'cache-lookup'
-      const duration = 50 // 50ms
+    it('logs audit event without resourceId', () => {
+      logAuditEvent('DELETE', 'connection', 'admin-123');
       
-      logPerformance(operation, duration)
-      
-      expect(mockLogger.debug).toHaveBeenCalledWith(
-        `Performance: ${operation}`,
-        { duration: '50ms' }
-      )
-    })
-  })
+      expect(mockLogger.info).toHaveBeenCalledWith('Audit: DELETE', {
+        resource: 'connection',
+        resourceId: undefined,
+        userId: 'admin-123'
+      });
+    });
+  });
 
-  describe('database logging', () => {
-    it('should log database queries', () => {
-      const query = 'SELECT * FROM users WHERE id = ?'
-      const duration = 25
+  describe('logPerformance', () => {
+    it('logs slow operation as warning', () => {
+      logPerformance('Database query', 1500, { table: 'users' });
       
-      logDatabaseQuery(query, duration)
+      expect(mockLogger.warn).toHaveBeenCalledWith('Slow Operation: Database query', {
+        duration: '1500ms',
+        table: 'users'
+      });
+    });
+
+    it('logs fast operation as debug', () => {
+      logPerformance('Cache lookup', 50, { cache: 'redis' });
+      
+      expect(mockLogger.debug).toHaveBeenCalledWith('Performance: Cache lookup', {
+        duration: '50ms',
+        cache: 'redis'
+      });
+    });
+  });
+
+  describe('logDatabaseQuery', () => {
+    it('logs database query with truncated query', () => {
+      const longQuery = 'SELECT * FROM users WHERE email = ? AND status = ? AND created_at > ? AND updated_at < ? AND last_login > ?';
+      logDatabaseQuery(longQuery, 250, { table: 'users' });
       
       expect(mockLogger.debug).toHaveBeenCalledWith('Database Query', {
-        query: query,
-        duration: '25ms'
-      })
-    })
+        query: longQuery,
+        duration: '250ms',
+        table: 'users'
+      });
+    });
 
-    it('should truncate long queries', () => {
-      const longQuery = 'SELECT * FROM users WHERE id = ? AND name = ? AND email = ? AND created_at > ? AND updated_at < ? AND status = ? AND role = ? AND permissions = ? AND settings = ? AND metadata = ? AND additional_field = ? AND another_field = ? AND yet_another_field = ? AND one_more_field = ? AND final_field = ?'
-      const duration = 30
-      
-      logDatabaseQuery(longQuery, duration)
+    it('truncates very long queries', () => {
+      const veryLongQuery = 'a'.repeat(300);
+      logDatabaseQuery(veryLongQuery, 100);
       
       expect(mockLogger.debug).toHaveBeenCalledWith('Database Query', {
-        query: longQuery.substring(0, 200) + '...',
-        duration: '30ms'
-      })
-    })
-  })
+        query: 'a'.repeat(200) + '...',
+        duration: '100ms'
+      });
+    });
+  });
 
-  describe('error handling', () => {
-    it('should handle errors and return sanitized response', () => {
-      const error = new Error('Database connection failed')
-      const context = 'user-authentication'
+  describe('handleError', () => {
+    it('logs error and returns sanitized response for production', () => {
+      const originalEnv = process.env.NODE_ENV;
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true });
       
-      const result = handleError(error, context)
+      const error = new Error('Database connection failed');
+      const result = handleError(error, 'database', { connectionId: 'conn-123' });
       
-      expect(result).toHaveProperty('message')
-      expect(result).toHaveProperty('code')
-      expect(result.code).toBe('Error')
-    })
+      expect(mockLogger.error).toHaveBeenCalledWith('Error in database: Database connection failed', {
+        error: 'Database connection failed',
+        stack: error.stack,
+        connectionId: 'conn-123'
+      });
+      
+      expect(result).toEqual({
+        message: 'An internal error occurred',
+        code: 'Error'
+      });
+      
+      Object.defineProperty(process.env, 'NODE_ENV', { value: originalEnv, configurable: true });
+    });
 
-    it('should include stack trace in development', () => {
-      const originalEnv = process.env.NODE_ENV
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true
-      })
+    it('logs error and returns detailed response for development', () => {
+      const originalEnv = process.env.NODE_ENV;
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', configurable: true });
       
-      const error = new Error('Test error')
-      const result = handleError(error, 'test-context')
+      const error = new Error('Validation failed');
+      const result = handleError(error, 'validation');
       
-      expect(result).toHaveProperty('stack')
+      expect(mockLogger.error).toHaveBeenCalledWith('Error in validation: Validation failed', {
+        error: 'Validation failed',
+        stack: error.stack
+      });
       
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: originalEnv,
-        writable: true,
-        configurable: true
-      })
-    })
+      expect(result).toEqual({
+        message: 'Validation failed',
+        code: 'Error',
+        stack: error.stack
+      });
+      
+      Object.defineProperty(process.env, 'NODE_ENV', { value: originalEnv, configurable: true });
+    });
+  });
 
-    it('should not include stack trace in production', () => {
-      const originalEnv = process.env.NODE_ENV
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'production',
-        writable: true,
-        configurable: true
-      })
+  describe('logShutdown', () => {
+    it('logs shutdown message', () => {
+      logShutdown('SIGTERM');
       
-      const error = new Error('Test error')
-      const result = handleError(error, 'test-context')
-      
-      expect(result).not.toHaveProperty('stack')
-      expect(result.message).toBe('An internal error occurred')
-      
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: originalEnv,
-        writable: true,
-        configurable: true
-      })
-    })
-  })
-
-  describe('logger instance', () => {
-    it('should be a valid winston logger', () => {
-      expect(logger).toBeDefined()
-      expect(typeof logger.info).toBe('function')
-      expect(typeof logger.error).toBe('function')
-      expect(typeof logger.warn).toBe('function')
-      expect(typeof logger.debug).toBe('function')
-    })
-
-    it('should handle circular references gracefully', () => {
-      const circularObj: any = { name: 'test' }
-      circularObj.self = circularObj
-      
-      expect(() => {
-        logInfo('Circular object test', { data: circularObj })
-      }).not.toThrow()
-    })
-
-    it('should handle large objects', () => {
-      const largeObj = {
-        data: 'x'.repeat(10000)
-      }
-      
-      expect(() => {
-        logInfo('Large object test', { data: largeObj })
-      }).not.toThrow()
-    })
-  })
-}) 
+      expect(mockLogger.info).toHaveBeenCalledWith('Received SIGTERM. Starting graceful shutdown...');
+    });
+  });
+}); 

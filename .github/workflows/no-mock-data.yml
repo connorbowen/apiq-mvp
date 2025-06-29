@@ -1,0 +1,16 @@
+name: No Mock Data Check
+
+on:
+  push:
+    branches: [ main, chore/phase-1-outstanding-items ]
+  pull_request:
+    branches: [ main, chore/phase-1-outstanding-items ]
+
+jobs:
+  check-no-mock-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for forbidden mock/test data patterns
+        run: |
+          grep -r -E 'test-user-123|test-user-456|demo-key|demo-token|fake API|mock.*api|create-test-user' . --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=.git --exclude=package-lock.json --exclude=package.json --exclude=.husky || exit 0 

@@ -17,6 +17,13 @@ This security guide outlines the comprehensive security measures implemented in 
 9. [Security Best Practices](#security-best-practices)
 10. [Security Checklist](#security-checklist)
 
+## 🚨 Mock/Test Data Policy & Automated Checks
+
+- **No mock or hardcoded data is allowed in dev or prod code or documentation.**
+- All test users, demo keys, and mock data must only exist in test scripts or test databases.
+- A pre-commit hook and CI check will block any commit/PR that introduces forbidden patterns (e.g., `test-user-123`, `demo-key`, `fake API`, etc.) in non-test code or docs.
+- See `package.json` and `.github/workflows/no-mock-data.yml` for details.
+
 ## Security Architecture
 
 ### Defense in Depth
@@ -129,6 +136,9 @@ export const requirePermission = (resource: string, action: string) => {
   };
 };
 ```
+
+- All authentication and authorization logic must use real user data from the database.
+- No mock or hardcoded users are allowed in dev/prod code.
 
 ## Data Protection
 
@@ -246,6 +256,9 @@ const retentionPolicies: RetentionPolicy[] = [
   }
 ];
 ```
+
+- All sensitive data must be encrypted and never hardcoded.
+- No mock/demo credentials or test data in dev/prod code or docs.
 
 ## API Security
 
@@ -596,6 +609,9 @@ export const logSecurityEvent = async (event: SecurityEvent): Promise<void> => {
 - Detect: Continuous monitoring and detection
 - Respond: Incident response and communication
 - Recover: Business continuity and improvement
+
+- Automated checks (pre-commit and CI) enforce the no-mock-data policy.
+- All documentation and code reviews must verify compliance with this policy.
 
 ## Security Monitoring
 

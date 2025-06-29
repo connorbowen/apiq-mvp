@@ -1,4 +1,5 @@
 import { Role } from '../../../src/generated/prisma';
+import { prisma } from '../../../lib/database/client';
 
 export interface UserContext {
   userId: string;
@@ -55,24 +56,31 @@ export const canPerformSystemOperations = (userRole: Role): boolean => {
 };
 
 /**
- * Get user context from session/token (placeholder for now)
- * TODO: Integrate with NextAuth.js or your authentication system
+ * Get user context from database
  */
 export const getUserContext = async (userId: string): Promise<UserContext | null> => {
-  // For now, return a mock admin user for testing
-  // In production, this would fetch from your auth system
-  if (userId === 'test-user-123') {
-    return {
-      userId,
-      role: Role.ADMIN,
-      email: 'admin@example.com'
-    };
-  }
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        isActive: true
+      }
+    });
 
-  // Default to regular user
-  return {
-    userId,
-    role: Role.USER,
-    email: 'user@example.com'
-  };
+    if (!user || !user.isActive) {
+      return null;
+    }
+
+    return {
+      userId: user.id,
+      role: user.role,
+      email: user.email
+    };
+  } catch (error) {
+    console.error('Error fetching user context:', error);
+    return null;
+  }
 }; 

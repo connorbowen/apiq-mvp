@@ -19,7 +19,6 @@
 - [x] Endpoint listing with filtering capabilities
 - [x] Error handling and logging system
 - [x] Health check endpoints
-- [x] Test user creation script
 - [x] Automated startup script
 
 ### 🔄 In Progress
@@ -75,9 +74,6 @@ npx prisma migrate deploy
 # Generate Prisma client
 npx prisma generate
 
-# Create test user
-node scripts/create-test-user.js
-
 # Test database connection
 npx tsx scripts/test-db.ts
 ```
@@ -85,6 +81,20 @@ npx tsx scripts/test-db.ts
 ### 5. Start Development Server
 ```bash
 npm run dev
+```
+
+### 6. Run Tests
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm test -- --coverage
+
+# Run specific test categories
+npm test -- --testPathPattern="unit"
+npm test -- --testPathPattern="integration"
+npm test -- --testPathPattern="e2e"
 ```
 
 ## 🔄 Development Workflow
@@ -221,9 +231,6 @@ npx prisma studio
 
 # Test database
 npx tsx scripts/test-db.ts
-
-# Create test user
-node scripts/create-test-user.js
 ```
 
 ### Application Development
@@ -273,6 +280,13 @@ The following features are confirmed working:
 - **Rate Limiting**: No rate limiting implemented yet
 - **RBAC**: Role-based access control not yet implemented
 
+## 🚨 Mock/Test Data Policy & Automated Checks
+
+- **No mock or hardcoded data is allowed in dev or prod code.**
+- All test users, demo keys, and mock data must only exist in test scripts or test databases.
+- A pre-commit hook and CI check will block any commit/PR that introduces forbidden patterns (e.g., `test-user-123`, `demo-key`, `fake API`, etc.) in non-test code or docs.
+- See `package.json` and `.github/workflows/no-mock-data.yml` for details.
+
 ## 🚨 Troubleshooting
 
 If you encounter issues:
@@ -300,24 +314,9 @@ Common issues and solutions are documented in the troubleshooting guide.
 
 ## Running Authentication & Integration Tests
 
-### 1. Authentication Demo Script
-
-You can test the authentication and RBAC system using the provided script:
-
-```bash
-# Start the dev server in one terminal
-npm run dev
-
-# In another terminal, run the demo script
-node scripts/test-auth.js
-```
-
-- This script logs in as different users, tests API endpoints, and demonstrates role-based access control.
-- Requires Node.js 18+ (for built-in fetch).
-
-### 2. Integration Tests
-
-To run all integration and auth tests:
+- All test users and test data are created and cleaned up by the test scripts themselves.
+- No test users or demo data are present in the main database or codebase.
+- To run all integration and auth tests:
 
 ```bash
 npm test
@@ -329,15 +328,36 @@ To run only the authentication integration tests:
 npm test -- --testPathPattern=auth.test.ts
 ```
 
-Test users:
-- `admin@example.com` / `admin123`
-- `user@example.com` / `user123`
-- `super@example.com` / `super123`
-
 See `docs/TESTING.md` for more details.
+
+## 🧪 Testing
+
+We follow a **strict no-mock-data policy** for database and authentication operations. All tests use real database connections and real authentication flows.
+
+### Test Coverage
+- **Total test suites**: 15
+- **Total tests**: 203
+- **Pass rate**: 100%
+- **Coverage**: 60.12% lines (core business logic >80%)
+
+### High Coverage Areas (>80%)
+- **Services**: OpenAI service (89.55% lines, 100% functions)
+- **Utilities**: Encryption (91.48% lines), Logger (87.17% lines)
+- **API Parser**: 100% lines and functions
+- **RBAC**: 100% lines and functions
+- **Database**: 98.55% lines and functions
+- **Middleware**: Error handling (80.72% lines), Rate limiting (82.45% lines)
+
+### Test Philosophy
+- **Real Database**: All tests use real PostgreSQL connections
+- **Real Authentication**: Real users with bcrypt-hashed passwords
+- **Real JWTs**: Actual login flows generate real tokens
+- **No Mocks**: Database and authentication operations are never mocked
+- **External Services**: Only external APIs (OpenAI, etc.) are mocked when necessary
+- **Structured Logging**: Safe, non-circular logging patterns prevent test failures
 
 ---
 
 **Last Updated**: December 2024
 **Current Step**: Database Schema Setup ✅
-**Next Step**: NextAuth Configuration 🔄 
+**Next Step**: NextAuth Configuration 🔄

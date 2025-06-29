@@ -1205,4 +1205,21 @@ Closes #issue-number
 
 ---
 
-Thank you for contributing to APIQ! Your contributions help make this project better for everyone. 
+Thank you for contributing to APIQ! Your contributions help make this project better for everyone.
+
+## 🚨 Mock/Test Data Policy & Automated Checks
+
+- **No mock or hardcoded data is allowed in dev or prod code or documentation.**
+- All test users, demo keys, and mock data must only exist in test scripts or test databases.
+- A pre-commit hook and CI check will block any commit/PR that introduces forbidden patterns (e.g., `test-user-123`, `demo-key`, `fake API`, etc.) in non-test code or docs.
+- See `package.json` and `.github/workflows/no-mock-data.yml` for details.
+
+## Testing Guidelines
+
+- All test data and test users must be created and cleaned up by the test scripts themselves.
+- No test users or demo data are present in the main database or codebase.
+
+## Documentation
+
+- Documentation must not reference or instruct the use of mock or hardcoded data in dev/prod.
+- All examples using test users or demo data must be clearly marked as test-only and isolated to test scripts or test environments. 

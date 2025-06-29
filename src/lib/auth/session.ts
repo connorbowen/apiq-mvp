@@ -1,35 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
-import { Role } from '../../generated/prisma';
+import bcrypt from 'bcryptjs';
+import { PrismaClient, Role } from '../../generated/prisma';
 import { ApplicationError } from '../../middleware/errorHandler';
 
-// Mock user database for simulation
-const MOCK_USERS = {
-  'admin@example.com': {
-    id: 'admin-123',
-    email: 'admin@example.com',
-    name: 'Admin User',
-    password: 'admin123', // In real app, this would be hashed
-    role: Role.ADMIN,
-    isActive: true
-  },
-  'user@example.com': {
-    id: 'user-456',
-    email: 'user@example.com',
-    name: 'Regular User',
-    password: 'user123',
-    role: Role.USER,
-    isActive: true
-  },
-  'super@example.com': {
-    id: 'super-789',
-    email: 'super@example.com',
-    name: 'Super Admin',
-    password: 'super123',
-    role: Role.SUPER_ADMIN,
-    isActive: true
-  }
-};
+const prisma = new PrismaClient();
 
 // JWT secret (in production, use environment variable)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
@@ -66,13 +41,12 @@ export interface JWTPayload {
  * Generate JWT token
  */
 export const generateToken = (user: AuthenticatedUser, type: 'access' | 'refresh' = 'access'): string => {
-  const payload: JWTPayload = {
+  const payload: Omit<JWTPayload, 'exp'> = {
     userId: user.id,
     email: user.email,
     role: user.role,
     type,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + (type === 'access' ? 15 * 60 : 7 * 24 * 60 * 60) // 15min or 7 days
+    iat: Math.floor(Date.now() / 1000)
   };
 
   return jwt.sign(payload, JWT_SECRET, {
@@ -108,15 +82,26 @@ export const extractToken = (req: NextApiRequest): string | null => {
  * Authenticate user with email and password
  */
 export const authenticateUser = async (email: string, password: string): Promise<AuthenticatedUser> => {
-  const user = MOCK_USERS[email as keyof typeof MOCK_USERS];
+  const user = await prisma.user.findUnique({
+    where: { email }
+  });
   
   if (!user || !user.isActive) {
     throw new ApplicationError('Invalid credentials', 401, 'INVALID_CREDENTIALS');
   }
   
-  if (user.password !== password) {
+  // Always use bcrypt for password validation - no plain text fallback
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  
+  if (!isPasswordValid) {
     throw new ApplicationError('Invalid credentials', 401, 'INVALID_CREDENTIALS');
   }
+  
+  // Update last login
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLogin: new Date() }
+  });
   
   return {
     id: user.id,
@@ -131,7 +116,9 @@ export const authenticateUser = async (email: string, password: string): Promise
  * Get user by ID
  */
 export const getUserById = async (userId: string): Promise<AuthenticatedUser | null> => {
-  const user = Object.values(MOCK_USERS).find(u => u.id === userId);
+  const user = await prisma.user.findUnique({
+    where: { id: userId }
+  });
   
   if (!user || !user.isActive) {
     return null;
@@ -299,6 +286,9 @@ export const handleRefreshToken = async (req: NextApiRequest, res: NextApiRespon
     if (!user) {
       throw new ApplicationError('User not found', 401, 'USER_NOT_FOUND');
     }
+    
+    // Add a small delay to ensure the new token has a different timestamp
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     const newAccessToken = generateToken(user, 'access');
     

@@ -201,7 +201,7 @@ export default function Home() {
             <div className="bg-gray-50 rounded-md p-4">
               <p className="text-sm text-gray-600 mb-2">Example workflow description:</p>
               <p className="text-sm font-mono bg-white p-2 rounded border">
-                "Get weather data for New York, then create a calendar event for tomorrow if it's going to rain"
+                &ldquo;Get weather data for New York, then create a calendar event for tomorrow if it&apos;s going to rain&rdquo;
               </p>
             </div>
             <div className="mt-4 text-sm text-gray-500">

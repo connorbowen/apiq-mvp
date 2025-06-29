@@ -1,4 +1,5 @@
-import { parseOpenApiSpec } from '../../../../src/lib/api/parser';
+import { parseOpenApiSpec, validateOpenApiUrl } from '../../../../src/lib/api/parser';
+import * as logger from '../../../../src/utils/logger';
 
 // Mock SwaggerParser
 jest.mock('@apidevtools/swagger-parser', () => ({
@@ -11,6 +12,12 @@ jest.mock('@apidevtools/swagger-parser', () => ({
 import SwaggerParser from '@apidevtools/swagger-parser';
 
 const mockSwaggerParser = SwaggerParser as jest.Mocked<typeof SwaggerParser>;
+
+jest.mock('crypto', () => ({
+  createHash: () => ({ update: () => ({ digest: () => 'hash' }) })
+}));
+
+const parseMock = SwaggerParser.parse as jest.Mock;
 
 describe('OpenAPI Parser', () => {
   beforeEach(() => {
@@ -51,23 +58,29 @@ describe('OpenAPI Parser', () => {
     });
 
     it('should handle network errors gracefully', async () => {
-      const networkError = new Error('Network error');
-      networkError.name = 'ResolverError';
+      const networkError = new Error('Network error') as any;
+      networkError.code = 'ENOTFOUND';
       mockSwaggerParser.parse.mockRejectedValue(networkError);
 
       await expect(parseOpenApiSpec('https://invalid-url.com/swagger.json'))
         .rejects
-        .toThrow('Failed to parse OpenAPI specification: Network error');
+        .toMatchObject({
+          type: 'UNREACHABLE',
+          message: expect.stringContaining('Cannot reach the OpenAPI specification URL')
+        });
     });
 
     it('should handle invalid JSON responses', async () => {
       const jsonError = new Error('Invalid JSON');
-      jsonError.name = 'SyntaxError';
+      jsonError.message = 'SwaggerParser: Invalid JSON';
       mockSwaggerParser.parse.mockRejectedValue(jsonError);
 
       await expect(parseOpenApiSpec('https://api.example.com/swagger.json'))
         .rejects
-        .toThrow('Failed to parse OpenAPI specification: Invalid JSON');
+        .toMatchObject({
+          type: 'INVALID_SPEC',
+          message: expect.stringContaining('Invalid OpenAPI specification')
+        });
     });
 
     it('should handle invalid OpenAPI spec structure', async () => {
@@ -82,17 +95,23 @@ describe('OpenAPI Parser', () => {
 
       await expect(parseOpenApiSpec('https://api.example.com/swagger.json'))
         .rejects
-        .toThrow('No endpoints found in OpenAPI specification');
+        .toMatchObject({
+          type: 'UNKNOWN',
+          message: 'Failed to parse OpenAPI specification: No endpoints found in OpenAPI specification'
+        });
     });
 
     it('should handle HTTP error responses', async () => {
-      const httpError = new Error('HTTP ERROR 404');
-      httpError.name = 'ResolverError';
+      const httpError = new Error('HTTP ERROR 404') as any;
+      httpError.code = 'ENOTFOUND';
       mockSwaggerParser.parse.mockRejectedValue(httpError);
 
       await expect(parseOpenApiSpec('https://api.example.com/swagger.json'))
         .rejects
-        .toThrow('Failed to parse OpenAPI specification: HTTP ERROR 404');
+        .toMatchObject({
+          type: 'UNREACHABLE',
+          message: expect.stringContaining('Cannot reach the OpenAPI specification URL')
+        });
     });
 
     it('should generate consistent spec hashes', async () => {
@@ -145,6 +164,55 @@ describe('OpenAPI Parser', () => {
 
       expect(Object.keys(result.spec.paths)).toHaveLength(100);
       expect(result.title).toBe('Large API');
+    });
+
+    it('parses a valid OpenAPI spec', async () => {
+      parseMock.mockResolvedValue({
+        openapi: '3.0.0',
+        info: { title: 'API', description: 'desc' },
+        paths: { '/foo': {} }
+      });
+      const result = await parseOpenApiSpec('http://test');
+      expect(result.version).toBe('3.0.0');
+      expect(result.title).toBe('API');
+      expect(result.description).toBe('desc');
+      expect(result.specHash).toBe('hash');
+    });
+
+    it('throws INVALID_SPEC if no paths', async () => {
+      parseMock.mockResolvedValue({ openapi: '3.0.0', info: {} });
+      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNKNOWN' });
+    });
+
+    it('throws UNREACHABLE for ENOTFOUND', async () => {
+      parseMock.mockRejectedValue({ code: 'ENOTFOUND', message: 'fail' });
+      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNREACHABLE' });
+    });
+
+    it('throws NETWORK_TIMEOUT for timeout', async () => {
+      parseMock.mockRejectedValue({ code: 'ETIMEDOUT', message: 'timeout' });
+      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'NETWORK_TIMEOUT' });
+    });
+
+    it('throws INVALID_SPEC for SwaggerParser error', async () => {
+      parseMock.mockRejectedValue({ message: 'SwaggerParser: bad spec' });
+      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'INVALID_SPEC' });
+    });
+
+    it('throws UNKNOWN for other errors', async () => {
+      parseMock.mockRejectedValue({ message: 'other' });
+      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNKNOWN' });
+    });
+  });
+
+  describe('validateOpenApiUrl', () => {
+    it('returns true for valid spec', async () => {
+      parseMock.mockResolvedValue({ openapi: '3.0.0', paths: { '/foo': {} }, info: {} });
+      await expect(validateOpenApiUrl('http://test')).resolves.toBe(true);
+    });
+    it('returns false for invalid spec', async () => {
+      parseMock.mockRejectedValue({ message: 'fail' });
+      await expect(validateOpenApiUrl('http://test')).resolves.toBe(false);
     });
   });
 }); 

@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { rateLimiter } from '../../../src/middleware/errorHandler'
+import { createRateLimiter } from '../../../src/middleware/rateLimiter'
 
 // Mock Next.js request/response
 const createMockRequest = (ip: string = '127.0.0.1'): NextApiRequest => {
@@ -24,6 +25,19 @@ const createMockResponse = (): NextApiResponse => {
   
   return res as NextApiResponse
 }
+
+const mockReq = (ip = '1.2.3.4') => ({
+  headers: { 'x-forwarded-for': ip },
+  socket: { remoteAddress: ip }
+});
+const mockRes = () => {
+  const res: any = {};
+  res.setHeader = jest.fn();
+  res.status = jest.fn().mockReturnThis();
+  res.json = jest.fn();
+  return res;
+};
+const next = jest.fn();
 
 describe('Rate Limiter Middleware', () => {
   beforeEach(() => {
@@ -217,5 +231,60 @@ describe('Rate Limiter Middleware', () => {
     //     limiter(request, response)
     //   }).not.toThrow()
     // })
+  })
+
+  describe('createRateLimiter', () => {
+    it('allows requests under the limit', async () => {
+      const limiter = createRateLimiter({ windowMs: 1000, maxRequests: 2 });
+      const req = mockReq();
+      const res = mockRes();
+      await limiter(req as any, res, next);
+      expect(next).toHaveBeenCalled();
+      await limiter(req as any, res, next);
+      expect(next).toHaveBeenCalledTimes(2);
+    });
+
+    it('blocks requests over the limit', async () => {
+      const limiter = createRateLimiter({ windowMs: 1000, maxRequests: 1 });
+      const req = mockReq();
+      const res = mockRes();
+      await limiter(req as any, res, next);
+      expect(next).toHaveBeenCalled();
+      await limiter(req as any, res, next);
+      expect(res.status).toHaveBeenCalledWith(429);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ code: 'RATE_LIMIT_EXCEEDED' }));
+    });
+
+    it('resets after window', async () => {
+      const limiter = createRateLimiter({ windowMs: 10, maxRequests: 1 });
+      const req = mockReq();
+      const res = mockRes();
+      await limiter(req as any, res, next);
+      expect(next).toHaveBeenCalled();
+      jest.advanceTimersByTime(11);
+      await limiter(req as any, res, next);
+      expect(next).toHaveBeenCalledTimes(2);
+    });
+
+    it('uses custom key generator', async () => {
+      const limiter = createRateLimiter({ windowMs: 1000, maxRequests: 1, keyGenerator: req => 'custom' });
+      const req = mockReq();
+      const res = mockRes();
+      await limiter(req as any, res, next);
+      expect(next).toHaveBeenCalled();
+      await limiter(req as any, res, next);
+      expect(res.status).toHaveBeenCalledWith(429);
+    });
+
+    it('handles store errors gracefully', async () => {
+      // Patch the store to throw
+      const limiter = createRateLimiter({ windowMs: 1000, maxRequests: 1 });
+      const req = mockReq();
+      const res = mockRes();
+      // @ts-ignore
+      limiter.__store = { get: jest.fn().mockRejectedValue(new Error('fail')), set: jest.fn(), increment: jest.fn() };
+      await limiter(req as any, res, next);
+      expect(next).toHaveBeenCalled();
+    });
   })
 }) 

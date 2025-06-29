@@ -60,7 +60,7 @@ global.console = {
 
 // Mock environment variables
 process.env.NODE_ENV = 'test'
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/apiq_test'
+process.env.DATABASE_URL = 'postgresql://connorbowen@localhost:5432/apiq'
 process.env.OPENAI_API_KEY = 'test-openai-key'
 process.env.NEXTAUTH_SECRET = 'test-secret'
 process.env.NEXTAUTH_URL = 'http://localhost:3000'
