@@ -19,33 +19,15 @@ export interface ParseError {
 }
 
 /**
- * Parse and validate an OpenAPI specification from a URL
- * @param url The URL to fetch the OpenAPI spec from
+ * Parse and validate an OpenAPI specification from pre-fetched data
+ * @param specData The OpenAPI spec data (already fetched)
+ * @param url The URL for logging purposes
  * @returns ParsedOpenApiSpec with sanitized content and hash
  * @throws ParseError with specific error types
  */
-export const parseOpenApiSpec = async (url: string): Promise<ParsedOpenApiSpec> => {
+export const parseOpenApiSpecData = async (specData: any, url?: string): Promise<ParsedOpenApiSpec> => {
   try {
-    logInfo('Parsing OpenAPI spec', { url });
-
-    // First fetch the spec with axios
-    const response = await axios.get(url, {
-      timeout: 10000,
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'APIQ/1.0'
-      }
-    });
-
-    if (response.status !== 200) {
-      throw {
-        type: 'UNREACHABLE' as const,
-        message: `HTTP ${response.status}: Failed to fetch OpenAPI specification`,
-        details: { status: response.status }
-      };
-    }
-
-    const specData = response.data;
+    logInfo('Parsing OpenAPI spec data', { url });
 
     // Validate it's an object
     if (typeof specData !== 'object' || specData === null) {
@@ -78,7 +60,7 @@ export const parseOpenApiSpec = async (url: string): Promise<ParsedOpenApiSpec> 
     const title = api.info?.title;
     const description = api.info?.description;
 
-    logInfo('Successfully parsed OpenAPI spec', {
+    logInfo('Successfully parsed OpenAPI spec data', {
       url,
       version,
       title,
@@ -96,7 +78,59 @@ export const parseOpenApiSpec = async (url: string): Promise<ParsedOpenApiSpec> 
     };
 
   } catch (error: any) {
-    logError('Failed to parse OpenAPI spec', error, { url });
+    logError('Failed to parse OpenAPI spec data', error, { url });
+
+    if (error.message?.includes('SwaggerParser') || error.message?.includes('OpenAPI')) {
+      throw {
+        type: 'INVALID_SPEC' as const,
+        message: `Invalid OpenAPI specification: ${error.message}`,
+        details: { message: error.message }
+      };
+    }
+
+    // Default error
+    throw {
+      type: 'UNKNOWN' as const,
+      message: `Failed to parse OpenAPI specification: ${error.message}`,
+      details: { message: error.message }
+    };
+  }
+};
+
+/**
+ * Parse and validate an OpenAPI specification from a URL
+ * @param url The URL to fetch the OpenAPI spec from
+ * @returns ParsedOpenApiSpec with sanitized content and hash
+ * @throws ParseError with specific error types
+ */
+export const parseOpenApiSpec = async (url: string): Promise<ParsedOpenApiSpec> => {
+  try {
+    logInfo('Fetching and parsing OpenAPI spec', { url });
+
+    // First fetch the spec with axios
+    const response = await axios.get(url, {
+      timeout: 10000,
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'APIQ/1.0'
+      }
+    });
+
+    if (response.status !== 200) {
+      throw {
+        type: 'UNREACHABLE' as const,
+        message: `HTTP ${response.status}: Failed to fetch OpenAPI specification`,
+        details: { status: response.status }
+      };
+    }
+
+    const specData = response.data;
+
+    // Use the data parsing function
+    return await parseOpenApiSpecData(specData, url);
+
+  } catch (error: any) {
+    logError('Failed to fetch OpenAPI spec', error, { url });
 
     // Handle specific error types
     if (axios.isAxiosError(error)) {
@@ -126,18 +160,15 @@ export const parseOpenApiSpec = async (url: string): Promise<ParsedOpenApiSpec> 
       }
     }
 
-    if (error.message?.includes('SwaggerParser') || error.message?.includes('OpenAPI')) {
-      throw {
-        type: 'INVALID_SPEC' as const,
-        message: `Invalid OpenAPI specification: ${error.message}`,
-        details: { message: error.message }
-      };
+    // Re-throw parsing errors
+    if (error.type) {
+      throw error;
     }
 
     // Default error
     throw {
       type: 'UNKNOWN' as const,
-      message: `Failed to parse OpenAPI specification: ${error.message}`,
+      message: `Failed to fetch OpenAPI specification: ${error.message}`,
       details: { message: error.message }
     };
   }

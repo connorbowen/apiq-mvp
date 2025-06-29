@@ -28,6 +28,7 @@
 | Rate limit simulation test |  | JSONPlaceholder burst test |
 | Health check for all test APIs |  | Base URL reachability |
 | Negative test for mock fixture presence |  | Enforced by `basic.test.ts` (fails CI if any mock files exist) |
+| OpenAPI spec caching & admin endpoint docs |  | See `architecture.md` for cache flow, admin endpoint, and env vars |
 
 ---
 

@@ -1,5 +1,20 @@
 # APIQ Architecture Documentation
 
+## Table of Contents
+
+1. System Overview
+2. High-Level Architecture
+3. Core Components
+4. Data Flow Architecture
+5. Security Architecture
+6. Scalability Considerations
+7. Performance Optimization
+8. OpenAPI Spec Caching
+9. Deployment Architecture
+10. Integration Patterns
+11. Error Handling & Resilience
+12. Future Architecture Considerations
+
 ## System Overview
 
 APIQ is a semi-agentic, low-code web application designed to orchestrate complex workflows across multiple APIs using natural language processing and AI-powered automation. The system follows a modern, scalable architecture that prioritizes security, maintainability, and user experience.
@@ -276,6 +291,73 @@ User Natural Language Query
 - Error tracking and alerting
 - Performance monitoring
 - Security event logging
+
+## OpenAPI Spec Caching
+
+### Data Flow Diagram
+
+```
+User/API Connection
+      |
+      v
+[Spec Fetch (HTTP)]
+      |
+      v
+[OpenAPI Cache (in-memory, TTL, max size, compression)]
+      |
+      v
+[Parser & Validation]
+      |
+      v
+[Database Storage / Endpoint Extraction]
+```
+
+### Caching Strategy
+- **TTL (Time to Live):** Configurable (default: 1 hour). Specs expire and are re-fetched after TTL.
+- **Max Size:** Configurable maximum number of cached specs and total cache size (bytes). Prevents DoS via large specs.
+- **Compression:** Large specs are compressed before caching to save memory.
+- **Audit Logging:** All fetches, cache hits/misses, and admin actions are logged for traceability.
+- **Slow Spec Timeout:** Configurable timeout for slow spec fetches (default: 30s).
+
+### Admin Endpoint
+- **Path:** `/api/admin/openapi-cache`
+- **Methods:**
+  - `GET`: Returns cache stats and entries (URL, fetchedAt, ttlRemaining, size, compressed).
+  - `DELETE`: Purges the cache (optionally by URL).
+- **Protection:** Requires `x-admin-token` header matching `ADMIN_TOKEN` env var (RBAC recommended for production).
+- **Response Example:**
+```json
+{
+  "success": true,
+  "stats": {
+    "count": 3,
+    "maxSize": 100,
+    "ttl": 3600,
+    "maxSizeBytes": 52428800
+  },
+  "entries": [
+    {
+      "url": "https://petstore.swagger.io/v2/swagger.json",
+      "fetchedAt": "2024-06-28T12:00:00Z",
+      "ttlRemaining": 3590,
+      "size": 20480,
+      "compressed": false
+    }
+  ]
+}
+```
+
+### Environment Variables
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OPENAPI_CACHE_TTL` | Cache TTL in seconds | 3600 |
+| `OPENAPI_CACHE_MAX_SIZE` | Max number of cached specs | 100 |
+| `OPENAPI_CACHE_MAX_SIZE_BYTES` | Max total cache size in bytes | 52428800 (50MB) |
+| `OPENAPI_CACHE_COMPRESSION` | Enable compression (true/false) | true |
+| `OPENAPI_SLOW_SPEC_TIMEOUT` | Timeout for spec fetch in ms | 30000 |
+| `ADMIN_TOKEN` | Token for admin endpoint protection | (set by user) |
+
+See `.env.example` for usage.
 
 ## Deployment Architecture
 
