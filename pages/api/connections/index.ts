@@ -16,8 +16,31 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       // Get all API connections for the authenticated user
       const connections = await prisma.apiConnection.findMany({
         where: { userId: user.id },
+        include: {
+          endpoints: {
+            where: { isActive: true }
+          }
+        },
         orderBy: { createdAt: 'desc' }
       });
+
+      // Add computed fields to each connection
+      const connectionsWithComputedFields = connections.map(connection => ({
+        id: connection.id,
+        name: connection.name,
+        description: connection.description,
+        baseUrl: connection.baseUrl,
+        authType: connection.authType,
+        documentationUrl: connection.documentationUrl,
+        status: connection.status,
+        ingestionStatus: connection.ingestionStatus,
+        // Computed fields
+        endpointCount: connection.endpoints.length,
+        lastUsed: connection.lastTested || connection.updatedAt,
+        // Metadata fields
+        createdAt: connection.createdAt,
+        updatedAt: connection.updatedAt
+      }));
 
       logInfo('Retrieved API connections', { 
         userId: user.id, 
@@ -26,7 +49,13 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
 
       return res.status(200).json({
         success: true,
-        data: connections
+        data: {
+          connections: connectionsWithComputedFields,
+          // Summary metadata
+          total: connections.length,
+          active: connections.filter(c => c.status === 'ACTIVE').length,
+          failed: connections.filter(c => c.ingestionStatus === 'FAILED').length
+        }
       });
 
     } else if (req.method === 'POST') {
@@ -37,7 +66,8 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       if (!connectionData.name || !connectionData.baseUrl || !connectionData.authType) {
         return res.status(400).json({
           success: false,
-          error: 'Missing required fields: name, baseUrl, authType'
+          error: 'Missing required fields: name, baseUrl, authType',
+          code: 'VALIDATION_ERROR'
         });
       }
 
@@ -46,7 +76,8 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       if (!validAuthTypes.includes(connectionData.authType)) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid auth type. Must be one of: NONE, API_KEY, BEARER_TOKEN, BASIC_AUTH, OAUTH2, CUSTOM'
+          error: 'Invalid auth type. Must be one of: NONE, API_KEY, BEARER_TOKEN, BASIC_AUTH, OAUTH2, CUSTOM',
+          code: 'VALIDATION_ERROR'
         });
       }
 
@@ -61,7 +92,8 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       if (existingConnection) {
         return res.status(409).json({
           success: false,
-          error: 'API connection with this name already exists'
+          error: 'API connection with this name already exists',
+          code: 'RESOURCE_CONFLICT'
         });
       }
 
@@ -87,10 +119,16 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       });
 
       // If documentation URL is provided, parse OpenAPI spec and extract endpoints
+      let endpointCount: number = 0;
       if (connectionData.documentationUrl) {
         try {
           // Parse the OpenAPI specification
           const parsedSpec = await parseOpenApiSpec(connectionData.documentationUrl);
+          
+          // Validate that parsedSpec has the required properties
+          if (!parsedSpec || !parsedSpec.rawSpec || !parsedSpec.specHash) {
+            throw new Error('Invalid parsed specification - missing required properties');
+          }
           
           // Update connection with parsed spec data
           await prisma.apiConnection.update({
@@ -103,7 +141,8 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           });
 
           // Extract and store endpoints
-          await extractAndStoreEndpoints(newConnection.id, parsedSpec);
+          const endpoints = await extractAndStoreEndpoints(newConnection.id, parsedSpec);
+          endpointCount = Array.isArray(endpoints) ? endpoints.length : 0;
 
           logInfo('Successfully processed OpenAPI spec and extracted endpoints', {
             connectionId: newConnection.id,
@@ -130,7 +169,9 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
             success: true,
             data: {
               ...newConnection,
-              ingestionStatus: 'FAILED'
+              ingestionStatus: 'FAILED',
+              endpointCount: 0,
+              lastUsed: newConnection.updatedAt
             },
             message: 'API connection created successfully, but OpenAPI spec processing failed',
             warning: error.message
@@ -145,14 +186,19 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
 
       return res.status(201).json({
         success: true,
-        data: finalConnection,
+        data: {
+          ...finalConnection,
+          endpointCount,
+          lastUsed: finalConnection?.updatedAt
+        },
         message: 'API connection created successfully'
       });
 
     } else {
       return res.status(405).json({
         success: false,
-        error: 'Method not allowed'
+        error: 'Method not allowed',
+        code: 'METHOD_NOT_ALLOWED'
       });
     }
 

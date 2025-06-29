@@ -111,27 +111,30 @@ Get all API connections for the current user.
 {
   "success": true,
   "data": {
-    "apis": [
+    "connections": [
       {
         "id": "api_id",
         "name": "Customer CRM",
+        "description": "Customer relationship management API",
         "baseUrl": "https://api.crm.com",
         "authType": "api_key",
-        "status": "active",
+        "documentationUrl": "https://api.crm.com/docs",
+        "status": "ACTIVE",
+        "ingestionStatus": "SUCCEEDED",
         "endpointCount": 15,
         "lastUsed": "2024-01-01T00:00:00.000Z",
-        "createdAt": "2024-01-01T00:00:00.000Z"
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
       }
     ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 50,
-      "totalPages": 3
-    }
+    "total": 50,
+    "active": 45,
+    "failed": 5
   }
 }
 ```
+
+> **Note:** The `endpointCount` field is always present in API connection responses. It is `0` if endpoint extraction fails or if the API has no endpoints.
 
 #### `GET /api/apis/{id}`
 
@@ -144,12 +147,15 @@ Get a specific API connection by ID.
   "data": {
     "id": "api_id",
     "name": "Customer CRM",
+    "description": "Customer relationship management API",
     "baseUrl": "https://api.crm.com",
     "authType": "api_key",
     "authConfig": {
       "apiKey": "***" // masked for security
     },
     "documentationUrl": "https://api.crm.com/docs",
+    "status": "ACTIVE",
+    "ingestionStatus": "SUCCEEDED",
     "endpoints": [
       {
         "id": "endpoint_id",
@@ -159,7 +165,8 @@ Get a specific API connection by ID.
         "description": "Retrieve a list of customers"
       }
     ],
-    "status": "active",
+    "endpointCount": 15,
+    "lastUsed": "2024-01-01T00:00:00.000Z",
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
   }
@@ -174,14 +181,14 @@ Create a new API connection.
 ```json
 {
   "name": "Customer CRM",
+  "description": "Customer relationship management API",
   "baseUrl": "https://api.crm.com",
   "authType": "api_key",
   "authConfig": {
     "apiKey": "your-api-key",
     "headerName": "X-API-Key"
   },
-  "documentationUrl": "https://api.crm.com/docs",
-  "description": "Customer relationship management API"
+  "documentationUrl": "https://api.crm.com/docs"
 }
 ```
 
@@ -192,11 +199,15 @@ Create a new API connection.
   "data": {
     "id": "new_api_id",
     "name": "Customer CRM",
+    "description": "Customer relationship management API",
     "baseUrl": "https://api.crm.com",
     "authType": "api_key",
-    "status": "active",
+    "status": "ACTIVE",
+    "ingestionStatus": "SUCCEEDED",
     "endpointCount": 15,
-    "createdAt": "2024-01-01T00:00:00.000Z"
+    "lastUsed": "2024-01-01T00:00:00.000Z",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   "message": "API connection created successfully"
 }
@@ -210,6 +221,7 @@ Update an existing API connection.
 ```json
 {
   "name": "Updated CRM",
+  "description": "Updated description",
   "authConfig": {
     "apiKey": "new-api-key"
   }
@@ -223,6 +235,10 @@ Update an existing API connection.
   "data": {
     "id": "api_id",
     "name": "Updated CRM",
+    "description": "Updated description",
+    "baseUrl": "https://api.crm.com",
+    "authType": "api_key",
+    "status": "ACTIVE",
     "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   "message": "API connection updated successfully"
@@ -253,7 +269,8 @@ Test an API connection.
     "status": "success",
     "responseTime": 245,
     "endpoints": 15,
-    "message": "Connection test successful"
+    "newEndpoints": 3,
+    "message": "Connection test successful - OpenAPI spec parsed and endpoints extracted"
   }
 }
 ```
@@ -270,7 +287,9 @@ Refresh the OpenAPI specification for an API connection.
     "endpointsUpdated": 15,
     "newEndpoints": 3,
     "removedEndpoints": 1,
-    "message": "API specification refreshed successfully"
+    "specChanged": true,
+    "responseTime": 1200,
+    "message": "API specification refreshed successfully - endpoints updated"
   }
 }
 ```

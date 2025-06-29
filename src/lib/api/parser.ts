@@ -1,4 +1,5 @@
 import SwaggerParser from '@apidevtools/swagger-parser';
+import axios from 'axios';
 import crypto from 'crypto';
 import { logError, logInfo } from '../../utils/logger';
 
@@ -27,8 +28,17 @@ export const parseOpenApiSpec = async (url: string): Promise<ParsedOpenApiSpec> 
   try {
     logInfo('Parsing OpenAPI spec', { url });
 
-    // Fetch and parse the spec
-    const api = await SwaggerParser.parse(url) as any;
+    // Fetch the spec using axios instead of SwaggerParser's built-in client
+    const response = await axios.get(url, {
+      timeout: 10000,
+      headers: {
+        'Accept': 'application/json, application/yaml, text/yaml, text/plain',
+        'User-Agent': 'APIQ-OpenAPI-Parser/1.0'
+      }
+    });
+
+    // Parse the spec using SwaggerParser
+    const api = await SwaggerParser.parse(response.data) as any;
     
     // Validate the spec has required components
     if (!api.paths || Object.keys(api.paths).length === 0) {
@@ -83,6 +93,14 @@ export const parseOpenApiSpec = async (url: string): Promise<ParsedOpenApiSpec> 
         type: 'NETWORK_TIMEOUT' as const,
         message: 'Request to OpenAPI specification timed out',
         details: { code: error.code, message: error.message }
+      };
+    }
+
+    if (error.response?.status) {
+      throw {
+        type: 'UNREACHABLE' as const,
+        message: `HTTP ${error.response.status}: ${error.response.statusText}`,
+        details: { status: error.response.status, statusText: error.response.statusText }
       };
     }
 
