@@ -46,42 +46,30 @@ export const createTestUser = async (
   role: Role = Role.USER,
   name?: string
 ): Promise<TestUser> => {
-  const testEmail = email || `${generateTestId('user')}@example.com`;
+  const testEmail = email || `test-${generateTestId()}@example.com`;
   const testPassword = password || 'testpass123';
   const testName = name || `Test ${role}`;
 
-  // Check if user already exists
-  let user = await prisma.user.findUnique({
-    where: { email: testEmail }
+  // Hash password with bcrypt
+  const hashedPassword = await bcrypt.hash(testPassword, 10);
+
+  // Use upsert to handle race conditions - create if doesn't exist, update if it does
+  const user = await prisma.user.upsert({
+    where: { email: testEmail },
+    update: {
+      password: hashedPassword,
+      name: testName,
+      role: role,
+      isActive: true
+    },
+    create: {
+      email: testEmail,
+      password: hashedPassword,
+      name: testName,
+      role: role,
+      isActive: true
+    }
   });
-
-  if (!user) {
-    // Hash password with bcrypt
-    const hashedPassword = await bcrypt.hash(testPassword, 10);
-
-    // Create user in database
-    user = await prisma.user.create({
-      data: {
-        email: testEmail,
-        password: hashedPassword,
-        name: testName,
-        role: role,
-        isActive: true
-      }
-    });
-  } else {
-    // Update existing user's password and role if needed
-    const hashedPassword = await bcrypt.hash(testPassword, 10);
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        name: testName,
-        role: role,
-        isActive: true
-      }
-    });
-  }
 
   // Login to get real JWT tokens
   const { req, res } = createMocks({
@@ -242,8 +230,36 @@ export const cleanupExistingTestUsers = async (): Promise<void> => {
         { email: { contains: 'test-' } },
         { email: { contains: '@example.com' } },
         { name: { contains: 'Test ' } },
-        { name: { contains: 'RBAC ' } }
+        { name: { contains: 'RBAC ' } },
+        { name: { contains: 'Authentication' } },
+        { name: { contains: 'Connections' } },
+        { name: { contains: 'Real API' } }
       ]
+    }
+  });
+  
+  // Also clean up any orphaned connections and endpoints
+  await prisma.endpoint.deleteMany({
+    where: {
+      apiConnection: {
+        user: {
+          OR: [
+            { email: { contains: 'test-' } },
+            { email: { contains: '@example.com' } }
+          ]
+        }
+      }
+    }
+  });
+  
+  await prisma.apiConnection.deleteMany({
+    where: {
+      user: {
+        OR: [
+          { email: { contains: 'test-' } },
+          { email: { contains: '@example.com' } }
+        ]
+      }
     }
   });
 };
@@ -255,6 +271,12 @@ export const createTestSuite = (suiteName: string) => {
   const testUsers: TestUser[] = [];
   const testConnections: TestConnection[] = [];
   const testEndpoints: TestEndpoint[] = [];
+  
+  // Generate a unique suite identifier to prevent conflicts
+  const suiteId = generateTestId(suiteName.toLowerCase().replace(/\s+/g, '-'));
+  
+  // Create a unique email prefix for this test suite
+  const emailPrefix = `${suiteId}-${Date.now()}`;
 
   return {
     /**
@@ -264,7 +286,7 @@ export const createTestSuite = (suiteName: string) => {
       // Ensure database connection
       await prisma.$connect();
       
-      // Clean up any existing test data
+      // Clean up any existing test data from this specific suite
       await cleanupExistingTestUsers();
     },
 
@@ -297,7 +319,9 @@ export const createTestSuite = (suiteName: string) => {
       role: Role = Role.USER,
       name?: string
     ): Promise<TestUser> => {
-      const user = await createTestUser(email, password, role, name);
+      // Use unique email prefix for this test suite to prevent conflicts
+      const uniqueEmail = email || `${emailPrefix}-${generateTestId('user')}@example.com`;
+      const user = await createTestUser(uniqueEmail, password, role, name);
       testUsers.push(user);
       return user;
     },

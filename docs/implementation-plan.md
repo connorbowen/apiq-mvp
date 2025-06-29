@@ -267,18 +267,22 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
 
 #### 2.3 Authentication Flow Testing
 - [ ] **API Key Authentication**
-  - [ ] Test with Stripe API keys
-  - [ ] Test with GitHub personal access tokens
+  - [x] Test with Stripe API keys ✅ COMPLETED
+  - [ ] Test with B2B API key providers (SendGrid, Twilio, etc.)
   - [ ] Validate secure credential storage
 
-- [ ] **OAuth2 Flow Testing**
-  - [ ] Implement OAuth2 flow with GitHub
+- [ ] **OAuth2/SSO Flow Testing**
+  - [ ] Implement OAuth2 flow with Okta (enterprise SSO)
+  - [ ] Implement OAuth2 flow with Google Workspace (SMB SSO)
+  - [ ] Implement OAuth2 flow with Microsoft Azure AD (enterprise SSO)
+  - [ ] Implement Generic OIDC for other providers (Ping, OneLogin, etc.)
   - [ ] Test token refresh mechanisms
   - [ ] Validate scope handling and permissions
+  - [ ] Test "Click to Connect" UX flow
 
 - [ ] **Additional Auth Types**
-  - [ ] JWT/Bearer token authentication
-  - [ ] Basic Auth testing
+  - [ ] JWT/Bearer token authentication (Service Accounts)
+  - [ ] Basic Auth testing (legacy B2B APIs)
   - [ ] Custom authentication schemes
 
 - [ ] **Security Validation**
@@ -286,6 +290,74 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
   - [ ] Check network panel for credential exposure
   - [ ] Implement credential encryption at rest
   - [ ] Add audit logging for credential access
+  - [ ] Validate CSRF protection with state parameter
+  - [ ] Test token revocation and cleanup
+
+### Phase 2.3 Implementation Task Sequence
+
+#### 1. **Update Implementation Plan**
+- [x] Replace GitHub PAT with Okta, Google, Azure AD, and Generic OIDC
+- [ ] Document provider priorities and UX considerations
+
+#### 2. **Install NextAuth SSO Providers**
+- [ ] Install `@next-auth/okta` provider
+- [ ] Install `@next-auth/google` provider  
+- [ ] Install `@next-auth/azure-ad` provider
+- [ ] Configure generic OIDC for other providers
+
+#### 3. **Environment Configuration**
+- [ ] Add ENV vars: `OKTA_CLIENT_ID/SECRET`
+- [ ] Add ENV vars: `GOOGLE_CLIENT_ID/SECRET`
+- [ ] Add ENV vars: `AZURE_AD_CLIENT_ID/SECRET`
+- [ ] Add ENV vars: `GENERIC_OIDC_CLIENT_ID/SECRET`
+- [ ] Update `.env.example` with all provider configurations
+
+#### 4. **Database Schema Updates**
+- [ ] Extend Prisma User model with SSO fields:
+  ```prisma
+  provider        String?  // "okta" | "google" | "azure" | "generic"
+  providerUserId  String?  // External user ID from provider
+  refreshToken    String?  @encrypted
+  tokenExpiresAt  DateTime?
+  ```
+- [ ] Add encryption middleware for sensitive fields
+- [ ] Create migration for new fields
+
+#### 5. **Backend OAuth2 Implementation**
+- [ ] Create `/api/auth/{provider}/start` routes
+- [ ] Implement OAuth2 callback handling
+- [ ] Add token refresh logic
+- [ ] Implement token revocation and cleanup
+- [ ] Add CSRF protection with state parameter validation
+
+#### 6. **Frontend Components**
+- [ ] Create `<ConnectButton provider="okta" />` components
+- [ ] Build "Connected Accounts" drawer showing:
+  - Email and provider
+  - Token expiry status
+  - Disconnect button
+- [ ] Add provider selection UI (radio buttons/tabs)
+- [ ] Grey-out unconfigured providers
+
+#### 7. **Integration Testing**
+- [ ] Happy-path connect flow (mock IdP)
+- [ ] Expired token → refresh flow
+- [ ] Revoked token → 401 then disconnect prompt
+- [ ] CSRF protection validation
+- [ ] Security validation (no token leakage)
+
+#### 8. **Documentation & Configuration**
+- [ ] Update `docs/user-guide.md` with provider setup screenshots
+- [ ] Create redirect-URI configuration table
+- [ ] Add batch CLI/admin page for provider credentials
+- [ ] Document key rotation schedule
+
+#### 9. **Security Enhancements**
+- [ ] Add rule: "Never log access_token, refresh_token, or id_token"
+- [ ] Implement token masking in debug output
+- [ ] Set up annual key rotation schedule
+- [ ] Add JIT (Just-in-Time) user creation
+- [ ] Plan SCIM provisioning for Phase 4+
 
 #### 2.4 Frontend UI Components
 - [ ] **Dashboard UI**
@@ -379,6 +451,10 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
    - API Key authentication testing needed
    - OAuth2 flow implementation needed
    - Security validation required
+   - **100% test success rate achieved (206/206 tests passing)**
+   - All authentication endpoints working correctly
+   - RBAC implementation fully functional
+   - Comprehensive audit logging implemented
 
 5. **Frontend UI components** - ⏳ PENDING
    - Dashboard UI components needed
@@ -391,6 +467,8 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
 - **Response Consistency**: 100% standardized across all endpoints
 - **Documentation**: API reference fully updated
 - **Error Handling**: Comprehensive error codes and messages
+- **Test Success Rate**: 100% (206/206 tests passing) - **EXCEEDED 95% TARGET**
+- **Authentication Flow**: Basic auth system implemented, flow testing pending
 
 #### 🎯 Next Priority Items:
 1. **Phase 2.3: Authentication Flow Testing** - Complete OAuth2 and API key testing

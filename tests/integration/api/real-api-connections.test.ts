@@ -13,17 +13,26 @@ describe('Real API Connections Integration Tests', () => {
   beforeAll(async () => {
     await testSuite.beforeAll();
     
-    // Create test user
+    // Create test user with unique email to avoid conflicts with other test files
     testUser = await testSuite.createUser(
-      'admin@example.com',
+      'real-api-test@example.com',
       'admin123',
       Role.ADMIN,
-      'Test Admin User'
+      'Real API Test Admin User'
     );
   });
 
   afterAll(async () => {
     await testSuite.afterAll();
+  });
+
+  beforeEach(async () => {
+    // Clean up any connections created by previous tests in this suite
+    await prisma.apiConnection.deleteMany({
+      where: {
+        userId: testUser.id
+      }
+    });
   });
 
   describe('POST /api/connections - Real API Tests', () => {

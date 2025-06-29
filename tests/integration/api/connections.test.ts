@@ -63,44 +63,6 @@ describe('API Connections Integration Tests', () => {
       expect(data.data.authType).toBe('NONE');
     });
 
-    it('should create API connection with real Petstore OpenAPI spec', async () => {
-      // Unmock the parser for this test to use the real implementation
-      jest.unmock('../../../src/lib/api/parser');
-      const { parseOpenApiSpec: realParseOpenApiSpec } = require('../../../src/lib/api/parser');
-      
-      // This test uses the real Petstore API instead of mocks
-      const { req, res } = createAuthenticatedRequest('POST', testUser, {
-        body: {
-          name: 'Real Petstore API',
-          baseUrl: 'https://petstore.swagger.io/v2',
-          authType: 'NONE',
-          documentationUrl: 'https://petstore.swagger.io/v2/swagger.json'
-        }
-      });
-
-      await handler(req as any, res as any);
-
-      expect(res._getStatusCode()).toBe(201);
-      const data = JSON.parse(res._getData());
-      expect(data.success).toBe(true);
-      expect(data.data.name).toBe('Real Petstore API');
-      expect(data.data.baseUrl).toBe('https://petstore.swagger.io/v2');
-      expect(data.data.authType).toBe('NONE');
-      
-      // The real API should succeed in parsing
-      expect(data.data.ingestionStatus).toBe('SUCCEEDED');
-      expect(data.data.specHash).toBeDefined();
-      expect(data.data.specHash).toHaveLength(64); // SHA-256 hash length
-      
-      // Should have extracted endpoints from the real Petstore API
-      expect(data.data.endpointCount).toBeGreaterThan(0);
-      
-      // Re-mock for other tests
-      jest.doMock('../../../src/lib/api/parser', () => ({
-        parseOpenApiSpec: jest.fn()
-      }));
-    }, 30000); // Increase timeout for real API call
-
     it('should create API connection with OpenAPI spec and extract endpoints', async () => {
       mockParseOpenApiSpec.mockResolvedValue({
         rawSpec: '{"openapi":"3.0.0","paths":{"/pets":{"get":{"summary":"List pets"}}}}',

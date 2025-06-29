@@ -94,6 +94,81 @@ Sign out the current user.
 }
 ```
 
+#### `POST /api/auth/login`
+Authenticate user with email and password.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_id",
+      "email": "user@example.com",
+      "name": "User Name",
+      "role": "USER"
+    },
+    "accessToken": "jwt_token",
+    "refreshToken": "refresh_token",
+    "expiresIn": 900
+  },
+  "message": "Login successful"
+}
+```
+
+#### `POST /api/auth/refresh`
+Refresh access token using refresh token.
+
+**Request Body:**
+```json
+{
+  "refreshToken": "refresh_token"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "new_jwt_token",
+    "expiresIn": 900
+  },
+  "message": "Token refreshed successfully"
+}
+```
+
+#### `GET /api/auth/me`
+Get current authenticated user information.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_id",
+      "email": "user@example.com",
+      "name": "User Name",
+      "role": "USER"
+    }
+  }
+}
+```
+
 ### API Connections
 
 #### `GET /api/apis`
@@ -1035,4 +1110,121 @@ For API support and questions:
 - **Documentation**: [https://docs.apiq.com](https://docs.apiq.com)
 - **Email**: api-support@apiq.com
 - **Slack**: [apiq-community.slack.com](https://apiq-community.slack.com)
-- **GitHub**: [github.com/apiq/apiq](https://github.com/apiq/apiq) 
+- **GitHub**: [github.com/apiq/apiq](https://github.com/apiq/apiq)
+
+## API Credential Management
+
+### GET /api/connections/{id}/credentials
+Retrieve stored credentials for an API connection.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "credentials": {
+      "id": "credential_id",
+      "apiConnectionId": "connection_id",
+      "isActive": true,
+      "expiresAt": "2025-12-31T23:59:59Z",
+      "createdAt": "2025-06-29T10:00:00Z",
+      "updatedAt": "2025-06-29T10:00:00Z"
+    }
+  }
+}
+```
+
+### POST /api/connections/{id}/credentials
+Store new credentials for an API connection.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+```json
+{
+  "credentials": {
+    "apiKey": "sk_test_...",
+    "secretKey": "sk_test_..."
+  },
+  "expiresAt": "2025-12-31T23:59:59Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "credentials": {
+      "id": "credential_id",
+      "apiConnectionId": "connection_id",
+      "isActive": true,
+      "expiresAt": "2025-12-31T23:59:59Z",
+      "createdAt": "2025-06-29T10:00:00Z",
+      "updatedAt": "2025-06-29T10:00:00Z"
+    }
+  },
+  "message": "Credentials stored successfully"
+}
+```
+
+### PUT /api/connections/{id}/credentials
+Update existing credentials for an API connection.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+```json
+{
+  "credentials": {
+    "apiKey": "sk_test_new_...",
+    "secretKey": "sk_test_new_..."
+  },
+  "expiresAt": "2025-12-31T23:59:59Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "credentials": {
+      "id": "credential_id",
+      "apiConnectionId": "connection_id",
+      "isActive": true,
+      "expiresAt": "2025-12-31T23:59:59Z",
+      "createdAt": "2025-06-29T10:00:00Z",
+      "updatedAt": "2025-06-29T10:05:00Z"
+    }
+  },
+  "message": "Credentials updated successfully"
+}
+```
+
+### DELETE /api/connections/{id}/credentials
+Delete credentials for an API connection (soft delete).
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Credentials deleted successfully"
+}
+``` 
