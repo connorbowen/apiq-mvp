@@ -41,6 +41,15 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         });
       }
 
+      // Validate authType is a valid enum value
+      const validAuthTypes = ['NONE', 'API_KEY', 'BEARER_TOKEN', 'BASIC_AUTH', 'OAUTH2', 'CUSTOM'];
+      if (!validAuthTypes.includes(connectionData.authType)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid auth type. Must be one of: NONE, API_KEY, BEARER_TOKEN, BASIC_AUTH, OAUTH2, CUSTOM'
+        });
+      }
+
       // Check if connection with same name already exists for this user
       const existingConnection = await prisma.apiConnection.findFirst({
         where: {

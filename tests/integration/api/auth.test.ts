@@ -2,57 +2,70 @@ import { createMocks } from 'node-mocks-http';
 import loginHandler from '../../../pages/api/auth/login';
 import refreshHandler from '../../../pages/api/auth/refresh';
 import meHandler from '../../../pages/api/auth/me';
-
-// Mock JWT
-const mockSign = jest.fn();
-const mockVerify = jest.fn();
-
-jest.mock('jsonwebtoken', () => ({
-  sign: mockSign,
-  verify: mockVerify
-}));
+import { NextApiRequest } from 'next';
+import { prisma } from '../../../lib/database/client';
+import { createTestSuite, createTestUser, cleanupTestUser, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
+import { Role } from '../../../src/generated/prisma';
 
 describe('Authentication Integration Tests', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  const testSuite = createTestSuite('Authentication Tests');
+  let testUsers: any[] = [];
+
+  beforeAll(async () => {
+    await testSuite.beforeAll();
+    
+    // Create test users with different roles
+    const users = [
+      { email: 'testuser@example.com', password: 'user123', role: Role.USER },
+      { email: 'testadmin@example.com', password: 'admin123', role: Role.ADMIN },
+      { email: 'testsuper@example.com', password: 'super123', role: Role.SUPER_ADMIN }
+    ];
+
+    for (const userData of users) {
+      const user = await testSuite.createUser(
+        userData.email,
+        userData.password,
+        userData.role,
+        `Test ${userData.role}`
+      );
+      testUsers.push(user);
+    }
+  });
+
+  afterAll(async () => {
+    await testSuite.afterAll();
   });
 
   describe('POST /api/auth/login', () => {
     it('should login with valid credentials', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      const adminUser = testUsers.find(u => u.role === Role.ADMIN);
+      const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
-          email: 'admin@example.com',
-          password: 'admin123'
+          email: adminUser.email,
+          password: adminUser.password
         }
       });
 
-      // Mock JWT token generation
-      mockSign
-        .mockReturnValueOnce('mock-access-token')
-        .mockReturnValueOnce('mock-refresh-token');
-
-      await loginHandler(req, res);
+      await loginHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
-      expect(data.data.user.email).toBe('admin@example.com');
-      expect(data.data.user.role).toBe('ADMIN');
-      expect(data.data.accessToken).toBe('mock-access-token');
-      expect(data.data.refreshToken).toBe('mock-refresh-token');
+      expect(data.data.user.email).toBe(adminUser.email);
+      expect(data.data.user.role).toBe(Role.ADMIN);
+      expect(data.data.accessToken).toBeDefined();
+      expect(data.data.refreshToken).toBeDefined();
     });
 
     it('should reject invalid credentials', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
           email: 'invalid@example.com',
           password: 'wrongpassword'
         }
       });
 
-      await loginHandler(req, res);
+      await loginHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(401);
       const data = JSON.parse(res._getData());
@@ -62,15 +75,14 @@ describe('Authentication Integration Tests', () => {
     });
 
     it('should reject missing credentials', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
-          email: 'admin@example.com'
+          email: 'testadmin@example.com'
           // missing password
         }
       });
 
-      await loginHandler(req, res);
+      await loginHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(400);
       const data = JSON.parse(res._getData());
@@ -79,11 +91,9 @@ describe('Authentication Integration Tests', () => {
     });
 
     it('should reject wrong HTTP method', async () => {
-      const { req, res } = createMocks({
-        method: 'GET'
-      });
+      const { req, res } = createUnauthenticatedRequest('GET');
 
-      await loginHandler(req, res);
+      await loginHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(405);
       const data = JSON.parse(res._getData());
@@ -94,48 +104,31 @@ describe('Authentication Integration Tests', () => {
 
   describe('POST /api/auth/refresh', () => {
     it('should refresh token with valid refresh token', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      const adminUser = testUsers.find(u => u.role === Role.ADMIN);
+      const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
-          refreshToken: 'valid-refresh-token'
+          refreshToken: adminUser.refreshToken
         }
       });
 
-      // Mock JWT verification
-      mockVerify.mockReturnValue({
-        userId: 'admin-123',
-        email: 'admin@example.com',
-        role: 'ADMIN',
-        type: 'refresh',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
-      });
-
-      // Mock new token generation
-      mockSign.mockReturnValue('new-access-token');
-
-      await refreshHandler(req, res);
+      await refreshHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
-      expect(data.data.accessToken).toBe('new-access-token');
+      expect(data.data.accessToken).toBeDefined();
+      // Note: The new access token may be the same if the original hasn't expired yet
+      // This is acceptable behavior for token refresh
     });
 
     it('should reject invalid refresh token', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
           refreshToken: 'invalid-token'
         }
       });
 
-      // Mock JWT verification error
-      mockVerify.mockImplementation(() => {
-        throw new Error('Invalid token');
-      });
-
-      await refreshHandler(req, res);
+      await refreshHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(401);
       const data = JSON.parse(res._getData());
@@ -144,12 +137,11 @@ describe('Authentication Integration Tests', () => {
     });
 
     it('should reject missing refresh token', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      const { req, res } = createUnauthenticatedRequest('POST', {
         body: {}
       });
 
-      await refreshHandler(req, res);
+      await refreshHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(400);
       const data = JSON.parse(res._getData());
@@ -160,39 +152,22 @@ describe('Authentication Integration Tests', () => {
 
   describe('GET /api/auth/me', () => {
     it('should return current user with valid token', async () => {
-      const { req, res } = createMocks({
-        method: 'GET',
-        headers: {
-          authorization: 'Bearer valid-access-token'
-        }
-      });
+      const adminUser = testUsers.find(u => u.role === Role.ADMIN);
+      const { req, res } = createAuthenticatedRequest('GET', adminUser);
 
-      // Mock JWT verification
-      mockVerify.mockReturnValue({
-        userId: 'admin-123',
-        email: 'admin@example.com',
-        role: 'ADMIN',
-        type: 'access',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 15 * 60
-      });
-
-      await meHandler(req, res);
+      await meHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
-      expect(data.data.user.email).toBe('admin@example.com');
-      expect(data.data.user.role).toBe('ADMIN');
+      expect(data.data.user.email).toBe(adminUser.email);
+      expect(data.data.user.role).toBe(Role.ADMIN);
     });
 
     it('should reject request without token', async () => {
-      const { req, res } = createMocks({
-        method: 'GET'
-        // No authorization header
-      });
+      const { req, res } = createUnauthenticatedRequest('GET');
 
-      await meHandler(req, res);
+      await meHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(401);
       const data = JSON.parse(res._getData());
@@ -201,19 +176,13 @@ describe('Authentication Integration Tests', () => {
     });
 
     it('should reject invalid token', async () => {
-      const { req, res } = createMocks({
-        method: 'GET',
+      const { req, res } = createUnauthenticatedRequest('GET', {
         headers: {
           authorization: 'Bearer invalid-token'
         }
       });
 
-      // Mock JWT verification error
-      mockVerify.mockImplementation(() => {
-        throw new Error('Invalid token');
-      });
-
-      await meHandler(req, res);
+      await meHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(401);
       const data = JSON.parse(res._getData());
@@ -222,11 +191,9 @@ describe('Authentication Integration Tests', () => {
     });
 
     it('should reject wrong HTTP method', async () => {
-      const { req, res } = createMocks({
-        method: 'POST'
-      });
+      const { req, res } = createUnauthenticatedRequest('POST');
 
-      await meHandler(req, res);
+      await meHandler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(405);
       const data = JSON.parse(res._getData());
@@ -237,30 +204,22 @@ describe('Authentication Integration Tests', () => {
 
   describe('User Roles', () => {
     it('should support different user roles', async () => {
-      const users = [
-        { email: 'user@example.com', password: 'user123', role: 'USER' },
-        { email: 'admin@example.com', password: 'admin123', role: 'ADMIN' },
-        { email: 'super@example.com', password: 'super123', role: 'SUPER_ADMIN' }
-      ];
-
-      for (const user of users) {
-        const { req, res } = createMocks({
-          method: 'POST',
+      for (const user of testUsers) {
+        const { req, res } = createUnauthenticatedRequest('POST', {
           body: {
             email: user.email,
             password: user.password
           }
         });
 
-        // Mock JWT token generation
-        mockSign.mockReturnValue('mock-token');
-
-        await loginHandler(req, res);
+        await loginHandler(req as any, res as any);
 
         expect(res._getStatusCode()).toBe(200);
         const data = JSON.parse(res._getData());
         expect(data.success).toBe(true);
         expect(data.data.user.role).toBe(user.role);
+        expect(data.data.accessToken).toBeDefined();
+        expect(data.data.refreshToken).toBeDefined();
       }
     });
   });

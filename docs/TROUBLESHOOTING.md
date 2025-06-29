@@ -48,11 +48,11 @@ createdb apiq
 
 **Solution**:
 ```bash
-# Create test user
-node scripts/create-test-user.js
+# Verify database connection
+npx tsx scripts/test-db.ts
 
-# Verify user exists
-psql -d apiq -c "SELECT * FROM users WHERE id = 'test-user-123';"
+# Check if users exist
+psql -d apiq -c "SELECT id, email, role FROM users LIMIT 5;"
 ```
 
 #### Issue: OpenAPI parsing fails
@@ -130,8 +130,8 @@ npx prisma migrate reset
 # Generate client
 npx prisma generate
 
-# Create test user
-node scripts/create-test-user.js
+# Verify database connection
+npx tsx scripts/test-db.ts
 ```
 
 ### Environment Issues
@@ -193,7 +193,7 @@ curl "http://localhost:3000/api/connections/CONNECTION_ID/endpoints?method=GET&p
 - [ ] Database exists (`psql -l | grep apiq`)
 - [ ] .env file exists and has required variables
 - [ ] Prisma client is generated (`npx prisma generate`)
-- [ ] Test user exists (`node scripts/create-test-user.js`)
+- [ ] Database connection test passes (`npx tsx scripts/test-db.ts`)
 - [ ] Development server starts without errors (`npm run dev`)
 - [ ] Health endpoint responds (`curl http://localhost:3000/api/health`)
 - [ ] API connections can be created (`curl -X POST http://localhost:3000/api/connections`)
@@ -260,65 +260,9 @@ npx prisma migrate deploy
 # 4. Generate Prisma client
 npx prisma generate
 
-# 5. Create test user
-node scripts/create-test-user.js
+# 5. Test database connection
+npx tsx scripts/test-db.ts
 
 # 6. Start development server
 npm run dev
 ```
-
-### Automated Startup
-```bash
-# Use the startup script
-npm run startup
-```
-
-## ✅ Working Features
-
-The following features are confirmed working:
-
-- ✅ **API Connection Creation**: Create connections with or without OpenAPI specs
-- ✅ **OpenAPI Spec Parsing**: Successfully parses and stores OpenAPI specifications
-- ✅ **Endpoint Extraction**: Extracts endpoints from OpenAPI specs (tested with Petstore API - 20 endpoints)
-- ✅ **Endpoint Listing**: Lists all endpoints for a connection
-- ✅ **Endpoint Filtering**: Filter by method, path, and summary
-- ✅ **Combined Filtering**: Use multiple filters simultaneously
-- ✅ **Error Handling**: Proper error responses and logging
-- ✅ **Database Operations**: All CRUD operations working correctly
-
-## 🔄 Known Limitations
-
-- **Large OpenAPI Specs**: Very large specs (like GitHub API) may timeout during endpoint extraction
-- **Authentication**: Currently using hardcoded test user until authentication is implemented
-- **Rate Limiting**: No rate limiting implemented yet
-- **RBAC**: Role-based access control not yet implemented
-
-## 📞 Getting Help
-
-### Before Asking for Help
-1. Check this troubleshooting guide
-2. Run the verification checklist
-3. Check the logs for specific error messages
-4. Try the quick fixes above
-
-### Useful Information to Include
-- Error message (full text)
-- Steps that led to the error
-- Environment (OS, Node.js version)
-- Database status
-- Output of verification commands
-
-### Common Debug Commands
-```bash
-# System info
-node --version
-npm --version
-psql --version
-
-# Project status
-npm list
-npx prisma --version
-
-# Database status
-psql -d apiq -c "SELECT version();"
-``` 

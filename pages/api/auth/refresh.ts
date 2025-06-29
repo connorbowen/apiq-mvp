@@ -1,3 +1,4 @@
 import { handleRefreshToken } from '../../../src/lib/auth/session';
+import { errorHandler } from '../../../src/middleware/errorHandler';
 
-export default handleRefreshToken; 
+export default errorHandler(handleRefreshToken); 

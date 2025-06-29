@@ -19,6 +19,13 @@ This document defines the specific development rules, constraints, and guideline
 11. [Deployment Rules](#deployment-rules)
 12. [Compliance Rules](#compliance-rules)
 
+## 🚨 Mock/Test Data Policy & Automated Checks
+
+- **No mock or hardcoded data is allowed in dev or prod code or documentation.**
+- All test users, demo keys, and mock data must only exist in test scripts or test databases.
+- A pre-commit hook and CI check will block any commit/PR that introduces forbidden patterns (e.g., `test-user-123`, `demo-key`, `fake API`, etc.) in non-test code or docs.
+- See `package.json` and `.github/workflows/no-mock-data.yml` for details.
+
 ## Project Structure Rules
 
 ### Folder Organization
@@ -142,6 +149,52 @@ import { UserProfile } from '@/components/UserProfile';
 5. **Merge**: Merge to `main` after approval
 6. **Cleanup**: Delete branch after successful merge
 7. **Completion**: Mark step as complete in tracking
+
+### Branch Cleanup Rules
+1. **Automatic Cleanup**: Delete feature branches immediately after successful merge
+   ```bash
+   # After merging to main
+   git checkout main
+   git pull origin main
+   git branch -d feature/step-1-database-schema-setup
+   git branch -d feature/api-connection-management
+   ```
+
+2. **Regular Maintenance**: Clean up merged branches weekly
+   ```bash
+   # List all merged branches
+   git branch --merged main
+   
+   # Delete all merged branches (except main)
+   git branch --merged main | grep -v "main" | xargs git branch -d
+   ```
+
+3. **Remote Branch Cleanup**: Also clean up remote branches
+   ```bash
+   # Delete remote branch after local cleanup
+   git push origin --delete feature/step-1-database-schema-setup
+   
+   # Or prune all stale remote branches
+   git remote prune origin
+   ```
+
+4. **Cleanup Checklist**: Before completing any step
+   - [ ] Feature branch successfully merged to `main`
+   - [ ] Local feature branch deleted
+   - [ ] Remote feature branch deleted (if applicable)
+   - [ ] No stale branches remaining
+   - [ ] Repository is clean and organized
+
+5. **Exception Handling**: Keep branches that are:
+   - Currently in active development
+   - Waiting for review/approval
+   - Hotfix branches for production issues
+   - Long-running feature branches (document why)
+
+6. **Documentation**: Update branch status in project tracking
+   - Mark branches as "merged and cleaned up" in implementation plan
+   - Remove references to deleted branches in documentation
+   - Update any branch-specific documentation
 
 ## Task Completion Rules
 

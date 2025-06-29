@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import axios from 'axios';
 import { logError, logInfo, logDebug } from '../utils/logger';
 import { 
   WorkflowGenerationRequest, 
@@ -38,7 +39,9 @@ export class OpenAIService {
     try {
       logInfo('Generating workflow from description', {
         description: request.description.substring(0, 100) + '...',
-        apiConnectionsCount: request.apiConnections.length
+        apiConnectionsCount: request.apiConnections.length,
+        hasParameters: !!request.parameters,
+        parametersCount: request.parameters ? Object.keys(request.parameters).length : 0
       });
 
       const systemPrompt = this.buildSystemPrompt(request.apiConnections);
@@ -103,7 +106,8 @@ export class OpenAIService {
       
       logInfo('Workflow generated successfully', {
         workflowName: result.workflow.name,
-        stepsCount: result.steps.length
+        stepsCount: result.steps.length,
+        hasExplanation: !!result.explanation
       });
 
       return {
@@ -113,7 +117,11 @@ export class OpenAIService {
       };
 
     } catch (error) {
-      logError('Failed to generate workflow', error as Error, { request });
+      logError('Failed to generate workflow', error as Error, { 
+        description: request.description?.substring(0, 100),
+        apiConnectionsCount: request.apiConnections?.length,
+        hasParameters: !!request.parameters
+      });
       throw new Error(`Workflow generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -131,7 +139,12 @@ export class OpenAIService {
       logDebug('Executing workflow step with AI guidance', {
         stepId: step.id,
         stepName: step.name,
-        apiConnectionId: apiConnection.id
+        stepOrder: step.stepOrder,
+        action: step.action,
+        apiConnectionId: apiConnection.id,
+        apiConnectionName: apiConnection.name,
+        previousResultsCount: Object.keys(previousResults).length,
+        contextCount: Object.keys(context).length
       });
 
       const systemPrompt = this.buildExecutionPrompt(apiConnection, step);
@@ -198,7 +211,12 @@ export class OpenAIService {
       throw new Error('Unknown function call returned from OpenAI');
 
     } catch (error) {
-      logError('Failed to execute workflow step', error as Error, { step, apiConnection });
+      logError('Failed to execute workflow step', error as Error, { 
+        stepId: step.id,
+        stepName: step.name,
+        apiConnectionId: apiConnection.id,
+        apiConnectionName: apiConnection.name
+      });
       return { 
         error: `Step execution failed: ${error instanceof Error ? error.message : 'Unknown error'}` 
       };
@@ -212,9 +230,15 @@ export class OpenAIService {
     callParams: any,
     apiConnection: ApiConnection
   ): Promise<any> {
-    const axios = await import('axios');
+    // Ensure proper URL construction
+    const baseUrl = apiConnection.baseUrl.endsWith('/') 
+      ? apiConnection.baseUrl.slice(0, -1) 
+      : apiConnection.baseUrl;
+    const path = callParams.url.startsWith('/') 
+      ? callParams.url 
+      : `/${callParams.url}`;
+    const url = `${baseUrl}${path}`;
     
-    const url = `${apiConnection.baseUrl}${callParams.url}`;
     const config = {
       method: callParams.method,
       url,
@@ -229,7 +253,7 @@ export class OpenAIService {
     // Add authentication based on apiConnection.authType
     this.addAuthentication(config, apiConnection);
 
-    const response = await axios.default(config);
+    const response = await axios(config);
     return response.data;
   }
 

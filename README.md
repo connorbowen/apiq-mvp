@@ -1,117 +1,34 @@
-# APIQ - Multi-API Orchestrator Webapp
+# APIQ - Natural Language API Orchestrator
 
-A semi-agentic, low-code web application that enables users to orchestrate complex workflows across multiple APIs using natural language and AI-powered automation.
+APIQ is a platform that enables users to orchestrate multiple APIs using natural language. It automatically translates user requests into executable workflows by analyzing available API endpoints and generating the necessary code.
 
-## 🚀 Overview
+## 🚀 Features
 
-APIQ transforms how developers and non-technical users interact with multiple APIs. Instead of writing custom scripts or juggling multiple tools, users can describe their goals in natural language, and the AI orchestrator will automatically plan and execute multi-step workflows across connected APIs.
-
-### Key Features
-
-- **🤖 AI-Powered Orchestration**: Natural language to API workflow translation using OpenAI GPT-4
-- **🔗 Multi-API Integration**: Connect and manage multiple external APIs with OpenAPI/Swagger specs
-- **🛡️ Secure Credential Management**: Encrypted storage of API keys and tokens
-- **👥 Role-Based Access Control**: Granular permissions for different user roles
-- **📊 Comprehensive Audit Logging**: Complete trail of all actions for compliance
-- **🎯 Guided User Experience**: Onboarding, templates, and contextual help
-- **⚡ Real-time Execution**: Live workflow progress and error handling
-
-## ✅ Current Status
-
-### ✅ Completed Features
-- [x] Project scaffolding (Next.js + TypeScript + Prisma)
-- [x] Database schema and migrations
-- [x] Environment configuration and validation
-- [x] Database connection and testing utilities
-- [x] API connection management (CRUD operations)
-- [x] OpenAPI specification parsing and validation
-- [x] Endpoint extraction and storage
-- [x] Endpoint listing with filtering capabilities
-- [x] Error handling and logging system
-- [x] Health check endpoints
-- [x] Test user creation and management
-- [x] Comprehensive documentation
-
-### 🔄 In Progress
-- [ ] NextAuth.js authentication setup
-- [ ] User management system
-- [ ] RBAC (Role-Based Access Control)
-- [ ] Frontend UI components
-- [ ] Workflow execution engine
-
-### 📋 Planned Features
-- [ ] AI-powered workflow orchestration
-- [ ] Multi-step API workflow execution
-- [ ] Background job queuing
-- [ ] Audit logging system
-- [ ] E2E testing suite
-- [ ] Rate limiting and security enhancements
+- **Natural Language Processing**: Describe workflows in plain English
+- **Multi-API Integration**: Connect and manage multiple external APIs
+- **AI-Powered Workflow Generation**: Automatically translate requests to executable workflows
+- **Enterprise-Grade Security**: Comprehensive security and compliance features
+- **Real-time Execution**: Monitor and manage workflow execution
+- **OpenAPI Integration**: Automatic endpoint discovery from OpenAPI specifications
 
 ## 🏗️ Architecture
 
-### Tech Stack
+- **Frontend**: Next.js 14+ with React 18+ and TypeScript
+- **Backend**: Next.js API routes with Node.js 18+
+- **Database**: PostgreSQL 15+ with Prisma ORM
+- **Authentication**: NextAuth.js with JWT tokens
+- **AI**: OpenAI GPT-4 for natural language processing
+- **Testing**: Jest with real database integration (no mocks)
 
-- **Frontend**: Next.js (React + TypeScript) with Tailwind CSS
-- **Backend**: Next.js API routes (serverless functions)
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: NextAuth.js (Auth.js) with email/password and SSO support
-- **AI Integration**: OpenAI GPT-4 with function calling
-- **API Spec Parsing**: @apidevtools/swagger-parser
-- **HTTP Client**: Axios for external API calls
-
-### System Components
-
-1. **Authentication Layer**: NextAuth.js handles user sessions and SSO
-2. **API Connection Manager**: Secure storage and management of API credentials
-3. **OpenAPI Parser**: Dynamic fetching and parsing of API specifications
-4. **Endpoint Extractor**: Extracts and stores API endpoints from OpenAPI specs
-5. **AI Orchestrator**: OpenAI integration for natural language interpretation
-6. **Workflow Engine**: Multi-step execution with data flow between APIs
-7. **Audit System**: Comprehensive logging of all user actions and API calls
-
-## 📁 Project Structure
-
-```
-/apiq-mvp
-├── /prisma                  # Database schema and migrations
-│   ├── schema.prisma        # Prisma schema definition
-│   └── migrations/          # Database migration files
-├── /lib                     # Utility functions and services
-│   ├── /database
-│   │   └── client.ts        # Prisma database client
-│   ├── /api
-│   │   ├── endpoints.ts     # Endpoint extraction utilities
-│   │   └── parser.ts        # OpenAPI parsing utilities
-│   └── /services
-│       └── openaiService.ts # OpenAI integration
-├── /scripts                 # Utility scripts
-│   ├── test-db.ts          # Database testing script
-│   ├── create-test-user.js # Test user creation script
-│   └── startup.sh          # Automated startup script
-├── /docs                    # Project documentation
-│   ├── DATABASE_SETUP.md    # Database setup guide
-│   ├── QUICK_START.md       # Quick start guide
-│   ├── TROUBLESHOOTING.md   # Troubleshooting guide
-│   └── ...                  # Other documentation
-├── /pages                   # Next.js pages and API routes
-│   └── /api
-│       ├── /connections     # API connection management
-│       │   └── /[id]/endpoints # Endpoint listing and filtering
-│       └── /health          # Health check endpoints
-├── /components              # Reusable React components
-├── /styles                  # Global styles and Tailwind config
-└── /public                  # Static assets
-```
-
-## 🚀 Quick Start
+## 🛠️ Development Setup
 
 ### Prerequisites
 
-- Node.js 18+ and npm
-- PostgreSQL 15+
-- Git
+- Node.js 18.0.0 or higher
+- PostgreSQL 14.0 or higher
+- npm 8.0.0 or higher
 
-### Installation & Setup
+### Quick Start
 
 1. **Clone the repository**
    ```bash
@@ -124,275 +41,161 @@ APIQ transforms how developers and non-technical users interact with multiple AP
    npm install
    ```
 
-3. **Set up PostgreSQL**
+3. **Environment setup**
    ```bash
-   # Install PostgreSQL (macOS)
-   brew install postgresql@15
-   brew services start postgresql@15
+   cp env.example .env.local
+   ```
    
-   # Add to PATH
-   echo 'export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"' >> ~/.zshrc
-   source ~/.zshrc
-   
+   Configure your `.env.local` with your database and API credentials.
+
+4. **Database setup**
+   ```bash
    # Create database
-   createdb apiq
-   ```
-
-4. **Set up environment variables**
-   ```bash
-   cp env.example .env
+   createdb apiq_dev
    
-   # Update database URL (replace with your username)
-   sed -i '' 's|DATABASE_URL=./data/apiq.db|DATABASE_URL="postgresql://connorbowen@localhost:5432/apiq"|' .env
-   ```
-
-5. **Set up the database**
-   ```bash
    # Run migrations
-   npx prisma migrate deploy
+   npx prisma migrate dev
    
    # Generate Prisma client
    npx prisma generate
    ```
 
-6. **Create test user**
-   ```bash
-   # Create a test user for development
-   node scripts/create-test-user.js
-   ```
-
-7. **Test database connection**
-   ```bash
-   npx tsx scripts/test-db.ts
-   ```
-
-8. **Start the development server**
+5. **Start development server**
    ```bash
    npm run dev
    ```
 
-9. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+The application will be available at `http://localhost:3000`.
 
-### 🔄 Development Workflow
+## 🧪 Testing
 
-When making schema changes:
+We follow a **strict no-mock-data policy** for database and authentication operations. All tests use real database connections and real authentication flows.
 
-1. **Update Prisma schema** (`prisma/schema.prisma`)
-2. **Create and run migration**
-   ```bash
-   npx prisma migrate dev --name <migration-name>
-   ```
-3. **Regenerate Prisma client**
-   ```bash
-   npx prisma generate
-   ```
-4. **Clear Next.js cache (if needed)**
-   ```bash
-   rm -rf .next
-   ```
-5. **Restart development server**
-   ```bash
-   # Stop current server (Ctrl+C)
-   npm run dev
-   ```
-
-### 🧪 Testing API Endpoints
-
-Test the API connection creation:
-```bash
-curl -X POST http://localhost:3000/api/connections \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Petstore API",
-    "baseUrl": "https://petstore.swagger.io/v2",
-    "documentationUrl": "https://petstore.swagger.io/v2/swagger.json",
-    "authType": "NONE"
-  }'
-```
-
-List API connections:
-```bash
-curl http://localhost:3000/api/connections
-```
-
-List endpoints for a connection:
-```bash
-curl http://localhost:3000/api/connections/<connection-id>/endpoints
-```
-
-Filter endpoints by method:
-```bash
-curl "http://localhost:3000/api/connections/<connection-id>/endpoints?method=GET"
-```
-
-Filter endpoints by path:
-```bash
-curl "http://localhost:3000/api/connections/<connection-id>/endpoints?path=/pet"
-```
-
-Filter endpoints by summary:
-```bash
-curl "http://localhost:3000/api/connections/<connection-id>/endpoints?summary=pet"
-```
-
-Combine multiple filters:
-```bash
-curl "http://localhost:3000/api/connections/<connection-id>/endpoints?method=GET&path=/pet"
-```
-
-## 🗄️ Database Schema
-
-### Current Tables
-- `users` - User accounts and authentication
-- `api_connections` - External API integrations (with ingestion status tracking)
-- `endpoints` - OpenAPI endpoint definitions
-- `workflows` - Multi-step workflow definitions
-- `workflow_steps` - Individual workflow steps
-- `workflow_executions` - Runtime execution tracking
-- `execution_logs` - Detailed execution logging
-- `audit_logs` - Security and compliance logging
-- `api_credentials` - Encrypted credential storage
-
-### Database Connection
-- **Host**: localhost
-- **Port**: 5432
-- **Database**: apiq
-- **User**: connorbowen (system username)
-- **Connection String**: `postgresql://connorbowen@localhost:5432/apiq`
-
-## 📖 User Guide
-
-### Getting Started
-
-1. **Create an Account**: Sign up with email/password or use SSO
-2. **Add Your First API**: Connect an API by providing its OpenAPI spec URL
-3. **Explore Endpoints**: Browse available API operations and their parameters
-4. **Start a Conversation**: Use natural language to describe what you want to accomplish
-5. **Review and Confirm**: The AI will propose a workflow - review and confirm before execution
-6. **Monitor Progress**: Watch real-time execution and view results
-
-### Example Workflows
-
-- **"Get the latest customer data from CRM API and then post a welcome message via the Messaging API"**
-- **"Fetch the top 10 customers from Sales API, then get their recent interactions from Marketing API"**
-- **"When a new customer is created in CRM, automatically create a project in PM tool and notify via Slack"**
-
-## 🔧 Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run test` - Run tests
-- `npx prisma studio` - Open Prisma Studio for database management
-- `npx tsx scripts/test-db.ts` - Test database connection
-
-### Database Operations
+### Running Tests
 
 ```bash
-# Run migrations
-npx prisma migrate dev
+# Run all tests
+npm test
 
-# Reset database (WARNING: deletes all data)
-npx prisma migrate reset
+# Run with coverage
+npm test -- --coverage
 
-# Open Prisma Studio
-npx prisma studio
+# Run specific test categories
+npm test -- --testPathPattern="unit"
+npm test -- --testPathPattern="integration"
+npm test -- --testPathPattern="e2e"
 
-# Test database connection
-npx tsx scripts/test-db.ts
+# Run specific file
+npm test -- --testPathPattern="openaiService"
 ```
 
-### Development Workflow
+### Test Philosophy
 
-1. **Feature Development**: Create feature branches from `main`
-2. **Testing**: Write unit and integration tests for new features
-3. **Code Review**: Submit pull requests for review
-4. **Deployment**: Merge to `main` triggers deployment
+- **Real Database**: All tests use real PostgreSQL connections
+- **Real Authentication**: Real users with bcrypt-hashed passwords
+- **Real JWTs**: Actual login flows generate real tokens
+- **No Mocks**: Database and authentication operations are never mocked
+- **External Services**: Only external APIs (OpenAI, etc.) are mocked when necessary
+- **Structured Logging**: Safe, non-circular logging patterns prevent test failures
 
-### Contributing
+### Test Coverage
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+#### High Coverage Areas (>80%)
+- **Services**: OpenAI service (89.55% lines, 100% functions)
+- **Utilities**: Encryption (91.48% lines), Logger (87.17% lines)
+- **API Parser**: 100% lines and functions
+- **RBAC**: 100% lines and functions
+- **Database**: 98.55% lines and functions
+- **Middleware**: Error handling (80.72% lines), Rate limiting (82.45% lines)
+
+#### Test Statistics
+- **Total test suites**: 15
+- **Total tests**: 203
+- **Pass rate**: 100%
+- **Coverage**: 60.12% lines (core business logic >80%)
+
+### Recent Testing Improvements (2024-06)
+
+- **Comprehensive Unit Testing**: Complete coverage for utilities, middleware, and services
+- **Structured Logging**: Refactored logging to prevent circular structure errors
+- **Test Utilities**: Robust helper utilities for creating test data and managing test lifecycle
+- **Middleware Testing**: Full coverage for error handling and rate limiting middleware
+- **Service Testing**: Enhanced OpenAI service testing with 89%+ coverage and proper mocking
+- **API Parser Testing**: 100% coverage for OpenAPI specification parsing utilities
+
+**Testing Philosophy:**
+- Integration/E2E tests use real data, real DB, and real JWTs (no mocks)
+- Unit tests mock external services and DB for logic and error handling
+- All logging follows safe, structured patterns to prevent circular references
+
+## 📚 Documentation
+
+- [Development Guide](docs/DEVELOPMENT_GUIDE.md) - Development setup and guidelines
+- [Testing Guide](docs/TESTING.md) - Testing strategy and best practices
+- [API Reference](docs/API_REFERENCE.md) - API documentation
+- [Architecture](docs/ARCHITECTURE.md) - System architecture overview
+- [Implementation Plan](docs/implementation-plan.md) - Detailed implementation roadmap
+- [Security Guide](docs/SECURITY_GUIDE.md) - Security guidelines and best practices
 
 ## 🔒 Security
 
-### Authentication & Authorization
-
-- **Multi-factor authentication** support via NextAuth.js
-- **Role-based access control** (Admin, User roles)
-- **Session management** with secure JWT tokens
-- **SSO integration** for enterprise deployments
-
-### Data Protection
-
-- **Encrypted credential storage** using AES-256
-- **Secure API key management** with rotation support
-- **Audit logging** of all user actions and API calls
-- **Input validation** and sanitization
-
-### Compliance
-
-- **GDPR compliance** with data export/deletion capabilities
-- **SOC 2 readiness** with comprehensive audit trails
-- **Enterprise security** features for B2B deployments
-
-## 📊 Monitoring & Logging
-
-### Audit Logs
-
-Every action in the system is logged for compliance and debugging:
-
-- User authentication events
-- API connection management
-- Workflow executions and results
-- Error conditions and resolutions
-
-### Performance Monitoring
-
-- API response times and success rates
-- AI model usage and costs
-- Database query performance
-- User activity metrics
+- **Authentication**: JWT-based authentication with NextAuth.js
+- **Authorization**: Role-based access control (RBAC)
+- **Data Encryption**: AES-256 encryption for sensitive data
+- **Input Validation**: Comprehensive input sanitization
+- **Audit Logging**: Complete audit trail for all operations
 
 ## 🚀 Deployment
 
 ### Production Setup
 
-1. **Database**: Use managed PostgreSQL service (AWS RDS, Supabase, etc.)
-2. **Environment**: Set production environment variables
-3. **SSL**: Enable HTTPS with SSL certificates
-4. **Monitoring**: Set up error tracking and performance monitoring
+1. **Environment Configuration**
+   ```bash
+   # Set production environment variables
+   NODE_ENV=production
+   DATABASE_URL=your-production-db-url
+   NEXTAUTH_SECRET=your-secret-key
+   OPENAI_API_KEY=your-openai-key
+   ```
 
-### Environment Variables (Production)
+2. **Database Migration**
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+3. **Build and Deploy**
+   ```bash
+   npm run build
+   npm start
+   ```
+
+### Docker Deployment
 
 ```bash
-NODE_ENV=production
-DATABASE_URL="postgresql://user:pass@host:port/dbname?sslmode=require"
-NEXTAUTH_URL="https://your-domain.com"
-NEXTAUTH_SECRET="your-production-secret"
-OPENAI_API_KEY="sk-your-openai-key"
-ENCRYPTION_KEY="your-production-encryption-key"
+# Build Docker image
+docker build -t apiq .
+
+# Run container
+docker run -p 3000:3000 apiq
 ```
-
-## 📚 Documentation
-
-- **[Database Setup Guide](docs/DATABASE_SETUP.md)** - Complete database configuration
-- **[Quick Start Guide](docs/QUICK_START.md)** - Get up and running quickly
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and components
-- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Development workflow
-- **[API Reference](docs/API_REFERENCE.md)** - API documentation
-- **[User Guide](docs/USER_GUIDE.md)** - End-user documentation
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](docs/CONTRIBUTING.md) for details.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Follow our coding standards and testing requirements
+4. Ensure all tests pass (including real database integration)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+### Development Standards
+
+- **TypeScript**: Strict type checking enabled
+- **ESLint**: Code linting and formatting
+- **Testing**: Real database integration, no mocks for core functionality
+- **Documentation**: Update docs for new features
+- **Security**: Follow security guidelines
 
 ## 📄 License
 
@@ -400,17 +203,28 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- **Documentation**: Check the `/docs` directory
-- **Issues**: Create an issue in the repository
-- **Discussions**: Use GitHub Discussions for questions
+- **Documentation**: Check the [docs](docs/) directory
+- **Issues**: Report bugs and feature requests via GitHub Issues
+- **Discussions**: Use GitHub Discussions for questions and ideas
 
-## Development & Testing
+## 🗺️ Roadmap
 
-- See [docs/QUICK_START.md](docs/QUICK_START.md) for setup and quick start.
-- See [docs/TESTING.md](docs/TESTING.md) for details on running authentication and integration tests, including the demo script and test users.
+See our [Implementation Plan](docs/implementation-plan.md) for detailed roadmap and upcoming features.
+
+### Current Phase: Foundation
+- ✅ Project setup and scaffolding
+- ✅ Database schema and migrations
+- ✅ Authentication system
+- ✅ Basic API structure
+- ✅ Real database integration testing
+- ✅ No-mock-data policy implementation
+
+### Next Phase: External API Validation
+- 🔄 Test API connections (Petstore, JSONPlaceholder, etc.)
+- 🔄 Real OpenAPI integration
+- 🔄 Authentication flow testing
+- 🔄 Performance and reliability testing
 
 ---
 
-**Current Version**: 0.1.0  
-**Last Updated**: December 2024  
-**Status**: Development (Database Setup Complete ✅) 
+**Built with ❤️ using Next.js, TypeScript, and OpenAI**

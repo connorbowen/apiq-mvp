@@ -74,30 +74,6 @@ npx prisma migrate deploy
 print_status "Generating Prisma client..."
 npx prisma generate
 
-# Create test user if it doesn't exist
-print_status "Checking for test user..."
-if ! node -e "
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-prisma.user.findUnique({ where: { id: 'test-user-123' } })
-  .then(user => {
-    if (!user) {
-      console.log('Test user not found');
-      process.exit(1);
-    } else {
-      console.log('Test user exists');
-      process.exit(0);
-    }
-  })
-  .catch(() => process.exit(1));
-" 2>/dev/null; then
-    print_warning "Test user not found. Creating test user..."
-    node scripts/create-test-user.js
-    print_success "Test user created"
-else
-    print_success "Test user exists"
-fi
-
 # Test database connection
 print_status "Testing database connection..."
 if npx tsx scripts/test-db.ts > /dev/null 2>&1; then

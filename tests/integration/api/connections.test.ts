@@ -1,27 +1,10 @@
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
+import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
+import { Role } from '../../../src/generated/prisma';
 
-// Mock Prisma client
-jest.mock('../../../lib/database/client', () => ({
-  prisma: {
-    apiConnection: {
-      findFirst: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-    endpoint: {
-      deleteMany: jest.fn(),
-      createMany: jest.fn(),
-      findMany: jest.fn(),
-    },
-    $transaction: jest.fn(),
-  }
-}));
-
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
-
-// Mock the parser and endpoints modules
+// Mock the parser and endpoints modules (these are not user/db mocks)
 jest.mock('../../../src/lib/api/parser', () => ({
   parseOpenApiSpec: jest.fn()
 }));
@@ -37,248 +20,217 @@ const mockParseOpenApiSpec = parseOpenApiSpec as jest.MockedFunction<typeof pars
 const mockExtractAndStoreEndpoints = extractAndStoreEndpoints as jest.MockedFunction<typeof extractAndStoreEndpoints>;
 
 describe('API Connections Integration Tests', () => {
+  const testSuite = createTestSuite('Connections Tests');
+  let testUser: any;
+
+  beforeAll(async () => {
+    await testSuite.beforeAll();
+    
+    // Create test user
+    testUser = await testSuite.createUser(
+      'admin@example.com',
+      'admin123',
+      Role.ADMIN,
+      'Test Admin User'
+    );
+  });
+
+  afterAll(async () => {
+    await testSuite.afterAll();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('POST /api/connections', () => {
     it('should create a basic API connection without OpenAPI spec', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
-          name: 'Test API',
+          name: 'Basic Test API',
           baseUrl: 'https://api.example.com',
           authType: 'NONE'
         }
       });
 
-      // Mock no existing connection
-      (mockPrisma.apiConnection.findFirst as jest.Mock).mockResolvedValue(null);
-
-      // Mock connection creation
-      (mockPrisma.apiConnection.create as jest.Mock).mockResolvedValue({
-        id: 'test-connection-id',
-        userId: 'test-user-123',
-        name: 'Test API',
-        baseUrl: 'https://api.example.com',
-        authType: 'NONE',
-        status: 'ACTIVE',
-        ingestionStatus: 'PENDING',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as any);
-
-      await handler(req, res);
+      await handler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(201);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
-      expect(data.data.name).toBe('Test API');
-      expect(data.data.ingestionStatus).toBe('PENDING');
+      expect(data.data.name).toBe('Basic Test API');
+      expect(data.data.baseUrl).toBe('https://api.example.com');
+      expect(data.data.authType).toBe('NONE');
     });
 
     it('should create API connection with OpenAPI spec and extract endpoints', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      mockParseOpenApiSpec.mockResolvedValue({
+        rawSpec: '{"openapi":"3.0.0","paths":{"/pets":{"get":{"summary":"List pets"}}}}',
+        specHash: 'abc123',
+        spec: { paths: { '/pets': { get: { summary: 'List pets' } } } },
+        version: '3.0.0',
+        title: 'Test API',
+        description: 'Test API description'
+      });
+      mockExtractAndStoreEndpoints.mockResolvedValue(['endpoint-id-1', 'endpoint-id-2']);
+
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'Petstore API',
           baseUrl: 'https://petstore.swagger.io/v2',
-          documentationUrl: 'https://petstore.swagger.io/v2/swagger.json',
-          authType: 'NONE'
+          authType: 'NONE',
+          documentationUrl: 'https://petstore.swagger.io/v2/swagger.json'
         }
       });
 
-      // Mock no existing connection
-      (mockPrisma.apiConnection.findFirst as jest.Mock).mockResolvedValue(null);
-
-      // Mock connection creation
-      (mockPrisma.apiConnection.create as jest.Mock).mockResolvedValue({
-        id: 'test-connection-id',
-        userId: 'test-user-123',
-        name: 'Petstore API',
-        baseUrl: 'https://petstore.swagger.io/v2',
-        authType: 'NONE',
-        status: 'ACTIVE',
-        ingestionStatus: 'PENDING',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as any);
-
-      // Mock OpenAPI parsing
-      mockParseOpenApiSpec.mockResolvedValue({
-        spec: {
-          paths: {
-            '/pet': {
-              get: { summary: 'Get pets', responses: { '200': { description: 'Success' } } }
-            }
-          }
-        },
-        rawSpec: '{"swagger":"2.0"}',
-        specHash: 'test-hash',
-        version: '2.0',
-        title: 'Petstore API'
-      });
-
-      // Mock endpoint extraction
-      mockExtractAndStoreEndpoints.mockResolvedValue(['endpoint-1']);
-
-      // Mock connection update
-      (mockPrisma.apiConnection.update as jest.Mock).mockResolvedValue({
-        id: 'test-connection-id',
-        ingestionStatus: 'SUCCEEDED',
-        rawSpec: '{"swagger":"2.0"}',
-        specHash: 'test-hash'
-      } as any);
-
-      await handler(req, res);
+      await handler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(201);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
+      expect(data.data.name).toBe('Petstore API');
       expect(data.data.ingestionStatus).toBe('SUCCEEDED');
-      expect(mockParseOpenApiSpec).toHaveBeenCalledWith('https://petstore.swagger.io/v2/swagger.json');
-      expect(mockExtractAndStoreEndpoints).toHaveBeenCalled();
     });
 
     it('should handle OpenAPI parsing errors gracefully', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      mockParseOpenApiSpec.mockRejectedValue(new Error('Invalid OpenAPI spec'));
+
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'Invalid API',
           baseUrl: 'https://invalid-api.com',
-          documentationUrl: 'https://invalid-api.com/swagger.json',
-          authType: 'NONE'
+          authType: 'NONE',
+          documentationUrl: 'https://invalid-api.com/swagger.json'
         }
       });
 
-      // Mock no existing connection
-      (mockPrisma.apiConnection.findFirst as jest.Mock).mockResolvedValue(null);
-
-      // Mock connection creation
-      (mockPrisma.apiConnection.create as jest.Mock).mockResolvedValue({
-        id: 'test-connection-id',
-        userId: 'test-user-123',
-        name: 'Invalid API',
-        baseUrl: 'https://invalid-api.com',
-        authType: 'NONE',
-        status: 'ACTIVE',
-        ingestionStatus: 'PENDING',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as any);
-
-      // Mock OpenAPI parsing error
-      mockParseOpenApiSpec.mockRejectedValue(new Error('Invalid OpenAPI spec'));
-
-      // Mock connection update for failed ingestion
-      (mockPrisma.apiConnection.update as jest.Mock).mockResolvedValue({
-        id: 'test-connection-id',
-        ingestionStatus: 'FAILED'
-      } as any);
-
-      await handler(req, res);
+      await handler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(201);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.ingestionStatus).toBe('FAILED');
+      expect(data.warning).toBe('Invalid OpenAPI spec');
     });
 
     it('should prevent duplicate connection names for the same user', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      // Create first connection
+      const connection1 = await testSuite.createConnection(
+        testUser,
+        'Duplicate API',
+        'https://api.example.com',
+        'NONE'
+      );
+
+      // Try to create second connection with same name
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'Duplicate API',
-          baseUrl: 'https://api.example.com',
+          baseUrl: 'https://api2.example.com',
           authType: 'NONE'
         }
       });
 
-      // Mock existing connection
-      (mockPrisma.apiConnection.findFirst as jest.Mock).mockResolvedValue({
-        id: 'existing-connection-id',
-        name: 'Duplicate API',
-        userId: 'test-user-123'
-      } as any);
+      await handler(req as any, res as any);
 
-      await handler(req, res);
-
-      expect(res._getStatusCode()).toBe(400);
+      expect(res._getStatusCode()).toBe(409);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(false);
       expect(data.error).toContain('already exists');
     });
 
     it('should validate required fields', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
-          // Missing required fields
-          authType: 'NONE'
+          name: 'Test API'
+          // Missing baseUrl and authType
         }
       });
 
-      await handler(req, res);
+      await handler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(400);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(false);
-      expect(data.error).toContain('required');
+      expect(data.error).toContain('Missing required fields');
     });
 
     it('should handle invalid auth type', async () => {
-      const { req, res } = createMocks({
-        method: 'POST',
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
-          name: 'Test API',
+          name: 'Invalid Auth API',
           baseUrl: 'https://api.example.com',
           authType: 'INVALID_TYPE'
         }
       });
 
-      await handler(req, res);
+      await handler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(400);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(false);
       expect(data.error).toContain('Invalid auth type');
     });
+
+    it('should reject unauthenticated requests', async () => {
+      const { req, res } = createUnauthenticatedRequest('POST', {
+        body: {
+          name: 'Test API',
+          baseUrl: 'https://api.example.com',
+          authType: 'NONE'
+        }
+      });
+
+      await handler(req as any, res as any);
+
+      expect(res._getStatusCode()).toBe(401);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('Authentication required');
+    });
   });
 
   describe('GET /api/connections', () => {
     it('should retrieve all connections for a user', async () => {
-      const { req, res } = createMocks({
-        method: 'GET'
-      });
+      // Create test connections
+      const connection1 = await testSuite.createConnection(
+        testUser,
+        'Conn1',
+        'https://api1.example.com',
+        'NONE'
+      );
+      const connection2 = await testSuite.createConnection(
+        testUser,
+        'Conn2',
+        'https://api2.example.com',
+        'API_KEY'
+      );
 
-      const mockConnections = [
-        {
-          id: 'connection-1',
-          name: 'API 1',
-          baseUrl: 'https://api1.com',
-          status: 'ACTIVE',
-          ingestionStatus: 'SUCCEEDED',
-          endpoints: []
-        },
-        {
-          id: 'connection-2',
-          name: 'API 2',
-          baseUrl: 'https://api2.com',
-          status: 'ACTIVE',
-          ingestionStatus: 'PENDING',
-          endpoints: []
-        }
-      ];
+      const { req, res } = createAuthenticatedRequest('GET', testUser);
 
-      // Mock Prisma query
-      mockPrisma.apiConnection.findMany = jest.fn().mockResolvedValue(mockConnections);
-
-      await handler(req, res);
+      await handler(req as any, res as any);
 
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
-      expect(data.data).toHaveLength(2);
+      expect(Array.isArray(data.data)).toBe(true);
+      expect(data.data.length).toBeGreaterThanOrEqual(2);
+      
+      // Should find our test connections
+      const connectionNames = data.data.map((conn: any) => conn.name);
+      expect(connectionNames).toContain('Conn1');
+      expect(connectionNames).toContain('Conn2');
+    });
+
+    it('should reject unauthenticated requests', async () => {
+      const { req, res } = createUnauthenticatedRequest('GET');
+
+      await handler(req as any, res as any);
+
+      expect(res._getStatusCode()).toBe(401);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('Authentication required');
     });
   });
 }); 

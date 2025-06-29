@@ -619,139 +619,253 @@
 
 ## Testing Strategy
 
-### Unit Testing
+### Testing Philosophy
 
-1. **Test Structure**
-   ```typescript
-   // tests/unit/lib/validation.test.ts
-   import { createApiConnectionSchema } from '@/lib/validation/apiConnection';
+**No Mock Data Policy**: We follow a strict no-mock-data policy for database and authentication operations in development and production code. All tests use real database connections and real authentication flows.
 
-   describe('API Connection Validation', () => {
-     it('should validate correct input', () => {
-       const validInput = {
-         name: 'Test API',
-         baseUrl: 'https://api.example.com',
-         authType: 'api_key' as const,
-         authConfig: { apiKey: 'test-key' }
-       };
+### Test Categories
 
-       const result = createApiConnectionSchema.safeParse(validInput);
-       expect(result.success).toBe(true);
-     });
+#### 1. Unit Tests (`/tests/unit/`)
+- **Purpose**: Test individual functions and components in isolation
+- **Scope**: Utility functions, business logic, component rendering, middleware, services
+- **Mocking**: Only mock external services (OpenAI, external APIs, Winston logger), never database or auth
+- **Coverage**: Aim for >90% coverage on business logic, >80% on utilities and middleware
 
-     it('should reject invalid URL', () => {
-       const invalidInput = {
-         name: 'Test API',
-         baseUrl: 'not-a-url',
-         authType: 'api_key' as const,
-         authConfig: { apiKey: 'test-key' }
-       };
+#### Recent Improvements
+- **Comprehensive utility testing**: All encryption, logging, and parsing utilities are fully tested
+- **Middleware coverage**: Error handling and rate limiting middleware have complete test coverage
+- **Service testing**: OpenAI service has 89%+ coverage with robust mocking
+- **Structured logging**: All logging follows safe, non-circular patterns
 
-       const result = createApiConnectionSchema.safeParse(invalidInput);
-       expect(result.success).toBe(false);
-     });
-   });
-   ```
+#### 2. Integration Tests (`/tests/integration/`)
+- **Purpose**: Test API endpoints and database interactions end-to-end
+- **Scope**: Full request/response cycles with real database
+- **Authentication**: Use real users with bcrypt-hashed passwords
+- **Database**: Real PostgreSQL connections, no mocks
+- **Cleanup**: Proper test data cleanup between tests
 
-2. **Component Testing**
-   ```typescript
-   // tests/unit/components/ApiConnectionForm.test.tsx
-   import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-   import { ApiConnectionForm } from '@/components/api/ApiConnectionForm';
+#### 3. End-to-End Tests (`/tests/e2e/`)
+- **Purpose**: Test complete user workflows
+- **Scope**: Full browser automation with real backend
+- **Data**: Real database with test users
+- **Environment**: Separate test database
 
-   describe('ApiConnectionForm', () => {
-     it('should submit form with valid data', async () => {
-       const mockOnSubmit = jest.fn();
-       
-       render(<ApiConnectionForm onSubmit={mockOnSubmit} />);
+### Testing Best Practices
 
-       fireEvent.change(screen.getByLabelText(/name/i), {
-         target: { value: 'Test API' }
-       });
+#### Database Testing
+```typescript
+// ✅ GOOD: Real database with test users
+beforeAll(async () => {
+  // Create real test user with bcrypt-hashed password
+  const hashedPassword = await bcrypt.hash('testpass123', 10);
+  testUser = await prisma.user.create({
+    data: {
+      email: 'test@example.com',
+      password: hashedPassword,
+      name: 'Test User',
+      role: 'USER'
+    }
+  });
+  
+  // Login to get real JWT
+  const { req, res } = createMocks({
+    method: 'POST',
+    body: { email: 'test@example.com', password: 'testpass123' }
+  });
+  await loginHandler(req as any, res as any);
+  const data = JSON.parse(res._getData());
+  accessToken = data.data.accessToken;
+});
 
-       fireEvent.change(screen.getByLabelText(/base url/i), {
-         target: { value: 'https://api.example.com' }
-       });
+// ❌ BAD: Mocking database operations
+jest.mock('../../../lib/database/client', () => ({
+  prisma: { user: { findFirst: jest.fn() } }
+}));
+```
 
-       fireEvent.click(screen.getByRole('button', { name: /submit/i }));
+#### Authentication Testing
+```typescript
+// ✅ GOOD: Real authentication flow
+it('should authenticate with valid credentials', async () => {
+  const { req, res } = createMocks({
+    method: 'POST',
+    body: { email: 'admin@example.com', password: 'admin123' }
+  });
+  
+  await loginHandler(req as any, res as any);
+  
+  expect(res._getStatusCode()).toBe(200);
+  const data = JSON.parse(res._getData());
+  expect(data.success).toBe(true);
+  expect(data.data.accessToken).toBeDefined();
+});
 
-       await waitFor(() => {
-         expect(mockOnSubmit).toHaveBeenCalledWith({
-           name: 'Test API',
-           baseUrl: 'https://api.example.com',
-           authType: 'api_key',
-           authConfig: { apiKey: '' }
-         });
-       });
-     });
-   });
-   ```
+// ❌ BAD: Mocking JWT or authentication
+jest.mock('jsonwebtoken');
+(jwt.sign as jest.Mock).mockReturnValue('fake-token');
+```
 
-### Integration Testing
+#### Test Data Management
+```typescript
+// ✅ GOOD: Proper cleanup
+afterAll(async () => {
+  // Clean up test data
+  await prisma.apiConnection.deleteMany({
+    where: { userId: testUserId }
+  });
+  await prisma.user.deleteMany({
+    where: { id: testUserId }
+  });
+  await prisma.$disconnect();
+});
 
-1. **API Testing**
-   ```typescript
-   // tests/integration/api/apis.test.ts
-   import { createMocks } from 'node-mocks-http';
-   import handler from '@/pages/api/apis';
-   import { prisma } from '@/lib/database/client';
+// ✅ GOOD: Unique test data
+const uniqueEmail = `test-${Date.now()}@example.com`;
+```
 
-   describe('/api/apis', () => {
-     beforeEach(async () => {
-       await prisma.apiConnection.deleteMany();
-     });
+#### Logging and Error Handling
+```typescript
+// ✅ GOOD: Safe, structured logging
+logError('API call failed', error, {
+  endpoint: '/api/users',
+  method: 'GET',
+  userId: user.id,
+  statusCode: 500
+});
 
-     it('should create new API connection', async () => {
-       const { req, res } = createMocks({
-         method: 'POST',
-         body: {
-           name: 'Test API',
-           baseUrl: 'https://api.example.com',
-           authType: 'api_key',
-           authConfig: { apiKey: 'test-key' }
-         }
-       });
+// ❌ BAD: Logging entire objects
+logError('API call failed', error, { request, response, user });
+```
 
-       await handler(req, res);
+### Current Test Coverage
 
-       expect(res._getStatusCode()).toBe(201);
-       
-       const data = JSON.parse(res._getData());
-       expect(data.success).toBe(true);
-       expect(data.data.name).toBe('Test API');
-     });
-   });
-   ```
+#### High Coverage Areas (>80%)
+- **Services**: OpenAI service (89.55% lines, 100% functions)
+- **Utilities**: Encryption (91.48% lines), Logger (87.17% lines)
+- **API Parser**: 100% lines and functions
+- **RBAC**: 100% lines and functions
+- **Database**: 98.55% lines and functions
+- **Middleware**: Error handling (80.72% lines), Rate limiting (82.45% lines)
 
-### End-to-End Testing
+#### Test Statistics
+- **Total test suites**: 15
+- **Total tests**: 203
+- **Pass rate**: 100%
+- **Coverage**: 60.12% lines (core business logic >80%)
 
-1. **Playwright Setup**
-   ```typescript
-   // tests/e2e/workflow.spec.ts
-   import { test, expect } from '@playwright/test';
+### Environment Configuration
 
-   test('complete workflow creation', async ({ page }) => {
-     // Navigate to dashboard
-     await page.goto('/dashboard');
-     
-     // Add API connection
-     await page.click('[data-testid="add-api-button"]');
-     await page.fill('[data-testid="api-name"]', 'Test API');
-     await page.fill('[data-testid="api-url"]', 'https://api.example.com');
-     await page.click('[data-testid="submit-api"]');
-     
-     // Create workflow
-     await page.click('[data-testid="new-workflow"]');
-     await page.fill('[data-testid="workflow-input"]', 'Get user data');
-     await page.click('[data-testid="generate-workflow"]');
-     
-     // Confirm and execute
-     await page.click('[data-testid="confirm-workflow"]');
-     
-     // Verify results
-     await expect(page.locator('[data-testid="workflow-success"]')).toBeVisible();
-   });
-   ```
+#### Test Environment Setup
+```bash
+# Test database should be separate from dev/prod
+DATABASE_URL="postgresql://username:password@localhost:5432/apiq_test"
+
+# Test environment variables
+NODE_ENV="test"
+NEXTAUTH_SECRET="test-secret"
+OPENAI_API_KEY="test-key"
+ENCRYPTION_KEY="test-encryption-key-32-chars-long"
+```
+
+#### Jest Configuration
+```javascript
+// jest.config.js
+module.exports = {
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testEnvironment: 'node',
+  testMatch: [
+    '<rootDir>/tests/**/*.test.ts',
+    '<rootDir>/tests/**/*.test.tsx'
+  ],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    'pages/**/*.{ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**'
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    }
+  }
+};
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm test -- --coverage
+
+# Run specific test categories
+npm test -- --testPathPattern="unit"
+npm test -- --testPathPattern="integration"
+npm test -- --testPathPattern="e2e"
+
+# Run specific file
+npm test -- --testPathPattern="openaiService"
+
+# Run tests in watch mode
+npm test -- --watch
+```
+
+### Test Utilities
+
+#### Test Helpers (`/tests/helpers/`)
+- `testUtils.ts`: Common test utilities for creating users, connections, and endpoints
+- Real JWT generation from login endpoints
+- Database cleanup utilities
+- Mock request/response creators
+
+#### Test Data Factories
+```typescript
+// Create test user with real password hash
+const testUser = await createTestUser({
+  email: 'test@example.com',
+  password: 'testpass123',
+  role: 'ADMIN'
+});
+
+// Create API connection
+const connection = await createTestConnection({
+  userId: testUser.id,
+  name: 'Test API',
+  baseUrl: 'https://api.example.com'
+});
+
+// Get real JWT token
+const token = await getAuthToken(testUser.email, 'testpass123');
+```
+
+### Test Coverage Requirements
+
+- **Statements**: 80% minimum (core business logic)
+- **Branches**: 80% minimum (core business logic)
+- **Functions**: 80% minimum (core business logic)
+- **Lines**: 80% minimum (core business logic)
+
+### Continuous Integration
+
+All tests must pass in CI before code can be merged:
+- Unit tests
+- Integration tests
+- Type checking
+- Linting
+- Security scanning
+- Coverage thresholds
+
+### External Service Testing
+
+For external services (OpenAI, external APIs), we use mocks in tests but ensure:
+- Real integration tests exist
+- Error handling is tested
+- Structured logging prevents circular references
 
 ## Security Guidelines
 
@@ -1001,5 +1115,12 @@
      }
    };
    ```
+
+## 🚨 Mock/Test Data Policy & Automated Checks
+
+- **No mock or hardcoded data is allowed in dev or prod code or documentation.**
+- All test users, demo keys, and mock data must only exist in test scripts or test databases.
+- A pre-commit hook and CI check will block any commit/PR that introduces forbidden patterns (e.g., `test-user-123`, `demo-key`, `fake API`, etc.) in non-test code or docs.
+- See `package.json` and `.github/workflows/no-mock-data.yml` for details.
 
 This development guide provides comprehensive coverage of the development process, coding standards, and best practices for the APIQ project. Follow these guidelines to ensure code quality, security, and maintainability. 

@@ -1,17 +1,53 @@
 import { test, expect, request } from '@playwright/test'
+import { createTestUser, cleanupTestUser, generateTestId } from '../helpers/testUtils'
 
 const BASE_URL = 'http://localhost:3000'
 
-// Helper to create a connection
+let testUser;
+let jwt;
+let createdConnectionIds: string[] = [];
+
+// Helper to create a connection with auth
 async function createConnection(apiRequest, data) {
   const response = await apiRequest.post('/api/connections', {
     data,
-    headers: { 'Content-Type': 'application/json' }
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${jwt}`
+    }
   })
+  if (response.status() === 201) {
+    const resData = await response.json();
+    if (resData.data && resData.data.id) {
+      createdConnectionIds.push(resData.data.id);
+    }
+  }
   return response
 }
 
 test.describe('APIQ Application E2E Tests', () => {
+  test.beforeAll(async () => {
+    // Create a real test user and get JWT
+    testUser = await createTestUser(
+      `e2e-${generateTestId('user')}@example.com`,
+      'e2eTestPass123',
+      'ADMIN',
+      'E2E Test User'
+    );
+    jwt = testUser.accessToken;
+  });
+
+  test.afterAll(async ({ request }) => {
+    // Clean up created connections
+    for (const id of createdConnectionIds) {
+      await request.delete(`/api/connections/${id}`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+    }
+    // Clean up test user
+    await cleanupTestUser(testUser);
+  });
+
   test.beforeEach(async ({ page }) => {
     // Navigate to the home page before each test
     await page.goto(BASE_URL)
