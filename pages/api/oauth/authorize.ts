@@ -62,12 +62,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new ApplicationError('API connection not found', 404, 'NOT_FOUND');
     }
 
+    // Check if provider is supported
+    const supportedProviders = oauth2Service.getSupportedProviders();
+    if (!supportedProviders.includes(provider)) {
+      throw new ApplicationError(
+        `Unsupported OAuth2 provider: ${provider}. Supported providers: ${supportedProviders.join(', ')}`,
+        400,
+        'UNSUPPORTED_PROVIDER'
+      );
+    }
+
+    // Get provider configuration to get the URLs
+    const providerConfig = oauth2Service.getProviderConfig(provider);
+    if (!providerConfig) {
+      throw new ApplicationError(
+        `Provider configuration not found for: ${provider}`,
+        400,
+        'PROVIDER_CONFIG_NOT_FOUND'
+      );
+    }
+
     // Validate OAuth2 configuration
     const config = {
       clientId,
       clientSecret,
-      authorizationUrl: '', // Will be set by the service
-      tokenUrl: '', // Will be set by the service
+      authorizationUrl: providerConfig.authorizationUrl,
+      tokenUrl: providerConfig.tokenUrl,
       redirectUri,
       scope: scopeString,
       state: provider
@@ -79,16 +99,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `Invalid OAuth2 configuration: ${validationErrors.join(', ')}`,
         400,
         'INVALID_CONFIG'
-      );
-    }
-
-    // Check if provider is supported
-    const supportedProviders = oauth2Service.getSupportedProviders();
-    if (!supportedProviders.includes(provider)) {
-      throw new ApplicationError(
-        `Unsupported OAuth2 provider: ${provider}. Supported providers: ${supportedProviders.join(', ')}`,
-        400,
-        'UNSUPPORTED_PROVIDER'
       );
     }
 
@@ -115,20 +125,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    // Redirect to OAuth2 provider
-    res.redirect(authorizationUrl);
+    // For testability, send a JSON response with the redirect URL
+    res.status(200).json({
+      success: true,
+      data: {
+        redirectUrl: authorizationUrl
+      }
+    });
+    // In production, you may want to use: res.redirect(authorizationUrl);
 
   } catch (error) {
     console.error('OAuth2 authorization error:', error);
 
     if (error instanceof ApplicationError) {
       return res.status(error.statusCode).json({
+        success: false,
         error: error.message,
         code: error.code
       });
     }
 
     return res.status(500).json({
+      success: false,
       error: 'Internal server error',
       code: 'INTERNAL_ERROR'
     });

@@ -5,7 +5,11 @@ import { ApplicationError } from '../../../src/middleware/errorHandler';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({
+      success: false,
+      error: 'Method not allowed',
+      code: 'METHOD_NOT_ALLOWED'
+    });
   }
 
   try {
@@ -75,7 +79,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Return success response
     res.status(200).json({
       success: true,
-      message: 'OAuth2 token refreshed successfully'
+      data: {
+        message: 'OAuth2 token refreshed successfully'
+      }
     });
 
   } catch (error) {
@@ -83,12 +89,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (error instanceof ApplicationError) {
       return res.status(error.statusCode).json({
+        success: false,
         error: error.message,
         code: error.code
       });
     }
 
     return res.status(500).json({
+      success: false,
       error: 'Internal server error',
       code: 'INTERNAL_ERROR'
     });

@@ -72,24 +72,34 @@ describe('OpenApiCache', () => {
     it('should evict oldest when max size reached', () => {
       // Create a fresh cache with maxSize 3 for this test
       const testCache = new OpenApiCache({
-        ttl: 1,
+        ttl: 3600, // Use longer TTL to avoid expiration during test
         maxSize: 3,
         maxSizeBytes: 1024,
         compression: false,
         slowSpecTimeout: 5000,
       });
       
+      // Add items sequentially - the cache should maintain insertion order
       testCache.set('url1', { spec: '1' });
       testCache.set('url2', { spec: '2' });
       testCache.set('url3', { spec: '3' });
       
-      // This should evict the oldest (url1)
+      // Verify all 3 items are in cache
+      expect(testCache.get('url1')).toEqual({ spec: '1' });
+      expect(testCache.get('url2')).toEqual({ spec: '2' });
+      expect(testCache.get('url3')).toEqual({ spec: '3' });
+      
+      // This should evict the oldest (url1) since we're at max size
       testCache.set('url4', { spec: '4' });
       
+      // url1 should be evicted, others should remain
       expect(testCache.get('url1')).toBeNull();
-      expect(testCache.get('url2')).not.toBeNull();
-      expect(testCache.get('url3')).not.toBeNull();
-      expect(testCache.get('url4')).not.toBeNull();
+      expect(testCache.get('url2')).toEqual({ spec: '2' });
+      expect(testCache.get('url3')).toEqual({ spec: '3' });
+      expect(testCache.get('url4')).toEqual({ spec: '4' });
+      
+      // Verify cache size is still at max
+      expect(testCache.getStats().size).toBe(3);
     });
 
     it('should evict by size when max bytes reached', () => {

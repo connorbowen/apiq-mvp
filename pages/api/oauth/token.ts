@@ -5,7 +5,11 @@ import { ApplicationError } from '../../../src/middleware/errorHandler';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({
+      success: false,
+      error: 'Method not allowed',
+      code: 'METHOD_NOT_ALLOWED'
+    });
   }
 
   try {
@@ -64,8 +68,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Return the access token
     res.status(200).json({
       success: true,
-      accessToken,
-      tokenType: 'Bearer'
+      data: {
+        accessToken,
+        tokenType: 'Bearer'
+      }
     });
 
   } catch (error) {
@@ -73,12 +79,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (error instanceof ApplicationError) {
       return res.status(error.statusCode).json({
+        success: false,
         error: error.message,
         code: error.code
       });
     }
 
     return res.status(500).json({
+      success: false,
       error: 'Internal server error',
       code: 'INTERNAL_ERROR'
     });
