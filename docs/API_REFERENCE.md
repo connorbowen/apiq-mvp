@@ -1045,6 +1045,60 @@ Configure outgoing webhooks for workflow events.
 }
 ```
 
+## Admin Endpoints
+
+### OpenAPI Cache Management
+
+#### `GET /api/admin/openapi-cache`
+
+Get OpenAPI cache statistics and status.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+X-Admin-Token: <admin_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "size": 5,
+    "totalSizeBytes": 1024000,
+    "maxSize": 100,
+    "maxSizeBytes": 52428800,
+    "ttl": 3600,
+    "entries": [
+      {
+        "url": "https://api.example.com/openapi.json",
+        "age": 1800000,
+        "size": 204800,
+        "compressed": true
+      }
+    ]
+  }
+}
+```
+
+#### `DELETE /api/admin/openapi-cache`
+
+Clear the OpenAPI cache.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+X-Admin-Token: <admin_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "OpenAPI cache cleared successfully"
+}
+```
+
 ## SDKs and Libraries
 
 ### JavaScript/TypeScript
