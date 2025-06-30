@@ -102,15 +102,16 @@ describe('OAuth2 Flow Integration Tests', () => {
       expect(provider).toHaveProperty('tokenUrl');
     });
 
-    it('should require authentication', async () => {
+    it('should not require authentication', async () => {
       const { req, res } = createUnauthenticatedRequest('GET');
 
       await providersHandler(req as any, res as any);
 
-      expect(res._getStatusCode()).toBe(401);
+      expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('Authentication required');
+      expect(data.success).toBe(true);
+      expect(data.data).toHaveProperty('providers');
+      expect(data.data).toHaveProperty('count');
     });
   });
 

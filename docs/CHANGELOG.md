@@ -77,6 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed one-off JavaScript scripts to maintain TypeScript-only codebase
   - Kept only utility/devops scripts in `scripts/` directory
   - Improved project organization and maintainability
+- **Network Error Handling** - Updated E2E tests to simulate network errors using Playwright's offline mode and fetch, ensuring the app handles network failures gracefully across all browsers.
+- **OAuth2 Providers Endpoint** - Clarified that GET /api/oauth/providers does not require authentication. Updated integration tests and documentation to match implementation.
+- **Integration Test Alignment** - Fixed integration tests to match actual endpoint behavior, especially for OAuth2 providers and error handling scenarios.
 
 ### Changed
 - N/A

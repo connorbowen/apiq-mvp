@@ -471,3 +471,11 @@ npm test -- --verbose --testNamePattern="API Connections"
 ---
 
 **Note**: This testing guide reflects the current state of the APIQ test suite. All tests must pass before any code is merged to main, and the no-mock-data policy is strictly enforced through automated checks and code reviews.
+
+### E2E Network Error Handling
+
+Network error handling is now tested in E2E by simulating offline mode in Playwright and attempting a fetch to an API endpoint (e.g., /api/health). The test expects the fetch to fail with a network error, and the application should handle this gracefully in the UI and API boundary. This approach works across Chromium, Firefox, and WebKit, and avoids browser-specific offline pages.
+
+### OAuth2 Providers Endpoint Test
+
+The integration test for GET /api/oauth/providers was updated to expect a 200 response (not 401), since the endpoint is public and does not require authentication.

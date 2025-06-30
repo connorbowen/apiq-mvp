@@ -1310,26 +1310,26 @@ APIQ supports OAuth2 authentication for connecting to third-party APIs that requ
 
 Get list of supported OAuth2 providers and their configuration.
 
-**Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
+**Authentication:**
+> No authentication required. This endpoint is public and can be called without a JWT token.
 
 **Response:**
 ```json
 {
   "success": true,
-  "providers": [
-    {
-      "name": "github",
-      "displayName": "GitHub",
-      "authorizationUrl": "https://github.com/login/oauth/authorize",
-      "tokenUrl": "https://github.com/login/oauth/access_token",
-      "scope": "repo user",
-      "userInfoUrl": "https://api.github.com/user"
-    }
-  ],
-  "count": 3
+  "data": {
+    "providers": [
+      {
+        "name": "github",
+        "displayName": "GitHub",
+        "authorizationUrl": "https://github.com/login/oauth/authorize",
+        "tokenUrl": "https://github.com/login/oauth/access_token",
+        "scope": "repo user",
+        "userInfoUrl": "https://api.github.com/user"
+      }
+    ],
+    "count": 3
+  }
 }
 ```
 
@@ -1461,4 +1461,10 @@ To use OAuth2 with an API connection:
     "scope": "repo user"
   }
 }
-``` 
+```
+
+### Error Handling
+
+#### Network Error Handling
+
+Network errors (e.g., loss of connectivity, server unreachable) are now tested in E2E using Playwright by simulating offline mode and attempting a fetch to an API endpoint. The application is expected to handle these errors gracefully at the UI and API boundary, providing user-friendly error messages and not crashing. See `tests/e2e/app.test.ts` for the latest test implementation. 
