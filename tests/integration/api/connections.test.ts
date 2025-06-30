@@ -3,6 +3,7 @@ import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
 import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
+import fs from 'fs';
 
 // Import the real modules (no mocking)
 import { parseOpenApiSpec } from '../../../src/lib/api/parser';

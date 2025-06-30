@@ -18,11 +18,13 @@ export interface ExtractedEndpoint {
  * Extract endpoints from an OpenAPI specification and store them in the database
  * @param apiConnectionId The ID of the API connection
  * @param parsedSpec The parsed OpenAPI specification
+ * @param transaction Optional transaction context to use
  * @returns Array of created endpoint IDs
  */
 export const extractAndStoreEndpoints = async (
   apiConnectionId: string, 
-  parsedSpec: ParsedOpenApiSpec
+  parsedSpec: ParsedOpenApiSpec,
+  transaction?: any
 ): Promise<string[]> => {
   const extractedEndpoints: ExtractedEndpoint[] = [];
   
@@ -61,35 +63,35 @@ export const extractAndStoreEndpoints = async (
       }
     }
 
-    // Store endpoints in a transaction
-    const createdEndpoints = await prisma.$transaction(async (tx: any) => {
-      // Delete existing endpoints for this connection
-      await tx.endpoint.deleteMany({
-        where: { apiConnectionId }
-      });
-
-      // Create new endpoints
-      const created = await tx.endpoint.createMany({
-        data: extractedEndpoints.map(endpoint => ({
-          apiConnectionId: endpoint.apiConnectionId,
-          path: endpoint.path,
-          method: endpoint.method,
-          summary: endpoint.summary,
-          description: endpoint.description,
-          parameters: endpoint.parameters,
-          requestBody: endpoint.requestBody,
-          responses: endpoint.responses
-        }))
-      });
-
-      // Get the created endpoint IDs
-      const endpointIds = await tx.endpoint.findMany({
-        where: { apiConnectionId },
-        select: { id: true }
-      });
-
-      return endpointIds.map((e: any) => e.id);
+    // Use provided transaction or create a new one
+    const tx = transaction || prisma;
+    
+    // Delete existing endpoints for this connection
+    await tx.endpoint.deleteMany({
+      where: { apiConnectionId }
     });
+
+    // Create new endpoints
+    const created = await tx.endpoint.createMany({
+      data: extractedEndpoints.map(endpoint => ({
+        apiConnectionId: endpoint.apiConnectionId,
+        path: endpoint.path,
+        method: endpoint.method,
+        summary: endpoint.summary,
+        description: endpoint.description,
+        parameters: endpoint.parameters,
+        requestBody: endpoint.requestBody,
+        responses: endpoint.responses
+      }))
+    });
+
+    // Get the created endpoint IDs
+    const endpointIds = await tx.endpoint.findMany({
+      where: { apiConnectionId },
+      select: { id: true }
+    });
+
+    const createdEndpoints = endpointIds.map((e: any) => e.id);
 
     logInfo('Successfully extracted and stored endpoints', {
       apiConnectionId,

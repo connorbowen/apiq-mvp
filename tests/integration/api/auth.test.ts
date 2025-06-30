@@ -13,14 +13,52 @@ describe('Authentication Integration Tests', () => {
 
   beforeAll(async () => {
     await testSuite.beforeAll();
-    
-    // Create test users with different roles
+    // testUsers creation moved to beforeEach
+  });
+
+  afterAll(async () => {
+    await testSuite.afterAll();
+  });
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    await prisma.endpoint.deleteMany({
+      where: {
+        apiConnection: {
+          user: {
+            OR: [
+              { email: { contains: 'test-' } },
+              { email: { contains: '@example.com' } }
+            ]
+          }
+        }
+      }
+    });
+    await prisma.apiConnection.deleteMany({
+      where: {
+        user: {
+          OR: [
+            { email: { contains: 'test-' } },
+            { email: { contains: '@example.com' } }
+          ]
+        }
+      }
+    });
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { email: { contains: 'test-' } },
+          { email: { contains: '@example.com' } }
+        ]
+      }
+    });
+    // Always create testUsers after cleanup
+    testUsers = [];
     const users = [
       { email: 'testuser@example.com', password: 'user123', role: Role.USER },
       { email: 'testadmin@example.com', password: 'admin123', role: Role.ADMIN },
       { email: 'testsuper@example.com', password: 'super123', role: Role.SUPER_ADMIN }
     ];
-
     for (const userData of users) {
       const user = await testSuite.createUser(
         userData.email,
@@ -30,10 +68,6 @@ describe('Authentication Integration Tests', () => {
       );
       testUsers.push(user);
     }
-  });
-
-  afterAll(async () => {
-    await testSuite.afterAll();
   });
 
   describe('POST /api/auth/login', () => {
