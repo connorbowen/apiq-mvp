@@ -7,9 +7,10 @@ import { prisma } from '../../../lib/database/client';
 import { handleApiError } from '../../../src/middleware/errorHandler';
 import { logInfo, logError } from '../../../src/utils/logger';
 import { CreateApiConnectionRequest } from '../../../src/types';
-import { parseOpenApiSpec, ParseError } from '../../../src/lib/api/parser';
+import { parseOpenApiSpecData, ParseError } from '../../../src/lib/api/parser';
 import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
+import { openApiService } from '../../../src/services/openApiService';
 
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
@@ -132,8 +133,15 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           // If documentation URL is provided, parse OpenAPI spec and extract endpoints
           if (connectionData.documentationUrl) {
             try {
-              // Parse the OpenAPI specification
-              const parsedSpec = await parseOpenApiSpec(connectionData.documentationUrl);
+              // Use the new OpenAPI service with caching
+              const fetchResult = await openApiService.fetchSpec(connectionData.documentationUrl);
+              
+              if (!fetchResult.success) {
+                throw new Error(fetchResult.error || 'Failed to fetch OpenAPI spec');
+              }
+
+              // Parse the OpenAPI specification using the fetched spec data
+              const parsedSpec = await parseOpenApiSpecData(fetchResult.spec, connectionData.documentationUrl);
               
               // Validate that parsedSpec has the required properties
               if (!parsedSpec || !parsedSpec.rawSpec || !parsedSpec.specHash) {
@@ -151,12 +159,14 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               });
 
               // Extract and store endpoints
-              const endpoints = await extractAndStoreEndpoints(newConnection.id, parsedSpec, tx);
+              const endpoints = await extractAndStoreEndpoints(newConnection.id, parsedSpec);
               endpointCount = Array.isArray(endpoints) ? endpoints.length : 0;
 
               logInfo('Successfully processed OpenAPI spec and extracted endpoints', {
                 connectionId: newConnection.id,
-                endpointCount: Object.keys(parsedSpec.spec.paths).length
+                endpointCount: Object.keys(parsedSpec.spec.paths).length,
+                cached: fetchResult.cached,
+                duration: fetchResult.duration
               });
 
             } catch (error: any) {

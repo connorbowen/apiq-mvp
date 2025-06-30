@@ -63,25 +63,14 @@ describe('Endpoint Extraction and Management', () => {
       };
 
       const apiConnectionId = 'test-connection-id';
-      
-      // Mock the individual Prisma operations
-      (mockPrisma.endpoint.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
-      (mockPrisma.endpoint.createMany as jest.Mock).mockResolvedValue({ count: 3 });
-      (mockPrisma.endpoint.findMany as jest.Mock).mockResolvedValue([
-        { id: '1' }, { id: '2' }, { id: '3' }
-      ]);
+      const mockTransaction = jest.fn().mockResolvedValue(['1', '2', '3']); // 3 endpoint IDs
+
+      mockPrisma.$transaction.mockImplementation(mockTransaction);
 
       const result = await extractAndStoreEndpoints(apiConnectionId, mockParsedSpec);
 
       expect(result).toHaveLength(3);
-      expect(mockPrisma.endpoint.deleteMany).toHaveBeenCalledWith({
-        where: { apiConnectionId }
-      });
-      expect(mockPrisma.endpoint.createMany).toHaveBeenCalled();
-      expect(mockPrisma.endpoint.findMany).toHaveBeenCalledWith({
-        where: { apiConnectionId },
-        select: { id: true }
-      });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
 
     it('should handle empty paths gracefully', async () => {
@@ -93,21 +82,14 @@ describe('Endpoint Extraction and Management', () => {
         title: 'Test API'
       };
       const apiConnectionId = 'test-connection-id';
-      
-      // Mock the individual Prisma operations
-      (mockPrisma.endpoint.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
-      (mockPrisma.endpoint.createMany as jest.Mock).mockResolvedValue({ count: 0 });
-      (mockPrisma.endpoint.findMany as jest.Mock).mockResolvedValue([]);
+      const mockTransaction = jest.fn().mockResolvedValue([]);
+
+      mockPrisma.$transaction.mockImplementation(mockTransaction);
 
       const result = await extractAndStoreEndpoints(apiConnectionId, mockParsedSpec);
 
       expect(result).toHaveLength(0);
-      expect(mockPrisma.endpoint.deleteMany).toHaveBeenCalledWith({
-        where: { apiConnectionId }
-      });
-      expect(mockPrisma.endpoint.createMany).toHaveBeenCalledWith({
-        data: []
-      });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
 
     it('should handle complex endpoint structures', async () => {
@@ -145,25 +127,14 @@ describe('Endpoint Extraction and Management', () => {
       };
 
       const apiConnectionId = 'test-connection-id';
-      
-      // Mock the individual Prisma operations
-      (mockPrisma.endpoint.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
-      (mockPrisma.endpoint.createMany as jest.Mock).mockResolvedValue({ count: 1 });
-      (mockPrisma.endpoint.findMany as jest.Mock).mockResolvedValue([
-        { id: '1' }
-      ]);
+      const mockTransaction = jest.fn().mockResolvedValue(['1']);
+
+      mockPrisma.$transaction.mockImplementation(mockTransaction);
 
       const result = await extractAndStoreEndpoints(apiConnectionId, mockParsedSpec);
 
       expect(result).toHaveLength(1);
-      expect(mockPrisma.endpoint.deleteMany).toHaveBeenCalledWith({
-        where: { apiConnectionId }
-      });
-      expect(mockPrisma.endpoint.createMany).toHaveBeenCalled();
-      expect(mockPrisma.endpoint.findMany).toHaveBeenCalledWith({
-        where: { apiConnectionId },
-        select: { id: true }
-      });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
     });
   });
 

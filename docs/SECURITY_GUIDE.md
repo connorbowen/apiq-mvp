@@ -97,6 +97,9 @@ APIQ implements a multi-layered security approach:
 └─────────────┴─────────┴─────────┴─────────────┘
 ```
 
+- All authentication and authorization logic must use real user data from the database.
+- No mock or hardcoded users are allowed in dev/prod code.
+
 ## Data Protection
 
 ### Encryption
@@ -192,52 +195,229 @@ const retentionPolicies: RetentionPolicy[] = [
 - **Monitoring**: Real-time rate limit monitoring and alerting
 - **Graceful Handling**: Proper rate limit error responses
 
+## Infrastructure Security
+
+### Container Security
+
+**Docker Security Best Practices**
+```dockerfile
+# Multi-stage build for security
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+FROM node:18-alpine AS runtime
+WORKDIR /app
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY . .
+
+# Security: Run as non-root user
+USER nextjs
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+**Security Scanning**
+- Container vulnerability scanning
+- Base image security updates
+- Runtime security monitoring
+- Secrets management
+
+## Compliance & Governance
+
+### GDPR Compliance
+
+**Data Subject Rights**
+```typescript
+// Data export functionality
+export const exportUserData = async (userId: string): Promise<UserDataExport> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      apiConnections: true,
+      workflows: true,
+      auditLogs: true
+    }
+  });
+  
+  return {
+    personalData: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt
+    },
+    apiConnections: user.apiConnections.map(api => ({
+      id: api.id,
+      name: api.name,
+      baseUrl: api.baseUrl,
+      createdAt: api.createdAt
+    })),
+    workflows: user.workflows,
+    auditLogs: user.auditLogs
+  };
+};
+
+// Data deletion functionality
+export const deleteUserData = async (userId: string): Promise<void> => {
+  await prisma.$transaction(async (tx) => {
+    // Anonymize personal data
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        email: `deleted_${userId}@deleted.com`,
+        name: 'Deleted User',
+        deletedAt: new Date()
+      }
+    });
+    
+    // Delete sensitive data
+    await tx.apiCredentials.deleteMany({
+      where: { userId }
+    });
+    
+    // Archive audit logs
+    await tx.auditLog.updateMany({
+      where: { userId },
+      data: { archived: true }
+    });
+  });
+};
+```
+
+### SOC 2 Compliance
+
+**Security Controls**
+- Access control policies
+- Change management procedures
+- Incident response plans
+- Regular security assessments
+
+**Audit Trail**
+```typescript
+// Comprehensive audit logging
+export const logSecurityEvent = async (event: SecurityEvent): Promise<void> => {
+  await prisma.securityLog.create({
+    data: {
+      eventType: event.type,
+      userId: event.userId,
+      ipAddress: event.ipAddress,
+      userAgent: event.userAgent,
+      details: event.details,
+      severity: event.severity,
+      timestamp: new Date()
+    }
+  });
+  
+  // Alert on high-severity events
+  if (event.severity === 'HIGH' || event.severity === 'CRITICAL') {
+    await sendSecurityAlert(event);
+  }
+};
+```
+
+### Industry Standards
+
+**OWASP Top 10 Compliance**
+- Input validation and output encoding
+- Authentication and session management
+- Access control implementation
+- Security configuration management
+- Data protection and privacy
+
+**NIST Cybersecurity Framework**
+- Identify: Asset management and risk assessment
+- Protect: Access control and data security
+- Detect: Continuous monitoring and detection
+- Respond: Incident response and communication
+- Recover: Business continuity and improvement
+
+- Automated checks (pre-commit and CI) enforce the no-mock-data policy.
+- All documentation and code reviews must verify compliance with this policy.
+
 ## Security Testing - ✅ COMPLETED
 
 ### Authentication Testing
-- **Login Flow**: 4 comprehensive tests covering all scenarios
-- **Token Refresh**: 2 tests for secure token refresh
-- **User Information**: 3 tests for user data access
-- **Role Management**: 1 test for RBAC functionality
-- **Error Handling**: 2 tests for authentication error scenarios
-
-### Security Validation Results
-- **Test Success Rate**: 100% (206/206 tests passing)
-- **Authentication Endpoints**: All endpoints working correctly
-- **RBAC Implementation**: Fully functional with comprehensive testing
-- **Credential Management**: Secure storage and access tested
-- **Audit Logging**: Complete audit trail implementation verified
-
-### Penetration Testing Scenarios
-- **Invalid Credentials**: Proper error handling without information leakage
-- **Expired Tokens**: Secure token expiration and refresh handling
-- **Unauthorized Access**: Proper 401/403 responses for unauthorized requests
-- **SQL Injection**: Input validation prevents injection attacks
-- **XSS Prevention**: Output encoding prevents cross-site scripting
-
-## Compliance & Standards
-
-### Security Standards
-- **OWASP Top 10**: Protection against common web vulnerabilities
-- **SOC-2**: Audit logging and compliance features
-- **GDPR**: Data protection and privacy compliance
-- **PCI DSS**: Payment card industry security standards (for payment integrations)
-
-### Best Practices
-- **Principle of Least Privilege**: Minimal required permissions
-- **Defense in Depth**: Multiple layers of security controls
-- **Secure by Default**: Secure configurations by default
-- **Regular Updates**: Security patches and dependency updates
-
-## Monitoring & Alerting
+- **JWT Token Validation**: Comprehensive token testing with real users
+- **API Key Authentication**: Real Stripe API integration testing
+- **OAuth2 Flow Testing**: Complete OAuth2 flow validation
+- **RBAC Testing**: Role-based access control validation
+- **Security Validation**: 100% test success rate achieved
 
 ### Security Monitoring
-- **Authentication Events**: Monitor login attempts and failures
-- **Authorization Events**: Track access control decisions
-- **Credential Access**: Monitor API credential usage
-- **Rate Limiting**: Track rate limit violations and abuse
 
-### Alerting
+#### Real-time Monitoring
+
+**Security Event Monitoring**
+```typescript
+// Security event monitoring
+export const monitorSecurityEvents = async () => {
+  const events = await prisma.securityLog.findMany({
+    where: {
+      timestamp: {
+        gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+      },
+      severity: {
+        in: ['HIGH', 'CRITICAL']
+      }
+    }
+  });
+  
+  // Analyze patterns
+  const suspiciousPatterns = analyzeSecurityPatterns(events);
+  
+  // Generate alerts
+  if (suspiciousPatterns.length > 0) {
+    await sendSecurityAlerts(suspiciousPatterns);
+  }
+};
+```
+
+**Anomaly Detection**
+- User behavior analysis
+- API usage patterns
+- Geographic access patterns
+- Time-based access patterns
+
+### Logging and Alerting
+
+**Security Logging**
+```typescript
+// Structured security logging
+export const securityLogger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({
+      filename: 'logs/security.log',
+      maxsize: 5242880, // 5MB
+      maxFiles: 10
+    }),
+    new winston.transports.Console({
+      format: winston.format.simple()
+    })
+  ]
+});
+
+export const logSecurityEvent = (event: SecurityEvent) => {
+  securityLogger.info('Security Event', {
+    eventType: event.type,
+    userId: event.userId,
+    ipAddress: event.ipAddress,
+    userAgent: event.userAgent,
+    details: event.details,
+    severity: event.severity,
+    timestamp: new Date().toISOString()
+  });
+};
+```
+
+**Alerting**
 - **Failed Authentication**: Alerts for repeated failed login attempts
 - **Unauthorized Access**: Alerts for access control violations
 - **Credential Abuse**: Alerts for suspicious credential usage
@@ -245,68 +425,121 @@ const retentionPolicies: RetentionPolicy[] = [
 
 ## Incident Response
 
-### Security Incident Handling
-- **Detection**: Automated detection of security incidents
-- **Response**: Immediate response procedures for security events
-- **Containment**: Rapid containment of security threats
-- **Recovery**: Secure recovery procedures for affected systems
+### Response Plan
 
-### Forensics
-- **Audit Logs**: Complete audit trail for incident investigation
-- **Evidence Preservation**: Secure preservation of security evidence
-- **Analysis**: Comprehensive analysis of security incidents
-- **Documentation**: Complete documentation of incident response
+**Incident Classification**
+1. **Critical**: System compromise, data breach
+2. **High**: Unauthorized access, credential theft
+3. **Medium**: Failed authentication, suspicious activity
+4. **Low**: Policy violations, minor security events
+
+**Response Procedures**
+```typescript
+export const handleSecurityIncident = async (incident: SecurityIncident) => {
+  // Immediate response
+  await logSecurityEvent({
+    type: 'INCIDENT_DETECTED',
+    severity: incident.severity,
+    details: incident
+  });
+  
+  // Alert security team
+  await sendSecurityAlert(incident);
+  
+  // Contain incident
+  await containIncident(incident);
+  
+  // Investigate and remediate
+  await investigateIncident(incident);
+  await remediateIncident(incident);
+  
+  // Post-incident review
+  await conductPostIncidentReview(incident);
+};
+```
+
+### Communication Plan
+
+**Stakeholder Notification**
+- **Internal**: Security team, management, affected users
+- **External**: Customers, regulators (if required)
+- **Public**: Press releases, status updates
+
+**Escalation Matrix**
+```
+Level 1: Security Analyst (0-2 hours)
+Level 2: Security Manager (2-4 hours)
+Level 3: CISO (4-8 hours)
+Level 4: Executive Team (8+ hours)
+```
+
+## Security Best Practices
+
+### Development Security
+
+**Secure Coding Standards**
+- Input validation and sanitization
+- Output encoding and escaping
+- Secure authentication implementation
+- Proper error handling
+- Regular security code reviews
+
+**Dependency Management**
+- Regular dependency updates
+- Vulnerability scanning
+- License compliance
+- Supply chain security
+
+### Operational Security
+
+**Access Management**
+- Principle of least privilege
+- Regular access reviews
+- Multi-factor authentication
+- Session management
+- Privileged access management
+
+**Monitoring and Logging**
+- Comprehensive logging
+- Real-time monitoring
+- Alert management
+- Log retention and analysis
+- Security information and event management (SIEM)
 
 ## Security Checklist
 
-### Development Security
-- [x] **Input Validation**: All inputs validated and sanitized
-- [x] **Authentication**: JWT-based authentication implemented
-- [x] **Authorization**: RBAC with proper role hierarchy
-- [x] **Encryption**: AES-256 encryption for sensitive data
-- [x] **Audit Logging**: Comprehensive audit trail
-- [x] **Error Handling**: Secure error handling without data exposure
-- [x] **Rate Limiting**: Protection against abuse and DDoS
-- [x] **HTTPS**: TLS 1.3 enforced for all communications
+### Pre-Deployment Checklist
+- [ ] Security code review completed
+- [ ] Vulnerability scan passed
+- [ ] Penetration testing completed
+- [ ] Security configuration reviewed
+- [ ] Access controls verified
+- [ ] Encryption implemented
+- [ ] Logging configured
+- [ ] Monitoring enabled
+- [ ] Incident response plan tested
+- [ ] Compliance requirements met
 
-### Testing Security
-- [x] **Authentication Testing**: Complete authentication flow testing
-- [x] **Authorization Testing**: RBAC functionality verified
-- [x] **Encryption Testing**: Credential encryption validated
-- [x] **Input Validation**: Injection attack prevention tested
-- [x] **Error Handling**: Secure error responses verified
-- [x] **Audit Logging**: Complete audit trail testing
-- [x] **Rate Limiting**: Abuse prevention tested
-- [x] **Security Headers**: Security headers properly configured
+### Ongoing Security Tasks
+- [ ] Regular security assessments
+- [ ] Vulnerability management
+- [ ] Access control reviews
+- [ ] Security training updates
+- [ ] Incident response drills
+- [ ] Compliance audits
+- [ ] Security metrics review
+- [ ] Threat intelligence updates
 
-### Deployment Security
-- [x] **Environment Variables**: Secure configuration management
-- [x] **Database Security**: Secure database configuration
-- [x] **Network Security**: Proper network security controls
-- [x] **Monitoring**: Security monitoring and alerting
-- [x] **Backup Security**: Secure backup and recovery procedures
-- [x] **Access Control**: Secure access to production systems
-- [x] **Incident Response**: Security incident response procedures
-- [x] **Compliance**: Security compliance requirements met
+### Emergency Response
+- [ ] Incident detection and classification
+- [ ] Immediate containment measures
+- [ ] Stakeholder notification
+- [ ] Investigation and analysis
+- [ ] Remediation and recovery
+- [ ] Post-incident review
+- [ ] Lessons learned documentation
+- [ ] Process improvement implementation
 
-## Security Metrics
+---
 
-### Current Security Status
-- **Test Success Rate**: 100% (206/206 tests passing)
-- **Authentication Coverage**: Complete authentication flow tested
-- **Authorization Coverage**: Full RBAC implementation tested
-- **Encryption Coverage**: All sensitive data encrypted
-- **Audit Coverage**: Comprehensive audit logging implemented
-- **Security Headers**: All security headers properly configured
-- **Rate Limiting**: Abuse prevention fully implemented
-- **Error Handling**: Secure error handling throughout system
-
-### Security Achievements
-- **Phase 2.3 Complete**: Authentication flow testing finished
-- **100% Test Success**: All security-related tests passing
-- **Enterprise Security**: Production-ready security implementation
-- **Compliance Ready**: SOC-2 and GDPR compliance features
-- **Comprehensive Testing**: All security scenarios tested
-- **Documentation Complete**: Full security documentation
-
-This comprehensive security implementation ensures APIQ MVP maintains the highest security standards while providing robust protection for user data and system integrity. 
+**Note**: This security guide is a living document that should be updated regularly to reflect current security practices, threats, and compliance requirements. All security measures must be implemented and tested before deployment to production environments. 

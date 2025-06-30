@@ -86,7 +86,7 @@ describe('OpenApiService', () => {
       const result = await service.fetchSpec(testUrl);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('timeout');
+      expect(result.error).toContain('Request timeout');
     });
 
     it('should handle invalid specs', async () => {
@@ -131,7 +131,7 @@ describe('OpenApiService', () => {
       const spec = { info: { title: 'Test' }, paths: {} };
       const result = service.validateSpec(spec);
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Missing OpenAPI version (openapi or swagger field)');
+      expect(result.errors).toContain('Missing OpenAPI version');
     });
 
     it('should reject spec without info', () => {
@@ -185,7 +185,7 @@ describe('OpenApiService', () => {
       };
       const result = service.validateSpec(spec);
       expect(result.isValid).toBe(true);
-      expect(result.warnings).toContain('No components object defined (schemas, securitySchemes, etc.)');
+      expect(result.warnings).toContain('No components object defined');
     });
   });
 

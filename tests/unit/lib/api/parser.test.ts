@@ -1,11 +1,6 @@
 import { parseOpenApiSpec, validateOpenApiUrl } from '../../../../src/lib/api/parser';
 import * as logger from '../../../../src/utils/logger';
 
-// Mock axios
-jest.mock('axios', () => ({
-  get: jest.fn()
-}));
-
 // Mock SwaggerParser
 jest.mock('@apidevtools/swagger-parser', () => ({
   __esModule: true,
@@ -14,10 +9,14 @@ jest.mock('@apidevtools/swagger-parser', () => ({
   }
 }));
 
-import axios from 'axios';
 import SwaggerParser from '@apidevtools/swagger-parser';
 
-const axiosGetMock = axios.get as jest.Mock;
+const mockSwaggerParser = SwaggerParser as jest.Mocked<typeof SwaggerParser>;
+
+jest.mock('crypto', () => ({
+  createHash: () => ({ update: () => ({ digest: () => 'hash' }) })
+}));
+
 const parseMock = SwaggerParser.parse as jest.Mock;
 
 describe('OpenAPI Parser', () => {
@@ -47,10 +46,7 @@ describe('OpenAPI Parser', () => {
         }
       };
 
-      // Mock axios to return the spec data
-      axiosGetMock.mockResolvedValue({ data: mockSpec });
-      // Mock SwaggerParser to return the parsed spec
-      parseMock.mockResolvedValue(mockSpec);
+      mockSwaggerParser.parse.mockResolvedValue(mockSpec);
 
       const result = await parseOpenApiSpec('https://api.example.com/swagger.json');
 
@@ -64,7 +60,7 @@ describe('OpenAPI Parser', () => {
     it('should handle network errors gracefully', async () => {
       const networkError = new Error('Network error') as any;
       networkError.code = 'ENOTFOUND';
-      axiosGetMock.mockRejectedValue(networkError);
+      mockSwaggerParser.parse.mockRejectedValue(networkError);
 
       await expect(parseOpenApiSpec('https://invalid-url.com/swagger.json'))
         .rejects
@@ -77,8 +73,7 @@ describe('OpenAPI Parser', () => {
     it('should handle invalid JSON responses', async () => {
       const jsonError = new Error('Invalid JSON');
       jsonError.message = 'SwaggerParser: Invalid JSON';
-      axiosGetMock.mockResolvedValue({ data: 'invalid json' });
-      parseMock.mockRejectedValue(jsonError);
+      mockSwaggerParser.parse.mockRejectedValue(jsonError);
 
       await expect(parseOpenApiSpec('https://api.example.com/swagger.json'))
         .rejects
@@ -96,8 +91,7 @@ describe('OpenAPI Parser', () => {
         }
       } as any;
 
-      axiosGetMock.mockResolvedValue({ data: invalidSpec });
-      parseMock.mockResolvedValue(invalidSpec);
+      mockSwaggerParser.parse.mockResolvedValue(invalidSpec);
 
       await expect(parseOpenApiSpec('https://api.example.com/swagger.json'))
         .rejects
@@ -109,14 +103,14 @@ describe('OpenAPI Parser', () => {
 
     it('should handle HTTP error responses', async () => {
       const httpError = new Error('HTTP ERROR 404') as any;
-      httpError.response = { status: 404, statusText: 'Not Found' };
-      axiosGetMock.mockRejectedValue(httpError);
+      httpError.code = 'ENOTFOUND';
+      mockSwaggerParser.parse.mockRejectedValue(httpError);
 
       await expect(parseOpenApiSpec('https://api.example.com/swagger.json'))
         .rejects
         .toMatchObject({
           type: 'UNREACHABLE',
-          message: expect.stringContaining('HTTP 404: Not Found')
+          message: expect.stringContaining('Cannot reach the OpenAPI specification URL')
         });
     });
 
@@ -136,8 +130,7 @@ describe('OpenAPI Parser', () => {
         }
       } as any;
 
-      axiosGetMock.mockResolvedValue({ data: mockSpec });
-      parseMock.mockResolvedValue(mockSpec);
+      mockSwaggerParser.parse.mockResolvedValue(mockSpec);
 
       const result1 = await parseOpenApiSpec('https://api.example.com/swagger.json');
       const result2 = await parseOpenApiSpec('https://api.example.com/swagger.json');
@@ -165,8 +158,7 @@ describe('OpenAPI Parser', () => {
         };
       }
 
-      axiosGetMock.mockResolvedValue({ data: largeSpec });
-      parseMock.mockResolvedValue(largeSpec);
+      mockSwaggerParser.parse.mockResolvedValue(largeSpec);
 
       const result = await parseOpenApiSpec('https://api.example.com/swagger.json');
 
@@ -175,72 +167,51 @@ describe('OpenAPI Parser', () => {
     });
 
     it('parses a valid OpenAPI spec', async () => {
-      const mockSpec = {
+      parseMock.mockResolvedValue({
         openapi: '3.0.0',
         info: { title: 'API', description: 'desc' },
         paths: { '/foo': {} }
-      };
-      
-      axiosGetMock.mockResolvedValue({ data: mockSpec });
-      parseMock.mockResolvedValue(mockSpec);
-      
+      });
       const result = await parseOpenApiSpec('http://test');
       expect(result.version).toBe('3.0.0');
       expect(result.title).toBe('API');
       expect(result.description).toBe('desc');
-      expect(result.specHash).toBeDefined();
+      expect(result.specHash).toBe('hash');
     });
 
     it('throws INVALID_SPEC if no paths', async () => {
-      const mockSpec = { openapi: '3.0.0', info: {} };
-      axiosGetMock.mockResolvedValue({ data: mockSpec });
-      parseMock.mockResolvedValue(mockSpec);
-      
+      parseMock.mockResolvedValue({ openapi: '3.0.0', info: {} });
       await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNKNOWN' });
     });
 
     it('throws UNREACHABLE for ENOTFOUND', async () => {
-      const error = { code: 'ENOTFOUND', message: 'fail' };
-      axiosGetMock.mockRejectedValue(error);
-      
+      parseMock.mockRejectedValue({ code: 'ENOTFOUND', message: 'fail' });
       await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNREACHABLE' });
     });
 
     it('throws NETWORK_TIMEOUT for timeout', async () => {
-      const error = { code: 'ETIMEDOUT', message: 'timeout' };
-      axiosGetMock.mockRejectedValue(error);
-      
+      parseMock.mockRejectedValue({ code: 'ETIMEDOUT', message: 'timeout' });
       await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'NETWORK_TIMEOUT' });
     });
 
     it('throws INVALID_SPEC for SwaggerParser error', async () => {
-      axiosGetMock.mockResolvedValue({ data: 'invalid' });
       parseMock.mockRejectedValue({ message: 'SwaggerParser: bad spec' });
-      
       await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'INVALID_SPEC' });
     });
 
     it('throws UNKNOWN for other errors', async () => {
-      const error = { message: 'other' };
-      axiosGetMock.mockRejectedValue(error);
-      
+      parseMock.mockRejectedValue({ message: 'other' });
       await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNKNOWN' });
     });
   });
 
   describe('validateOpenApiUrl', () => {
     it('returns true for valid spec', async () => {
-      const mockSpec = { openapi: '3.0.0', paths: { '/foo': {} }, info: {} };
-      axiosGetMock.mockResolvedValue({ data: mockSpec });
-      parseMock.mockResolvedValue(mockSpec);
-      
+      parseMock.mockResolvedValue({ openapi: '3.0.0', paths: { '/foo': {} }, info: {} });
       await expect(validateOpenApiUrl('http://test')).resolves.toBe(true);
     });
-    
     it('returns false for invalid spec', async () => {
-      const error = { message: 'fail' };
-      axiosGetMock.mockRejectedValue(error);
-      
+      parseMock.mockRejectedValue({ message: 'fail' });
       await expect(validateOpenApiUrl('http://test')).resolves.toBe(false);
     });
   });

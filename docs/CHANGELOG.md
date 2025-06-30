@@ -39,6 +39,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - All authentication endpoints working correctly
   - RBAC implementation fully functional
   - Comprehensive audit logging implemented
+- **OpenAPI Caching System** - ✅ COMPLETED
+  - In-memory OpenAPI spec cache with TTL and max size limits
+  - Configurable cache settings via environment variables
+  - Cache compression for large specifications
+  - Admin endpoint for cache statistics and purging
+  - Integration with connections API for improved performance
+  - Comprehensive unit tests for cache and service layers
+  - Cache guardrails to prevent OpenAPI spec mocks in tests
 
 ### Changed
 - N/A
@@ -56,6 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Test Isolation**: Enhanced with unique identifiers and comprehensive cleanup
 - **Authentication Flow**: Complete implementation with all auth types tested
 - **Security Validation**: Comprehensive security testing completed
+- **OpenAPI Service**: Enhanced with caching capabilities and improved error handling
+- **Test Guardrails**: Enforced no-mock policy for OpenAPI specifications in tests
 
 ### Deprecated
 - N/A
@@ -81,6 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Health Check Tests**: All health check tests now passing
 - **Parser Unit Tests**: Fixed mocking issues with axios and SwaggerParser
 - **Real API Connections**: Resolved unique constraint violations
+- **OpenAPI Cache**: Fixed cache initialization and cleanup issues
+- **Test Guardrails**: Resolved issues with mock detection in test environment
 
 ### Security
 - N/A

@@ -13,49 +13,41 @@ describe('RBAC Integration: Endpoint Deletion', () => {
 
   beforeAll(async () => {
     await testSuite.beforeAll();
+    
+    // Create admin user
+    adminUser = await testSuite.createUser(
+      'rbacadmin@example.com',
+      'admin123',
+      Role.ADMIN,
+      'RBAC Admin'
+    );
+
+    // Create regular user
+    regularUser = await testSuite.createUser(
+      'rbacuser@example.com',
+      'user123',
+      Role.USER,
+      'RBAC User'
+    );
+
+    // Create API connection for admin
+    testConnection = await testSuite.createConnection(
+      adminUser,
+      'RBAC Test API',
+      'https://rbac-test.com',
+      'NONE'
+    );
+
+    // Create endpoint for the connection
+    testEndpoint = await testSuite.createEndpoint(
+      testConnection,
+      '/test',
+      'GET'
+    );
   });
 
   afterAll(async () => {
     await testSuite.afterAll();
-  });
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    await prisma.endpoint.deleteMany({
-      where: {
-        apiConnection: {
-          user: {
-            OR: [
-              { email: { contains: 'test-' } },
-              { email: { contains: '@example.com' } }
-            ]
-          }
-        }
-      }
-    });
-    await prisma.apiConnection.deleteMany({
-      where: {
-        user: {
-          OR: [
-            { email: { contains: 'test-' } },
-            { email: { contains: '@example.com' } }
-          ]
-        }
-      }
-    });
-    await prisma.user.deleteMany({
-      where: {
-        OR: [
-          { email: { contains: 'test-' } },
-          { email: { contains: '@example.com' } }
-        ]
-      }
-    });
-    // Always create test users and data after cleanup
-    adminUser = await testSuite.createUser('admin@example.com', 'admin123', Role.ADMIN, 'Admin User');
-    regularUser = await testSuite.createUser('user@example.com', 'user123', Role.USER, 'Regular User');
-    testConnection = await testSuite.createConnection(adminUser, 'RBAC Test API', 'https://rbac-test.com', 'NONE');
-    testEndpoint = await testSuite.createEndpoint(testConnection, '/test', 'GET');
   });
 
   it('should forbid non-admin users from deleting endpoints', async () => {

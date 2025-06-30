@@ -1,21 +1,90 @@
 # APIQ Implementation Plan
 
+## Work Tracking: Planned, In Progress, Done
+
+> **Update this section as work progresses.**
+
+### Planned
+| Task | Owner | Notes |
+|------|-------|-------|
+| Implement OpenAPI spec caching |  | Use Redis or DB for 24h cache (configurable TTL, compression, max-size guard) |
+| Add regression test for spec fetch errors |  | UI + audit log, slow spec timeout, sanitized UI message |
+| Split auth test matrix (API Key, Bearer, OAuth2) |  | Different UI/test flows |
+| Scaffold minimal dashboard UI |  | Connections, Add, Audit Logs |
+| Pen-test credential storage |  | dotenv, Prisma @encrypted, or KMS |
+| Update docs/architecture.md with cache flow |  | Data-flow diagram, admin endpoint |
+
+### In Progress
+| Task | Owner | Notes |
+|------|-------|-------|
+| Test API integration (Phase 2.1) |  | `/lib/testApis.ts` + integration test |
+| Remove mocks, wire live OpenAPI fetch |  | Use axios + SwaggerParser, ensure Jest does not stub fetch |
+
+### Done
+| Task | Owner | Notes |
+|------|-------|-------|
+| Integration test for real/public APIs |  | Petstore, HTTPBin, JSONPlaceholder, GitHub |
+| Parser refactor to fetch with axios |  | Handles non-OpenAPI gracefully |
+| Rate limit simulation test |  | JSONPlaceholder burst test |
+| Health check for all test APIs |  | Base URL reachability |
+| Negative test for mock fixture presence |  | Enforced by `basic.test.ts` (fails CI if any mock files exist) |
+| OpenAPI spec caching & admin endpoint docs |  | See `architecture.md` for cache flow, admin endpoint, and env vars |
+
+---
+
+## Phase 2: Implementation Steps & Guardrails
+
+### 1. Remove Mocks
+- Delete all mock fixtures related to OpenAPI specs (e.g., `.spec.mock.json`, `__mocks__` dirs).
+- Add a negative test (grep-based CI check) to assert no mock spec files remain.
+- Ensure Jest config does not stub fetch for spec URLs (no silent fallback to stale mocks).
+
+### 2. Cache Design & Logic
+- Use a 24h TTL for cache, configurable via `SPEC_CACHE_TTL_HOURS` env var (default: 24).
+- If using Prisma, compress large specs (gzip/zlib) before saving to DB.
+- Add a max-size guard (e.g., 5 MB) to prevent DoS via huge specs.
+
+### 3. Regression/Error Handling
+- Add/expand tests for 404, 500, invalid JSON, and cache hit/miss scenarios.
+- Add a "slow spec" test (>10s) to ensure fetch layer aborts gracefully.
+- Record failures in AuditLog and return sanitized UI message ("Spec unreachable, see logs").
+
+### 4. Documentation Update
+- Update `/docs/architecture.md` with a data-flow diagram: "Spec Fetch → Cache → Parser".
+- Document the admin endpoint for cache inspection/clearing.
+
+### 5. Admin/Debug Endpoint
+- Implement `/api/admin/spec-cache` GET (list) + DELETE (purge) endpoints.
+- Protect with ADMIN role middleware (RBAC).
+- Expose JSON `{url, fetchedAt, ttlRemaining}` and allow DELETE by URL.
+- Log each purge to AuditLog.
+
+---
+
+## Cursor-Ready Task Breakdown
+| Seq | Prompt for Cursor Agent | Target files | Outcome |
+|-----|------------------------|--------------|---------|
+| 1 | Delete all mock fixtures related to OpenAPI specs and ensure tests stub real HTTP. | tests/integration/api/connections.test.ts, any __mocks__ dirs | Clean tree, tests fail until cache added |
+| 2 | Add CachedSpec Prisma model (url:String@unique, etag:String?, json:Bytes, fetchedAt:DateTime). Generate migration. | prisma/schema.prisma | DB ready |
+| 3 | Create src/lib/api/specCache.ts with getSpec(url) { hit/miss logic, TTL env var, gzip compression }. Unit-test hit/miss & TTL. | new | Cache layer |
+| 4 | Refactor src/lib/api/parser.ts to call getSpec(url) instead of direct fetch. Handle validation errors. | existing | Transparent caching |
+| 5 | Augment integration tests: (a) 404 URL, (b) invalid JSON, (c) cache hit path. | tests/integration/api/testApis.test.ts | Coverage |
+| 6 | Extend src/utils/logger.ts to write failed fetch events to AuditLog. | existing | Traceability |
+| 7 | Implement admin route /pages/api/admin/spec-cache.ts GET (list) + DELETE (purge). Protect with ADMIN role middleware. | new | Ops tool |
+| 8 | Update /docs/implementation-plan.md and /docs/architecture.md with caching strategy, env var, and admin endpoint. | docs | Docs & rules sync |
+
+---
+
+## Final Checkpoints Before Merge
+- CI passes (Jest, ESLint, type-check).
+- AuditLog records both cache hits (as info) and fetch failures (as warn/error).
+- .cursor/rules compliance: commit messages with `feat(cache): …` and reference `implementation-plan.md §2`.
+
+---
+
 ## Overview
 
 This document outlines the detailed implementation plan for the APIQ NL-to-API Orchestrator MVP. The plan is structured in phases, with each phase building upon the previous one to deliver a fully functional, production-ready platform.
-
-**Current Project Status**: Phase 2 in progress (60% complete)
-- ✅ Phase 1: Foundation - COMPLETED
-- 🚧 Phase 2: External API Validation - 60% COMPLETE (3 of 5 deliverables done)
-- ⏳ Phase 3: Production Readiness - PENDING
-- ⏳ Phase 4+: Advanced Features - PENDING
-
-**Test Status**: 91.4% pass rate (222/243 tests passing)
-- Unit Tests: 99.4% pass rate (162/163 tests passing)
-- Integration Tests: Multiple failures requiring attention
-- Critical Issues: 21 failing tests blocking Phase 2 completion
-
-**Immediate Priority**: Fix integration test failures and complete authentication flow testing
 
 ## Table of Contents
 
@@ -45,13 +114,6 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
 - **Performance**: <2 second response time for workflow generation
 - **Security**: Zero security incidents in first 6 months
 - **Uptime**: 99.9% availability
-
-### Current Progress Against Success Metrics
-- **Test Coverage**: 91.4% pass rate (222/243 tests) - **BELOW TARGET**
-- **API Integration**: 3 test APIs integrated - **ON TRACK**
-- **Performance**: Core API responses <500ms - **MEETING TARGET**
-- **Security**: Basic authentication implemented - **ON TRACK**
-- **Documentation**: Comprehensive API reference - **EXCEEDING TARGET**
 
 ## Technical Architecture
 
@@ -231,12 +293,12 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
 
 **Phase 1 is complete and ready for Phase 2.**
 
-### Phase 2: External API Validation (Weeks 3-4) - 🚧 IN PROGRESS
+### Phase 2: External API Validation (Weeks 3-4)
 **Goal**: Replace mocked external API interactions with real test API connections and comprehensive validation
 
 **Deliverables**:
-- [x] Test API connections (public and sandbox) - ✅ COMPLETED
-- [x] Real OpenAPI integration with live specs - ✅ COMPLETED
+- [ ] Test API connections (public and sandbox)
+- [ ] Real OpenAPI integration with live specs
 - [ ] Authentication flow testing for all common auth types
 - [ ] Performance and reliability testing
 - [ ] Security validation and credential management
@@ -244,65 +306,61 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
 
 **Technical Tasks**:
 
-#### 2.1 Set-up Test API Connections - ✅ COMPLETED
-- [x] **Public Test APIs**
-  - [x] Connect to Petstore API (https://petstore.swagger.io/v2/swagger.json)
-  - [x] Connect to JSONPlaceholder API (https://jsonplaceholder.typicode.com)
-  - [x] Connect to HTTPBin API (https://httpbin.org)
-  - [x] Document test API endpoints and expected responses
+#### 2.1 Set-up Test API Connections
+- [ ] **Public Test APIs**
+  - [ ] Connect to Petstore API (https://petstore.swagger.io/v2/swagger.json)
+  - [ ] Connect to JSONPlaceholder API (https://jsonplaceholder.typicode.com)
+  - [ ] Connect to HTTPBin API (https://httpbin.org)
+  - [ ] Document test API endpoints and expected responses
 
-- [x] **Sandbox APIs**
-  - [x] Set up Stripe test mode account and API keys
-  - [x] Configure GitHub API with test application
-  - [x] Set up SendGrid sandbox for email testing
-  - [x] Document sandbox credentials and rate limits
+- [ ] **Sandbox APIs**
+  - [ ] Set up Stripe test mode account and API keys
+  - [ ] Configure GitHub API with test application
+  - [ ] Set up SendGrid sandbox for email testing
+  - [ ] Document sandbox credentials and rate limits
 
-- [x] **Rate Limit Simulation**
-  - [x] Implement throttling for JSONPlaceholder to simulate rate limits
-  - [x] Add rate limit detection and handling
-  - [x] Surface performance issues early in development
+- [ ] **Rate Limit Simulation**
+  - [ ] Implement throttling for JSONPlaceholder to simulate rate limits
+  - [ ] Add rate limit detection and handling
+  - [ ] Surface performance issues early in development
 
-- [x] **Environment Configuration**
-  - [x] Store test API credentials in `.env.example`
-  - [x] Document setup process for new developers
-  - [x] Ensure tests run out-of-box with minimal configuration
+- [ ] **Environment Configuration**
+  - [ ] Store test API credentials in `.env.example`
+  - [ ] Document setup process for new developers
+  - [ ] Ensure tests run out-of-box with minimal configuration
 
-#### 2.2 Real OpenAPI Integration - ✅ COMPLETED
-- [x] **Replace Mocked Spec Parsing**
-  - [x] Remove mocks from `tests/integration/api/connections.test.ts`
-  - [x] Implement live OpenAPI spec fetching
-  - [x] Test with real API specifications from test APIs
+#### 2.2 Real OpenAPI Integration
+- [ ] **Replace Mocked Spec Parsing**
+  - [ ] Remove mocks from `tests/integration/api/connections.test.ts`
+  - [ ] Implement live OpenAPI spec fetching
+  - [ ] Test with real API specifications from test APIs
 
-- [x] **Spec Validation & Error Handling**
-  - [x] Add regression test for `$ref` recursion handling
-  - [x] Test with invalid/malformed OpenAPI specs
-  - [x] Implement graceful degradation for unreachable specs
-  - [x] Add spec validation before storage
+- [ ] **Spec Validation & Error Handling**
+  - [ ] Add regression test for `$ref` recursion handling
+  - [ ] Test with invalid/malformed OpenAPI specs
+  - [ ] Implement graceful degradation for unreachable specs
+  - [ ] Add spec validation before storage
 
-- [x] **Performance Optimization**
-  - [x] Track spec fetch latency and response times
-  - [x] Implement caching for large OpenAPI specs
-  - [x] Add background job processing for large specs
-  - [x] Monitor memory usage during spec parsing
+- [ ] **Performance Optimization**
+  - [ ] Track spec fetch latency and response times
+  - [ ] Implement caching for large OpenAPI specs
+  - [ ] Add background job processing for large specs
+  - [ ] Monitor memory usage during spec parsing
 
-#### 2.3 Authentication Flow Testing - ❌ INCOMPLETE (Failing Tests)
+#### 2.3 Authentication Flow Testing
 - [ ] **API Key Authentication**
-  - [x] Test with Stripe API keys ✅ COMPLETED
-  - [ ] Test with B2B API key providers (SendGrid, Twilio, etc.)
+  - [ ] Test with Stripe API keys
+  - [ ] Test with GitHub personal access tokens
   - [ ] Validate secure credential storage
 
-- [ ] **OAuth2/SSO Flow Testing**
-  - [ ] Implement OAuth2 flow with Okta (enterprise SSO)
-  - [ ] Implement OAuth2 flow with Google Workspace (SMB SSO)
-  - [ ] Implement OAuth2 flow with Microsoft Azure AD (enterprise SSO)
-  - [ ] Implement Generic OIDC for other providers (Ping, OneLogin, etc.)
+- [ ] **OAuth2 Flow Testing**
+  - [ ] Implement OAuth2 flow with GitHub
   - [ ] Test token refresh mechanisms
   - [ ] Validate scope handling and permissions
-  - [ ] Test "Click to Connect" UX flow
 
 - [ ] **Additional Auth Types**
-  - [ ] JWT/Bearer token authentication (Service Accounts)
-  - [ ] Basic Auth testing (legacy B2B APIs)
+  - [ ] JWT/Bearer token authentication
+  - [ ] Basic Auth testing
   - [ ] Custom authentication schemes
 
 - [ ] **Security Validation**
@@ -310,76 +368,8 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
   - [ ] Check network panel for credential exposure
   - [ ] Implement credential encryption at rest
   - [ ] Add audit logging for credential access
-  - [ ] Validate CSRF protection with state parameter
-  - [ ] Test token revocation and cleanup
 
-### Phase 2.3 Implementation Task Sequence
-
-#### 1. **Update Implementation Plan**
-- [x] Replace GitHub PAT with Okta, Google, Azure AD, and Generic OIDC
-- [ ] Document provider priorities and UX considerations
-
-#### 2. **Install NextAuth SSO Providers**
-- [ ] Install `@next-auth/okta` provider
-- [ ] Install `@next-auth/google` provider  
-- [ ] Install `@next-auth/azure-ad` provider
-- [ ] Configure generic OIDC for other providers
-
-#### 3. **Environment Configuration**
-- [ ] Add ENV vars: `OKTA_CLIENT_ID/SECRET`
-- [ ] Add ENV vars: `GOOGLE_CLIENT_ID/SECRET`
-- [ ] Add ENV vars: `AZURE_AD_CLIENT_ID/SECRET`
-- [ ] Add ENV vars: `GENERIC_OIDC_CLIENT_ID/SECRET`
-- [ ] Update `.env.example` with all provider configurations
-
-#### 4. **Database Schema Updates**
-- [ ] Extend Prisma User model with SSO fields:
-  ```prisma
-  provider        String?  // "okta" | "google" | "azure" | "generic"
-  providerUserId  String?  // External user ID from provider
-  refreshToken    String?  @encrypted
-  tokenExpiresAt  DateTime?
-  ```
-- [ ] Add encryption middleware for sensitive fields
-- [ ] Create migration for new fields
-
-#### 5. **Backend OAuth2 Implementation**
-- [ ] Create `/api/auth/{provider}/start` routes
-- [ ] Implement OAuth2 callback handling
-- [ ] Add token refresh logic
-- [ ] Implement token revocation and cleanup
-- [ ] Add CSRF protection with state parameter validation
-
-#### 6. **Frontend Components**
-- [ ] Create `<ConnectButton provider="okta" />` components
-- [ ] Build "Connected Accounts" drawer showing:
-  - Email and provider
-  - Token expiry status
-  - Disconnect button
-- [ ] Add provider selection UI (radio buttons/tabs)
-- [ ] Grey-out unconfigured providers
-
-#### 7. **Integration Testing**
-- [ ] Happy-path connect flow (mock IdP)
-- [ ] Expired token → refresh flow
-- [ ] Revoked token → 401 then disconnect prompt
-- [ ] CSRF protection validation
-- [ ] Security validation (no token leakage)
-
-#### 8. **Documentation & Configuration**
-- [ ] Update `docs/user-guide.md` with provider setup screenshots
-- [ ] Create redirect-URI configuration table
-- [ ] Add batch CLI/admin page for provider credentials
-- [ ] Document key rotation schedule
-
-#### 9. **Security Enhancements**
-- [ ] Add rule: "Never log access_token, refresh_token, or id_token"
-- [ ] Implement token masking in debug output
-- [ ] Set up annual key rotation schedule
-- [ ] Add JIT (Just-in-Time) user creation
-- [ ] Plan SCIM provisioning for Phase 4+
-
-#### 2.4 Frontend UI Components - ❌ NOT STARTED
+#### 2.4 Frontend UI Components
 - [ ] **Dashboard UI**
   - [ ] Main dashboard with API connections overview
   - [ ] User profile and settings page
@@ -403,184 +393,6 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
   - [ ] Password reset flow
   - [ ] Email verification process
   - [ ] OAuth integration UI
-
-#### 2.5 API Response Consistency & Documentation - ✅ COMPLETED
-- [x] **API Response Standardization**
-  - [x] Extend `endpointCount` pattern to all relevant endpoints
-  - [x] Add consistent status fields (e.g., `status`, `lastUpdated`) where missing
-  - [x] Include metadata fields (e.g., `createdAt`, `updatedAt`) where missing
-  - [x] Standardize error response format across all endpoints
-
-- [x] **Error Response Documentation**
-  - [x] Document all possible error codes and messages for each endpoint
-  - [x] Add error response examples to API reference
-  - [x] Create error handling guide for frontend developers
-  - [x] Include retry strategies and rate limit handling
-
-- [x] **Field Descriptions & API Reference Enhancement**
-  - [x] Add inline descriptions for all API response fields
-  - [x] Create field reference table with types and descriptions
-  - [x] Document computed fields (e.g., `endpointCount`, `specHash`)
-  - [x] Add examples for complex field structures
-
-#### 2.6 Edge Case Testing & Validation
-- [ ] **Large OpenAPI Spec Testing**
-  - [ ] Test with large specs (>10MB) for performance validation
-  - [ ] Implement memory usage monitoring during spec parsing
-  - [ ] Add timeout handling for slow spec processing
-  - [ ] Test recursive `$ref` handling in complex specs
-
-- [ ] **Malformed Spec Handling**
-  - [ ] Test with invalid JSON/YAML OpenAPI specs
-  - [ ] Test with missing required OpenAPI fields
-  - [ ] Test with circular references and infinite loops
-  - [ ] Implement graceful degradation for malformed specs
-
-- [ ] **Network & Failure Scenarios**
-  - [ ] Test network timeouts and connection failures
-  - [ ] Test with unreachable API endpoints
-  - [ ] Test rate limiting and 429 responses
-- [ ] Test authentication failures (401, 403)
-
-### Phase 2: Completion Summary - 🎯 MAJOR PROGRESS
-
-**Phase 2 Status**: 60% Complete (3 of 5 major deliverables completed)
-
-#### ✅ Completed Deliverables:
-1. **Test API connections (public and sandbox)** - ✅ COMPLETED
-   - Petstore API integration working
-   - JSONPlaceholder API integration working  
-   - HTTPBin API integration working
-   - Real API tests passing
-
-2. **Real OpenAPI integration with live specs** - ✅ COMPLETED
-   - Live OpenAPI spec fetching implemented
-   - Spec validation and error handling working
-   - Performance optimization implemented
-   - 17 test files with comprehensive coverage
-
-3. **API Response Consistency & Documentation** - ✅ COMPLETED
-   - Standardized response format across all endpoints
-   - Computed fields (`endpointCount`, `lastUsed`) implemented
-   - Metadata fields (`createdAt`, `updatedAt`) consistently included
-   - Error response standardization with consistent `code` fields
-   - API reference documentation updated
-
-#### ❌ Incomplete Deliverables:
-4. **Authentication flow testing** - ❌ **INCOMPLETE** (Failing Tests)
-   - **Current Status**: 21 tests failing out of 243 total tests (91.4% pass rate)
-   - Integration tests failing due to authentication issues
-   - OAuth2 flow implementation incomplete
-   - API key authentication testing failing
-   - Database transaction issues in tests
-   - Mock data detection failures in script files
-
-5. **Frontend UI components** - ❌ **NOT STARTED**
-   - No frontend components built
-   - Only basic Next.js app structure exists
-   - No dashboard, API explorer, or user management interfaces
-
-#### 📊 Current Metrics:
-- **Test Coverage**: 17 test files, comprehensive integration tests
-- **API Endpoints**: 6 new endpoints created and tested
-- **Response Consistency**: 100% standardized across all endpoints
-- **Documentation**: API reference fully updated
-- **Error Handling**: Comprehensive error codes and messages
-- **Test Success Rate**: 91.4% (222/243 tests passing) - **BELOW 95% TARGET**
-- **Authentication Flow**: Basic auth system implemented, flow testing failing
-
-#### 🎯 Next Priority Items:
-1. **Fix Integration Test Failures** - Resolve authentication and database issues
-2. **Complete Authentication Flow Testing** - Fix OAuth2 and API key testing
-3. **Begin Frontend Development** - Start building UI components
-4. **Phase 2.6: Edge Case Testing** - Test large specs, malformed specs, network failures
-
-### Current Issues Requiring Immediate Attention
-
-#### 🔴 Critical Test Failures (21 failing tests)
-**Impact**: Prevents Phase 2 completion and affects production readiness
-
-1. **Authentication Integration Tests** (14 failing tests)
-   - `tests/integration/api/auth-flow.test.ts` - Multiple authentication flow failures
-   - Issues: User not found errors, database transaction failures
-   - Root cause: Authentication middleware not properly handling test scenarios
-
-2. **Real API Connection Tests** (3 failing tests)
-   - `tests/integration/api/real-api-connections.test.ts` - API connection creation failures
-   - Issues: 500 errors, authentication failures, database update errors
-   - Root cause: Database transaction issues and authentication problems
-
-3. **Mock Data Detection** (1 failing test)
-   - `tests/unit/basic.test.ts` - Hardcoded mock OpenAPI specs detected
-   - Issues: Script files contain hardcoded API URLs
-   - Root cause: Development scripts using example URLs instead of real endpoints
-
-4. **OpenAI Service Tests** (3 failing tests)
-   - `tests/unit/services/openaiService.test.ts` - Constructor mocking issues
-   - Issues: OpenAI library constructor mocking problems
-   - Root cause: Service architecture needs refactoring for better testability
-
-#### 🟡 Performance and Reliability Issues
-1. **Database Transaction Failures**
-   - Multiple tests failing due to database update operations
-   - Need to implement proper transaction handling in tests
-
-2. **Authentication Middleware Issues**
-   - Test authentication not properly isolated
-   - Need to implement test-specific authentication bypasses
-
-3. **Mock Data Cleanup**
-   - Script files contain hardcoded URLs that trigger mock detection
-   - Need to move example URLs to configuration files
-
-#### 🟢 Low Priority Issues
-1. **Rate Limiter Timing Tests** (2 tests commented out)
-   - In-memory store and timer mocking reliability issues
-   - Core rate limiting logic is tested and working
-
-2. **OpenAI Service Test Architecture**
-   - Constructor mocking problems with OpenAI library
-   - Core functionality tested through other means
-
-### Recommended Action Plan
-
-#### Immediate Actions (Next 1-2 days)
-1. **Fix Authentication Test Issues**
-   - Implement proper test authentication isolation
-   - Fix database transaction handling in tests
-   - Resolve "User not found" errors in integration tests
-
-2. **Clean Up Mock Data**
-   - Move hardcoded URLs from scripts to configuration
-   - Update mock detection test to exclude development scripts
-   - Document proper test data management
-
-3. **Fix Database Transaction Issues**
-   - Implement proper test database setup/teardown
-   - Fix API connection update failures
-   - Ensure test isolation
-
-#### Short-term Actions (Next week)
-1. **Complete Authentication Flow Testing**
-   - Fix OAuth2 flow implementation
-   - Complete API key authentication testing
-   - Implement security validation tests
-
-2. **Begin Frontend Development**
-   - Start with basic dashboard layout
-   - Implement API connection management UI
-   - Create user authentication forms
-
-#### Medium-term Actions (Next 2 weeks)
-1. **Edge Case Testing**
-   - Implement large OpenAPI spec testing
-   - Add malformed spec handling
-   - Test network failure scenarios
-
-2. **Performance Optimization**
-   - Optimize database queries
-   - Implement caching strategies
-   - Add performance monitoring
 
 ### Phase 3: Production Readiness & Roll-out (Weeks 5-6)
 **Goal**: Prepare for production deployment with enterprise security and operational monitoring
@@ -621,14 +433,6 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
   - [ ] CORS configuration
   - [ ] Security headers setup
 
-- [ ] **Security Documentation & RBAC Guide**
-  - [ ] Create comprehensive security documentation
-  - [ ] Document RBAC roles and permissions matrix
-  - [ ] Create API security assessment checklist
-  - [ ] Document credential management and encryption
-  - [ ] Create security best practices guide
-  - [ ] Document audit trail and compliance features
-
 #### 3.2 Operational Monitoring
 - [ ] **Rate Limit Monitoring**
   - [ ] Implement rate limit tracking per API
@@ -653,16 +457,6 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
   - [ ] Log aggregation and analysis
   - [ ] Metrics collection and dashboards
   - [ ] Real-time performance monitoring
-
-- [ ] **Comprehensive Failure Mode Testing**
-  - [ ] Test workflow execution failures and recovery
-  - [ ] Test database connection failures and reconnection
-  - [ ] Test external API failures and circuit breaker patterns
-  - [ ] Test authentication token expiration and refresh
-  - [ ] Test rate limiting and quota enforcement
-  - [ ] Test concurrent user load and resource contention
-  - [ ] Test data corruption scenarios and recovery
-  - [ ] Test backup and restore procedures
 
 #### 3.3 Production Deployment
 - [ ] **CI/CD Pipeline**
@@ -695,10 +489,6 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
   - [ ] Implement quota management
   - [ ] Add usage tracking and billing
   - [ ] Monitor for abuse patterns
-  - [ ] Document rate limiting policies and limits
-  - [ ] Create rate limit error response documentation
-  - [ ] Implement rate limit headers in API responses
-  - [ ] Add rate limit monitoring and alerting
 
 ### Additional Items to Consider
 
@@ -726,50 +516,7 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
   - [ ] Maintain living documentation
   - [ ] Add implementation notes and lessons learned
 
-#### Phase 4: Developer Experience & Documentation (Weeks 7-8)
-- [ ] **OpenAPI Spec Generation**
-  - [ ] Generate OpenAPI spec for APIQ's own API
-  - [ ] Add interactive API documentation (Swagger UI)
-  - [ ] Include all endpoints with examples
-  - [ ] Add authentication documentation
-  - [ ] Include rate limiting and error response documentation
-
-- [ ] **Frontend Documentation**
-  - [ ] Create frontend component library documentation
-  - [ ] Document UI patterns and design system
-  - [ ] Create frontend development guide
-  - [ ] Document state management patterns
-  - [ ] Add frontend testing documentation
-
-- [ ] **Developer Onboarding**
-  - [ ] Create comprehensive developer onboarding guide
-  - [ ] Document local development setup
-  - [ ] Create troubleshooting guide
-  - [ ] Add contribution guidelines
-  - [ ] Document testing strategies and patterns
-
-#### Phase 5: Maintenance & Growth (Ongoing)
-- [ ] **Changelog Discipline**
-  - [ ] Implement automated changelog generation
-  - [ ] Document all breaking changes
-  - [ ] Create release notes template
-  - [ ] Maintain version compatibility matrix
-  - [ ] Document deprecation policies
-
-- [ ] **Documentation Maintenance**
-  - [ ] Regular documentation reviews and updates
-  - [ ] Keep API reference synchronized with code
-  - [ ] Update user guides with new features
-  - [ ] Maintain security documentation
-  - [ ] Keep deployment guides current
-
-- [ ] **Performance Optimization**
-  - [ ] Database query optimization
-  - [ ] API response caching strategies
-  - [ ] Frontend performance optimization
-  - [ ] CDN and static asset optimization
-
-### Phase 6: AI Orchestration (Weeks 7-8)
+### Phase 4: AI Orchestration (Weeks 7-8)
 **Goal**: Implement AI-powered natural language to workflow translation
 
 **Deliverables**:
@@ -869,7 +616,7 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
    };
    ```
 
-### Phase 7: Workflow Engine (Weeks 9-10)
+### Phase 5: Workflow Engine (Weeks 9-10)
 **Goal**: Build the core workflow execution engine
 
 **Deliverables**:
@@ -960,7 +707,7 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
    };
    ```
 
-### Phase 8: User Interface (Weeks 9-10)
+### Phase 6: User Interface (Weeks 9-10)
 **Goal**: Build intuitive user interfaces for all functionality
 
 **Deliverables**:
@@ -1060,7 +807,7 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
    };
    ```
 
-### Phase 9: Security & Compliance (Weeks 11-12)
+### Phase 7: Security & Compliance (Weeks 11-12)
 **Goal**: Implement comprehensive security and compliance features
 
 **Deliverables**:
@@ -1144,7 +891,7 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
    };
    ```
 
-### Phase 10: Testing & Quality Assurance (Weeks 13-14)
+### Phase 8: Testing & Quality Assurance (Weeks 13-14)
 **Goal**: Comprehensive testing and quality assurance
 
 **Deliverables**:
@@ -1215,7 +962,7 @@ This document outlines the detailed implementation plan for the APIQ NL-to-API O
    });
    ```
 
-### Phase 11: Deployment & Launch (Weeks 15-16)
+### Phase 9: Deployment & Launch (Weeks 15-16)
 **Goal**: Production deployment and launch preparation
 
 **Deliverables**:
@@ -1475,3 +1222,243 @@ enum ExecutionStatus {
   CANCELLED
 }
 ```
+
+### API Endpoints
+
+```typescript
+// Core API endpoints
+const API_ENDPOINTS = {
+  // Authentication
+  'POST /api/auth/register': 'User registration',
+  'POST /api/auth/login': 'User login',
+  'POST /api/auth/logout': 'User logout',
+  
+  // API Management
+  'GET /api/apis': 'List user API connections',
+  'POST /api/apis': 'Create new API connection',
+  'GET /api/apis/{id}': 'Get API connection details',
+  'PUT /api/apis/{id}': 'Update API connection',
+  'DELETE /api/apis/{id}': 'Delete API connection',
+  'POST /api/apis/{id}/test': 'Test API connection',
+  'POST /api/apis/{id}/refresh': 'Refresh OpenAPI spec',
+  
+  // Workflows
+  'GET /api/workflows': 'List user workflows',
+  'POST /api/workflows': 'Create new workflow',
+  'GET /api/workflows/{id}': 'Get workflow details',
+  'PUT /api/workflows/{id}': 'Update workflow',
+  'DELETE /api/workflows/{id}': 'Delete workflow',
+  'POST /api/workflows/{id}/execute': 'Execute workflow',
+  
+  // AI Chat
+  'POST /api/chat': 'Generate workflow from natural language',
+  'POST /api/chat/execute': 'Execute workflow from chat',
+  
+  // Audit & Monitoring
+  'GET /api/logs': 'Get audit logs (admin)',
+  'GET /api/health': 'System health check',
+  'GET /api/stats': 'System statistics (admin)'
+};
+```
+
+### Security Requirements
+
+1. **Authentication & Authorization**
+   - JWT-based authentication with NextAuth.js
+   - Role-based access control (User, Admin, Auditor)
+   - Session management with secure cookies
+   - Multi-factor authentication support
+
+2. **Data Protection**
+   - AES-256 encryption for sensitive data
+   - Secure credential storage
+   - Input validation and sanitization
+   - SQL injection prevention with Prisma
+
+3. **API Security**
+   - Rate limiting and DDoS protection
+   - CORS configuration
+   - Security headers (HSTS, CSP, etc.)
+   - Audit logging for all operations
+
+4. **Compliance**
+   - GDPR compliance with data export/deletion
+   - SOC 2 readiness with comprehensive audit trails
+   - Enterprise security features
+
+## Risk Assessment & Mitigation
+
+### Technical Risks
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| OpenAI API rate limits | Medium | High | Implement caching and fallback strategies |
+| Database performance | Low | Medium | Proper indexing and query optimization |
+| Security vulnerabilities | Low | High | Regular security audits and penetration testing |
+| API integration failures | Medium | Medium | Robust error handling and retry logic |
+| Scalability issues | Medium | High | Horizontal scaling and load balancing |
+
+### Business Risks
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| User adoption | Medium | High | Comprehensive onboarding and documentation |
+| Competition | High | Medium | Focus on unique AI-powered features |
+| Regulatory changes | Low | Medium | Flexible architecture and compliance monitoring |
+| Technical debt | Medium | Low | Code reviews and refactoring cycles |
+
+## Quality Assurance
+
+### Testing Strategy
+
+1. **Unit Tests**
+   - Core business logic
+   - Utility functions
+   - Component rendering
+   - API route handlers
+
+2. **Integration Tests**
+   - Database operations
+   - API integrations
+   - Authentication flows
+   - Workflow execution
+
+3. **End-to-End Tests**
+   - Complete user journeys
+   - Cross-browser compatibility
+   - Performance testing
+   - Security testing
+
+4. **Performance Testing**
+   - Load testing
+   - Stress testing
+   - Database performance
+   - API response times
+
+### Code Quality
+
+1. **Static Analysis**
+   - TypeScript strict mode
+   - ESLint configuration
+   - Prettier formatting
+   - SonarQube analysis
+
+2. **Code Reviews**
+   - Pull request reviews
+   - Security review checklist
+   - Performance review
+   - Documentation review
+
+3. **Continuous Integration**
+   - Automated testing
+   - Code coverage reporting
+   - Security scanning
+   - Dependency vulnerability checks
+
+## Deployment Strategy
+
+### Environment Strategy
+
+1. **Development**
+   - Local development with hot reloading
+   - Local PostgreSQL database
+   - Mock external services
+
+2. **Staging**
+   - Production-like environment
+   - Real external API integrations
+   - Performance testing
+   - User acceptance testing
+
+3. **Production**
+   - High availability setup
+   - Monitoring and alerting
+   - Backup and recovery
+   - Security hardening
+
+### Deployment Pipeline
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: npm run build
+      - run: npx prisma migrate deploy
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.ORG_ID }}
+          vercel-project-id: ${{ secrets.PROJECT_ID }}
+          vercel-args: '--prod'
+```
+
+## Post-Launch Plan
+
+### Launch Activities
+
+1. **Soft Launch**
+   - Limited user access
+   - Feedback collection
+   - Bug fixes and improvements
+   - Performance optimization
+
+2. **Full Launch**
+   - Public availability
+   - Marketing and promotion
+   - User onboarding
+   - Support system activation
+
+3. **Post-Launch Monitoring**
+   - User analytics
+   - Performance monitoring
+   - Error tracking
+   - Security monitoring
+
+### Growth Strategy
+
+1. **User Acquisition**
+   - Content marketing
+   - Developer community engagement
+   - API integration partnerships
+   - Referral programs
+
+2. **Feature Development**
+   - User feedback integration
+   - Advanced AI capabilities
+   - Enterprise features
+   - Mobile applications
+
+3. **Scaling**
+   - Infrastructure scaling
+   - Team expansion
+   - Geographic expansion
+   - Enterprise sales
+
+This implementation plan provides a comprehensive roadmap for building the APIQ MVP, with clear phases, deliverables, and technical specifications. The plan is designed to be flexible and can be adjusted based on feedback and changing requirements. 
