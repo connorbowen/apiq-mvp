@@ -1,15 +1,19 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 
 /**
- * Simple test script for Stripe API key authentication
+ * Test script for Stripe API key authentication
  * Tests the new API credentials endpoint with real Stripe sandbox keys
  */
 
-const axios = require('axios');
-require('dotenv').config();
+import axios from 'axios';
+import { logInfo, logError } from '../src/utils/logger';
+
+// Load environment variables
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Test configuration
-const BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
+const BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
 const STRIPE_TEST_SECRET_KEY = process.env.STRIPE_TEST_SECRET_KEY;
 
 if (!STRIPE_TEST_SECRET_KEY) {
@@ -18,22 +22,29 @@ if (!STRIPE_TEST_SECRET_KEY) {
 }
 
 // Test user credentials (from your test setup)
-const TEST_USER = {
-  email: 'admin@apiq.com',
-  password: 'admin123'
-};
+const TEST_USER_EMAIL = 'stripe-test@example.com';
+const TEST_USER_PASSWORD = 'testpass123';
+
+// Ensure STRIPE_TEST_SECRET_KEY is treated as string after the check
+const STRIPE_KEY = STRIPE_TEST_SECRET_KEY as string;
+
+interface TestResult {
+  test: string;
+  success: boolean;
+  error?: string;
+  data?: any;
+  duration?: number;
+}
 
 class StripeAuthTester {
-  constructor() {
-    this.authToken = null;
-    this.connectionId = null;
-    this.credentialId = null;
-  }
+  private authToken: string | null = null;
+  private connectionId: string | null = null;
+  private credentialId: string | null = null;
 
-  async runTests() {
+  async runTests(): Promise<void> {
     console.log('🧪 Starting Stripe API Key Authentication Tests\n');
 
-    const results = [];
+    const results: TestResult[] = [];
 
     try {
       // Test 1: Authentication
@@ -67,26 +78,26 @@ class StripeAuthTester {
       results.push(await this.testCleanup());
 
     } catch (error) {
-      console.error('Test suite failed:', error.message);
+      logError('Test suite failed', error instanceof Error ? error : new Error(String(error)));
     }
 
     // Print results
     this.printResults(results);
   }
 
-  async testAuthentication() {
+  private async testAuthentication(): Promise<TestResult> {
     const start = Date.now();
     
     try {
       console.log('🔐 Testing authentication...');
       
       const response = await axios.post(`${BASE_URL}/api/auth/login`, {
-        email: TEST_USER.email,
-        password: TEST_USER.password
+        email: TEST_USER_EMAIL,
+        password: TEST_USER_PASSWORD
       });
 
-      if (response.data.success && response.data.data.accessToken) {
-        this.authToken = response.data.data.accessToken;
+      if (response.data.success && response.data.data.token) {
+        this.authToken = response.data.data.token;
         
         return {
           test: 'Authentication',
@@ -101,13 +112,13 @@ class StripeAuthTester {
       return {
         test: 'Authentication',
         success: false,
-        error: error.response?.data?.error || error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - start
       };
     }
   }
 
-  async testCreateStripeConnection() {
+  private async testCreateStripeConnection(): Promise<TestResult> {
     const start = Date.now();
     
     try {
@@ -145,13 +156,13 @@ class StripeAuthTester {
       return {
         test: 'Create Stripe Connection',
         success: false,
-        error: error.response?.data?.error || error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - start
       };
     }
   }
 
-  async testStoreStripeCredentials() {
+  private async testStoreStripeCredentials(): Promise<TestResult> {
     const start = Date.now();
     
     try {
@@ -160,7 +171,7 @@ class StripeAuthTester {
       const response = await axios.post(`${BASE_URL}/api/connections/${this.connectionId}/credentials`, {
         credentialData: {
           type: 'stripe_api_key',
-          apiKey: STRIPE_TEST_SECRET_KEY,
+          apiKey: STRIPE_KEY,
           environment: 'test',
           permissions: ['read', 'write']
         },
@@ -191,13 +202,13 @@ class StripeAuthTester {
       return {
         test: 'Store Stripe Credentials',
         success: false,
-        error: error.response?.data?.error || error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - start
       };
     }
   }
 
-  async testRetrieveCredentialMetadata() {
+  private async testRetrieveCredentialMetadata(): Promise<TestResult> {
     const start = Date.now();
     
     try {
@@ -234,13 +245,13 @@ class StripeAuthTester {
       return {
         test: 'Retrieve Credential Metadata',
         success: false,
-        error: error.response?.data?.error || error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - start
       };
     }
   }
 
-  async testStripeApiCall() {
+  private async testStripeApiCall(): Promise<TestResult> {
     const start = Date.now();
     
     try {
@@ -275,13 +286,13 @@ class StripeAuthTester {
       return {
         test: 'Stripe API Call',
         success: false,
-        error: error.response?.data?.error || error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - start
       };
     }
   }
 
-  async testUpdateCredentials() {
+  private async testUpdateCredentials(): Promise<TestResult> {
     const start = Date.now();
     
     try {
@@ -290,7 +301,7 @@ class StripeAuthTester {
       const response = await axios.put(`${BASE_URL}/api/connections/${this.connectionId}/credentials/${this.credentialId}`, {
         credentialData: {
           type: 'stripe_api_key',
-          apiKey: STRIPE_TEST_SECRET_KEY,
+          apiKey: STRIPE_KEY,
           environment: 'test',
           permissions: ['read', 'write'],
           updated: true
@@ -319,13 +330,13 @@ class StripeAuthTester {
       return {
         test: 'Update Credentials',
         success: false,
-        error: error.response?.data?.error || error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - start
       };
     }
   }
 
-  async testSecurityValidation() {
+  private async testSecurityValidation(): Promise<TestResult> {
     const start = Date.now();
     
     try {
@@ -335,7 +346,7 @@ class StripeAuthTester {
       try {
         await axios.get(`${BASE_URL}/api/connections/${this.connectionId}/credentials/${this.credentialId}`);
         throw new Error('Should require authentication');
-      } catch (error) {
+      } catch (error: any) {
         if (error.response?.status === 401) {
           // Expected - authentication required
         } else {
@@ -366,13 +377,13 @@ class StripeAuthTester {
       return {
         test: 'Security Validation',
         success: false,
-        error: error.response?.data?.error || error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - start
       };
     }
   }
 
-  async testCleanup() {
+  private async testCleanup(): Promise<TestResult> {
     const start = Date.now();
     
     try {
@@ -407,13 +418,13 @@ class StripeAuthTester {
       return {
         test: 'Cleanup',
         success: false,
-        error: error.response?.data?.error || error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - start
       };
     }
   }
 
-  printResults(results) {
+  private printResults(results: TestResult[]): void {
     console.log('\n📊 Test Results Summary\n');
     console.log('='.repeat(50));
     

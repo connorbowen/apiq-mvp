@@ -123,18 +123,27 @@ We welcome various types of contributions:
 Create a `.env.local` file with the following variables:
 
 ```env
+# Server Configuration
+NODE_ENV=development
+PORT=3000
+API_BASE_URL=http://localhost:3000
+
 # Database
 DATABASE_URL="postgresql://username:password@localhost:5432/apiq_dev"
 
-# NextAuth.js
+# Authentication
 NEXTAUTH_SECRET="your-development-secret-key"
 NEXTAUTH_URL="http://localhost:3000"
+CORS_ORIGIN=http://localhost:3000
+
+# Security
+ENCRYPTION_KEY="your-32-character-encryption-key-here"
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
 
 # OpenAI (for AI features)
 OPENAI_API_KEY="sk-your-openai-api-key"
 
 # Development
-NODE_ENV="development"
 LOG_LEVEL="debug"
 
 # Optional: Redis (for caching)

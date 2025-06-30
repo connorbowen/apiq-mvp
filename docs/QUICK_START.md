@@ -194,11 +194,25 @@ api_connections → endpoints (1:many)
 
 ### Required Variables
 ```bash
+# Server Configuration
+NODE_ENV=development
+PORT=3000
+API_BASE_URL=http://localhost:3000
+
+# Database
 DATABASE_URL="postgresql://connorbowen@localhost:5432/apiq"
+
+# Authentication
 JWT_SECRET=your-super-secret-jwt-key
-OPENAI_API_KEY=your-openai-api-key
-ENCRYPTION_KEY=your-32-character-encryption-key
 NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3000
+
+# Security
+ENCRYPTION_KEY=your-32-character-encryption-key
+
+# OpenAI
+OPENAI_API_KEY=your-openai-api-key
 ```
 
 ### Generate Secure Keys

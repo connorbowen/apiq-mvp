@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the comprehensive testing strategy for OAuth2 flow implementation in APIQ MVP. The testing plan covers OAuth2 authorization flows, token management, security validation, and integration testing with popular OAuth2 providers.
+This document outlines the comprehensive testing strategy for OAuth2 flow implementation in APIQ MVP. The OAuth2 service and all related endpoints now use dependency injection (DI) for all dependencies (database, encryption, token generation, etc.), enabling full mocking and improved testability. All tests should inject mocks via DI for isolation and coverage.
 
 ## Testing Objectives
 

@@ -66,6 +66,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automatic token refresh when tokens expire
   - Dependency injection architecture for improved testability
   - Complete unit test coverage (14 tests, 100% pass rate)
+- **Port Configuration Standardization** - ✅ COMPLETED
+  - Standardized all environments to use port 3000 consistently
+  - Fixed OAuth callback URL conflicts between development and test environments
+  - Updated environment files (`.env`, `.env.test`, `env.example`) to use port 3000
+  - Resolved port conflicts that were preventing OAuth flows from working correctly
+  - Updated documentation and scripts to reflect new port configuration
+- **Project Structure Cleanup** - ✅ COMPLETED
+  - Moved all test-related scripts from `scripts/` to `tests/helpers/`
+  - Removed one-off JavaScript scripts to maintain TypeScript-only codebase
+  - Kept only utility/devops scripts in `scripts/` directory
+  - Improved project organization and maintainability
 
 ### Changed
 - N/A
@@ -96,12 +107,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Error Handling** - Comprehensive OAuth2 error handling with proper HTTP status codes
 - **Database Integration** - OAuth2 tokens stored in ApiCredential table with encryption
 - **API Documentation** - Complete OAuth2 API reference documentation
+- **Port Configuration** - All environments now consistently use port 3000
+  - Development environment: `PORT=3000`, `API_BASE_URL=http://localhost:3000`
+  - Test environment: `PORT=3000`, `API_BASE_URL=http://localhost:3000`
+  - OAuth callback URLs: `http://localhost:3000/api/oauth/callback`
+  - NextAuth configuration: `NEXTAUTH_URL=http://localhost:3000`
+- **Project Structure** - Reorganized scripts directory for better maintainability
+  - Test scripts moved from `scripts/` to `tests/helpers/`
+  - Removed JavaScript scripts to maintain TypeScript-only codebase
+  - Kept only essential utility scripts in `scripts/` directory
 
 ### Deprecated
 - N/A
 
 ### Removed
 - N/A
+- **JavaScript Test Scripts** - Removed all `.js` test scripts to maintain TypeScript-only codebase
+  - Deleted `test-auth.js`, `test-oauth-manual.js`, `test-new-endpoints.js`, `test-stripe-auth-simple.js`
+  - Kept only TypeScript (`.ts`) scripts for consistency and type safety
+- **One-off Scripts** - Removed one-off and redundant scripts from `scripts/` directory
+  - Moved test-related scripts to appropriate test directories
+  - Kept only utility and devops scripts in `scripts/`
 
 ### Fixed
 - N/A
@@ -128,6 +154,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated test expectations to match current API response structure (`data.data.connections`)
   - Ensured proper authentication flow for all connection-related endpoints
   - Verified authentication rejection tests work correctly
+- **OAuth Port Conflicts** - Fixed port configuration issues that were preventing OAuth flows
+  - Resolved conflicts between development (port 3001) and OAuth callback URLs (port 3000)
+  - Standardized all environments to use port 3000 consistently
+  - Fixed OAuth callback URL mismatches that were causing authentication failures
+  - Updated all environment files and documentation to reflect correct port configuration
 
 ### Security
 - Implemented secure authentication with NextAuth.js

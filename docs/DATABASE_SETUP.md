@@ -91,8 +91,8 @@ Create a `.env` file in your project root with the following variables:
 ```bash
 # Server Configuration
 NODE_ENV=development
-PORT=3001
-API_BASE_URL=http://localhost:3001
+PORT=3000
+API_BASE_URL=http://localhost:3000
 
 # Database Configuration
 DATABASE_URL="postgresql://connorbowen@localhost:5432/apiq"
@@ -138,7 +138,7 @@ NEXTAUTH_SECRET=your-nextauth-secret-key-change-this-in-production
 |----------|-------------|----------|---------|
 | `DATABASE_URL` | PostgreSQL connection string | Yes | - |
 | `NODE_ENV` | Application environment | Yes | development |
-| `PORT` | Server port | No | 3001 |
+| `PORT` | Server port | No | 3000 |
 | `JWT_SECRET` | JWT signing secret | Yes | - |
 | `OPENAI_API_KEY` | OpenAI API key | Yes | - |
 | `ENCRYPTION_KEY` | 32-character encryption key | Yes | - |
@@ -325,110 +325,4 @@ psql -d apiq -c "SELECT pg_size_pretty(pg_database_size('apiq'));"
 ### Common Issues
 
 #### 1. Connection Refused
-```bash
-# Check if PostgreSQL is running
-brew services list | grep postgresql
-
-# Start PostgreSQL if not running
-brew services start postgresql@15
 ```
-
-#### 2. Database Does Not Exist
-```bash
-# Create database
-createdb apiq
-
-# Or connect as superuser and create
-sudo -u postgres createdb apiq
-```
-
-#### 3. Permission Denied
-```bash
-# Check user permissions
-psql -d apiq -c "\du"
-
-# Grant permissions if needed
-psql -d apiq -c "GRANT ALL PRIVILEGES ON DATABASE apiq TO connorbowen;"
-```
-
-#### 4. Migration Errors
-```bash
-# Reset migrations
-npx prisma migrate reset
-
-# Or manually drop and recreate
-psql -d apiq -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-npx prisma migrate dev
-```
-
-### Performance Optimization
-
-#### Indexes
-The schema includes automatic indexes on:
-- Primary keys (id fields)
-- Foreign keys (userId, workflowId, etc.)
-- Unique constraints (email, unique combinations)
-
-#### Connection Pooling
-The Prisma client is configured with connection pooling for optimal performance.
-
-### Security Considerations
-
-1. **Environment Variables**: Never commit `.env` files to version control
-2. **Database Access**: Use strong passwords in production
-3. **Network Security**: Configure firewall rules for database access
-4. **Encryption**: Sensitive data is encrypted using AES-256
-5. **Audit Logging**: All database operations are logged for security
-
-## Production Deployment
-
-### Production Database Setup
-
-1. **Use Managed Database Service**:
-   - AWS RDS
-   - Google Cloud SQL
-   - Azure Database for PostgreSQL
-   - Supabase
-   - Railway
-
-2. **Environment Variables**:
-   ```bash
-   DATABASE_URL="postgresql://username:password@host:port/database?sslmode=require"
-   ```
-
-3. **SSL Configuration**:
-   - Enable SSL connections
-   - Use connection pooling
-   - Configure read replicas for scaling
-
-4. **Backup Strategy**:
-   - Automated daily backups
-   - Point-in-time recovery
-   - Cross-region replication
-
-### Migration Strategy
-
-```bash
-# Production migration
-npx prisma migrate deploy
-
-# Verify migration
-npx prisma db pull
-
-# Generate production client
-npx prisma generate
-```
-
-## Support
-
-For database-related issues:
-
-1. Check the [Prisma Documentation](https://www.prisma.io/docs/)
-2. Review [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-3. Check the troubleshooting section above
-4. Create an issue in the project repository
-
----
-
-**Last Updated**: December 2024
-**Version**: 1.0.0 

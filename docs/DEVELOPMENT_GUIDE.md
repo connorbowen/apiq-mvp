@@ -48,18 +48,25 @@
    
    Configure your `.env.local`:
    ```env
+   # Server Configuration
+   NODE_ENV=development
+   PORT=3000
+   API_BASE_URL=http://localhost:3000
+   
    # Database
    DATABASE_URL="postgresql://username:password@localhost:5432/apiq_dev"
    
    # NextAuth.js
    NEXTAUTH_SECRET="your-secret-key-here"
    NEXTAUTH_URL="http://localhost:3000"
+   CORS_ORIGIN=http://localhost:3000
    
    # OpenAI
    OPENAI_API_KEY="sk-your-openai-api-key"
    
-   # Development
-   NODE_ENV="development"
+   # Security
+   ENCRYPTION_KEY="your-32-character-encryption-key-here"
+   JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
    ```
 
 4. **Database setup**
@@ -127,7 +134,12 @@
 ├── /tests                  # Test files
 │   ├── /unit               # Unit tests
 │   ├── /integration        # Integration tests
-│   └── /e2e                # End-to-end tests
+│   ├── /e2e                # End-to-end tests
+│   └── /helpers            # Test helper scripts and utilities
+├── /scripts                # Utility and devops scripts
+│   ├── init-db.js          # Database initialization
+│   ├── startup.sh          # Application startup script
+│   └── run-tests.sh        # Test orchestration script
 └── /docs                   # Documentation
 ```
 
@@ -1049,7 +1061,7 @@ For external services (OpenAI, external APIs), we use mocks in tests but ensure:
    # OpenAI
    OPENAI_API_KEY="sk-your-production-key"
    
-   # Redis (for caching)
+ # Redis (for caching)
    REDIS_URL="redis://localhost:6379"
    
    # Monitoring

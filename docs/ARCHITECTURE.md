@@ -492,6 +492,7 @@ See `.env.example` for usage.
 - **Automatic token refresh** for expired tokens
 - **CSRF protection** with state parameter validation
 - **Comprehensive audit logging** for security compliance
+- **Dependency injection (DI) for all OAuth2 service dependencies** (database, encryption, token generation, etc.)
 
 ### OAuth2 System Architecture
 
@@ -526,18 +527,19 @@ See `.env.example` for usage.
 
 #### OAuth2 Flow Components
 
-1. **OAuth2Service** - Core OAuth2 business logic
+1. **OAuth2Service** - Core OAuth2 business logic (now fully DI-based)
    - Provider management (GitHub, Google, Slack)
    - Authorization URL generation
    - Token exchange and refresh
    - Security validation
+   - **All dependencies injected for testability and maintainability**
 
 2. **API Endpoints**
-   - `/api/oauth/authorize` - Initiate OAuth2 flow
-   - `/api/oauth/callback` - Process OAuth2 callback
-   - `/api/oauth/refresh` - Refresh expired tokens
-   - `/api/oauth/token` - Retrieve access tokens
-   - `/api/oauth/providers` - List supported providers
+   - `/api/oauth/authorize` - Initiate OAuth2 flow (uses DI)
+   - `/api/oauth/callback` - Process OAuth2 callback (uses DI)
+   - `/api/oauth/refresh` - Refresh expired tokens (uses DI)
+   - `/api/oauth/token` - Retrieve access tokens (uses DI)
+   - `/api/oauth/providers` - List supported providers (uses DI)
 
 3. **Security Features**
    - **Encrypted Storage** - AES-256 encryption for all tokens

@@ -28,6 +28,31 @@ APIQ MVP maintains a comprehensive test suite with **100% test success rate** (2
 
 ## Test Infrastructure
 
+### Test Helper Scripts
+
+**Location**: `tests/helpers/`
+**Purpose**: Manual testing utilities and debugging tools
+
+**Available Scripts**:
+- `debug-parser.ts` - Debug OpenAPI parser issues
+- `test-db.ts` - Test database connectivity and operations
+- `test-petstore-api.ts` - Test against Swagger Petstore API
+- `test-petstore-endpoints.ts` - Test endpoint extraction from Petstore
+- `test-stripe-auth.ts` - Test Stripe OAuth authentication
+- `testUtils.ts` - Shared test utilities and helpers
+
+**Usage**:
+```bash
+# Run TypeScript test helpers
+npx tsx tests/helpers/test-db.ts
+npx tsx tests/helpers/debug-parser.ts
+
+# Run with environment variables
+dotenv -e .env.test -- npx tsx tests/helpers/test-stripe-auth.ts
+```
+
+**Note**: All test helper scripts are TypeScript-only for consistency and type safety.
+
 ### Test Isolation Improvements
 
 The test suite has been enhanced with robust isolation mechanisms:

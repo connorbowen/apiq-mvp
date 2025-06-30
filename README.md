@@ -161,10 +161,12 @@ apiq-mvp/
 ### OAuth2 Development
 
 The OAuth2 system is built with:
-- **OAuth2Service** - Core OAuth2 business logic with dependency injection
-- **API Endpoints** - Complete OAuth2 flow endpoints
+- **OAuth2Service** - Core OAuth2 business logic with dependency injection (DI) for all dependencies (database, encryption, token generation, etc.)
+- **API Endpoints** - Complete OAuth2 flow endpoints, all using DI for the OAuth2 service
 - **Security Features** - Encrypted storage, CSRF protection, audit logging
-- **Testing** - Comprehensive unit tests with mocked dependencies
+- **Testing** - Comprehensive unit and integration tests with full dependency mocking via DI
+
+> **Note:** The OAuth2 service and all related endpoints have been refactored to use dependency injection, improving testability, maintainability, and clarity. See `src/lib/auth/oauth2.ts` for details.
 
 ### Running Tests
 

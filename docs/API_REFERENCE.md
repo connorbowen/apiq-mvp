@@ -1287,6 +1287,8 @@ Authorization: Bearer <access_token>
 
 APIQ supports OAuth2 authentication for connecting to third-party APIs that require OAuth2 authorization. The OAuth2 flow is secure, supports multiple providers, and includes automatic token refresh.
 
+> **Note:** The OAuth2 service and all related endpoints are implemented using dependency injection (DI) for all dependencies (database, encryption, token generation, etc.), improving testability, maintainability, and security. All token management and security logic are handled via DI-injected services.
+
 ### Supported OAuth2 Providers
 
 - **GitHub** - For GitHub API access

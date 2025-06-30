@@ -95,8 +95,16 @@ lsof -ti:3000
 # Kill the process
 kill -9 $(lsof -ti:3000)
 
-# Or use a different port
-npm run dev -- -p 3001
+# Restart the development server
+npm run dev
+```
+
+**Note**: The application is configured to use port 3000 consistently across all environments. If you need to use a different port, update your `.env` file:
+```bash
+PORT=3001
+API_BASE_URL=http://localhost:3001
+NEXTAUTH_URL=http://localhost:3001
+CORS_ORIGIN=http://localhost:3001
 ```
 
 ## 🔧 Quick Fixes
