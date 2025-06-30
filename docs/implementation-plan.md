@@ -8,11 +8,11 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 **Key Innovation**: Users can describe workflows in natural language (e.g., "When a new GitHub issue is created, send a Slack notification and create a Trello card"), and the system automatically generates and executes the corresponding multi-step workflow across multiple APIs.
 
-## Current Status: Phase 2.4 Complete ✅
+## Current Status: Phase 2.4 In Progress 🚧
 
 **Test Status**: 282 tests, 100% pass rate (79 additional tests added since Phase 1)
 **Last Updated**: January 2025
-**Next Milestone**: Phase 2.5 - Workflow Orchestration Engine
+**Next Milestone**: Phase 2.4 - Workflow Orchestration Engine (Priority 1A)
 
 ## Phase 1: Core Infrastructure ✅ COMPLETED
 
@@ -124,58 +124,139 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 **Phase 2.3 Deliverables**: ✅ All completed and tested
 
-#### 🔄 Workflow Orchestration Engine 🚧 IN PROGRESS
-- [ ] **Workflow Builder Core** - Multi-step workflow execution engine
-- [ ] **Step Configuration** - Individual step setup and validation
-- [ ] **Data Flow Management** - Pass data between workflow steps
-- [ ] **Conditional Logic** - If/then/else workflow branching
-- [ ] **Error Handling & Retry** - Workflow-level error management and retry logic
-- [ ] **Workflow Templates** - Pre-built workflow patterns
-- [ ] **Workflow Validation** - Validate workflows before execution
+### Phase 2.4: Workflow Orchestration Engine 🚧 IN PROGRESS
+
+#### 🔄 Priority 1A: Workflow Executor Core 🚧 IN PROGRESS
+- [ ] **Step Runner Engine** - Build the core step execution engine (currently placeholder JSON response)
+- [ ] **Loop & Retry Logic** - Implement workflow loops and automatic retry mechanisms
+- [ ] **Rollback Strategy** - Define idempotency and partial-failure handling
+- [ ] **Execution State Management** - Track execution state and progress
+- [ ] **Integration Tests** - Add comprehensive integration tests for executor
+- [ ] **Documentation** - Update `/docs/workflow-execution.md` with executor specification
+
+#### 🔄 Priority 1B: Data Flow & Conditional Logic 🚧 PLANNED
+- [ ] **Data Mapping** - Map outputs → inputs across workflow steps
+- [ ] **Basic Transform Helpers** - Built-in data transformation utilities
+- [ ] **Conditional Logic Engine** - If/then/else workflow branching
 - [ ] **Step Dependencies** - Handle step ordering and dependencies
+- [ ] **Integration Tests** - Add data flow and conditional logic tests
+- [ ] **Documentation** - Update `/docs/workflow-data-flow.md` with examples
 
-#### 🔄 Real-time Monitoring & Observability 🚧 PLANNED
-- [ ] **API Health Monitoring** - Real-time status checking for all connected APIs
-- [ ] **Performance Metrics** - Response time tracking and performance analytics
-- [ ] **Error Rate Monitoring** - Failure rate analysis and alerting
-- [ ] **Workflow Execution Monitoring** - Real-time workflow execution tracking
-- [ ] **Alert System** - Notification for API issues and workflow failures
-- [ ] **Dashboard** - Real-time monitoring interface
-- [ ] **OAuth2 Token Monitoring** - Monitor OAuth2 token expiration and refresh status
-- [ ] **Execution History** - Comprehensive workflow execution logs
+#### 🔄 Priority 1C: Workflow Templates 🚧 PLANNED
+- [ ] **Template System** - Seed handful of YAML/JSON workflow blueprints
+- [ ] **Template Library** - Pre-built workflow patterns (customer onboarding, data sync, etc.)
+- [ ] **Template Validation** - Validate templates before execution
+- [ ] **Template Sharing** - Share templates within organization
+- [ ] **Integration Tests** - Add template system tests
+- [ ] **Documentation** - Update `/docs/workflow-templates.md` with template format
 
-#### 🔄 Enhanced Security & Compliance 🚧 PLANNED
-- [ ] **Credential Encryption** - Secure storage of API keys and OAuth2 tokens
-- [ ] **Access Logging** - Comprehensive audit trails including OAuth2 events
-- [ ] **IP Whitelisting** - Restrict API access by IP address
-- [ ] **Rate Limiting** - Per-user and per-API rate limits
-- [ ] **Security Headers** - Enhanced security configuration
-- [ ] **OAuth2 Token Security** - Secure OAuth2 token storage and rotation
-- [ ] **Audit Trail** - Complete user action and API call logging
-- [ ] **Compliance Reporting** - Generate compliance reports for enterprise customers
+### Phase 2.5: Observability & Monitoring 🚧 PLANNED
 
-### Phase 2.4: Frontend UI Components ✅ COMPLETED
+#### 🔄 Priority 2A: Health Checks 🚧 PLANNED
+- [ ] **API Health Monitoring** - Periodic ping + alert for all connected APIs
+- [ ] **Service Health Checks** - Monitor internal service health
+- [ ] **Dependency Monitoring** - Database, external APIs, OAuth2 providers
+- [ ] **Health Check API** - `/api/health` endpoint with detailed status
+- [ ] **Integration Tests** - Add health check monitoring tests
+- [ ] **Documentation** - Update `/docs/monitoring.md` with health check setup
 
-#### ✅ OAuth2 User Experience - COMPLETE
-- [x] **OAuth2 Connection UI** - Visual interface for connecting OAuth2 services
-- [x] **OAuth2 Authorization Flow** - Seamless OAuth2 authorization experience
-- [x] **OAuth2 Status Display** - Show connection status and token expiration
-- [x] **OAuth2 Reauthorization** - Handle expired tokens gracefully with re-auth prompts
-- [x] **OAuth2 Scope Selection** - Allow users to select required permissions
+#### 🔄 Priority 2B: Execution Telemetry 🚧 PLANNED
+- [ ] **Workflow Metrics Table** - Store duration + status per step
+- [ ] **Performance Tracking** - Response time, throughput, error rates
+- [ ] **Metrics Pipeline** - DB → Prometheus → Grafana integration
+- [ ] **Real-time Execution Tracking** - Live workflow execution monitoring
+- [ ] **Integration Tests** - Add telemetry collection tests
+- [ ] **Documentation** - Update `/docs/telemetry.md` with metrics schema
 
-#### ✅ OAuth2 Frontend Integration - COMPLETE
-- [x] **API Client Utility** - Centralized API client with TypeScript interfaces (`src/lib/api/client.ts`)
-- [x] **OAuth2 Manager Component** - Reusable component for OAuth2 management (`src/components/OAuth2Manager.tsx`)
-- [x] **Enhanced Login Page** - OAuth2 provider validation and error handling
-- [x] **Updated Dashboard** - OAuth2 configuration support in connection creation
-- [x] **OAuth2 Setup Page** - Dedicated page for OAuth2 connection management
-- [x] **OAuth2 Authorization Page** - Smooth flow initiation with parameter validation
-- [x] **OAuth2 Callback Page** - Handles completion with success/error states
-- [x] **Type Safety** - Full TypeScript integration with proper error handling
-- [x] **Error Handling** - Comprehensive error states and user feedback
-- [x] **Security Integration** - Proper OAuth2 parameter validation and secure token handling
+#### 🔄 Priority 2C: Dashboard & Alerts 🚧 PLANNED
+- [ ] **Grafana Dashboard** - Real-time monitoring interface
+- [ ] **Alert System** - Email/Slack notifications on failures
+- [ ] **Alert Rules** - Configurable alert thresholds and conditions
+- [ ] **Alert History** - Track and manage alert history
+- [ ] **Integration Tests** - Add dashboard and alert tests
+- [ ] **Documentation** - Update `/docs/alerts.md` with alert configuration
 
-**Phase 2.4 Deliverables**: ✅ All completed and tested
+### Phase 2.6: Security Hardening 🚧 PLANNED
+
+#### 🔄 Priority 3A: Rate Limiting 🚧 PLANNED
+- [ ] **Rate Limiting Middleware** - Implement via `next-rate-limit`
+- [ ] **Per-User Limits** - User-specific rate limiting
+- [ ] **Per-API Limits** - API-specific rate limiting
+- [ ] **Rate Limit Headers** - Proper rate limit response headers
+- [ ] **Integration Tests** - Add rate limiting tests
+- [ ] **Documentation** - Update `/docs/security.md` with rate limiting config
+
+#### 🔄 Priority 3B: IP Allow-List 🚧 PLANNED
+- [ ] **IP Allow-List Middleware** - Restrict API access by IP address
+- [ ] **Admin UI** - Manage IP allow-lists through admin interface
+- [ ] **IP Validation** - Validate and sanitize IP addresses
+- [ ] **Integration Tests** - Add IP allow-list tests
+- [ ] **Documentation** - Update `/docs/security.md` with IP allow-list setup
+
+#### 🔄 Priority 3C: Security Headers 🚧 PLANNED
+- [ ] **Helmet Integration** - Security headers middleware
+- [ ] **CSP Headers** - Content Security Policy configuration
+- [ ] **HSTS Headers** - HTTP Strict Transport Security
+- [ ] **Security Headers Validation** - Validate security headers are set
+- [ ] **Integration Tests** - Add security headers tests
+- [ ] **Documentation** - Update `/docs/security.md` with security headers
+
+#### 🔄 Priority 3D: Compliance Reports 🚧 PLANNED
+- [ ] **Quarterly Audit Log Export** - Generate compliance audit reports
+- [ ] **Static Security Documentation** - Generate security compliance docs
+- [ ] **Report Format Definition** - Define compliance report format
+- [ ] **Report Ownership** - Assign ownership for compliance reporting
+- [ ] **Integration Tests** - Add compliance report generation tests
+- [ ] **Documentation** - Update `/docs/compliance.md` with report formats
+
+## Dependency Order
+
+1. **Auth / RBAC** (✅ Completed in Phase 2.2)
+2. **Executor** (P1A) - Core workflow execution engine
+3. **Data-flow & Conditional Logic** (P1B) - Step interconnection
+4. **Templates** (P1C) - Pre-built workflow patterns
+5. **Observability Stack** (P2) - Monitoring and alerting
+6. **Security Hardening** (P3) - Production security measures
+
+## Additional Low-Effort Wins
+
+### Automated Testing
+- Add integration tests as you deliver P1A/B to avoid regressions
+- Maintain 100% test pass rate throughout development
+
+### Rollback Strategy
+- Define idempotency & partial-failure handling early (part of P1A)
+- Implement workflow versioning and rollback capabilities
+
+### Documentation Updates
+- Each priority includes "Update /docs/… and sample workflow" bullet
+- Ensure Cursor agents remain spec-aligned with current implementation
+- Maintain comprehensive API documentation and examples
+
+### Phase 2.7: User Registration & Verification 🚧 IN PROGRESS
+
+#### 🚧 UI Components
+- [ ] **Signup Page** - `/signup` page with email + password fields, server-side validation
+- [ ] **OAuth2 Signup** - OAuth2 sign-up (Google, GitHub, Slack) via NextAuth providers
+- [ ] **SAML/OIDC Signup** - Enterprise SSO signup (Okta, Azure AD, Google Workspace)
+- [ ] **Email Verification Screen** - Verification email screen & resend link functionality
+- [ ] **Welcome Flow** - First-time "Welcome" walkthrough (sets `hasSeenWelcome=true`)
+
+#### 🚧 Backend / API
+- [ ] **Registration API** - POST `/api/auth/register` (rate-limited, captcha optional)
+- [ ] **Email Verification** - POST `/api/auth/verify` (consumes token)
+- [ ] **Resend Verification** - POST `/api/auth/resend-verification`
+- [ ] **Password Reset** - POST `/api/auth/reset-password` (send link)
+- [x] **SAML/OIDC Integration** - Enterprise SSO endpoints for Okta, Azure AD, Google Workspace
+- [ ] **Prisma Models** - `VerificationToken`, `PasswordResetToken` models
+- [ ] **Email Service** - Nodemailer (or Resend, Postmark) integration for email sending
+- [x] **Testing** - Jest tests for register, verify, SAML/OIDC, happy + failure paths
+
+#### ✅ Documentation & Rules
+- [x] **Plan Update** - Update `implementation-plan.md` §2.5
+- [x] **Schema Documentation** - Add schema changes and link in commit per `.cursor/rules` "Documentation Reference" section
+
+**Phase 2.7 Deliverables**: 🚧 In Progress (SAML/OIDC endpoints and tests completed)
 
 #### ❌ User Interface
 - [ ] **Dashboard** - Main application interface with workflow overview
@@ -280,15 +361,16 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - **Authentication Testing** - ✅ Complete
 - **OAuth2 Flow Implementation** - ✅ Complete
 - **OAuth2 Flow Testing** - ✅ Complete
+- **SAML/OIDC Integration** - ✅ Complete
+- **SAML/OIDC Testing** - ✅ Complete
 
 ### 🚧 In Progress
-- **Advanced API Features (Phase 2.3)** - 🚧 In Progress
-- **Workflow Orchestration Engine** - 🚧 In Progress
-- **Real-time Monitoring** - 🚧 Planned
-- **Enhanced Security** - 🚧 Planned
+- **Workflow Orchestration Engine (Phase 2.4)** - 🚧 In Progress (Priority 1A)
+- **User Registration & Verification (Phase 2.7)** - 🚧 In Progress
+- **Observability & Monitoring (Phase 2.5)** - 🚧 Planned
+- **Security Hardening (Phase 2.6)** - 🚧 Planned
 
 ### ❌ Not Started
-- **Frontend UI Components (Phase 2.4)** - ❌ Not Started
 - **Natural Language AI Orchestration (Phase 3)** - ❌ Not Started
 - **Production Readiness (Phase 4)** - ❌ Not Started
 - **Advanced AI Orchestration (Phase 5)** - ❌ Not Started
@@ -331,6 +413,9 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - **OAuth2 Flow**: Complete OAuth2 implementation with GitHub, Google, Slack support
 - **OAuth2 Security**: Encrypted token storage, CSRF protection, audit logging
 - **OAuth2 Testing**: Comprehensive test coverage (111/111 integration tests passing)
+- **SAML/OIDC SSO**: Enterprise SSO with Okta, Azure AD, Google Workspace
+- **SAML/OIDC Security**: Certificate validation, signature verification, audit logging
+- **SAML/OIDC Testing**: Comprehensive test coverage for enterprise SSO flows
 
 ### 🎯 Target Metrics
 - **Performance**: < 200ms API response times
@@ -351,6 +436,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - **API Reliability**: Comprehensive error handling
 - **Testing Coverage**: 100% test pass rate maintained
 - **OAuth2 Security**: Encrypted tokens, CSRF protection, audit logging
+- **SAML/OIDC Security**: Certificate validation, signature verification, secure token handling
 
 ### 🔄 Active Risks
 - **Performance**: Need monitoring for API response times
@@ -366,15 +452,21 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 ## Next Steps
 
-### Immediate (Phase 2.3)
-1. **Workflow Orchestration Engine** - Build the foundation for AI to program
-2. **Real-time Monitoring** - Add comprehensive monitoring for AI-generated workflows
-3. **Enhanced Security** - Implement credential encryption and audit logging
+### Immediate (Phase 2.4 - Priority 1A)
+1. **Workflow Executor Core** - Build the core step execution engine (currently placeholder)
+2. **Loop & Retry Logic** - Implement workflow loops and automatic retry mechanisms
+3. **Rollback Strategy** - Define idempotency and partial-failure handling
+4. **Integration Tests** - Add comprehensive integration tests for executor
 
-### Short-term (Phase 2.4)
-1. **Frontend UI** - Build user interface for workflow management
-2. **OAuth2 User Experience** - Create seamless OAuth2 connection flows
-3. **Responsive Design** - Mobile optimization and accessibility
+### Short-term (Phase 2.4 - Priority 1B & 1C)
+1. **Data Flow & Conditional Logic** - Map outputs → inputs across workflow steps
+2. **Workflow Templates** - Seed handful of YAML/JSON workflow blueprints
+3. **User Registration** - Complete self-service user onboarding (Phase 2.7)
+4. **Observability Stack** - Health checks, telemetry, and alerts (Phase 2.5)
+
+### Medium-term (Phase 2.6)
+1. **Security Hardening** - Rate limiting, IP allow-lists, security headers
+2. **Compliance Reports** - Quarterly audit log export and security documentation
 
 ### Medium-term (Phase 3)
 1. **Natural Language Processing** - Implement GPT-4 integration
@@ -443,6 +535,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 ---
 
-*Last updated: December 2024*
+*Last updated: January 2025*
 *Current test status: 282 tests, 100% pass rate*
-*OAuth2 test status: 111/111 integration tests passing* 
+*OAuth2 test status: 111/111 integration tests passing*
+*SAML/OIDC test status: 36 new tests created for enterprise SSO* 

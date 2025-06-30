@@ -169,6 +169,55 @@ Authorization: Bearer <access_token>
 }
 ```
 
+#### `GET /api/auth/oauth2`
+Initiate OAuth2 login flow for user authentication.
+
+**Query Parameters:**
+- `provider` (required) - OAuth2 provider name (google, github, slack)
+- `redirectUri` (optional) - Custom redirect URI (defaults to `/dashboard`)
+
+**Response:** Redirects to OAuth2 provider authorization URL
+
+**Example:**
+```
+GET /api/auth/oauth2?provider=google&redirectUri=/dashboard
+```
+
+#### `GET /api/auth/oauth2/callback`
+Process OAuth2 callback for user authentication.
+
+**Query Parameters:**
+- `code` (required) - Authorization code from OAuth2 provider
+- `state` (required) - State parameter for CSRF protection
+- `error` (optional) - Error from OAuth2 provider
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_id",
+      "email": "user@example.com",
+      "name": "User Name",
+      "role": "USER"
+    },
+    "accessToken": "jwt_token",
+    "expiresIn": 900
+  },
+  "message": "OAuth2 login successful"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "OAuth2 login failed",
+  "code": "OAUTH2_LOGIN_ERROR"
+}
+```
+
 ### API Connections
 
 #### `GET /api/connections`

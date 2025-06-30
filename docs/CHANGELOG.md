@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 2.5: User Registration & Verification Plan** - ✅ ADDED TO IMPLEMENTATION PLAN
+  - Complete user registration flow with email/password and OAuth2 signup
+  - Email verification system with resend functionality
+  - Password reset flow with secure token handling
+  - Welcome flow for new users with onboarding experience
+  - Rate limiting and captcha protection for registration
+  - Prisma models for verification and password reset tokens
+  - Comprehensive testing strategy for registration flows
+- **NLP-Focused Platform Refactoring** - ✅ COMPLETED
+  - Simplified landing page to focus on natural language workflow creation
+  - Enhanced chat interface with conversational AI responses
+  - Streamlined dashboard with chat-first experience
+  - Improved OpenAI service with more conversational prompts
+  - Better error handling and user feedback throughout
+  - Type safety improvements and consistency fixes
+- **OAuth2 User Login Implementation** - ✅ COMPLETED
+  - Basic Google OAuth2 login flow for user authentication
+  - Backend endpoints for OAuth2 authorization and callback handling
+  - JWT token generation and user creation/updating
+  - Frontend integration with login page and redirect handling
+  - Secure token storage and session management
 - **OAuth2 Frontend Integration** - ✅ COMPLETED
   - Complete UI components for OAuth2 flows and token management
   - API Client utility with TypeScript interfaces for OAuth2 operations
@@ -125,6 +146,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Debug/Test Scripts**: Added `clear-cache.js`, `debug-openapi.js`, `debug-parser.js`, and `/api/oauth/test.ts` for easier debugging and admin/dev workflows.
 
 ### Changed
+- **Platform Focus** - Refactored from complex API management to NLP-first workflow creation
+  - Landing page now emphasizes natural language workflow creation
+  - Dashboard simplified to prioritize chat interface over connection management
+  - Chat interface enhanced with conversational AI responses and better UX
+  - OpenAI service updated with more friendly and helpful prompts
+- **User Experience** - Improved conversational flow and error handling
+  - Enhanced chat interface with better messaging and quick examples
+  - Streamlined navigation with chat as primary interface
+  - Better error messages and user feedback throughout
+  - Type consistency improvements across components
+- **Authentication Flow** - Enhanced login experience with OAuth2 support
+  - Login page updated to handle OAuth2 provider selection
+  - Better error handling for OAuth2 login attempts
+  - Improved redirect handling for OAuth2 flows
+  - Enhanced session management and token handling
 - N/A
 - **Integration Tests**: Refactored all integration tests to remove database and authentication mocks
 - **Test Environment**: Updated test environment to use real development database
