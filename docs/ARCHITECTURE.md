@@ -476,4 +476,335 @@ See `.env.example` for usage.
 - Multi-tenancy support
 - Advanced RBAC
 - Enterprise SSO integration
-- Custom compliance frameworks 
+- Custom compliance frameworks
+
+### Authentication Architecture
+
+#### JWT Authentication
+- **Token-based authentication** using JSON Web Tokens
+- **Role-based access control** (USER, ADMIN, SUPER_ADMIN)
+- **Session management** with refresh tokens
+- **Secure token storage** and validation
+
+#### OAuth2 Authentication
+- **Multi-provider OAuth2 support** (GitHub, Google, Slack)
+- **Secure token management** with encryption
+- **Automatic token refresh** for expired tokens
+- **CSRF protection** with state parameter validation
+- **Comprehensive audit logging** for security compliance
+
+### OAuth2 System Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   API Layer     │    │   OAuth2        │
+│                 │    │                 │    │   Providers     │
+│ OAuth2 UI       │───▶│ /api/oauth/*    │───▶│ GitHub          │
+│ Components      │    │                 │    │ Google          │
+└─────────────────┘    └─────────────────┘    │ Slack           │
+                                              └─────────────────┘
+                                                       │
+                                              ┌─────────────────┐
+                                              │   OAuth2        │
+                                              │   Service       │
+                                              │                 │
+                                              │ • Authorization │
+                                              │ • Token Mgmt    │
+                                              │ • Refresh Logic │
+                                              │ • Security      │
+                                              └─────────────────┘
+                                                       │
+                                              ┌─────────────────┐
+                                              │   Data Layer    │
+                                              │                 │
+                                              │ • Encrypted     │
+                                              │   Tokens        │
+                                              │ • Audit Logs    │
+                                              │ • User Data     │
+                                              └─────────────────┘
+```
+
+#### OAuth2 Flow Components
+
+1. **OAuth2Service** - Core OAuth2 business logic
+   - Provider management (GitHub, Google, Slack)
+   - Authorization URL generation
+   - Token exchange and refresh
+   - Security validation
+
+2. **API Endpoints**
+   - `/api/oauth/authorize` - Initiate OAuth2 flow
+   - `/api/oauth/callback` - Process OAuth2 callback
+   - `/api/oauth/refresh` - Refresh expired tokens
+   - `/api/oauth/token` - Retrieve access tokens
+   - `/api/oauth/providers` - List supported providers
+
+3. **Security Features**
+   - **Encrypted Storage** - AES-256 encryption for all tokens
+   - **CSRF Protection** - State parameter validation
+   - **Audit Logging** - Complete OAuth2 event tracking
+   - **Scope Validation** - Permission enforcement
+
+4. **Database Integration**
+   - **ApiCredential Table** - Encrypted OAuth2 token storage
+   - **AuditLog Table** - OAuth2 event logging
+   - **User Table** - OAuth2 provider associations
+
+### Data Architecture
+
+#### Database Schema
+
+```sql
+-- OAuth2 Token Storage
+CREATE TABLE api_credentials (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  api_connection_id TEXT NOT NULL,
+  encrypted_data TEXT NOT NULL,  -- Encrypted OAuth2 tokens
+  key_id TEXT NOT NULL,          -- Encryption key identifier
+  is_active BOOLEAN DEFAULT true,
+  expires_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, api_connection_id)
+);
+
+-- OAuth2 Audit Logging
+CREATE TABLE audit_logs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  action TEXT NOT NULL,          -- OAUTH2_AUTHORIZE, OAUTH2_CONNECT, etc.
+  resource TEXT NOT NULL,
+  resource_id TEXT,
+  details JSONB,                 -- OAuth2-specific details
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### OAuth2 Data Flow
+
+1. **Token Storage**
+   - OAuth2 tokens encrypted with AES-256
+   - Stored in `api_credentials` table
+   - Associated with user and API connection
+
+2. **Audit Logging**
+   - All OAuth2 events logged to `audit_logs`
+   - Includes authorization, token refresh, errors
+   - Supports compliance and security monitoring
+
+### Security Architecture
+
+#### OAuth2 Security Measures
+
+1. **Token Encryption**
+   - All OAuth2 tokens encrypted before storage
+   - AES-256 encryption with environment-based keys
+   - Secure key management and rotation
+
+2. **CSRF Protection**
+   - State parameter validation in OAuth2 flow
+   - Time-based expiration (5 minutes)
+   - Cryptographic nonce for additional security
+
+3. **Scope Validation**
+   - OAuth2 scopes validated against provider requirements
+   - User consent tracking and enforcement
+   - Minimal scope principle enforcement
+
+4. **Audit and Monitoring**
+   - Complete OAuth2 event logging
+   - Security event monitoring
+   - Compliance reporting capabilities
+
+### Service Layer Architecture
+
+#### OAuth2Service Design
+
+```typescript
+class OAuth2Service {
+  // Dependency injection for testability
+  constructor({
+    prisma = new PrismaClient(),
+    encryptionService = defaultEncryptionService,
+    generateSecureToken = defaultGenerateSecureToken
+  } = {})
+
+  // Core OAuth2 operations
+  generateAuthorizationUrl(userId, apiConnectionId, provider, config)
+  processCallback(code, state, config)
+  refreshToken(userId, apiConnectionId, config)
+  getAccessToken(userId, apiConnectionId)
+  
+  // Provider management
+  getSupportedProviders()
+  getProviderConfig(provider)
+  validateConfig(config)
+}
+```
+
+#### Key Design Principles
+
+1. **Dependency Injection** - Services accept dependencies for testability
+2. **Single Responsibility** - Each service has a focused purpose
+3. **Error Handling** - Comprehensive error handling with proper HTTP status codes
+4. **Security First** - Security considerations built into every component
+5. **Audit Trail** - Complete logging for compliance and debugging
+
+### Integration Points
+
+#### OAuth2 Integration with Existing Systems
+
+1. **Authentication Integration**
+   - OAuth2 tokens work alongside JWT authentication
+   - User sessions maintained across OAuth2 flows
+   - Role-based access control applies to OAuth2 operations
+
+2. **API Connection Integration**
+   - OAuth2 authentication integrated with API connection system
+   - Seamless transition from API key to OAuth2 authentication
+   - Unified credential management interface
+
+3. **Workflow Integration**
+   - OAuth2 tokens available for workflow execution
+   - Automatic token refresh during workflow runs
+   - Secure token handling in multi-step workflows
+
+### Performance Considerations
+
+#### OAuth2 Performance Optimizations
+
+1. **Token Caching**
+   - Valid tokens cached in memory for quick access
+   - Automatic refresh before expiration
+   - Efficient token validation
+
+2. **Database Optimization**
+   - Indexed queries for OAuth2 operations
+   - Efficient token storage and retrieval
+   - Optimized audit log queries
+
+3. **Network Optimization**
+   - Efficient OAuth2 provider communication
+   - Connection pooling for external API calls
+   - Timeout handling and retry logic
+
+### Scalability Architecture
+
+#### OAuth2 Scalability Features
+
+1. **Provider Extensibility**
+   - Easy addition of new OAuth2 providers
+   - Configurable provider settings
+   - Plugin-like architecture for providers
+
+2. **Token Management**
+   - Scalable token storage and retrieval
+   - Efficient token refresh mechanisms
+   - Support for high-volume OAuth2 operations
+
+3. **Monitoring and Alerting**
+   - OAuth2 flow monitoring
+   - Token expiration alerts
+   - Security event notifications
+
+### Deployment Architecture
+
+#### OAuth2 Deployment Considerations
+
+1. **Environment Configuration**
+   - OAuth2 provider credentials per environment
+   - Encryption keys managed securely
+   - Environment-specific redirect URIs
+
+2. **Security Configuration**
+   - HTTPS required for OAuth2 flows
+   - Secure cookie settings
+   - CSP headers for OAuth2 security
+
+3. **Monitoring and Logging**
+   - OAuth2 flow monitoring
+   - Security event logging
+   - Performance metrics collection
+
+## Technology Stack
+
+### Frontend
+- **Next.js 14** - React framework with API routes
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first CSS framework
+
+### Backend
+- **Next.js API Routes** - Serverless API endpoints
+- **Prisma ORM** - Database abstraction layer
+- **PostgreSQL** - Primary database
+
+### Authentication
+- **JWT** - JSON Web Tokens for session management
+- **OAuth2** - Multi-provider OAuth2 implementation
+- **bcrypt** - Password hashing
+
+### Security
+- **AES-256** - Token encryption
+- **CryptoJS** - Cryptographic utilities
+- **CSRF Protection** - Cross-site request forgery prevention
+
+### Testing
+- **Jest** - Unit and integration testing
+- **Playwright** - End-to-end testing
+- **Dependency Injection** - Testable service architecture
+
+### Monitoring
+- **Audit Logging** - Comprehensive event logging
+- **Error Tracking** - Application error monitoring
+- **Performance Monitoring** - Response time and throughput tracking
+
+## Security Considerations
+
+### OAuth2 Security Best Practices
+
+1. **Token Security**
+   - Encrypted storage of all OAuth2 tokens
+   - Secure token transmission
+   - Proper token expiration handling
+
+2. **Flow Security**
+   - CSRF protection with state parameters
+   - Secure redirect URI validation
+   - Scope validation and enforcement
+
+3. **Infrastructure Security**
+   - HTTPS enforcement
+   - Secure headers configuration
+   - Environment variable security
+
+4. **Monitoring and Alerting**
+   - Security event monitoring
+   - Anomaly detection
+   - Incident response procedures
+
+## Future Enhancements
+
+### Planned OAuth2 Improvements
+
+1. **Additional Providers**
+   - Stripe OAuth2 integration
+   - Salesforce OAuth2 support
+   - Microsoft Graph API integration
+
+2. **Advanced Features**
+   - OAuth2 PKCE support
+   - Device authorization flow
+   - OAuth2 token introspection
+
+3. **Security Enhancements**
+   - Hardware security module (HSM) integration
+   - Advanced threat detection
+   - Compliance automation
+
+4. **User Experience**
+   - OAuth2 flow UI improvements
+   - Token management interface
+   - Provider configuration UI 

@@ -1,38 +1,66 @@
-# APIQ - Natural Language API Orchestrator
+# APIQ - Multi-API Orchestrator
 
-APIQ is a platform that enables users to orchestrate multiple APIs using natural language. It automatically translates user requests into executable workflows by analyzing available API endpoints and generating the necessary code.
+A semi-agentic, low-code web application that enables users to orchestrate complex workflows across multiple APIs using natural language and AI-powered automation.
 
 ## 🚀 Features
 
-- **Natural Language Processing**: Describe workflows in plain English
-- **Multi-API Integration**: Connect and manage multiple external APIs
-- **AI-Powered Workflow Generation**: Automatically translate requests to executable workflows
-- **Enterprise-Grade Security**: Comprehensive security and compliance features
-- **Real-time Execution**: Monitor and manage workflow execution
-- **OpenAPI Integration**: Automatic endpoint discovery from OpenAPI specifications
+### Core Functionality
+- **Multi-API Integration** - Connect to any API with OpenAPI/Swagger documentation
+- **Workflow Orchestration** - Create complex multi-step workflows across APIs
+- **Natural Language Interface** - AI-powered workflow creation and management
+- **Real-time Monitoring** - Live workflow execution monitoring and error handling
+- **Comprehensive Audit Trails** - Complete logging for compliance and debugging
+
+### Authentication & Security
+- **JWT Authentication** - Secure token-based authentication with role-based access control
+- **OAuth2 Support** - Multi-provider OAuth2 authentication (GitHub, Google, Slack)
+- **Encrypted Storage** - AES-256 encryption for all sensitive data
+- **CSRF Protection** - State parameter validation for OAuth2 flows
+- **Audit Logging** - Comprehensive security event logging
+
+### API Management
+- **OpenAPI Integration** - Automatic API specification parsing and caching
+- **Connection Management** - Visual API connection setup and testing
+- **Credential Security** - Encrypted storage of API keys and OAuth2 tokens
+- **Health Monitoring** - Real-time API status and performance tracking
+- **Error Handling** - Comprehensive error management and recovery
+
+### Developer Experience
+- **TypeScript** - Full type safety throughout the application
+- **Comprehensive Testing** - 282+ tests with 100% pass rate
+- **Dependency Injection** - Testable service architecture
+- **API Documentation** - Complete API reference documentation
+- **Development Tools** - Hot reloading, linting, and debugging support
 
 ## 🏗️ Architecture
 
-- **Frontend**: Next.js 14+ with React 18+ and TypeScript
-- **Backend**: Next.js API routes with Node.js 18+
-- **Database**: PostgreSQL 15+ with Prisma ORM
-- **Authentication**: NextAuth.js with JWT tokens
-- **AI**: OpenAI GPT-4 for natural language processing
-- **Testing**: Jest with real database integration (no mocks)
+### Technology Stack
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes, Prisma ORM, PostgreSQL
+- **Authentication**: JWT, OAuth2, bcrypt
+- **Security**: AES-256 encryption, CSRF protection
+- **Testing**: Jest, Playwright, Dependency Injection
+- **Monitoring**: Audit logging, error tracking, performance monitoring
 
-## 🛠️ Development Setup
+### OAuth2 System
+- **Multi-Provider Support**: GitHub, Google, Slack (extensible)
+- **Secure Token Management**: Encrypted storage with automatic refresh
+- **CSRF Protection**: State parameter validation
+- **Comprehensive Logging**: Complete OAuth2 event audit trail
+- **Dependency Injection**: Testable OAuth2 service architecture
+
+## 🚀 Quick Start
 
 ### Prerequisites
+- Node.js 18+
+- PostgreSQL 12+
+- npm or yarn
 
-- Node.js 18.0.0 or higher
-- PostgreSQL 14.0 or higher
-- npm 8.0.0 or higher
-
-### Quick Start
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/your-org/apiq-mvp.git
    cd apiq-mvp
    ```
 
@@ -41,35 +69,102 @@ APIQ is a platform that enables users to orchestrate multiple APIs using natural
    npm install
    ```
 
-3. **Environment setup**
+3. **Set up environment variables**
    ```bash
    cp env.example .env.local
+   # Edit .env.local with your configuration
    ```
-   
-   Configure your `.env.local` with your database and API credentials.
 
-4. **Database setup**
+4. **Set up the database**
    ```bash
-   # Create database
-   createdb apiq_dev
-   
-   # Run migrations
-   npx prisma migrate dev
-   
-   # Generate Prisma client
-   npx prisma generate
+   npm run db:setup
    ```
 
-5. **Start development server**
+5. **Start the development server**
    ```bash
    npm run dev
    ```
 
-The application will be available at `http://localhost:3000`.
+6. **Run tests**
+   ```bash
+   npm test
+   ```
 
-## 🧪 Testing
+### OAuth2 Configuration
 
-We follow a **strict no-mock-data policy** for database and authentication operations. All tests use real database connections and real authentication flows.
+To use OAuth2 authentication:
+
+1. **Configure OAuth2 providers** in your environment variables:
+   ```bash
+   GITHUB_CLIENT_ID=your_github_client_id
+   GITHUB_CLIENT_SECRET=your_github_client_secret
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
+
+2. **Create an API connection** with OAuth2 authentication:
+   ```json
+   {
+     "name": "GitHub API",
+     "baseUrl": "https://api.github.com",
+     "authType": "OAUTH2",
+     "authConfig": {
+       "provider": "github",
+       "clientId": "your_github_client_id",
+       "clientSecret": "your_github_client_secret",
+       "redirectUri": "https://your-app.com/api/oauth/callback",
+       "scope": "repo user"
+     }
+   }
+   ```
+
+3. **Initiate OAuth2 flow**:
+   ```bash
+   GET /api/oauth/authorize?apiConnectionId=conn_123&provider=github&clientId=your_client_id&clientSecret=your_client_secret&redirectUri=https://your-app.com/api/oauth/callback
+   ```
+
+## 📚 Documentation
+
+- **[Product Requirements Document](docs/prd.md)** - Detailed product specifications
+- **[Implementation Plan](docs/implementation-plan.md)** - Development roadmap and progress
+- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation including OAuth2 endpoints
+- **[Architecture Documentation](docs/ARCHITECTURE.md)** - System architecture and design
+- **[Security Guide](docs/SECURITY_GUIDE.md)** - Security best practices and OAuth2 security
+- **[Testing Guide](docs/TESTING.md)** - Testing strategies and OAuth2 testing
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment instructions
+
+## 🔧 Development
+
+### Project Structure
+```
+apiq-mvp/
+├── components/          # React UI components
+├── pages/api/          # Next.js API routes
+│   ├── auth/           # Authentication endpoints
+│   ├── connections/    # API connection management
+│   └── oauth/          # OAuth2 endpoints
+├── src/
+│   ├── lib/            # Shared utilities and services
+│   │   ├── auth/       # Authentication services (JWT, OAuth2)
+│   │   ├── api/        # API management services
+│   │   └── utils/      # Utility functions
+│   ├── types/          # TypeScript type definitions
+│   └── middleware/     # Request middleware
+├── tests/              # Test files
+│   ├── unit/           # Unit tests
+│   ├── integration/    # Integration tests
+│   └── e2e/            # End-to-end tests
+├── prisma/             # Database schema and migrations
+└── docs/               # Project documentation
+```
+
+### OAuth2 Development
+
+The OAuth2 system is built with:
+- **OAuth2Service** - Core OAuth2 business logic with dependency injection
+- **API Endpoints** - Complete OAuth2 flow endpoints
+- **Security Features** - Encrypted storage, CSRF protection, audit logging
+- **Testing** - Comprehensive unit tests with mocked dependencies
 
 ### Running Tests
 
@@ -77,125 +172,63 @@ We follow a **strict no-mock-data policy** for database and authentication opera
 # Run all tests
 npm test
 
-# Run with coverage
-npm test -- --coverage
+# Run specific test suites
+npm run test:unit
+npm run test:integration
+npm run test:e2e
 
-# Run specific test categories
-npm test -- --testPathPattern="unit"
-npm test -- --testPathPattern="integration"
-npm test -- --testPathPattern="e2e"
-
-# Run specific file
-npm test -- --testPathPattern="openaiService"
+# Run OAuth2 tests specifically
+npm test -- tests/unit/lib/auth/oauth2.test.ts
 ```
-
-### Test Philosophy
-
-- **Real Database**: All tests use real PostgreSQL connections
-- **Real Authentication**: Real users with bcrypt-hashed passwords
-- **Real JWTs**: Actual login flows generate real tokens
-- **No Mocks**: Database and authentication operations are never mocked
-- **External Services**: Only external APIs (OpenAI, etc.) are mocked when necessary
-- **Structured Logging**: Safe, non-circular logging patterns prevent test failures
-
-### Test Coverage
-
-#### High Coverage Areas (>80%)
-- **Services**: OpenAI service (89.55% lines, 100% functions)
-- **Utilities**: Encryption (91.48% lines), Logger (87.17% lines)
-- **API Parser**: 100% lines and functions
-- **RBAC**: 100% lines and functions
-- **Database**: 98.55% lines and functions
-- **Middleware**: Error handling (80.72% lines), Rate limiting (82.45% lines)
-
-#### Test Statistics
-- **Total test suites**: 15
-- **Total tests**: 203
-- **Pass rate**: 100%
-- **Coverage**: 60.12% lines (core business logic >80%)
-
-### Recent Testing Improvements (2024-06)
-
-- **Comprehensive Unit Testing**: Complete coverage for utilities, middleware, and services
-- **Structured Logging**: Refactored logging to prevent circular structure errors
-- **Test Utilities**: Robust helper utilities for creating test data and managing test lifecycle
-- **Middleware Testing**: Full coverage for error handling and rate limiting middleware
-- **Service Testing**: Enhanced OpenAI service testing with 89%+ coverage and proper mocking
-- **API Parser Testing**: 100% coverage for OpenAPI specification parsing utilities
-
-**Testing Philosophy:**
-- Integration/E2E tests use real data, real DB, and real JWTs (no mocks)
-- Unit tests mock external services and DB for logic and error handling
-- All logging follows safe, structured patterns to prevent circular references
-
-## 📚 Documentation
-
-- [Development Guide](docs/DEVELOPMENT_GUIDE.md) - Development setup and guidelines
-- [Testing Guide](docs/TESTING.md) - Testing strategy and best practices
-- [API Reference](docs/API_REFERENCE.md) - API documentation
-- [Architecture](docs/ARCHITECTURE.md) - System architecture overview
-- [Implementation Plan](docs/implementation-plan.md) - Detailed implementation roadmap
-- [Security Guide](docs/SECURITY_GUIDE.md) - Security guidelines and best practices
 
 ## 🔒 Security
 
-- **Authentication**: JWT-based authentication with NextAuth.js
-- **Authorization**: Role-based access control (RBAC)
-- **Data Encryption**: AES-256 encryption for sensitive data
-- **Input Validation**: Comprehensive input sanitization
-- **Audit Logging**: Complete audit trail for all operations
+### OAuth2 Security Features
+- **Encrypted Token Storage** - All OAuth2 tokens encrypted with AES-256
+- **CSRF Protection** - State parameter validation prevents cross-site request forgery
+- **Scope Validation** - OAuth2 scopes validated and enforced
+- **Audit Logging** - Complete OAuth2 event logging for security compliance
+- **Automatic Token Refresh** - Secure token refresh before expiration
 
-## 🚀 Deployment
+### Security Best Practices
+- All sensitive data encrypted at rest
+- HTTPS required for OAuth2 flows
+- Comprehensive input validation and sanitization
+- Role-based access control (RBAC)
+- Regular security audits and monitoring
 
-### Production Setup
+## 📊 Status
 
-1. **Environment Configuration**
-   ```bash
-   # Set production environment variables
-   NODE_ENV=production
-   DATABASE_URL=your-production-db-url
-   NEXTAUTH_SECRET=your-secret-key
-   OPENAI_API_KEY=your-openai-key
-   ```
+### Current Status
+- ✅ **Core Infrastructure** - Complete
+- ✅ **API Integration** - Complete with 5+ real APIs
+- ✅ **Authentication System** - Complete (JWT + OAuth2)
+- ✅ **OAuth2 Implementation** - Complete with GitHub, Google, Slack support
+- ✅ **Testing Framework** - 282 tests, 100% pass rate
+- 🚧 **Frontend UI** - In progress
+- ❌ **AI Integration** - Planned for Phase 4
 
-2. **Database Migration**
-   ```bash
-   npx prisma migrate deploy
-   ```
-
-3. **Build and Deploy**
-   ```bash
-   npm run build
-   npm start
-   ```
-
-### Docker Deployment
-
-```bash
-# Build Docker image
-docker build -t apiq .
-
-# Run container
-docker run -p 3000:3000 apiq
-```
+### OAuth2 Status
+- ✅ **OAuth2 Service** - Complete with dependency injection
+- ✅ **OAuth2 Endpoints** - All 5 endpoints implemented
+- ✅ **OAuth2 Security** - Encrypted storage, CSRF protection, audit logging
+- ✅ **OAuth2 Testing** - 14 unit tests, 100% pass rate
+- 🚧 **OAuth2 Integration Testing** - In progress
+- ❌ **OAuth2 UI Components** - Planned
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Follow our coding standards and testing requirements
-4. Ensure all tests pass (including real database integration)
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### Development Standards
-
-- **TypeScript**: Strict type checking enabled
-- **ESLint**: Code linting and formatting
-- **Testing**: Real database integration, no mocks for core functionality
-- **Documentation**: Update docs for new features
-- **Security**: Follow security guidelines
+### Development Rules
+- Follow the [User Rules](docs/user-rules.md) for development guidelines
+- Write tests for all new functionality
+- Update documentation for any API changes
+- Ensure all tests pass before submitting PRs
 
 ## 📄 License
 
@@ -205,26 +238,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Documentation**: Check the [docs](docs/) directory
 - **Issues**: Report bugs and feature requests via GitHub Issues
-- **Discussions**: Use GitHub Discussions for questions and ideas
-
-## 🗺️ Roadmap
-
-See our [Implementation Plan](docs/implementation-plan.md) for detailed roadmap and upcoming features.
-
-### Current Phase: Foundation
-- ✅ Project setup and scaffolding
-- ✅ Database schema and migrations
-- ✅ Authentication system
-- ✅ Basic API structure
-- ✅ Real database integration testing
-- ✅ No-mock-data policy implementation
-
-### Next Phase: External API Validation
-- 🔄 Test API connections (Petstore, JSONPlaceholder, etc.)
-- 🔄 Real OpenAPI integration
-- 🔄 Authentication flow testing
-- 🔄 Performance and reliability testing
+- **Security**: Report security issues to security@apiq.com
 
 ---
 
-**Built with ❤️ using Next.js, TypeScript, and OpenAI**
+**APIQ** - Democratizing API orchestration through natural language and AI.

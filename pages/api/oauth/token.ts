@@ -1,0 +1,86 @@
+import { NextApiRequest, NextApiResponse } from 'next';
+import { oauth2Service } from '../../../src/lib/auth/oauth2';
+import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
+import { ApplicationError } from '../../../src/middleware/errorHandler';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    // Authenticate the user
+    const authReq = req as AuthenticatedRequest;
+    const user = await requireAuth(authReq, res);
+
+    // Extract query parameters
+    const { apiConnectionId } = req.query;
+
+    // Validate required parameters
+    if (!apiConnectionId || typeof apiConnectionId !== 'string') {
+      throw new ApplicationError('apiConnectionId is required', 400, 'MISSING_PARAMETER');
+    }
+
+    // Validate that the API connection belongs to the user
+    const { PrismaClient } = require('../../../src/generated/prisma');
+    const prisma = new PrismaClient();
+
+    const apiConnection = await prisma.apiConnection.findFirst({
+      where: {
+        id: apiConnectionId,
+        userId: user.id
+      }
+    });
+
+    if (!apiConnection) {
+      throw new ApplicationError('API connection not found', 404, 'NOT_FOUND');
+    }
+
+    // Check if the API connection uses OAuth2
+    if (apiConnection.authType !== 'OAUTH2') {
+      throw new ApplicationError('API connection does not use OAuth2 authentication', 400, 'INVALID_AUTH_TYPE');
+    }
+
+    // Get the OAuth2 access token
+    const accessToken = await oauth2Service.getAccessToken(user.id, apiConnectionId);
+
+    if (!accessToken) {
+      throw new ApplicationError('No valid OAuth2 access token found', 404, 'TOKEN_NOT_FOUND');
+    }
+
+    // Log the token access
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'OAUTH2_TOKEN_ACCESS',
+        resource: 'API_CONNECTION',
+        resourceId: apiConnectionId,
+        details: {
+          success: true
+        }
+      }
+    });
+
+    // Return the access token
+    res.status(200).json({
+      success: true,
+      accessToken,
+      tokenType: 'Bearer'
+    });
+
+  } catch (error) {
+    console.error('OAuth2 token access error:', error);
+
+    if (error instanceof ApplicationError) {
+      return res.status(error.statusCode).json({
+        error: error.message,
+        code: error.code
+      });
+    }
+
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+} 

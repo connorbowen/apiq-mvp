@@ -1281,4 +1281,182 @@ Authorization: Bearer <access_token>
   "success": true,
   "message": "Credentials deleted successfully"
 }
+```
+
+## OAuth2 Authentication
+
+APIQ supports OAuth2 authentication for connecting to third-party APIs that require OAuth2 authorization. The OAuth2 flow is secure, supports multiple providers, and includes automatic token refresh.
+
+### Supported OAuth2 Providers
+
+- **GitHub** - For GitHub API access
+- **Google** - For Google Calendar, Gmail, and other Google APIs
+- **Slack** - For Slack API access
+
+### OAuth2 Flow Overview
+
+1. **Authorization Request** - User initiates OAuth2 flow via `/api/oauth/authorize`
+2. **Provider Authorization** - User authorizes on the OAuth2 provider's site
+3. **Callback Processing** - Provider redirects to `/api/oauth/callback` with authorization code
+4. **Token Exchange** - APIQ exchanges code for access and refresh tokens
+5. **Token Storage** - Tokens are encrypted and stored securely
+6. **Token Management** - Tokens can be refreshed and retrieved as needed
+
+### OAuth2 Endpoints
+
+#### GET /api/oauth/providers
+
+Get list of supported OAuth2 providers and their configuration.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "providers": [
+    {
+      "name": "github",
+      "displayName": "GitHub",
+      "authorizationUrl": "https://github.com/login/oauth/authorize",
+      "tokenUrl": "https://github.com/login/oauth/access_token",
+      "scope": "repo user",
+      "userInfoUrl": "https://api.github.com/user"
+    }
+  ],
+  "count": 3
+}
+```
+
+#### GET /api/oauth/authorize
+
+Generate OAuth2 authorization URL and redirect user to OAuth2 provider.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Query Parameters:**
+- `apiConnectionId` (required) - ID of the API connection
+- `provider` (required) - OAuth2 provider name (github, google, slack)
+- `clientId` (required) - OAuth2 client ID
+- `clientSecret` (required) - OAuth2 client secret
+- `redirectUri` (required) - OAuth2 redirect URI
+- `scope` (optional) - OAuth2 scope (defaults to provider's default scope)
+
+**Response:** Redirects to OAuth2 provider authorization URL
+
+**Example:**
+```
+GET /api/oauth/authorize?apiConnectionId=conn_123&provider=github&clientId=your_client_id&clientSecret=your_client_secret&redirectUri=https://your-app.com/api/oauth/callback&scope=repo user
+```
+
+#### GET /api/oauth/callback
+
+Process OAuth2 callback from provider and exchange authorization code for tokens.
+
+**Query Parameters:**
+- `code` (required) - Authorization code from OAuth2 provider
+- `state` (required) - State parameter for CSRF protection
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "OAuth2 authorization completed successfully"
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "OAuth2 authorization failed",
+  "details": "User denied access",
+  "code": "OAUTH2_ERROR"
+}
+```
+
+#### POST /api/oauth/refresh
+
+Refresh an expired OAuth2 access token using the refresh token.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "apiConnectionId": "conn_123",
+  "provider": "github"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "OAuth2 token refreshed successfully"
+}
+```
+
+#### GET /api/oauth/token
+
+Retrieve OAuth2 access token for making API calls to OAuth2-protected services.
+
+**Headers:**
+```
+Authorization: Bearer <jwt_token>
+```
+
+**Query Parameters:**
+- `apiConnectionId` (required) - ID of the API connection
+
+**Response:**
+```json
+{
+  "success": true,
+  "accessToken": "ghp_xxxxxxxxxxxxxxxxxxxx",
+  "tokenType": "Bearer"
+}
+```
+
+### OAuth2 Security Features
+
+- **Encrypted Token Storage** - All OAuth2 tokens are encrypted before storage
+- **CSRF Protection** - State parameter validation prevents CSRF attacks
+- **Token Expiration** - Automatic token refresh when tokens expire
+- **Audit Logging** - All OAuth2 events are logged for security and compliance
+- **Scope Validation** - OAuth2 scopes are validated and enforced
+
+### OAuth2 Configuration
+
+To use OAuth2 with an API connection:
+
+1. **Set Auth Type** - Set `authType` to `"OAUTH2"` in the API connection
+2. **Configure Provider** - Add OAuth2 provider configuration to `authConfig`
+3. **Initiate Flow** - Use `/api/oauth/authorize` to start OAuth2 flow
+4. **Handle Callback** - Process callback at `/api/oauth/callback`
+5. **Use Tokens** - Retrieve tokens via `/api/oauth/token` for API calls
+
+**Example API Connection with OAuth2:**
+```json
+{
+  "name": "GitHub API",
+  "baseUrl": "https://api.github.com",
+  "authType": "OAUTH2",
+  "authConfig": {
+    "provider": "github",
+    "clientId": "your_github_client_id",
+    "clientSecret": "your_github_client_secret",
+    "redirectUri": "https://your-app.com/api/oauth/callback",
+    "scope": "repo user"
+  }
+}
 ``` 
