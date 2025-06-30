@@ -1,10 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../src/lib/database/client';
 import { logError, logInfo } from '../../../src/utils/logger';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { errorHandler } from '../../../src/middleware/errorHandler';
-
-const prisma = new PrismaClient();
 
 async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {

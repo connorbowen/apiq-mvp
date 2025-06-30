@@ -26,17 +26,17 @@ export interface LoginRequest {
 // API Connection Management
 export interface ApiConnection {
   id: string;
-  userId: string;
   name: string;
   description?: string;
   baseUrl: string;
   authType: 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM';
-  authConfig: Record<string, any>;
-  documentationUrl?: string;
   status: 'ACTIVE' | 'INACTIVE' | 'ERROR' | 'PENDING';
-  lastTested?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  ingestionStatus: 'SUCCEEDED' | 'PENDING' | 'FAILED';
+  endpointCount: number;
+  lastUsed?: string;
+  createdAt: string;
+  updatedAt: string;
+  authConfig?: any;
 }
 
 export interface CreateApiConnectionRequest {
