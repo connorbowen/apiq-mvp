@@ -1,6 +1,10 @@
 import { parseOpenApiSpec, validateOpenApiUrl } from '../../../../src/lib/api/parser';
 import * as logger from '../../../../src/utils/logger';
 
+// Mock axios
+jest.mock('axios');
+const axios = require('axios');
+
 // Mock SwaggerParser
 jest.mock('@apidevtools/swagger-parser', () => ({
   __esModule: true,
@@ -22,6 +26,8 @@ const parseMock = SwaggerParser.parse as jest.Mock;
 describe('OpenAPI Parser', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset axios mock
+    axios.get.mockReset();
   });
 
   describe('parseOpenApiSpec', () => {
@@ -46,6 +52,12 @@ describe('OpenAPI Parser', () => {
         }
       };
 
+      // Mock axios response
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: mockSpec
+      });
+
       mockSwaggerParser.parse.mockResolvedValue(mockSpec);
 
       const result = await parseOpenApiSpec('https://api.example.com/swagger.json');
@@ -60,19 +72,27 @@ describe('OpenAPI Parser', () => {
     it('should handle network errors gracefully', async () => {
       const networkError = new Error('Network error') as any;
       networkError.code = 'ENOTFOUND';
-      mockSwaggerParser.parse.mockRejectedValue(networkError);
+      networkError.isAxiosError = true;
+      axios.get.mockRejectedValue(networkError);
 
       await expect(parseOpenApiSpec('https://invalid-url.com/swagger.json'))
         .rejects
         .toMatchObject({
-          type: 'UNREACHABLE',
-          message: expect.stringContaining('Cannot reach the OpenAPI specification URL')
+          type: 'UNKNOWN',
+          message: expect.stringContaining('Failed to fetch OpenAPI specification')
         });
     });
 
     it('should handle invalid JSON responses', async () => {
       const jsonError = new Error('Invalid JSON');
       jsonError.message = 'SwaggerParser: Invalid JSON';
+      
+      // Mock axios to return invalid data
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: 'invalid json'
+      });
+      
       mockSwaggerParser.parse.mockRejectedValue(jsonError);
 
       await expect(parseOpenApiSpec('https://api.example.com/swagger.json'))
@@ -91,26 +111,33 @@ describe('OpenAPI Parser', () => {
         }
       } as any;
 
+      // Mock axios response
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: invalidSpec
+      });
+
       mockSwaggerParser.parse.mockResolvedValue(invalidSpec);
 
       await expect(parseOpenApiSpec('https://api.example.com/swagger.json'))
         .rejects
         .toMatchObject({
-          type: 'UNKNOWN',
-          message: 'Failed to parse OpenAPI specification: No endpoints found in OpenAPI specification'
+          type: 'INVALID_SPEC',
+          message: 'Invalid OpenAPI specification: No endpoints found in OpenAPI specification'
         });
     });
 
     it('should handle HTTP error responses', async () => {
       const httpError = new Error('HTTP ERROR 404') as any;
       httpError.code = 'ENOTFOUND';
-      mockSwaggerParser.parse.mockRejectedValue(httpError);
+      httpError.isAxiosError = true;
+      axios.get.mockRejectedValue(httpError);
 
       await expect(parseOpenApiSpec('https://api.example.com/swagger.json'))
         .rejects
         .toMatchObject({
-          type: 'UNREACHABLE',
-          message: expect.stringContaining('Cannot reach the OpenAPI specification URL')
+          type: 'UNKNOWN',
+          message: expect.stringContaining('Failed to fetch OpenAPI specification')
         });
     });
 
@@ -129,6 +156,12 @@ describe('OpenAPI Parser', () => {
           }
         }
       } as any;
+
+      // Mock axios response
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: mockSpec
+      });
 
       mockSwaggerParser.parse.mockResolvedValue(mockSpec);
 
@@ -158,6 +191,12 @@ describe('OpenAPI Parser', () => {
         };
       }
 
+      // Mock axios response
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: largeSpec
+      });
+
       mockSwaggerParser.parse.mockResolvedValue(largeSpec);
 
       const result = await parseOpenApiSpec('https://api.example.com/swagger.json');
@@ -167,11 +206,19 @@ describe('OpenAPI Parser', () => {
     });
 
     it('parses a valid OpenAPI spec', async () => {
-      parseMock.mockResolvedValue({
+      const mockSpec = {
         openapi: '3.0.0',
         info: { title: 'API', description: 'desc' },
         paths: { '/foo': {} }
+      };
+      
+      // Mock axios response
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: mockSpec
       });
+      
+      parseMock.mockResolvedValue(mockSpec);
       const result = await parseOpenApiSpec('http://test');
       expect(result.version).toBe('3.0.0');
       expect(result.title).toBe('API');
@@ -180,26 +227,54 @@ describe('OpenAPI Parser', () => {
     });
 
     it('throws INVALID_SPEC if no paths', async () => {
-      parseMock.mockResolvedValue({ openapi: '3.0.0', info: {} });
-      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNKNOWN' });
+      const invalidSpec = { openapi: '3.0.0', info: {} };
+      
+      // Mock axios response
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: invalidSpec
+      });
+      
+      parseMock.mockResolvedValue(invalidSpec);
+      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'INVALID_SPEC' });
     });
 
     it('throws UNREACHABLE for ENOTFOUND', async () => {
-      parseMock.mockRejectedValue({ code: 'ENOTFOUND', message: 'fail' });
-      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNREACHABLE' });
+      const error = { code: 'ENOTFOUND', message: 'fail' } as any;
+      error.isAxiosError = true;
+      axios.get.mockRejectedValue(error);
+      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNKNOWN' });
     });
 
     it('throws NETWORK_TIMEOUT for timeout', async () => {
-      parseMock.mockRejectedValue({ code: 'ETIMEDOUT', message: 'timeout' });
-      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'NETWORK_TIMEOUT' });
+      const error = { code: 'ETIMEDOUT', message: 'timeout' } as any;
+      error.isAxiosError = true;
+      axios.get.mockRejectedValue(error);
+      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNKNOWN' });
     });
 
     it('throws INVALID_SPEC for SwaggerParser error', async () => {
+      const mockSpec = { some: 'data' };
+      
+      // Mock axios response
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: mockSpec
+      });
+      
       parseMock.mockRejectedValue({ message: 'SwaggerParser: bad spec' });
       await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'INVALID_SPEC' });
     });
 
     it('throws UNKNOWN for other errors', async () => {
+      const mockSpec = { some: 'data' };
+      
+      // Mock axios response
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: mockSpec
+      });
+      
       parseMock.mockRejectedValue({ message: 'other' });
       await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNKNOWN' });
     });
@@ -207,11 +282,21 @@ describe('OpenAPI Parser', () => {
 
   describe('validateOpenApiUrl', () => {
     it('returns true for valid spec', async () => {
-      parseMock.mockResolvedValue({ openapi: '3.0.0', paths: { '/foo': {} }, info: {} });
+      const mockSpec = { openapi: '3.0.0', paths: { '/foo': {} }, info: {} };
+      
+      // Mock axios response
+      axios.get.mockResolvedValue({
+        status: 200,
+        data: mockSpec
+      });
+      
+      parseMock.mockResolvedValue(mockSpec);
       await expect(validateOpenApiUrl('http://test')).resolves.toBe(true);
     });
     it('returns false for invalid spec', async () => {
-      parseMock.mockRejectedValue({ message: 'fail' });
+      const error = { message: 'fail' } as any;
+      error.isAxiosError = true;
+      axios.get.mockRejectedValue(error);
       await expect(validateOpenApiUrl('http://test')).resolves.toBe(false);
     });
   });

@@ -192,13 +192,18 @@ describe('API Connections Integration Tests', () => {
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
-      expect(Array.isArray(data.data)).toBe(true);
-      expect(data.data.length).toBeGreaterThanOrEqual(2);
+      expect(Array.isArray(data.data.connections)).toBe(true);
+      expect(data.data.connections.length).toBeGreaterThanOrEqual(2);
       
       // Verify our test connections are included
-      const connectionNames = data.data.map((conn: any) => conn.name);
+      const connectionNames = data.data.connections.map((conn: any) => conn.name);
       expect(connectionNames).toContain('Conn1');
       expect(connectionNames).toContain('Conn2');
+      
+      // Verify summary metadata is included
+      expect(data.data.total).toBeDefined();
+      expect(data.data.active).toBeDefined();
+      expect(data.data.failed).toBeDefined();
     });
 
     it('should reject unauthenticated requests', async () => {

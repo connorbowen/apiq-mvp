@@ -18,7 +18,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:e2e:with-server": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && playwright test\" --kill-others",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e:with-server",
     "test:ci": "npm run test:coverage && npm run test:e2e",
     "startup": "./scripts/startup.sh",
     "db:test": "tsx scripts/test-db.ts",
@@ -76,6 +77,7 @@
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.2.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.0.4",
     "husky": "^9.1.7",
@@ -89,7 +91,8 @@
     "tailwindcss": "^4.1.11",
     "ts-jest": "^29.4.0",
     "tsx": "^4.6.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "wait-on": "^8.0.3"
   },
   "engines": {
     "node": ">=18.0.0",

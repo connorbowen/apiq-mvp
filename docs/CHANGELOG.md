@@ -47,6 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Integration with connections API for improved performance
   - Comprehensive unit tests for cache and service layers
   - Cache guardrails to prevent OpenAPI spec mocks in tests
+- **Integration Test Authentication Fixes** - ✅ COMPLETED
+  - Fixed authentication in `/api/connections` integration tests
+  - Updated test expectations to match current API response structure
+  - Ensured all connection-related tests use proper authentication helpers
+  - Verified authentication rejection for unauthenticated requests
+  - All 88 integration tests now passing with proper authentication
 
 ### Changed
 - N/A
@@ -66,6 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security Validation**: Comprehensive security testing completed
 - **OpenAPI Service**: Enhanced with caching capabilities and improved error handling
 - **Test Guardrails**: Enforced no-mock policy for OpenAPI specifications in tests
+- **API Response Structure**: Updated `/api/connections` GET endpoint to return structured data with metadata
+  - Response now includes `data.connections` array, `total`, `active`, and `failed` counts
+  - Maintains backward compatibility while providing enhanced metadata
 
 ### Deprecated
 - N/A
@@ -93,6 +102,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Real API Connections**: Resolved unique constraint violations
 - **OpenAPI Cache**: Fixed cache initialization and cleanup issues
 - **Test Guardrails**: Resolved issues with mock detection in test environment
+- **Connection Integration Tests**: Fixed authentication issues in `/api/connections` tests
+  - Resolved "Authentication required" errors in tests using `createAuthenticatedRequest`
+  - Updated test expectations to match current API response structure (`data.data.connections`)
+  - Ensured proper authentication flow for all connection-related endpoints
+  - Verified authentication rejection tests work correctly
 
 ### Security
 - N/A

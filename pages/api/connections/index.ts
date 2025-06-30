@@ -159,7 +159,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               });
 
               // Extract and store endpoints
-              const endpoints = await extractAndStoreEndpoints(newConnection.id, parsedSpec);
+              const endpoints = await extractAndStoreEndpoints(newConnection.id, parsedSpec, tx);
               endpointCount = Array.isArray(endpoints) ? endpoints.length : 0;
 
               logInfo('Successfully processed OpenAPI spec and extracted endpoints', {

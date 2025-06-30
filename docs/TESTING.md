@@ -82,49 +82,29 @@ npm run test:e2e
 
 **Test Helper Functions**
 ```typescript
-// ✅ GOOD: Real integration test
+// ✅ GOOD: Real integration test with proper authentication
 describe('API Connections Integration Tests', () => {
-  let accessToken: string;
-  let testUserId: string;
+  const testSuite = createTestSuite('Connections Tests');
+  let testUser: any;
 
   beforeAll(async () => {
-    // Create real test user
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-    const testUser = await prisma.user.create({
-      data: {
-        email: 'admin@example.com',
-        password: hashedPassword,
-        name: 'Test Admin User',
-        role: 'ADMIN'
-      }
-    });
+    await testSuite.beforeAll();
     
-    // Login to get real JWT
-    const { req, res } = createMocks({
-      method: 'POST',
-      body: { email: 'admin@example.com', password: 'admin123' }
-    });
-    await loginHandler(req as any, res as any);
-    const data = JSON.parse(res._getData());
-    accessToken = data.data.accessToken;
-    testUserId = data.data.user.id;
+    // Create test user with real authentication
+    testUser = await testSuite.createUser(
+      'admin@example.com',
+      'admin123',
+      Role.ADMIN,
+      'Test Admin User'
+    );
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await prisma.apiConnection.deleteMany({
-      where: { userId: testUserId }
-    });
-    await prisma.user.deleteMany({
-      where: { id: testUserId }
-    });
-    await prisma.$disconnect();
+    await testSuite.afterAll();
   });
 
-  it('should create API connection', async () => {
-    const { req, res } = createMocks({
-      method: 'POST',
-      headers: { authorization: `Bearer ${accessToken}` },
+  it('should create API connection with authentication', async () => {
+    const { req, res } = createAuthenticatedRequest('POST', testUser, {
       body: {
         name: 'Test API',
         baseUrl: 'https://api.example.com',
@@ -138,6 +118,51 @@ describe('API Connections Integration Tests', () => {
     const data = JSON.parse(res._getData());
     expect(data.success).toBe(true);
     expect(data.data.name).toBe('Test API');
+  });
+
+  it('should retrieve connections with proper response structure', async () => {
+    // Create test connections first
+    await testSuite.createConnection(testUser, 'Conn1', 'https://api1.example.com', 'NONE');
+    await testSuite.createConnection(testUser, 'Conn2', 'https://api2.example.com', 'NONE');
+
+    const { req, res } = createAuthenticatedRequest('GET', testUser);
+
+    await handler(req as any, res as any);
+
+    expect(res._getStatusCode()).toBe(200);
+    const data = JSON.parse(res._getData());
+    expect(data.success).toBe(true);
+    
+    // ✅ CORRECT: Expect structured response with connections array
+    expect(Array.isArray(data.data.connections)).toBe(true);
+    expect(data.data.connections.length).toBeGreaterThanOrEqual(2);
+    
+    // Verify metadata fields
+    expect(data.data.total).toBeDefined();
+    expect(data.data.active).toBeDefined();
+    expect(data.data.failed).toBeDefined();
+    
+    // Verify our test connections are included
+    const connectionNames = data.data.connections.map((conn: any) => conn.name);
+    expect(connectionNames).toContain('Conn1');
+    expect(connectionNames).toContain('Conn2');
+  });
+
+  it('should reject unauthenticated requests', async () => {
+    const { req, res } = createUnauthenticatedRequest('POST', {
+      body: {
+        name: 'Test API',
+        baseUrl: 'https://api.example.com',
+        authType: 'NONE'
+      }
+    });
+
+    await handler(req as any, res as any);
+
+    expect(res._getStatusCode()).toBe(401);
+    const data = JSON.parse(res._getData());
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('Authentication required');
   });
 });
 ```
@@ -175,6 +200,49 @@ describe('API Connection Tests', () => {
 - **API Endpoints**: 100% coverage
 - **Authentication Flows**: 100% coverage
 
+## Authentication Testing
+
+### Real Authentication Flow
+
+All integration tests use real authentication with the following pattern:
+
+1. **Create Real User**: Use `createTestUser()` with bcrypt-hashed passwords
+2. **Login to Get Tokens**: Call the actual login endpoint to get JWT tokens
+3. **Use Authenticated Requests**: Use `createAuthenticatedRequest()` helper
+4. **Test Unauthenticated Access**: Use `createUnauthenticatedRequest()` to verify rejection
+
+### Authentication Helpers
+
+```typescript
+// ✅ GOOD: Use authentication helpers
+import { createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
+
+// For authenticated requests
+const { req, res } = createAuthenticatedRequest('POST', testUser, {
+  body: { /* request data */ }
+});
+
+// For unauthenticated requests (to test rejection)
+const { req, res } = createUnauthenticatedRequest('POST', {
+  body: { /* request data */ }
+});
+```
+
+### Response Structure Validation
+
+When testing API endpoints, ensure you validate the correct response structure:
+
+```typescript
+// ✅ CORRECT: For /api/connections GET endpoint
+expect(Array.isArray(data.data.connections)).toBe(true);
+expect(data.data.total).toBeDefined();
+expect(data.data.active).toBeDefined();
+expect(data.data.failed).toBeDefined();
+
+// ❌ INCORRECT: Don't expect data.data to be an array directly
+expect(Array.isArray(data.data)).toBe(true); // This will fail
+```
+
 ## Mock Data Prevention
 
 ### Automated Checks
@@ -199,11 +267,6 @@ describe('Mock Prevention', () => {
   it('should not have OpenAPI spec mocks', () => {
     const mockFiles = glob.sync('**/*.spec.mock.json', { cwd: process.cwd() });
     expect(mockFiles).toHaveLength(0);
-  });
-
-  it('should not have __mocks__ directories for OpenAPI', () => {
-    const mockDirs = glob.sync('**/__mocks__/**/openapi*', { cwd: process.cwd() });
-    expect(mockDirs).toHaveLength(0);
   });
 });
 ```

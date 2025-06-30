@@ -70,17 +70,26 @@ describe('OpenApiCache', () => {
 
   describe('cache eviction', () => {
     it('should evict oldest when max size reached', () => {
-      cache.set('url1', { spec: '1' });
-      cache.set('url2', { spec: '2' });
-      cache.set('url3', { spec: '3' });
+      // Create a fresh cache with maxSize 3 for this test
+      const testCache = new OpenApiCache({
+        ttl: 1,
+        maxSize: 3,
+        maxSizeBytes: 1024,
+        compression: false,
+        slowSpecTimeout: 5000,
+      });
+      
+      testCache.set('url1', { spec: '1' });
+      testCache.set('url2', { spec: '2' });
+      testCache.set('url3', { spec: '3' });
       
       // This should evict the oldest (url1)
-      cache.set('url4', { spec: '4' });
+      testCache.set('url4', { spec: '4' });
       
-      expect(cache.get('url1')).toBeNull();
-      expect(cache.get('url2')).not.toBeNull();
-      expect(cache.get('url3')).not.toBeNull();
-      expect(cache.get('url4')).not.toBeNull();
+      expect(testCache.get('url1')).toBeNull();
+      expect(testCache.get('url2')).not.toBeNull();
+      expect(testCache.get('url3')).not.toBeNull();
+      expect(testCache.get('url4')).not.toBeNull();
     });
 
     it('should evict by size when max bytes reached', () => {
