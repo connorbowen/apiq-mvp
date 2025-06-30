@@ -45,20 +45,25 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Get OAuth2 providers to check if the provider is supported
-      const providersResponse = await apiClient.getOAuth2Providers();
-      
-      if (providersResponse.success && providersResponse.data) {
-        const providerConfig = providersResponse.data.providers.find((p: any) => p.name === provider);
-        if (providerConfig) {
-          // For now, show a message that OAuth2 login is not fully implemented
-          // In a real implementation, this would redirect to the OAuth2 provider
-          setError(`OAuth2 login for ${provider} is not fully implemented yet. Please use email/password login.`);
+      // Initiate OAuth2 flow
+      const response = await fetch(`/api/auth/oauth2?provider=${provider}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data.redirectUrl) {
+          // Redirect to OAuth2 provider
+          window.location.href = data.data.redirectUrl;
         } else {
-          setError(`OAuth2 provider ${provider} is not supported.`);
+          setError('Failed to initiate OAuth2 flow');
         }
       } else {
-        setError('Failed to load OAuth2 providers.');
+        const errorData = await response.json();
+        setError(errorData.error || 'OAuth2 login failed');
       }
     } catch (error) {
       setError('OAuth2 login failed. Please try again.');
