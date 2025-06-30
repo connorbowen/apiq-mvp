@@ -479,3 +479,9 @@ Network error handling is now tested in E2E by simulating offline mode in Playwr
 ### OAuth2 Providers Endpoint Test
 
 The integration test for GET /api/oauth/providers was updated to expect a 200 response (not 401), since the endpoint is public and does not require authentication.
+
+### Test/Report Cleanup
+
+- Old Playwright and test-results error-context files have been removed to keep the repo clean and up-to-date.
+- E2E and integration test reliability improved; see new debug/test scripts for troubleshooting and admin workflows.
+- New scripts: `clear-cache.js`, `debug-openapi.js`, `debug-parser.js`, and `/api/oauth/test.ts` can be used for debugging and cache management during development.

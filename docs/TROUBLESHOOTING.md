@@ -274,3 +274,9 @@ npx tsx scripts/test-db.ts
 # 6. Start development server
 npm run dev
 ```
+
+### Debugging & Troubleshooting
+
+- Use `clear-cache.js`, `debug-openapi.js`, and `debug-parser.js` for troubleshooting OpenAPI cache and parsing issues.
+- Use `/api/oauth/test.ts` for testing OAuth2 endpoints and flows.
+- Improved error handling in endpoint extraction and OAuth2 callback flows. Check logs for detailed error messages.

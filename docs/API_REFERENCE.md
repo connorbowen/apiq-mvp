@@ -171,7 +171,7 @@ Authorization: Bearer <access_token>
 
 ### API Connections
 
-#### `GET /api/apis`
+#### `GET /api/connections`
 
 Get all API connections for the current user.
 
@@ -211,167 +211,7 @@ Get all API connections for the current user.
 
 > **Note:** The `endpointCount` field is always present in API connection responses. It is `0` if endpoint extraction fails or if the API has no endpoints.
 
-#### `GET /api/apis/{id}`
-
-Get a specific API connection by ID.
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "api_id",
-    "name": "Customer CRM",
-    "description": "Customer relationship management API",
-    "baseUrl": "https://api.crm.com",
-    "authType": "api_key",
-    "authConfig": {
-      "apiKey": "***" // masked for security
-    },
-    "documentationUrl": "https://api.crm.com/docs",
-    "status": "ACTIVE",
-    "ingestionStatus": "SUCCEEDED",
-    "endpoints": [
-      {
-        "id": "endpoint_id",
-        "path": "/customers",
-        "method": "GET",
-        "summary": "Get customers",
-        "description": "Retrieve a list of customers"
-      }
-    ],
-    "endpointCount": 15,
-    "lastUsed": "2024-01-01T00:00:00.000Z",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-#### `POST /api/apis`
-
-Create a new API connection.
-
-**Request Body:**
-```json
-{
-  "name": "Customer CRM",
-  "description": "Customer relationship management API",
-  "baseUrl": "https://api.crm.com",
-  "authType": "api_key",
-  "authConfig": {
-    "apiKey": "your-api-key",
-    "headerName": "X-API-Key"
-  },
-  "documentationUrl": "https://api.crm.com/docs"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "new_api_id",
-    "name": "Customer CRM",
-    "description": "Customer relationship management API",
-    "baseUrl": "https://api.crm.com",
-    "authType": "api_key",
-    "status": "ACTIVE",
-    "ingestionStatus": "SUCCEEDED",
-    "endpointCount": 15,
-    "lastUsed": "2024-01-01T00:00:00.000Z",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  },
-  "message": "API connection created successfully"
-}
-```
-
-#### `PUT /api/apis/{id}`
-
-Update an existing API connection.
-
-**Request Body:**
-```json
-{
-  "name": "Updated CRM",
-  "description": "Updated description",
-  "authConfig": {
-    "apiKey": "new-api-key"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "api_id",
-    "name": "Updated CRM",
-    "description": "Updated description",
-    "baseUrl": "https://api.crm.com",
-    "authType": "api_key",
-    "status": "ACTIVE",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  },
-  "message": "API connection updated successfully"
-}
-```
-
-#### `DELETE /api/apis/{id}`
-
-Delete an API connection.
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "API connection deleted successfully"
-}
-```
-
-#### `POST /api/apis/{id}/test`
-
-Test an API connection.
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "status": "success",
-    "responseTime": 245,
-    "endpoints": 15,
-    "newEndpoints": 3,
-    "message": "Connection test successful - OpenAPI spec parsed and endpoints extracted"
-  }
-}
-```
-
-#### `POST /api/apis/{id}/refresh`
-
-Refresh the OpenAPI specification for an API connection.
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "endpointsUpdated": 15,
-    "newEndpoints": 3,
-    "removedEndpoints": 1,
-    "specChanged": true,
-    "responseTime": 1200,
-    "message": "API specification refreshed successfully - endpoints updated"
-  }
-}
-```
-
-### Endpoints
-
-#### `GET /api/apis/{apiId}/endpoints`
+#### `GET /api/connections/{id}/endpoints`
 
 Get all endpoints for a specific API connection.
 
@@ -412,62 +252,57 @@ Get all endpoints for a specific API connection.
 }
 ```
 
-#### `GET /api/apis/{apiId}/endpoints/{endpointId}`
+#### `POST /api/connections`
 
-Get detailed information about a specific endpoint.
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "endpoint_id",
-    "path": "/customers/{id}",
-    "method": "GET",
-    "summary": "Get customer by ID",
-    "description": "Retrieve a specific customer by their ID",
-    "parameters": [
-      {
-        "name": "id",
-        "in": "path",
-        "type": "string",
-        "required": true,
-        "description": "Customer ID"
-      }
-    ],
-    "requestBody": {
-      "required": false,
-      "content": {
-        "application/json": {
-          "schema": { /* JSON schema */ }
-        }
-      }
-    },
-    "responses": {
-      "200": {
-        "description": "Customer found",
-        "schema": { /* JSON schema */ }
-      },
-      "404": {
-        "description": "Customer not found"
-      }
-    }
-  }
-}
-```
-
-#### `POST /api/apis/{apiId}/endpoints/{endpointId}/test`
-
-Test a specific endpoint.
+Create a new API connection.
 
 **Request Body:**
 ```json
 {
-  "parameters": {
-    "id": "customer123"
+  "name": "Customer CRM",
+  "description": "Customer relationship management API",
+  "baseUrl": "https://api.crm.com",
+  "authType": "api_key",
+  "authConfig": {
+    "apiKey": "your-api-key",
+    "headerName": "X-API-Key"
   },
-  "headers": {
-    "Accept": "application/json"
+  "documentationUrl": "https://api.crm.com/docs"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "new_api_id",
+    "name": "Customer CRM",
+    "description": "Customer relationship management API",
+    "baseUrl": "https://api.crm.com",
+    "authType": "api_key",
+    "status": "ACTIVE",
+    "ingestionStatus": "SUCCEEDED",
+    "endpointCount": 15,
+    "lastUsed": "2024-01-01T00:00:00.000Z",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  "message": "API connection created successfully"
+}
+```
+
+#### `PATCH /api/connections/{id}`
+
+Update an existing API connection.
+
+**Request Body:**
+```json
+{
+  "name": "Updated CRM",
+  "description": "Updated description",
+  "authConfig": {
+    "apiKey": "new-api-key"
   }
 }
 ```
@@ -477,16 +312,63 @@ Test a specific endpoint.
 {
   "success": true,
   "data": {
-    "statusCode": 200,
-    "responseTime": 150,
-    "headers": {
-      "content-type": "application/json"
-    },
-    "body": {
-      "id": "customer123",
-      "name": "John Doe",
-      "email": "john@example.com"
-    }
+    "id": "api_id",
+    "name": "Updated CRM",
+    "description": "Updated description",
+    "baseUrl": "https://api.crm.com",
+    "authType": "api_key",
+    "status": "ACTIVE",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  "message": "API connection updated successfully"
+}
+```
+
+#### `DELETE /api/connections/{id}`
+
+Delete an API connection.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "API connection deleted successfully"
+}
+```
+
+#### `POST /api/connections/{id}/test`
+
+Test an API connection.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "success",
+    "responseTime": 245,
+    "endpoints": 15,
+    "newEndpoints": 3,
+    "message": "Connection test successful - OpenAPI spec parsed and endpoints extracted"
+  }
+}
+```
+
+#### `POST /api/connections/{id}/refresh`
+
+Refresh the OpenAPI specification for an API connection.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "endpointsUpdated": 15,
+    "newEndpoints": 3,
+    "removedEndpoints": 1,
+    "specChanged": true,
+    "responseTime": 1200,
+    "message": "API specification refreshed successfully - endpoints updated"
   }
 }
 ```
@@ -1306,7 +1188,7 @@ APIQ supports OAuth2 authentication for connecting to third-party APIs that requ
 
 ### OAuth2 Endpoints
 
-#### GET /api/oauth/providers
+#### `GET /api/oauth/providers`
 
 Get list of supported OAuth2 providers and their configuration.
 
@@ -1333,7 +1215,7 @@ Get list of supported OAuth2 providers and their configuration.
 }
 ```
 
-#### GET /api/oauth/authorize
+#### `GET /api/oauth/authorize`
 
 Generate OAuth2 authorization URL and redirect user to OAuth2 provider.
 
@@ -1357,7 +1239,7 @@ Authorization: Bearer <jwt_token>
 GET /api/oauth/authorize?apiConnectionId=conn_123&provider=github&clientId=your_client_id&clientSecret=your_client_secret&redirectUri=https://your-app.com/api/oauth/callback&scope=repo user
 ```
 
-#### GET /api/oauth/callback
+#### `GET /api/oauth/callback`
 
 Process OAuth2 callback from provider and exchange authorization code for tokens.
 
@@ -1382,7 +1264,7 @@ Process OAuth2 callback from provider and exchange authorization code for tokens
 }
 ```
 
-#### POST /api/oauth/refresh
+#### `POST /api/oauth/refresh`
 
 Refresh an expired OAuth2 access token using the refresh token.
 
@@ -1408,7 +1290,7 @@ Content-Type: application/json
 }
 ```
 
-#### GET /api/oauth/token
+#### `GET /api/oauth/token`
 
 Retrieve OAuth2 access token for making API calls to OAuth2-protected services.
 

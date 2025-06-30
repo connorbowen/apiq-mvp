@@ -80,6 +80,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Network Error Handling** - Updated E2E tests to simulate network errors using Playwright's offline mode and fetch, ensuring the app handles network failures gracefully across all browsers.
 - **OAuth2 Providers Endpoint** - Clarified that GET /api/oauth/providers does not require authentication. Updated integration tests and documentation to match implementation.
 - **Integration Test Alignment** - Fixed integration tests to match actual endpoint behavior, especially for OAuth2 providers and error handling scenarios.
+- **API Endpoints**: Updated `/api/connections`, `/api/connections/[id]/endpoints`, `/api/oauth/callback`, and `/api/oauth/providers` for improved error handling, validation, and response consistency.
+- **OpenAPI Cache & Parser**: Improved cache logic, endpoint extraction, and error handling. Updated admin endpoints and documentation.
+- **Config**: Updated `next.config.js` for new environment or build settings.
+- **Testing & Reports**: Cleaned up old Playwright and test-results error-context files. Improved E2E and integration test reliability.
+- **Debug/Test Scripts**: Added `clear-cache.js`, `debug-openapi.js`, `debug-parser.js`, and `/api/oauth/test.ts` for easier debugging and admin/dev workflows.
 
 ### Changed
 - N/A

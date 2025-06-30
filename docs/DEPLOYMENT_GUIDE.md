@@ -1059,4 +1059,9 @@ export DEBUG="prisma:query"
 DEBUG="prisma:query" npm run dev
 ```
 
+### Config & Debug Scripts
+
+- `next.config.js` has been updated. Review for any new environment or build settings before deploying.
+- Use `clear-cache.js` and related scripts for cache management in dev/staging environments as needed.
+
 This deployment guide provides comprehensive coverage of all deployment scenarios and best practices for the APIQ platform. Follow these guidelines to ensure successful deployments in any environment. 

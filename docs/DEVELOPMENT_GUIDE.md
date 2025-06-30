@@ -1135,4 +1135,20 @@ For external services (OpenAI, external APIs), we use mocks in tests but ensure:
 - A pre-commit hook and CI check will block any commit/PR that introduces forbidden patterns (e.g., `test-user-123`, `demo-key`, `fake API`, etc.) in non-test code or docs.
 - See `package.json` and `.github/workflows/no-mock-data.yml` for details.
 
-This development guide provides comprehensive coverage of the development process, coding standards, and best practices for the APIQ project. Follow these guidelines to ensure code quality, security, and maintainability. 
+This development guide provides comprehensive coverage of the development process, coding standards, and best practices for the APIQ project. Follow these guidelines to ensure code quality, security, and maintainability.
+
+### OpenAPI Cache & Parser
+
+- The OpenAPI cache and parser logic have been improved for better error handling and endpoint extraction. See `src/utils/openApiCache.ts` and `src/lib/api/parser.ts` for details.
+
+### Debug & Test Scripts
+
+- New scripts added for development and debugging:
+  - `clear-cache.js`: Clear the OpenAPI cache
+  - `debug-openapi.js`: Debug OpenAPI ingestion
+  - `debug-parser.js`: Debug OpenAPI parsing
+  - `/api/oauth/test.ts`: Test OAuth2 endpoints
+
+### Config Changes
+
+- `next.config.js` has been updated. Review for any new environment or build settings that may affect local or production builds. 
