@@ -1,7 +1,7 @@
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
-import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
+import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest, createTestUser } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 
 // Note: No mocks for parser and endpoints - we want to test real API calls
@@ -27,12 +27,41 @@ describe('Real API Connections Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    // Clean up any connections created by previous tests in this suite
-    await prisma.apiConnection.deleteMany({
+    jest.clearAllMocks();
+    await prisma.endpoint.deleteMany({
       where: {
-        userId: testUser.id
+        apiConnection: {
+          user: {
+            OR: [
+              { email: { contains: 'test-' } },
+              { email: { contains: '@example.com' } }
+            ]
+          }
+        }
       }
     });
+    await prisma.apiConnection.deleteMany({
+      where: {
+        user: {
+          OR: [
+            { email: { contains: 'test-' } },
+            { email: { contains: '@example.com' } }
+          ]
+        }
+      }
+    });
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { email: { contains: 'test-' } },
+          { email: { contains: '@example.com' } }
+        ]
+      }
+    });
+    // Recreate test users as needed for each test
+    if (typeof testUser !== 'undefined') {
+      testUser = await createTestUser('realapi@example.com', 'realapi123', Role.USER, 'Real API User');
+    }
   });
 
   describe('POST /api/connections - Real API Tests', () => {

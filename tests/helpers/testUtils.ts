@@ -1,3 +1,10 @@
+// TODO: [connorbowen] 2025-06-29 - This utility file exceeds the 200-300 line threshold (currently 413 lines).
+// Consider splitting into focused utility modules:
+// - testUtils.auth.ts (authentication helpers)
+// - testUtils.database.ts (database setup/cleanup)
+// - testUtils.api.ts (API request helpers)
+// Priority: Low - utilities are working well, refactoring for organization only.
+
 import { createMocks } from 'node-mocks-http';
 import { prisma } from '../../lib/database/client';
 import bcrypt from 'bcryptjs';
@@ -109,12 +116,20 @@ export const createTestConnection = async (
   baseUrl?: string,
   authType: AuthType = 'NONE'
 ): Promise<TestConnection> => {
+  // Ensure the user exists in the database
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+  let ensuredUser = user;
+  if (!dbUser) {
+    // Use createTestUser to create the user if missing
+    ensuredUser = await createTestUser(user.email, user.password, user.role, user.name);
+  }
+
   const testName = name || generateTestId('connection');
   const testBaseUrl = baseUrl || `https://${generateTestId('api')}.example.com`;
 
   const connection = await prisma.apiConnection.create({
     data: {
-      userId: user.id,
+      userId: ensuredUser.id,
       name: testName,
       baseUrl: testBaseUrl,
       authType: authType,
@@ -129,7 +144,7 @@ export const createTestConnection = async (
     name: testName,
     baseUrl: testBaseUrl,
     authType: authType,
-    userId: user.id
+    userId: ensuredUser.id
   };
 };
 

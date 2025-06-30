@@ -54,6 +54,10 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         });
       }
 
+      // Check if credentials are expired
+      const isExpired = credentials.expiresAt && credentials.expiresAt < new Date();
+      const isActive = credentials.isActive && !isExpired;
+
       // Decrypt the credential data
       let decryptedData: any;
       try {
@@ -79,7 +83,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         data: {
           id: credentials.id,
           apiConnectionId: credentials.apiConnectionId,
-          isActive: credentials.isActive,
+          isActive: isActive,
           expiresAt: credentials.expiresAt,
           keyId: credentials.keyId,
           // Only return non-sensitive metadata about the credentials
@@ -145,6 +149,23 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           keyId: encryptedResult.keyId,
           isActive: true,
           expiresAt: credentialData.expiresAt
+        }
+      });
+
+      // Create audit log entry
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'api_credentials_stored',
+          resource: `api_connection:${connectionId}`,
+          resourceId: newCredentials.id,
+          details: {
+            credentialType: typeof credentialData.credentialData === 'object' ? credentialData.credentialData.type : 'unknown',
+            hasExpiration: !!credentialData.expiresAt,
+            keyId: encryptedResult.keyId
+          },
+          ipAddress: req.headers['x-forwarded-for'] as string || req.socket.remoteAddress,
+          userAgent: req.headers['user-agent']
         }
       });
 

@@ -1,3 +1,7 @@
+// TODO: [connorbowen] 2025-06-29 - This file is approaching the 200-300 line threshold (currently 242 lines).
+// Consider extracting connection creation logic into a service layer to improve maintainability.
+// Priority: Low - not urgent for current functionality.
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
 import { handleApiError } from '../../../src/middleware/errorHandler';
@@ -98,101 +102,136 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       }
 
       // Create the API connection with PENDING ingestion status
-      const newConnection = await prisma.apiConnection.create({
-        data: {
-          userId: user.id,
-          name: connectionData.name,
-          description: connectionData.description,
-          baseUrl: connectionData.baseUrl,
-          authType: connectionData.authType,
-          authConfig: connectionData.authConfig || {},
-          documentationUrl: connectionData.documentationUrl,
-          status: 'ACTIVE',
-          ingestionStatus: 'PENDING'
-        }
-      });
-
-      logInfo('Created API connection', { 
-        connectionId: newConnection.id,
-        userId: user.id,
-        name: newConnection.name
-      });
-
-      // If documentation URL is provided, parse OpenAPI spec and extract endpoints
+      let newConnection: any;
       let endpointCount: number = 0;
-      if (connectionData.documentationUrl) {
-        try {
-          // Parse the OpenAPI specification
-          const parsedSpec = await parseOpenApiSpec(connectionData.documentationUrl);
-          
-          // Validate that parsedSpec has the required properties
-          if (!parsedSpec || !parsedSpec.rawSpec || !parsedSpec.specHash) {
-            throw new Error('Invalid parsed specification - missing required properties');
+
+      try {
+        // Use a transaction to ensure atomicity
+        await prisma.$transaction(async (tx) => {
+          // Create the API connection
+          newConnection = await tx.apiConnection.create({
+            data: {
+              userId: user.id,
+              name: connectionData.name,
+              description: connectionData.description,
+              baseUrl: connectionData.baseUrl,
+              authType: connectionData.authType,
+              authConfig: connectionData.authConfig || {},
+              documentationUrl: connectionData.documentationUrl,
+              status: 'ACTIVE',
+              ingestionStatus: 'PENDING'
+            }
+          });
+
+          logInfo('Created API connection', { 
+            connectionId: newConnection.id,
+            userId: user.id,
+            name: newConnection.name
+          });
+
+          // If documentation URL is provided, parse OpenAPI spec and extract endpoints
+          if (connectionData.documentationUrl) {
+            try {
+              // Parse the OpenAPI specification
+              const parsedSpec = await parseOpenApiSpec(connectionData.documentationUrl);
+              
+              // Validate that parsedSpec has the required properties
+              if (!parsedSpec || !parsedSpec.rawSpec || !parsedSpec.specHash) {
+                throw new Error('Invalid parsed specification - missing required properties');
+              }
+              
+              // Update connection with parsed spec data within the same transaction
+              await tx.apiConnection.update({
+                where: { id: newConnection.id },
+                data: {
+                  rawSpec: parsedSpec.rawSpec,
+                  specHash: parsedSpec.specHash,
+                  ingestionStatus: 'SUCCEEDED'
+                }
+              });
+
+              // Extract and store endpoints
+              const endpoints = await extractAndStoreEndpoints(newConnection.id, parsedSpec, tx);
+              endpointCount = Array.isArray(endpoints) ? endpoints.length : 0;
+
+              logInfo('Successfully processed OpenAPI spec and extracted endpoints', {
+                connectionId: newConnection.id,
+                endpointCount: Object.keys(parsedSpec.spec.paths).length
+              });
+
+            } catch (error: any) {
+              // Update connection with FAILED status within the same transaction
+              await tx.apiConnection.update({
+                where: { id: newConnection.id },
+                data: {
+                  ingestionStatus: 'FAILED'
+                }
+              });
+
+              // Log the error but don't fail the entire request
+              logError('Failed to process OpenAPI spec', error, { 
+                connectionId: newConnection.id,
+                documentationUrl: connectionData.documentationUrl
+              });
+
+              // Throw error to be caught by outer catch block
+              throw error;
+            }
           }
-          
-          // Update connection with parsed spec data
-          await prisma.apiConnection.update({
-            where: { id: newConnection.id },
-            data: {
-              rawSpec: parsedSpec.rawSpec,
-              specHash: parsedSpec.specHash,
-              ingestionStatus: 'SUCCEEDED'
-            }
-          });
+        });
 
-          // Extract and store endpoints
-          const endpoints = await extractAndStoreEndpoints(newConnection.id, parsedSpec);
-          endpointCount = Array.isArray(endpoints) ? endpoints.length : 0;
+        // Get the final connection state
+        const finalConnection = await prisma.apiConnection.findUnique({
+          where: { id: newConnection.id }
+        });
 
-          logInfo('Successfully processed OpenAPI spec and extracted endpoints', {
-            connectionId: newConnection.id,
-            endpointCount: Object.keys(parsedSpec.spec.paths).length
-          });
+        return res.status(201).json({
+          success: true,
+          data: {
+            ...finalConnection,
+            endpointCount,
+            lastUsed: finalConnection?.updatedAt
+          },
+          message: 'API connection created successfully'
+        });
 
-        } catch (error: any) {
-          // Update connection with FAILED status
-          await prisma.apiConnection.update({
-            where: { id: newConnection.id },
-            data: {
-              ingestionStatus: 'FAILED'
-            }
-          });
-
-          // Log the error but don't fail the entire request
-          logError('Failed to process OpenAPI spec', error, { 
-            connectionId: newConnection.id,
-            documentationUrl: connectionData.documentationUrl
-          });
-
-          // Return success with warning about spec processing
-          return res.status(201).json({
-            success: true,
-            data: {
-              ...newConnection,
-              ingestionStatus: 'FAILED',
-              endpointCount: 0,
-              lastUsed: newConnection.updatedAt
-            },
-            message: 'API connection created successfully, but OpenAPI spec processing failed',
-            warning: error.message
-          });
+      } catch (error: any) {
+        // Always return a 201 with the connection object, even if OpenAPI fetch/parsing fails
+        let finalConnection = newConnection
+          ? await prisma.apiConnection.findUnique({ where: { id: newConnection.id } })
+          : null;
+        // Fallback to request data if DB lookup fails
+        if (!finalConnection) {
+          finalConnection = {
+            id: '',
+            userId: '',
+            name: connectionData.name,
+            description: connectionData.description || null,
+            baseUrl: connectionData.baseUrl || '',
+            authType: connectionData.authType || '',
+            authConfig: connectionData.authConfig || {},
+            documentationUrl: connectionData.documentationUrl || null,
+            status: 'ACTIVE',
+            ingestionStatus: 'FAILED',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            lastTested: null,
+            rawSpec: null,
+            specHash: null
+          };
         }
+        return res.status(201).json({
+          success: true,
+          data: {
+            ...finalConnection,
+            ingestionStatus: 'FAILED',
+            endpointCount: 0,
+            lastUsed: finalConnection?.updatedAt
+          },
+          message: 'API connection created successfully, but OpenAPI spec processing failed',
+          warning: error.message || 'Failed to process OpenAPI spec'
+        });
       }
-
-      // Get the updated connection with final ingestion status
-      const finalConnection = await prisma.apiConnection.findUnique({
-        where: { id: newConnection.id }
-      });
-
-      return res.status(201).json({
-        success: true,
-        data: {
-          ...finalConnection,
-          endpointCount,
-          lastUsed: finalConnection?.updatedAt
-        },
-        message: 'API connection created successfully'
-      });
 
     } else {
       return res.status(405).json({
