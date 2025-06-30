@@ -14,6 +14,7 @@ A semi-agentic, low-code web application that enables users to orchestrate compl
 ### Authentication & Security
 - **JWT Authentication** - Secure token-based authentication with role-based access control
 - **OAuth2 Support** - Multi-provider OAuth2 authentication (GitHub, Google, Slack)
+- **OAuth2 Frontend Integration** - Complete UI components for OAuth2 flows and token management
 - **Encrypted Storage** - AES-256 encryption for all sensitive data
 - **CSRF Protection** - State parameter validation for OAuth2 flows
 - **Audit Logging** - Comprehensive security event logging
@@ -48,6 +49,9 @@ A semi-agentic, low-code web application that enables users to orchestrate compl
 - **CSRF Protection**: State parameter validation
 - **Comprehensive Logging**: Complete OAuth2 event audit trail
 - **Dependency Injection**: Testable OAuth2 service architecture
+- **Frontend Integration**: Complete UI components for OAuth2 flows
+- **API Client**: Centralized client for OAuth2 operations
+- **Type Safety**: Full TypeScript integration with error handling
 
 ## 🚀 Quick Start
 
@@ -102,26 +106,24 @@ To use OAuth2 authentication:
    GOOGLE_CLIENT_SECRET=your_google_client_secret
    ```
 
-2. **Create an API connection** with OAuth2 authentication:
-   ```json
-   {
-     "name": "GitHub API",
-     "baseUrl": "https://api.github.com",
-     "authType": "OAUTH2",
-     "authConfig": {
-       "provider": "github",
-       "clientId": "your_github_client_id",
-       "clientSecret": "your_github_client_secret",
-       "redirectUri": "https://your-app.com/api/oauth/callback",
-       "scope": "repo user"
-     }
-   }
-   ```
+2. **Create an API connection** with OAuth2 authentication through the UI:
+   - Navigate to the dashboard
+   - Click "Create Connection"
+   - Select "OAuth2" as authentication type
+   - Choose provider (GitHub, Google, Slack)
+   - Enter client ID, client secret, and redirect URI
+   - Configure required scopes
 
-3. **Initiate OAuth2 flow**:
-   ```bash
-   GET /api/oauth/authorize?apiConnectionId=conn_123&provider=github&clientId=your_client_id&clientSecret=your_client_secret&redirectUri=https://your-app.com/api/oauth/callback
-   ```
+3. **Initiate OAuth2 flow** through the UI:
+   - Go to the connection's OAuth2 setup page
+   - Click "Authorize with [Provider]"
+   - Complete the OAuth2 authorization flow
+   - Tokens are automatically stored and managed
+
+4. **Manage OAuth2 tokens**:
+   - View connection status and token expiration
+   - Refresh expired tokens automatically
+   - Retrieve access tokens for API calls
 
 ## 📚 Documentation
 
@@ -163,10 +165,18 @@ apiq-mvp/
 The OAuth2 system is built with:
 - **OAuth2Service** - Core OAuth2 business logic with dependency injection (DI) for all dependencies (database, encryption, token generation, etc.)
 - **API Endpoints** - Complete OAuth2 flow endpoints, all using DI for the OAuth2 service
+- **Frontend Components** - Complete UI components for OAuth2 flows and token management
+- **API Client** - Centralized client for OAuth2 operations with TypeScript support
 - **Security Features** - Encrypted storage, CSRF protection, audit logging
 - **Testing** - Comprehensive unit and integration tests with full dependency mocking via DI
 
 > **Note:** The OAuth2 service and all related endpoints have been refactored to use dependency injection, improving testability, maintainability, and clarity. See `src/lib/auth/oauth2.ts` for details.
+
+#### Frontend OAuth2 Components
+- **OAuth2Manager** (`src/components/OAuth2Manager.tsx`) - Reusable component for OAuth2 management
+- **API Client** (`src/lib/api/client.ts`) - Centralized API client with OAuth2 methods
+- **OAuth2 Pages** - Complete flow from authorization to callback handling
+- **Type Safety** - Full TypeScript integration with proper error handling
 
 ### Running Tests
 

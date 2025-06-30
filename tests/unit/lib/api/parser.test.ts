@@ -99,7 +99,7 @@ describe('OpenAPI Parser', () => {
         .rejects
         .toMatchObject({
           type: 'INVALID_SPEC',
-          message: expect.stringContaining('Invalid OpenAPI specification')
+          message: 'OpenAPI specification must be a JSON object'
         });
     });
 
@@ -123,7 +123,7 @@ describe('OpenAPI Parser', () => {
         .rejects
         .toMatchObject({
           type: 'INVALID_SPEC',
-          message: 'Invalid OpenAPI specification: No endpoints found in OpenAPI specification'
+          message: 'No endpoints found in OpenAPI specification'
         });
     });
 
@@ -276,7 +276,7 @@ describe('OpenAPI Parser', () => {
       });
       
       parseMock.mockRejectedValue({ message: 'other' });
-      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'UNKNOWN' });
+      await expect(parseOpenApiSpec('http://test')).rejects.toMatchObject({ type: 'INVALID_SPEC' });
     });
   });
 

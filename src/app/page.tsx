@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +46,12 @@ export default function Home() {
               >
                 {isLoading ? 'Checking...' : 'Health Check'}
               </button>
+              <Link
+                href="/login"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Sign In
+              </Link>
             </div>
           </div>
         </div>

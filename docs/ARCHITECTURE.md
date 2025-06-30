@@ -809,4 +809,17 @@ class OAuth2Service {
 4. **User Experience**
    - OAuth2 flow UI improvements
    - Token management interface
-   - Provider configuration UI 
+   - Provider configuration UI
+
+## UI/UX Sequencing and Implementation Mapping (2024 Update)
+
+Refer to `/docs/implementation-plan.md` for the full direct mapping table and next steps checklist. Key highlights:
+
+- API Connection Manager and API Explorer are now combined as tabs for better UX.
+- Settings Panel is separated under `/settings` to isolate secrets/config.
+- Monitoring Dashboard uses `AuditLog` and SSE for live updates.
+- All AI-generated workflows require user confirmation before execution.
+- Editable Workflow Interface opens the visual builder pre-populated from AI plans.
+- All new UI components require Jest tests and must pass ESLint.
+
+See the implementation plan for the full checklist and mapping table. 

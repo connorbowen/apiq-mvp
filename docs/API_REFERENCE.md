@@ -1171,6 +1171,52 @@ APIQ supports OAuth2 authentication for connecting to third-party APIs that requ
 
 > **Note:** The OAuth2 service and all related endpoints are implemented using dependency injection (DI) for all dependencies (database, encryption, token generation, etc.), improving testability, maintainability, and security. All token management and security logic are handled via DI-injected services.
 
+### Frontend Integration
+
+The OAuth2 system includes complete frontend integration with the following components:
+
+#### API Client (`src/lib/api/client.ts`)
+Centralized TypeScript client for OAuth2 operations with full type safety.
+
+**Key Methods:**
+```typescript
+// Get supported OAuth2 providers
+async getOAuth2Providers(): Promise<ApiResponse<{ providers: OAuth2Provider[]; count: number }>>
+
+// Initiate OAuth2 authorization flow
+async initiateOAuth2Flow(
+  apiConnectionId: string,
+  provider: string,
+  clientId: string,
+  clientSecret: string,
+  redirectUri: string,
+  scope?: string
+): Promise<string>
+
+// Refresh OAuth2 tokens
+async refreshOAuth2Token(apiConnectionId: string, provider: string): Promise<ApiResponse>
+
+// Get OAuth2 access token
+async getOAuth2Token(apiConnectionId: string): Promise<ApiResponse<{ accessToken: string; tokenType: string }>>
+```
+
+#### OAuth2 Manager Component (`src/components/OAuth2Manager.tsx`)
+Reusable React component for OAuth2 connection management.
+
+**Features:**
+- Provider-specific icons and configuration display
+- Token refresh and access token retrieval
+- Connection status and expiration monitoring
+- Comprehensive error handling and success feedback
+- Support for GitHub, Google, and Slack providers
+
+#### OAuth2 Pages
+- **Login Page** (`src/app/login/page.tsx`) - OAuth2 provider buttons and validation
+- **Dashboard** (`src/app/dashboard/page.tsx`) - OAuth2 configuration in connection creation
+- **OAuth2 Setup** (`src/app/connections/[id]/oauth2/page.tsx`) - Dedicated OAuth2 management
+- **OAuth2 Authorization** (`src/app/oauth/authorize/page.tsx`) - Flow initiation
+- **OAuth2 Callback** (`src/app/oauth/callback/page.tsx`) - Flow completion
+
 ### Supported OAuth2 Providers
 
 - **GitHub** - For GitHub API access
