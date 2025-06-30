@@ -494,24 +494,32 @@ See `.env.example` for usage.
 - **Comprehensive audit logging** for security compliance
 - **Dependency injection (DI) for all OAuth2 service dependencies** (database, encryption, token generation, etc.)
 
-### OAuth2 System Architecture
+### Authentication System Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   API Layer     │    │   OAuth2        │
+│   Frontend      │    │   API Layer     │    │   Auth          │
 │                 │    │                 │    │   Providers     │
-│ OAuth2 UI       │───▶│ /api/oauth/*    │───▶│ GitHub          │
-│ Components      │    │                 │    │ Google          │
-└─────────────────┘    └─────────────────┘    │ Slack           │
+│ Auth UI         │───▶│ /api/auth/*     │───▶│ OAuth2:         │
+│ Components      │    │                 │    │ • GitHub        │
+└─────────────────┘    └─────────────────┘    │ • Google        │
+                                              │ • Slack         │
+                                              │                 │
+                                              │ SAML/OIDC:      │
+                                              │ • Okta          │
+                                              │ • Azure AD      │
+                                              │ • Google        │
+                                              │   Workspace     │
                                               └─────────────────┘
                                                        │
                                               ┌─────────────────┐
-                                              │   OAuth2        │
+                                              │   Auth          │
                                               │   Service       │
                                               │                 │
-                                              │ • Authorization │
+                                              │ • OAuth2 Logic  │
+                                              │ • SAML Logic    │
+                                              │ • OIDC Logic    │
                                               │ • Token Mgmt    │
-                                              │ • Refresh Logic │
                                               │ • Security      │
                                               └─────────────────┘
                                                        │
@@ -522,10 +530,11 @@ See `.env.example` for usage.
                                               │   Tokens        │
                                               │ • Audit Logs    │
                                               │ • User Data     │
+                                              │ • SSO Config    │
                                               └─────────────────┘
 ```
 
-#### OAuth2 Flow Components
+#### Authentication Flow Components
 
 1. **OAuth2Service** - Core OAuth2 business logic (now fully DI-based)
    - Provider management (GitHub, Google, Slack)
@@ -534,12 +543,25 @@ See `.env.example` for usage.
    - Security validation
    - **All dependencies injected for testability and maintainability**
 
-2. **API Endpoints**
-   - `/api/oauth/authorize` - Initiate OAuth2 flow (uses DI)
-   - `/api/oauth/callback` - Process OAuth2 callback (uses DI)
-   - `/api/oauth/refresh` - Refresh expired tokens (uses DI)
-   - `/api/oauth/token` - Retrieve access tokens (uses DI)
-   - `/api/oauth/providers` - List supported providers (uses DI)
+2. **SAMLService** - Enterprise SAML SSO logic
+   - Provider management (Okta, Azure AD, Google Workspace)
+   - SAML assertion processing
+   - Identity provider integration
+   - Security validation and signature verification
+
+3. **OIDCService** - OpenID Connect logic
+   - Provider management (Okta, Azure AD, Google Workspace)
+   - OIDC flow handling
+   - Token validation and user info retrieval
+   - Security validation
+
+4. **API Endpoints**
+   - `/api/auth/oauth2` - Initiate OAuth2 user login (uses DI)
+   - `/api/auth/oauth2/callback` - Process OAuth2 callback (uses DI)
+   - `/api/auth/saml/{provider}` - Initiate SAML SSO flow
+   - `/api/auth/saml/callback` - Process SAML assertion
+   - `/api/auth/oidc/{provider}` - Initiate OIDC flow
+   - `/api/auth/oidc/callback` - Process OIDC callback
 
 3. **Security Features**
    - **Encrypted Storage** - AES-256 encryption for all tokens
@@ -571,35 +593,57 @@ CREATE TABLE api_credentials (
   UNIQUE(user_id, api_connection_id)
 );
 
--- OAuth2 Audit Logging
+-- SAML/OIDC Configuration
+CREATE TABLE sso_configurations (
+  id TEXT PRIMARY KEY,
+  provider TEXT NOT NULL,        -- 'okta', 'azure', 'google-workspace'
+  provider_type TEXT NOT NULL,   -- 'saml', 'oidc'
+  issuer_url TEXT NOT NULL,
+  client_id TEXT NOT NULL,
+  client_secret TEXT NOT NULL,
+  certificate TEXT,              -- SAML certificate for signature verification
+  metadata_url TEXT,             -- SAML metadata URL
+  scopes TEXT[],                 -- OIDC scopes
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(provider, provider_type)
+);
+
+-- Authentication Audit Logging
 CREATE TABLE audit_logs (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
-  action TEXT NOT NULL,          -- OAUTH2_AUTHORIZE, OAUTH2_CONNECT, etc.
+  action TEXT NOT NULL,          -- OAUTH2_AUTHORIZE, SAML_LOGIN, OIDC_LOGIN, etc.
   resource TEXT NOT NULL,
   resource_id TEXT,
-  details JSONB,                 -- OAuth2-specific details
+  details JSONB,                 -- Authentication-specific details
   ip_address TEXT,
   user_agent TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 ```
 
-#### OAuth2 Data Flow
+#### Authentication Data Flow
 
-1. **Token Storage**
+1. **OAuth2 Token Storage**
    - OAuth2 tokens encrypted with AES-256
    - Stored in `api_credentials` table
    - Associated with user and API connection
 
-2. **Audit Logging**
-   - All OAuth2 events logged to `audit_logs`
-   - Includes authorization, token refresh, errors
+2. **SAML/OIDC Configuration**
+   - SSO provider configurations stored in `sso_configurations`
+   - Includes certificates, metadata URLs, and scopes
+   - Supports both SAML and OIDC protocols
+
+3. **Audit Logging**
+   - All authentication events logged to `audit_logs`
+   - Includes OAuth2, SAML, and OIDC events
    - Supports compliance and security monitoring
 
 ### Security Architecture
 
-#### OAuth2 Security Measures
+#### Authentication Security Measures
 
 1. **Token Encryption**
    - All OAuth2 tokens encrypted before storage
@@ -607,23 +651,28 @@ CREATE TABLE audit_logs (
    - Secure key management and rotation
 
 2. **CSRF Protection**
-   - State parameter validation in OAuth2 flow
+   - State parameter validation in OAuth2/OIDC flows
    - Time-based expiration (5 minutes)
    - Cryptographic nonce for additional security
 
-3. **Scope Validation**
-   - OAuth2 scopes validated against provider requirements
+3. **SAML Security**
+   - Digital signature verification for SAML assertions
+   - Certificate validation and trust chain verification
+   - Replay attack prevention with time-based validation
+
+4. **Scope Validation**
+   - OAuth2/OIDC scopes validated against provider requirements
    - User consent tracking and enforcement
    - Minimal scope principle enforcement
 
-4. **Audit and Monitoring**
-   - Complete OAuth2 event logging
+5. **Audit and Monitoring**
+   - Complete authentication event logging
    - Security event monitoring
    - Compliance reporting capabilities
 
 ### Service Layer Architecture
 
-#### OAuth2Service Design
+#### Authentication Service Design
 
 ```typescript
 class OAuth2Service {
@@ -645,6 +694,42 @@ class OAuth2Service {
   getProviderConfig(provider)
   validateConfig(config)
 }
+
+class SAMLService {
+  // Dependency injection for testability
+  constructor({
+    prisma = new PrismaClient(),
+    encryptionService = defaultEncryptionService,
+    certificateValidator = defaultCertificateValidator
+  } = {})
+
+  // Core SAML operations
+  generateAuthRequest(provider, relayState)
+  processAssertion(samlResponse, relayState)
+  validateSignature(assertion, certificate)
+  
+  // Provider management
+  getProviderConfig(provider)
+  validateMetadata(metadataUrl)
+}
+
+class OIDCService {
+  // Dependency injection for testability
+  constructor({
+    prisma = new PrismaClient(),
+    encryptionService = defaultEncryptionService,
+    jwtValidator = defaultJWTValidator
+  } = {})
+
+  // Core OIDC operations
+  generateAuthUrl(provider, state, nonce)
+  processCallback(code, state, nonce)
+  validateIdToken(idToken, provider)
+  
+  // Provider management
+  getProviderConfig(provider)
+  validateDiscoveryDocument(issuerUrl)
+}
 ```
 
 #### Key Design Principles
@@ -657,12 +742,13 @@ class OAuth2Service {
 
 ### Integration Points
 
-#### OAuth2 Integration with Existing Systems
+#### Authentication Integration with Existing Systems
 
-1. **Authentication Integration**
-   - OAuth2 tokens work alongside JWT authentication
-   - User sessions maintained across OAuth2 flows
-   - Role-based access control applies to OAuth2 operations
+1. **User Authentication Integration**
+   - OAuth2, SAML, and OIDC work alongside JWT authentication
+   - User sessions maintained across all authentication flows
+   - Role-based access control applies to all authentication operations
+   - Enterprise SSO integration for organizational access
 
 2. **API Connection Integration**
    - OAuth2 authentication integrated with API connection system
@@ -676,7 +762,7 @@ class OAuth2Service {
 
 ### Performance Considerations
 
-#### OAuth2 Performance Optimizations
+#### Authentication Performance Optimizations
 
 1. **Token Caching**
    - Valid tokens cached in memory for quick access
@@ -684,50 +770,66 @@ class OAuth2Service {
    - Efficient token validation
 
 2. **Database Optimization**
-   - Indexed queries for OAuth2 operations
-   - Efficient token storage and retrieval
+   - Indexed queries for authentication operations
+   - Efficient token and configuration storage
    - Optimized audit log queries
 
 3. **Network Optimization**
-   - Efficient OAuth2 provider communication
+   - Efficient provider communication (OAuth2, SAML, OIDC)
    - Connection pooling for external API calls
    - Timeout handling and retry logic
 
+4. **SAML/OIDC Optimization**
+   - Certificate caching for SAML signature verification
+   - Metadata caching for SAML/OIDC providers
+   - Efficient assertion processing and validation
+
 ### Scalability Architecture
 
-#### OAuth2 Scalability Features
+#### Authentication Scalability Features
 
 1. **Provider Extensibility**
-   - Easy addition of new OAuth2 providers
+   - Easy addition of new OAuth2, SAML, and OIDC providers
    - Configurable provider settings
-   - Plugin-like architecture for providers
+   - Plugin-like architecture for all authentication types
 
 2. **Token Management**
    - Scalable token storage and retrieval
    - Efficient token refresh mechanisms
-   - Support for high-volume OAuth2 operations
+   - Support for high-volume authentication operations
 
-3. **Monitoring and Alerting**
-   - OAuth2 flow monitoring
+3. **Enterprise SSO Scaling**
+   - Support for large enterprise deployments
+   - Efficient SAML assertion processing
+   - Scalable OIDC token validation
+
+4. **Monitoring and Alerting**
+   - Authentication flow monitoring
    - Token expiration alerts
    - Security event notifications
 
 ### Deployment Architecture
 
-#### OAuth2 Deployment Considerations
+#### Authentication Deployment Considerations
 
 1. **Environment Configuration**
-   - OAuth2 provider credentials per environment
+   - OAuth2, SAML, and OIDC provider credentials per environment
    - Encryption keys managed securely
-   - Environment-specific redirect URIs
+   - Environment-specific redirect URIs and assertion consumer URLs
 
 2. **Security Configuration**
-   - HTTPS required for OAuth2 flows
+   - HTTPS required for all authentication flows
    - Secure cookie settings
-   - CSP headers for OAuth2 security
+   - CSP headers for authentication security
+   - SAML certificate management and rotation
 
-3. **Monitoring and Logging**
-   - OAuth2 flow monitoring
+3. **Enterprise SSO Configuration**
+   - SAML metadata exchange with identity providers
+   - OIDC discovery document configuration
+   - Certificate and key management for SAML signing
+
+4. **Monitoring and Logging**
+   - Authentication flow monitoring
    - Security event logging
    - Performance metrics collection
 
@@ -746,6 +848,8 @@ class OAuth2Service {
 ### Authentication
 - **JWT** - JSON Web Tokens for session management
 - **OAuth2** - Multi-provider OAuth2 implementation
+- **SAML** - Enterprise SAML SSO for Okta, Azure AD, Google Workspace
+- **OIDC** - OpenID Connect for enterprise authentication
 - **bcrypt** - Password hashing
 
 ### Security
@@ -765,54 +869,74 @@ class OAuth2Service {
 
 ## Security Considerations
 
-### OAuth2 Security Best Practices
+### Authentication Security Best Practices
 
 1. **Token Security**
-   - Encrypted storage of all OAuth2 tokens
+   - Encrypted storage of all OAuth2 and OIDC tokens
    - Secure token transmission
    - Proper token expiration handling
 
-2. **Flow Security**
+2. **OAuth2/OIDC Flow Security**
    - CSRF protection with state parameters
    - Secure redirect URI validation
    - Scope validation and enforcement
 
-3. **Infrastructure Security**
-   - HTTPS enforcement
+3. **SAML Security**
+   - Digital signature verification for all assertions
+   - Certificate validation and trust chain verification
+   - Replay attack prevention with time-based validation
+   - Secure assertion consumer service configuration
+
+4. **Infrastructure Security**
+   - HTTPS enforcement for all authentication flows
    - Secure headers configuration
    - Environment variable security
+   - Certificate and key management
 
-4. **Monitoring and Alerting**
+5. **Monitoring and Alerting**
    - Security event monitoring
    - Anomaly detection
    - Incident response procedures
 
 ## Future Enhancements
 
-### Planned OAuth2 Improvements
+### Planned Authentication Improvements
 
-1. **Additional Providers**
+1. **Additional OAuth2 Providers**
    - Stripe OAuth2 integration
    - Salesforce OAuth2 support
    - Microsoft Graph API integration
 
-2. **Advanced Features**
+2. **Additional SAML/OIDC Providers**
+   - AWS SSO integration
+   - OneLogin SAML/OIDC support
+   - Ping Identity integration
+   - Custom SAML/OIDC provider support
+
+3. **Advanced OAuth2 Features**
    - OAuth2 PKCE support
    - Device authorization flow
    - OAuth2 token introspection
 
-3. **Security Enhancements**
+4. **Advanced SAML/OIDC Features**
+   - SAML attribute mapping and transformation
+   - OIDC claims customization
+   - Just-in-time user provisioning
+   - Multi-factor authentication integration
+
+5. **Security Enhancements**
    - Hardware security module (HSM) integration
    - Advanced threat detection
    - Compliance automation
+   - Certificate lifecycle management
 
-4. **User Experience**
+6. **User Experience**
    - **NLP-First Interface** - Chat-based workflow creation as primary interface
    - **Conversational AI** - Enhanced OpenAI service with friendly, helpful responses
    - **Simplified Navigation** - Streamlined dashboard with chat interface prominence
-   - **OAuth2 User Login** - Complete OAuth2 authentication flow for user login
-   - **Token Management** - Secure OAuth2 token management and refresh
-   - **Provider Configuration** - Easy OAuth2 provider setup and management
+   - **Enterprise SSO** - Complete SAML/OIDC authentication flow for enterprise users
+   - **Token Management** - Secure authentication token management and refresh
+   - **Provider Configuration** - Easy authentication provider setup and management
 
 ## UI/UX Sequencing and Implementation Mapping (2024 Update)
 
@@ -823,6 +947,7 @@ The platform has been refactored to prioritize **natural language workflow creat
 - **Dashboard** - Chat interface is primary, API connections are secondary
 - **Chat Interface** - Enhanced with conversational AI responses and quick examples
 - **OAuth2 Integration** - Complete user authentication flow with Google, GitHub, Slack
+- **Enterprise SSO** - SAML/OIDC support for Okta, Azure AD, Google Workspace
 - **User Registration** - Phase 2.5 planned for self-service user onboarding
 
 ### Implementation Highlights
@@ -830,6 +955,7 @@ The platform has been refactored to prioritize **natural language workflow creat
 - **Conversational UX** - AI responses are friendly and helpful with clear explanations
 - **Simplified Navigation** - Reduced complexity, focus on workflow creation
 - **OAuth2 User Auth** - Complete OAuth2 login flow for user authentication
+- **Enterprise SSO** - SAML/OIDC authentication for enterprise users
 - **Type Safety** - Improved TypeScript consistency across all components
 
 Refer to `/docs/implementation-plan.md` for the full direct mapping table and next steps checklist. Key highlights:

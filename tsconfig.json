@@ -26,7 +26,8 @@
       "@/pages/*": ["./pages/*"],
       "@/prisma/*": ["./prisma/*"],
       "@/scripts/*": ["./scripts/*"]
-    }
+    },
+    "types": ["jest", "@testing-library/jest-dom"]
   },
   "include": [
     "next-env.d.ts",

@@ -218,6 +218,97 @@ Process OAuth2 callback for user authentication.
 }
 ```
 
+### Enterprise SSO (SAML/OIDC)
+
+#### `GET /api/auth/saml/{provider}`
+Initiate SAML SSO flow for enterprise authentication.
+
+**Path Parameters:**
+- `provider` (required) - SSO provider name (okta, azure, google-workspace)
+
+**Query Parameters:**
+- `redirectUri` (optional) - Custom redirect URI (defaults to `/dashboard`)
+
+**Response:** Redirects to SAML identity provider
+
+**Example:**
+```
+GET /api/auth/saml/okta?redirectUri=/dashboard
+```
+
+#### `POST /api/auth/saml/callback`
+Process SAML assertion for user authentication.
+
+**Request Body:**
+```json
+{
+  "SAMLResponse": "base64_encoded_saml_response",
+  "RelayState": "optional_relay_state"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_id",
+      "email": "user@company.com",
+      "name": "User Name",
+      "role": "USER",
+      "organization": "Company Name"
+    },
+    "accessToken": "jwt_token",
+    "expiresIn": 900
+  },
+  "message": "SAML authentication successful"
+}
+```
+
+#### `GET /api/auth/oidc/{provider}`
+Initiate OpenID Connect flow for enterprise authentication.
+
+**Path Parameters:**
+- `provider` (required) - OIDC provider name (okta, azure, google-workspace)
+
+**Query Parameters:**
+- `redirectUri` (optional) - Custom redirect URI (defaults to `/dashboard`)
+
+**Response:** Redirects to OIDC identity provider
+
+**Example:**
+```
+GET /api/auth/oidc/azure?redirectUri=/dashboard
+```
+
+#### `GET /api/auth/oidc/callback`
+Process OIDC callback for user authentication.
+
+**Query Parameters:**
+- `code` (required) - Authorization code from OIDC provider
+- `state` (required) - State parameter for CSRF protection
+- `error` (optional) - Error from OIDC provider
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_id",
+      "email": "user@company.com",
+      "name": "User Name",
+      "role": "USER",
+      "organization": "Company Name"
+    },
+    "accessToken": "jwt_token",
+    "expiresIn": 900
+  },
+  "message": "OIDC authentication successful"
+}
+```
+
 ### API Connections
 
 #### `GET /api/connections`

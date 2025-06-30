@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Phase 2.5: User Registration & Verification Plan** - ✅ ADDED TO IMPLEMENTATION PLAN
   - Complete user registration flow with email/password and OAuth2 signup
+  - Enterprise SSO integration (SAML/OIDC) for Okta, Azure AD, Google Workspace
   - Email verification system with resend functionality
   - Password reset flow with secure token handling
   - Welcome flow for new users with onboarding experience

@@ -1,19 +1,23 @@
-# APIQ - Multi-API Orchestrator
+# APIQ - Natural Language Workflow Orchestrator
 
-A semi-agentic, low-code web application that enables users to orchestrate complex workflows across multiple APIs using natural language and AI-powered automation.
+A semi-agentic, low-code web application that enables non-technincal users to create complex workflows across multiple APIs using natural language and AI-powered automation. The platform prioritizes conversational workflow creation over complex API management.
 
 ## 🚀 Features
 
 ### Core Functionality
+- **Natural Language Workflow Creation** - Chat-based interface for describing workflows in plain English
+- **AI-Powered Orchestration** - OpenAI GPT-4 integration for intelligent workflow generation
 - **Multi-API Integration** - Connect to any API with OpenAPI/Swagger documentation
-- **Workflow Orchestration** - Create complex multi-step workflows across APIs
-- **Natural Language Interface** - AI-powered workflow creation and management
+- **Conversational Interface** - Friendly, helpful AI responses with clear explanations
+- **Simplified User Experience** - Streamlined interface focused on workflow creation
 - **Real-time Monitoring** - Live workflow execution monitoring and error handling
 - **Comprehensive Audit Trails** - Complete logging for compliance and debugging
 
 ### Authentication & Security
 - **JWT Authentication** - Secure token-based authentication with role-based access control
-- **OAuth2 Support** - Multi-provider OAuth2 authentication (GitHub, Google, Slack)
+- **OAuth2 User Login** - Complete OAuth2 authentication flow for user login (Google, GitHub, Slack)
+- **Enterprise SSO** - SAML/OIDC support for Okta, Azure AD, Google Workspace
+- **OAuth2 API Integration** - Multi-provider OAuth2 authentication for API connections
 - **OAuth2 Frontend Integration** - Complete UI components for OAuth2 flows and token management
 - **Encrypted Storage** - AES-256 encryption for all sensitive data
 - **CSRF Protection** - State parameter validation for OAuth2 flows
@@ -32,6 +36,26 @@ A semi-agentic, low-code web application that enables users to orchestrate compl
 - **Dependency Injection** - Testable service architecture
 - **API Documentation** - Complete API reference documentation
 - **Development Tools** - Hot reloading, linting, and debugging support
+
+## 🎯 Platform Focus
+
+### Natural Language First
+APIQ has been refactored to prioritize **natural language workflow creation** over complex API management:
+
+- **Chat Interface** - Primary method for creating workflows through conversation
+- **Conversational AI** - Friendly, helpful responses that guide users through workflow creation
+- **Simplified Navigation** - Streamlined interface that reduces complexity
+- **Quick Examples** - Built-in examples to help users get started quickly
+- **OAuth2 User Authentication** - Complete OAuth2 login flow for seamless user experience
+- **Enterprise SSO** - SAML/OIDC support for enterprise identity providers
+
+### Example Workflow Creation
+Instead of manually configuring API connections and building workflows step-by-step, users can simply describe what they want:
+
+```
+User: "When a new GitHub issue is created, send a Slack notification to the team"
+AI: "I'll help you create a workflow that monitors GitHub for new issues and sends Slack notifications. Let me set this up for you..."
+```
 
 ## 🏗️ Architecture
 
@@ -94,7 +118,9 @@ A semi-agentic, low-code web application that enables users to orchestrate compl
    npm test
    ```
 
-### OAuth2 Configuration
+### Authentication Configuration
+
+#### OAuth2 Configuration
 
 To use OAuth2 authentication:
 
@@ -104,6 +130,27 @@ To use OAuth2 authentication:
    GITHUB_CLIENT_SECRET=your_github_client_secret
    GOOGLE_CLIENT_ID=your_google_client_id
    GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
+
+#### Enterprise SSO Configuration (SAML/OIDC)
+
+To use enterprise SSO authentication:
+
+1. **Configure SAML/OIDC providers** in your environment variables:
+   ```bash
+   # Okta Configuration
+   OKTA_ISSUER=https://your-domain.okta.com
+   OKTA_CLIENT_ID=your_okta_client_id
+   OKTA_CLIENT_SECRET=your_okta_client_secret
+   
+   # Azure AD Configuration
+   AZURE_TENANT_ID=your_tenant_id
+   AZURE_CLIENT_ID=your_azure_client_id
+   AZURE_CLIENT_SECRET=your_azure_client_secret
+   
+   # Google Workspace Configuration
+   GOOGLE_WORKSPACE_CLIENT_ID=your_google_workspace_client_id
+   GOOGLE_WORKSPACE_CLIENT_SECRET=your_google_workspace_client_secret
    ```
 
 2. **Create an API connection** with OAuth2 authentication through the UI:
