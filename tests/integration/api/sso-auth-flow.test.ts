@@ -1,7 +1,15 @@
+// TODO: [connorbowen] 2025-06-29 - This test file exceeds the 200-300 line threshold (currently 431 lines).
+// Consider splitting into smaller, focused test files:
+// - sso-auth-flow.provider.test.ts (provider-specific tests)
+// - sso-auth-flow.flow.test.ts (authentication flow tests)
+// - sso-auth-flow.integration.test.ts (end-to-end integration tests)
+// Priority: Low - tests are working well, refactoring for maintainability only.
+
 import { createMocks } from 'node-mocks-http';
-import { createTestSuite, createAuthenticatedRequest } from '../../helpers/testUtils';
+import { createTestSuite, createAuthenticatedRequest, createTestUser } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 import { getAvailableProviders } from '../../../src/lib/auth/sso-providers';
+import { prisma } from '../../../lib/database/client';
 
 describe('SSO Authentication Flow Testing - Phase 2.3', () => {
   const testSuite = createTestSuite('SSO Auth Flow Tests');
@@ -9,11 +17,47 @@ describe('SSO Authentication Flow Testing - Phase 2.3', () => {
 
   beforeAll(async () => {
     await testSuite.beforeAll();
-    testUser = await testSuite.createUser('sso-test@example.com', 'testpass123', Role.USER);
+    // testUser creation moved to beforeEach
   });
 
   afterAll(async () => {
     await testSuite.afterAll();
+  });
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    await prisma.endpoint.deleteMany({
+      where: {
+        apiConnection: {
+          user: {
+            OR: [
+              { email: { contains: 'test-' } },
+              { email: { contains: '@example.com' } }
+            ]
+          }
+        }
+      }
+    });
+    await prisma.apiConnection.deleteMany({
+      where: {
+        user: {
+          OR: [
+            { email: { contains: 'test-' } },
+            { email: { contains: '@example.com' } }
+          ]
+        }
+      }
+    });
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { email: { contains: 'test-' } },
+          { email: { contains: '@example.com' } }
+        ]
+      }
+    });
+    // Always create testUser after cleanup
+    testUser = await createTestUser('ssoauth@example.com', 'ssoauth123', Role.USER, 'SSO Auth User');
   });
 
   describe('SSO Provider Configuration', () => {

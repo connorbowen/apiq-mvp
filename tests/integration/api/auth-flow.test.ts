@@ -1,7 +1,14 @@
+// TODO: [connorbowen] 2025-06-29 - This test file exceeds the 200-300 line threshold (currently 507 lines).
+// Consider splitting into smaller, focused test files:
+// - auth-flow.login.test.ts
+// - auth-flow.registration.test.ts  
+// - auth-flow.password-reset.test.ts
+// Priority: Low - tests are working well, refactoring for maintainability only.
+
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
-import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
+import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest, createTestUser } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 
 describe('Authentication Flow Testing - Phase 2.3', () => {
@@ -10,11 +17,47 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
 
   beforeAll(async () => {
     await testSuite.beforeAll();
-    testUser = await testSuite.createUser('auth-flow-test@example.com', 'testpass123', Role.USER);
+    // testUser creation moved to beforeEach
   });
 
   afterAll(async () => {
     await testSuite.afterAll();
+  });
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    await prisma.endpoint.deleteMany({
+      where: {
+        apiConnection: {
+          user: {
+            OR: [
+              { email: { contains: 'test-' } },
+              { email: { contains: '@example.com' } }
+            ]
+          }
+        }
+      }
+    });
+    await prisma.apiConnection.deleteMany({
+      where: {
+        user: {
+          OR: [
+            { email: { contains: 'test-' } },
+            { email: { contains: '@example.com' } }
+          ]
+        }
+      }
+    });
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { email: { contains: 'test-' } },
+          { email: { contains: '@example.com' } }
+        ]
+      }
+    });
+    // Always create testUser after cleanup
+    testUser = await createTestUser('authflow@example.com', 'authflow123', Role.USER, 'Auth Flow User');
   });
 
   describe('API Key Authentication', () => {
@@ -461,7 +504,7 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
           userId: testUser.id,
           action: 'api_credentials_stored'
         },
-        orderBy: { timestamp: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 1
       });
 

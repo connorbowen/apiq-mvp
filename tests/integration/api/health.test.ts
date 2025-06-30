@@ -1,6 +1,7 @@
 import { createMocks } from 'node-mocks-http'
 import { NextApiRequest } from 'next'
 import healthHandler from '../../../pages/api/health'
+import { prisma } from '../../../lib/database/client'
 
 // Remove database health check mock
 // jest.mock('../../../src/database/init', ... )
@@ -29,6 +30,41 @@ function createMockRequest(options: any = {}) {
 }
 
 describe('/api/health', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    await prisma.endpoint.deleteMany({
+      where: {
+        apiConnection: {
+          user: {
+            OR: [
+              { email: { contains: 'test-' } },
+              { email: { contains: '@example.com' } }
+            ]
+          }
+        }
+      }
+    });
+    await prisma.apiConnection.deleteMany({
+      where: {
+        user: {
+          OR: [
+            { email: { contains: 'test-' } },
+            { email: { contains: '@example.com' } }
+          ]
+        }
+      }
+    });
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { email: { contains: 'test-' } },
+          { email: { contains: '@example.com' } }
+        ]
+      }
+    });
+    // No need to recreate testUser here; this file does not use testUser.
+  });
+
   describe('GET', () => {
     it('should return 200 and health status', async () => {
       const { req, res } = createMockRequest({

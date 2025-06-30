@@ -3,6 +3,7 @@ import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
 import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
+import fs from 'fs';
 
 // Mock the parser and endpoints modules (these are not user/db mocks)
 jest.mock('../../../src/lib/api/parser', () => ({
@@ -39,8 +40,50 @@ describe('API Connections Integration Tests', () => {
     await testSuite.afterAll();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
+    
+    // Clean up any existing test data before each test
+    await prisma.endpoint.deleteMany({
+      where: {
+        apiConnection: {
+          user: {
+            OR: [
+              { email: { contains: 'test-' } },
+              { email: { contains: '@example.com' } }
+            ]
+          }
+        }
+      }
+    });
+    
+    await prisma.apiConnection.deleteMany({
+      where: {
+        user: {
+          OR: [
+            { email: { contains: 'test-' } },
+            { email: { contains: '@example.com' } }
+          ]
+        }
+      }
+    });
+    
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { email: { contains: 'test-' } },
+          { email: { contains: '@example.com' } }
+        ]
+      }
+    });
+    
+    // Recreate the test user for each test to ensure fresh state
+    testUser = await testSuite.createUser(
+      'admin@example.com',
+      'admin123',
+      Role.ADMIN,
+      'Test Admin User'
+    );
   });
 
   describe('POST /api/connections', () => {
@@ -64,8 +107,9 @@ describe('API Connections Integration Tests', () => {
     });
 
     it('should create API connection with OpenAPI spec and extract endpoints', async () => {
+      const openApiSpec = fs.readFileSync('tests/fixtures/petstore-openapi.json', 'utf-8');
       mockParseOpenApiSpec.mockResolvedValue({
-        rawSpec: '{"openapi":"3.0.0","paths":{"/pets":{"get":{"summary":"List pets"}}}}',
+        rawSpec: openApiSpec,
         specHash: 'abc123',
         spec: { paths: { '/pets': { get: { summary: 'List pets' } } } },
         version: '3.0.0',
