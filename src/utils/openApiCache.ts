@@ -52,6 +52,19 @@ export class OpenApiCache {
     }
 
     logger.info('OpenAPI cache hit', { url, age, ttl: this.config.ttl });
+    
+    // If the spec is compressed, decompress it
+    if (cached.compressed && Buffer.isBuffer(cached.spec)) {
+      try {
+        const decompressed = this.decompress(cached.spec);
+        return JSON.parse(decompressed);
+      } catch (error) {
+        logger.error('Failed to decompress cached OpenAPI spec', { url, error: (error as Error).message });
+        this.cache.delete(url);
+        return null;
+      }
+    }
+    
     return cached.spec;
   }
 

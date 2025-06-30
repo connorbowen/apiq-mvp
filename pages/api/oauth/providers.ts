@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { oauth2Service } from '../../../src/lib/auth/oauth2';
-import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { ApplicationError } from '../../../src/middleware/errorHandler';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -13,11 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Authenticate the user
-    const authReq = req as AuthenticatedRequest;
-    const user = await requireAuth(authReq, res);
-
-    // Get supported providers
+    // Get supported providers (no authentication required)
     const supportedProviders = oauth2Service.getSupportedProviders();
     
     // Get provider configurations

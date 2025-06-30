@@ -59,6 +59,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         filters: Object.keys(filters).length > 0 ? filters : undefined
       });
 
+      // Always return 200 with an array, even if empty
       return res.status(200).json({
         success: true,
         data: endpoints

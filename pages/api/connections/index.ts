@@ -198,7 +198,21 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         return res.status(201).json({
           success: true,
           data: {
-            ...finalConnection,
+            id: finalConnection?.id,
+            userId: finalConnection?.userId,
+            name: finalConnection?.name,
+            description: finalConnection?.description,
+            baseUrl: finalConnection?.baseUrl,
+            authType: finalConnection?.authType,
+            authConfig: finalConnection?.authConfig,
+            documentationUrl: finalConnection?.documentationUrl,
+            status: finalConnection?.status,
+            ingestionStatus: finalConnection?.ingestionStatus,
+            rawSpec: finalConnection?.rawSpec,
+            specHash: finalConnection?.specHash,
+            lastTested: finalConnection?.lastTested,
+            createdAt: finalConnection?.createdAt,
+            updatedAt: finalConnection?.updatedAt,
             endpointCount,
             lastUsed: finalConnection?.updatedAt
           },
@@ -206,37 +220,37 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         });
 
       } catch (error: any) {
-        // Always return a 201 with the connection object, even if OpenAPI fetch/parsing fails
-        let finalConnection = newConnection
-          ? await prisma.apiConnection.findUnique({ where: { id: newConnection.id } })
-          : null;
-        // Fallback to request data if DB lookup fails
-        if (!finalConnection) {
-          finalConnection = {
-            id: '',
-            userId: '',
-            name: connectionData.name,
-            description: connectionData.description || null,
-            baseUrl: connectionData.baseUrl || '',
-            authType: connectionData.authType || '',
-            authConfig: connectionData.authConfig || {},
-            documentationUrl: connectionData.documentationUrl || null,
-            status: 'ACTIVE',
-            ingestionStatus: 'FAILED',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            lastTested: null,
-            rawSpec: null,
-            specHash: null
-          };
+        // If the connection was not created, return a 500 error
+        if (!newConnection || !newConnection.id) {
+          logError('API connection creation failed before DB insert', error, { name: connectionData.name, userId: user.id });
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to create API connection',
+            code: 'CONNECTION_CREATION_FAILED',
+            details: error.message || error
+          });
         }
+        // Always return a 201 with the connection object, even if OpenAPI fetch/parsing fails
+        const finalConnection = await prisma.apiConnection.findUnique({ where: { id: newConnection.id } });
         return res.status(201).json({
           success: true,
           data: {
-            ...finalConnection,
+            id: newConnection.id,
+            userId: newConnection.userId,
+            name: newConnection.name,
+            description: newConnection.description,
+            baseUrl: newConnection.baseUrl,
+            authType: newConnection.authType,
+            authConfig: newConnection.authConfig,
+            documentationUrl: newConnection.documentationUrl,
+            status: newConnection.status,
             ingestionStatus: 'FAILED',
-            endpointCount: 0,
-            lastUsed: finalConnection?.updatedAt
+            rawSpec: finalConnection?.rawSpec,
+            specHash: finalConnection?.specHash,
+            lastTested: finalConnection?.lastTested,
+            createdAt: newConnection.createdAt,
+            updatedAt: newConnection.updatedAt,
+            endpointCount: 0
           },
           message: 'API connection created successfully, but OpenAPI spec processing failed',
           warning: error.message || 'Failed to process OpenAPI spec'

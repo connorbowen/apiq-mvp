@@ -38,14 +38,22 @@ export const parseOpenApiSpecData = async (specData: any, url?: string): Promise
       };
     }
 
-    // Parse and validate the spec with SwaggerParser
-    const api = await SwaggerParser.parse(specData) as any;
+    // Basic validation without SwaggerParser to avoid path resolution issues
+    const api = specData;
     
     // Validate the spec has required components
     if (!api.paths || Object.keys(api.paths).length === 0) {
       throw {
         type: 'INVALID_SPEC' as const,
         message: 'No endpoints found in OpenAPI specification'
+      };
+    }
+
+    // Validate it's a valid OpenAPI/Swagger spec
+    if (!api.openapi && !api.swagger) {
+      throw {
+        type: 'INVALID_SPEC' as const,
+        message: 'Invalid OpenAPI specification: missing openapi or swagger version'
       };
     }
 
@@ -80,12 +88,8 @@ export const parseOpenApiSpecData = async (specData: any, url?: string): Promise
   } catch (error: any) {
     logError('Failed to parse OpenAPI spec data', error, { url });
 
-    if (error.message?.includes('SwaggerParser') || error.message?.includes('OpenAPI')) {
-      throw {
-        type: 'INVALID_SPEC' as const,
-        message: `Invalid OpenAPI specification: ${error.message}`,
-        details: { message: error.message }
-      };
+    if (error.type) {
+      throw error;
     }
 
     // Default error
