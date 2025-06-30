@@ -1,0 +1,41 @@
+# Page snapshot
+
+```yaml
+- alert
+- banner:
+  - heading "APIQ" [level=1]
+  - paragraph: AI-Powered API Assistant
+  - text: Welcome, E2E Execution Test User
+  - button "Sign out"
+- main:
+  - img
+  - term: Connected APIs
+  - definition: "0"
+  - img
+  - term: Active
+  - definition: "0"
+  - img
+  - term: Ready to Chat
+  - definition: "No"
+  - navigation:
+    - button "Chat with AI"
+    - button "API Connections"
+  - img
+  - heading "No Active API Connections" [level=3]
+  - paragraph: You need to connect at least one API before you can start chatting with AI.
+  - button "Add API Connection"
+- dialog:
+  - heading "Build Error" [level=1]
+  - paragraph: Failed to compile
+  - text: Next.js (14.2.30) is outdated
+  - link "(learn more)":
+    - /url: https://nextjs.org/docs/messages/version-staleness
+  - link "./pages/api/workflows/index.ts:2:1":
+    - text: ./pages/api/workflows/index.ts:2:1
+    - img
+  - text: "Module not found: Can't resolve '../../../src/lib/database/client' 1 | import { NextApiRequest, NextApiResponse } from 'next'; > 2 | import { prisma } from '../../../src/lib/database/client'; | ^ 3 | import { logError, logInfo } from '../../../src/utils/logger'; 4 | import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session'; 5 | import { errorHandler } from '../../../src/middleware/errorHandler';"
+  - link "https://nextjs.org/docs/messages/module-not-found":
+    - /url: https://nextjs.org/docs/messages/module-not-found
+  - contentinfo:
+    - paragraph: This error occurred during the build process and can only be dismissed by fixing the error.
+```
