@@ -177,7 +177,7 @@ describe('SSO Authentication Flow Testing - Phase 2.3', () => {
       
       // Test invalid state parameter
       const invalidState = '';
-      const invalidCallback = invalidState && mockCode && invalidState.length > 10;
+      const invalidCallback = Boolean(invalidState && mockCode && invalidState.length > 10);
       expect(invalidCallback).toBe(false);
     });
   });
