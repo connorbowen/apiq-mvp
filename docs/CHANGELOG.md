@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Automatic Sign-In After Email Verification** - ✅ COMPLETED
+  - Enhanced email verification flow with automatic user authentication
+  - Updated `/api/auth/verify` endpoint to return JWT tokens upon successful verification
+  - Modified verification page to automatically sign users in and redirect to dashboard
+  - Improved user experience by eliminating friction in onboarding process
+  - Updated API client to handle new verification response format with authentication tokens
+  - Enhanced signup success page messaging to reflect automatic sign-in flow
+  - Comprehensive documentation updates for new UX flow
+  - **Security**: Uses existing JWT_SECRET for secure token generation
+  - **UX**: Users are automatically signed in after clicking verification link
+  - **Performance**: Reduced redirect delay from 3s to 2s for better user experience
+  - **Documentation**: Updated API reference, UI pages guide, and changelog
 - **Email Service Integration** - ✅ COMPLETED
   - Real email sending for user verification and password reset flows
   - Gmail SMTP integration with secure app password authentication

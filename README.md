@@ -19,6 +19,8 @@ A semi-agentic, low-code web application that enables non-technincal users to cr
 - **Enterprise SSO** - SAML/OIDC support for Okta, Azure AD, Google Workspace
 - **OAuth2 API Integration** - Multi-provider OAuth2 authentication for API connections
 - **OAuth2 Frontend Integration** - Complete UI components for OAuth2 flows and token management
+- **Email Verification** - Secure email verification with automatic sign-in after verification
+- **Password Reset** - Secure password reset flow with email-based token validation
 - **Encrypted Storage** - AES-256 encryption for all sensitive data
 - **CSRF Protection** - State parameter validation for OAuth2 flows
 - **Audit Logging** - Comprehensive security event logging
