@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import getOpenAIClient from '../lib/openaiWrapper';
 import axios from 'axios';
 import { logError, logInfo, logDebug } from '../utils/logger';
 import { 
@@ -15,7 +15,7 @@ import {
  */
 
 export class OpenAIService {
-  private client: OpenAI;
+  private client: any;
   private model: string;
 
   constructor() {
@@ -24,10 +24,7 @@ export class OpenAIService {
       throw new Error('OPENAI_API_KEY environment variable is required');
     }
 
-    this.client = new OpenAI({
-      apiKey,
-      dangerouslyAllowBrowser: false // Ensure server-side only
-    });
+    this.client = getOpenAIClient(apiKey);
 
     this.model = process.env.OPENAI_MODEL || 'gpt-4-turbo-preview';
   }

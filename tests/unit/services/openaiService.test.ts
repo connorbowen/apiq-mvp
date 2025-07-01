@@ -1,22 +1,18 @@
-import { OpenAIService } from '../../../src/services/openaiService';
+import 'openai/shims/node';
+
+// Mock the OpenAI wrapper
+jest.mock('../../../src/lib/openaiWrapper', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
 import { WorkflowGenerationRequest, ApiConnection, WorkflowStep } from '../../../src/types';
 import { Role } from '../../../src/generated/prisma';
 import axios from 'axios';
+import getOpenAIClient from '../../../src/lib/openaiWrapper';
 
 // Mock axios
 jest.mock('axios', () => jest.fn());
-
-// Mock OpenAI
-jest.mock('openai', () => {
-  const mockCreate = jest.fn();
-  return jest.fn().mockImplementation(() => ({
-    chat: {
-      completions: {
-        create: mockCreate
-      }
-    }
-  }));
-});
 
 // Mock logger
 jest.mock('../../../src/utils/logger', () => ({
@@ -26,19 +22,21 @@ jest.mock('../../../src/utils/logger', () => ({
 }));
 
 describe('OpenAIService', () => {
-  let openaiService: OpenAIService;
+  let openaiService: any;
   let mockCreate: jest.Mock;
 
   const mockApiConnection: ApiConnection = {
     id: 'test-connection-1',
-    userId: 'test-user-1',
     name: 'Test API',
+    description: 'A test API connection',
     baseUrl: 'https://api.test.com',
     authType: 'NONE',
     status: 'ACTIVE',
+    ingestionStatus: 'SUCCEEDED',
+    endpointCount: 5,
     authConfig: {},
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
 
   const mockWorkflowStep: WorkflowStep = {
@@ -63,16 +61,25 @@ describe('OpenAIService', () => {
     process.env.OPENAI_API_KEY = 'test-api-key';
     process.env.OPENAI_MODEL = 'gpt-4-turbo-preview';
 
-    // Clear mocks
+    // Clear mocks and set up mockCreate
     jest.clearAllMocks();
-    
-    // Get the mock functions
-    const OpenAI = require('openai');
-    const mockOpenAI = new OpenAI();
-    mockCreate = mockOpenAI.chat.completions.create;
-    
-    // Create service instance
+    mockCreate = jest.fn();
+    (getOpenAIClient as jest.Mock).mockReturnValue({
+      chat: {
+        completions: {
+          create: mockCreate,
+        },
+      },
+    });
+
+    // Clear require cache for OpenAIService
+    delete require.cache[require.resolve('../../../src/services/openaiService')];
+
+    // Import OpenAIService
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { OpenAIService } = require('../../../src/services/openaiService');
     openaiService = new OpenAIService();
+
     ((axios as unknown) as jest.Mock).mockReset();
   });
 
@@ -83,16 +90,19 @@ describe('OpenAIService', () => {
 
   describe('Constructor', () => {
     it('should initialize with valid API key', () => {
+      const { OpenAIService } = require('../../../src/services/openaiService');
       expect(openaiService).toBeInstanceOf(OpenAIService);
     });
 
     it('should throw error when API key is missing', () => {
       delete process.env.OPENAI_API_KEY;
+      const { OpenAIService } = require('../../../src/services/openaiService');
       expect(() => new OpenAIService()).toThrow('OPENAI_API_KEY environment variable is required');
     });
 
     it('should use default model when not specified', () => {
       delete process.env.OPENAI_MODEL;
+      const { OpenAIService } = require('../../../src/services/openaiService');
       const service = new OpenAIService();
       expect(service).toBeInstanceOf(OpenAIService);
     });
@@ -330,12 +340,14 @@ describe('OpenAIService', () => {
   describe('validateConfig', () => {
     it('should return true when API key is present', () => {
       process.env.OPENAI_API_KEY = 'test-key';
+      const { OpenAIService } = require('../../../src/services/openaiService');
       const service = new OpenAIService();
       expect(service.validateConfig()).toBe(true);
     });
 
     it('should return false when API key is missing', () => {
       // Create a service instance first, then delete the key for validation
+      const { OpenAIService } = require('../../../src/services/openaiService');
       const service = new OpenAIService();
       delete process.env.OPENAI_API_KEY;
       expect(service.validateConfig()).toBe(false);
