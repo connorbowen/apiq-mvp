@@ -186,18 +186,27 @@ class ApiClient {
   /**
    * Verify user email using a valid verification token
    * @param token - Verification token from email
-   * @returns Promise resolving to API response with success message
+   * @returns Promise resolving to API response with authentication tokens and user data
    * @example
    * ```typescript
    * const response = await apiClient.verifyEmail('verification-token-123');
    * if (response.success) {
-   *   console.log('Email verified');
+   *   console.log('Email verified and user signed in');
    * }
    * ```
    */
   async verifyEmail(token: string): Promise<ApiResponse<{
     message: string;
     userId: string;
+    accessToken: string;
+    refreshToken: string;
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+      isActive: boolean;
+    };
   }>> {
     return this.request('/api/auth/verify', {
       method: 'POST',

@@ -26,7 +26,7 @@ This document describes all the user-facing pages in the APIQ application, their
 
 **User Experience**:
 1. Shows success message with user's email address
-2. Clear next steps (check email, click verification link, sign in)
+2. Clear next steps (check email, click verification link, automatic sign-in)
 3. Option to resend verification email if needed
 4. Links to sign in or return home
 
@@ -54,16 +54,18 @@ This document describes all the user-facing pages in the APIQ application, their
 
 ### Email Verification (`/verify`)
 
-**Purpose**: Email address verification
+**Purpose**: Email address verification with automatic sign-in
 
 **User Experience**:
 1. User clicks verification link from email
-2. Token is validated
-3. On success, user is redirected to login with success message
+2. Token is validated and user account is activated
+3. On success, user is automatically signed in and redirected to dashboard
 4. If token is invalid/expired, error message with resend option
 
 **Features**:
-- Token validation
+- Token validation and account activation
+- Automatic authentication upon successful verification
+- Direct redirect to dashboard (no additional login required)
 - Clear success/error messaging
 - Link to resend verification if needed
 

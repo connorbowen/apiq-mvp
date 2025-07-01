@@ -100,7 +100,7 @@ export default function SignupSuccessPage() {
               </div>
               <div className="ml-3">
                 <p className="text-sm text-gray-700">
-                  <strong>Sign in</strong> and start using APIQ
+                  <strong>You&apos;ll be automatically signed in</strong> and taken to your dashboard
                 </p>
               </div>
             </div>

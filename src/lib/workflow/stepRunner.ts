@@ -29,15 +29,15 @@ export type StepType = 'API_CALL' | 'DATA_TRANSFORM' | 'CONDITION' | 'LOOP' | 'W
 // Base step executor interface
 export interface StepExecutor {
   type: StepType;
-  execute(step: WorkflowStep, context: ExecutionContext): Promise<StepResult>;
-  validate(step: WorkflowStep): boolean;
+  execute(step: any, context: ExecutionContext): Promise<StepResult>;
+  validate(step: any): boolean;
 }
 
 // API Call Step Executor
 export class ApiCallStepExecutor implements StepExecutor {
   type: StepType = 'API_CALL';
 
-  async execute(step: WorkflowStep, context: ExecutionContext): Promise<StepResult> {
+  async execute(step: any, context: ExecutionContext): Promise<StepResult> {
     const startTime = Date.now();
     let retryCount = 0;
     const maxRetries = step.retryConfig?.maxRetries || 3;
@@ -118,7 +118,7 @@ export class ApiCallStepExecutor implements StepExecutor {
     throw new Error('Unexpected error in API call execution');
   }
 
-  validate(step: WorkflowStep): boolean {
+  validate(step: any): boolean {
     return !!(
       step.apiConnectionId &&
       step.action &&
@@ -257,7 +257,7 @@ export class ApiCallStepExecutor implements StepExecutor {
 export class DataTransformStepExecutor implements StepExecutor {
   type: StepType = 'DATA_TRANSFORM';
 
-  async execute(step: WorkflowStep, context: ExecutionContext): Promise<StepResult> {
+  async execute(step: any, context: ExecutionContext): Promise<StepResult> {
     const startTime = Date.now();
     
     try {
@@ -316,7 +316,7 @@ export class DataTransformStepExecutor implements StepExecutor {
     }
   }
 
-  validate(step: WorkflowStep): boolean {
+  validate(step: any): boolean {
     const { operation, input, output } = step.parameters;
     return !!(operation && input && output);
   }
@@ -400,7 +400,7 @@ export class DataTransformStepExecutor implements StepExecutor {
 export class ConditionStepExecutor implements StepExecutor {
   type: StepType = 'CONDITION';
 
-  async execute(step: WorkflowStep, context: ExecutionContext): Promise<StepResult> {
+  async execute(step: any, context: ExecutionContext): Promise<StepResult> {
     const startTime = Date.now();
     
     try {
@@ -446,7 +446,7 @@ export class ConditionStepExecutor implements StepExecutor {
     }
   }
 
-  validate(step: WorkflowStep): boolean {
+  validate(step: any): boolean {
     const { condition } = step.parameters;
     return !!condition;
   }
@@ -493,6 +493,81 @@ export class ConditionStepExecutor implements StepExecutor {
   }
 }
 
+// Custom Step Executor
+export class CustomStepExecutor implements StepExecutor {
+  type: StepType = 'CUSTOM';
+
+  async execute(step: any, context: ExecutionContext): Promise<StepResult> {
+    const startTime = Date.now();
+    
+    try {
+      logDebug('Executing custom step', {
+        stepId: step.id,
+        stepName: step.name,
+        action: step.action
+      });
+
+      // Handle different custom actions
+      let result;
+      switch (step.action) {
+        case 'noop':
+          result = { message: 'No operation performed' };
+          break;
+        case 'wait':
+          const waitTime = step.parameters?.waitTime || 1000;
+          await this.sleep(waitTime);
+          result = { message: `Waited for ${waitTime}ms` };
+          break;
+        case 'log':
+          result = { message: step.parameters?.message || 'Custom log message' };
+          break;
+        default:
+          result = { message: `Custom action: ${step.action}` };
+      }
+
+      const duration = Date.now() - startTime;
+      
+      logInfo('Custom step completed successfully', {
+        stepId: step.id,
+        stepName: step.name,
+        duration
+      });
+
+      return {
+        success: true,
+        data: result,
+        duration,
+        retryCount: 0
+      };
+
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      
+      logError('Custom step failed', error as Error, {
+        stepId: step.id,
+        stepName: step.name,
+        duration
+      });
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration,
+        retryCount: 0
+      };
+    }
+  }
+
+  validate(step: any): boolean {
+    // Custom steps are valid if they have an action
+    return !!step.action;
+  }
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
 // Main Step Runner
 export class StepRunner {
   private executors: Map<StepType, StepExecutor> = new Map();
@@ -501,6 +576,7 @@ export class StepRunner {
     this.registerExecutor(new ApiCallStepExecutor());
     this.registerExecutor(new DataTransformStepExecutor());
     this.registerExecutor(new ConditionStepExecutor());
+    this.registerExecutor(new CustomStepExecutor());
   }
 
   registerExecutor(executor: StepExecutor): void {
@@ -508,21 +584,35 @@ export class StepRunner {
   }
 
   async executeStep(step: any, context: ExecutionContext): Promise<StepResult> {
-    const stepType = this.determineStepType(step);
-    const executor = this.executors.get(stepType);
-
-    if (!executor) {
-      throw new Error(`No executor found for step type: ${stepType}`);
-    }
-
-    if (!executor.validate(step)) {
-      throw new Error(`Invalid step configuration for ${stepType}: ${step.name}`);
-    }
-
-    // Log step execution start
-    await this.logStepExecution(context.executionId, step, 'INFO', 'Step execution started');
-
+    const startTime = Date.now();
+    
     try {
+      const stepType = this.determineStepType(step);
+      const executor = this.executors.get(stepType);
+
+      if (!executor) {
+        const duration = Date.now() - startTime;
+        return {
+          success: false,
+          error: `No executor found for step type: ${stepType}`,
+          duration,
+          retryCount: 0
+        };
+      }
+
+      if (!executor.validate(step)) {
+        const duration = Date.now() - startTime;
+        return {
+          success: false,
+          error: `Invalid step configuration for ${stepType}: ${step.name}`,
+          duration,
+          retryCount: 0
+        };
+      }
+
+      // Log step execution start
+      await this.logStepExecution(context.executionId, step, 'INFO', 'Step execution started');
+
       const result = await executor.execute(step, context);
       
       // Log step execution result
@@ -531,25 +621,38 @@ export class StepRunner {
 
       return result;
     } catch (error) {
+      const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
       await this.logStepExecution(context.executionId, step, 'ERROR', `Step execution error: ${errorMessage}`, { error: errorMessage });
-      throw error;
+      
+      return {
+        success: false,
+        error: errorMessage,
+        duration,
+        retryCount: 0
+      };
     }
   }
 
-  private determineStepType(step: WorkflowStep): StepType {
+  private determineStepType(step: any): StepType {
     // Determine step type based on step configuration
     if (step.apiConnectionId) {
       return 'API_CALL';
     }
     
-    const { operation } = step.parameters;
+    const { operation } = step.parameters || {};
     if (operation === 'map' || operation === 'filter' || operation === 'aggregate') {
       return 'DATA_TRANSFORM';
     }
     
-    if (step.parameters.condition) {
+    if (step.parameters?.condition) {
       return 'CONDITION';
+    }
+    
+    // Check for custom actions
+    if (step.action === 'noop' || step.action === 'wait' || step.action === 'log') {
+      return 'CUSTOM';
     }
     
     // Default to API_CALL for backward compatibility

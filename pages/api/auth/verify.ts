@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '../../../src/generated/prisma';
 import { ApplicationError } from '../../../src/middleware/errorHandler';
 import { logInfo, logError } from '../../../src/utils/logger';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
@@ -76,6 +77,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { token }
     });
 
+    // Generate authentication tokens
+    const accessToken = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET!,
+      { expiresIn: '1h' }
+    );
+
+    const refreshToken = jwt.sign(
+      { userId: user.id, tokenType: 'refresh' },
+      process.env.JWT_SECRET!,
+      { expiresIn: '7d' }
+    );
+
     // Log the verification
     await prisma.auditLog.create({
       data: {
@@ -97,12 +111,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       email: user.email
     });
 
-    // Return success response
+    // Return success response with authentication tokens
     res.status(200).json({
       success: true,
       data: {
-        message: 'Email verified successfully. You can now sign in to your account.',
-        userId: user.id
+        message: 'Email verified successfully! Welcome to APIQ.',
+        userId: user.id,
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          isActive: user.isActive
+        }
       }
     });
 

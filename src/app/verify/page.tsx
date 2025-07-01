@@ -21,13 +21,19 @@ export default function VerifyPage() {
     try {
       const response = await apiClient.verifyEmail(token);
 
-      if (response.success) {
-        setSuccess(response.data?.message || 'Email verified successfully!');
+      if (response.success && response.data) {
+        // Store authentication tokens
+        localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+
+        setSuccess(response.data.message || 'Email verified successfully! Welcome to APIQ!');
         setIsVerifying(false);
-        // Redirect to login after 3 seconds
+        
+        // Redirect to dashboard after 2 seconds
         setTimeout(() => {
-          router.push('/login');
-        }, 3000);
+          router.push('/dashboard');
+        }, 2000);
       } else {
         setError(response.error || 'Email verification failed');
         setIsVerifying(false);
@@ -100,7 +106,7 @@ export default function VerifyPage() {
               <div className="ml-3">
                 <p className="text-sm font-medium text-green-800">{success}</p>
                 <p className="mt-1 text-sm text-green-700">
-                  Redirecting to login page...
+                  Redirecting to dashboard...
                 </p>
               </div>
             </div>
