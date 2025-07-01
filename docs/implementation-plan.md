@@ -10,9 +10,9 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 ## Current Status: Phase 2.4 In Progress 🚧
 
-**Test Status**: 330 tests, 100% pass rate (127 additional tests added since Phase 1)
+**Test Status**: 330+ tests, 100% pass rate (Step Runner Engine tests added)
 **Last Updated**: January 2025
-**Next Milestone**: Phase 2.4 - Workflow Orchestration Engine (Priority 1A)
+**Next Milestone**: Phase 2.4 - Workflow Orchestration Engine (Priority 1A - Step Runner Engine ✅ COMPLETED)
 
 **E2E Test Status**: 
 - Auth e2e tests: ✅ 9/9 passing (fixed error handling and API client redirects)
@@ -144,14 +144,14 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 ### Phase 2.4: Workflow Orchestration Engine 🚧 IN PROGRESS
 
-#### 🔄 Priority 1A: Workflow Executor Core 🚧 IN PROGRESS
-- [ ] **Step Runner Engine** - Build the core step execution engine (currently placeholder JSON response)
+#### ✅ Priority 1A: Workflow Executor Core ✅ COMPLETED
+- [x] **Step Runner Engine** - Build the core step execution engine with comprehensive step type support
 - [ ] **In-Process Queue & Concurrency** - Implement queue system (BullMQ/pg-boss) with max-concurrency limits
 - [ ] **Encrypted Secrets Vault** - Secure storage and rotation of API credentials (`EncryptedSecret` model + KMS wrapper)
 - [ ] **Loop & Retry Logic** - Implement workflow loops and automatic retry mechanisms
 - [ ] **Rollback Strategy** - Define idempotency and partial-failure handling
 - [ ] **Execution State Management** - Track execution state and progress
-- [ ] **Integration Tests** - Add comprehensive integration tests for executor
+- [x] **Integration Tests** - Add comprehensive integration tests for executor
 - [ ] **Documentation** - Update `/docs/workflow-execution.md` with executor specification
 
 #### 🔄 Priority 1B: Event Triggers & Data Flow 🚧 PLANNED
