@@ -135,6 +135,12 @@ APIQ supports different user roles with varying levels of access:
    - Set required scopes
    - Complete OAuth flow
 
+   **Secrets Vault**
+   - Store API keys, tokens, and sensitive credentials securely
+   - All secrets encrypted with AES-256 encryption
+   - Automatic key rotation and versioning
+   - Rate-limited access (100 requests/minute per user)
+
    **Basic Authentication**
    - Enter username and password
    - Credentials will be base64 encoded
@@ -167,6 +173,73 @@ APIQ supports different user roles with varying levels of access:
 - Safely disconnect APIs you no longer need
 - Remove associated credentials
 - Clean up related workflows
+
+## Managing Secrets
+
+### Secrets Vault Overview
+
+The Secrets Vault provides secure storage for sensitive data such as API keys, OAuth2 tokens, and custom secrets. All secrets are encrypted with AES-256 and include comprehensive security features.
+
+**Security Features**
+- **AES-256 Encryption**: All secret values encrypted at rest
+- **Input Validation**: Comprehensive validation for all inputs
+- **Rate Limiting**: 100 requests per minute per user
+- **Audit Logging**: Complete audit trail for all operations
+- **No Sensitive Logging**: Never logs secret values or tokens
+
+### Creating Secrets
+
+1. **Access Secrets Vault**
+   - Navigate to "Secrets" in the main menu
+   - Click "New Secret" to create a new secret
+
+2. **Configure Secret**
+   - **Name**: Choose a descriptive name (alphanumeric, hyphens, underscores only)
+   - **Type**: Select secret type (api_key, oauth2_token, webhook_secret, custom)
+   - **Value**: Enter the secret value (never logged or displayed)
+   - **Metadata**: Add optional description and tags
+   - **Expiration**: Set optional expiration date
+
+3. **Save Secret**
+   - Click "Save" to store the secret securely
+   - The secret value is immediately encrypted and stored
+
+### Managing Secrets
+
+**View All Secrets**
+- See all your secrets in a secure list view
+- View metadata (name, type, creation date, version)
+- Secret values are never displayed for security
+
+**Update Secrets**
+- Click "Edit" on any secret
+- Update the secret value or metadata
+- Version number automatically increments
+- Previous versions are retained for audit purposes
+
+**Delete Secrets**
+- Click "Delete" to remove a secret
+- Secrets are soft-deleted (not permanently removed)
+- Deleted secrets can be restored within 30 days
+
+### Using Secrets in Workflows
+
+1. **Reference Secrets**
+   - In workflow steps, use `{{secrets.secret_name}}` syntax
+   - Secrets are automatically decrypted when accessed
+   - Access is logged for audit purposes
+
+2. **Secret Types**
+   - **API Keys**: Use for API authentication
+   - **OAuth2 Tokens**: Store OAuth2 access tokens
+   - **Webhook Secrets**: Secure webhook endpoints
+   - **Custom**: Store any sensitive data
+
+3. **Best Practices**
+   - Use descriptive names for easy identification
+   - Set expiration dates for temporary secrets
+   - Regularly rotate sensitive credentials
+   - Monitor secret access through audit logs
 
 ## Exploring APIs
 

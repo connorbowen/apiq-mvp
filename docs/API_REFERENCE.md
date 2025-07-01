@@ -60,6 +60,176 @@ Error responses:
 
 ## API Endpoints
 
+### Secrets Management
+
+The Secrets Vault provides secure storage and management of sensitive data such as API keys, OAuth2 tokens, and custom secrets. All secrets are encrypted with AES-256 and include comprehensive input validation, rate limiting, and audit logging.
+
+#### Security Features
+- **AES-256 Encryption**: All secret values encrypted at rest
+- **Input Validation**: Comprehensive validation for all inputs with character restrictions
+- **Rate Limiting**: 100 requests per minute per user
+- **Audit Logging**: Complete audit trail for all secret operations
+- **No Sensitive Logging**: Never logs secret values, tokens, or PII
+
+#### `POST /api/secrets`
+
+Store a new secret.
+
+**Request Body:**
+```json
+{
+  "name": "my-api-key",
+  "type": "api_key",
+  "value": "sk_test_...",
+  "metadata": {
+    "description": "Stripe test API key",
+    "environment": "test"
+  },
+  "expiresAt": "2024-12-31T23:59:59.000Z"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "secret_123",
+    "name": "my-api-key",
+    "type": "api_key",
+    "isActive": true,
+    "version": 1,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  "message": "Secret stored successfully"
+}
+```
+
+**Error Response (Rate Limited):**
+```json
+{
+  "success": false,
+  "error": "Rate limit exceeded. Please try again later.",
+  "code": "RATE_LIMIT_EXCEEDED",
+  "retryAfter": 60
+}
+```
+
+**Error Response (Validation Error):**
+```json
+{
+  "success": false,
+  "error": "Invalid secret name: contains invalid characters",
+  "code": "VALIDATION_ERROR"
+}
+```
+
+#### `GET /api/secrets`
+
+List all secrets for the authenticated user.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "secrets": [
+      {
+        "id": "secret_123",
+        "name": "my-api-key",
+        "type": "api_key",
+        "isActive": true,
+        "version": 1,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "totalCount": 1
+  }
+}
+```
+
+#### `GET /api/secrets/{id}`
+
+Retrieve a specific secret (metadata only, value not returned).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "secret_123",
+    "name": "my-api-key",
+    "type": "api_key",
+    "isActive": true,
+    "version": 1,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### `PUT /api/secrets/{id}`
+
+Update an existing secret.
+
+**Request Body:**
+```json
+{
+  "value": "sk_test_new_key_...",
+  "metadata": {
+    "description": "Updated Stripe test API key",
+    "environment": "test"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "secret_123",
+    "name": "my-api-key",
+    "type": "api_key",
+    "isActive": true,
+    "version": 2,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-02T00:00:00.000Z"
+  },
+  "message": "Secret updated successfully"
+}
+```
+
+#### `DELETE /api/secrets/{id}`
+
+Delete a secret (soft delete).
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Secret deleted successfully"
+}
+```
+
+#### `POST /api/secrets/{id}/rotate`
+
+Rotate the master encryption key for all secrets.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "rotatedSecrets": 5,
+    "newKeyId": "key_456"
+  },
+  "message": "Master key rotated successfully"
+}
+```
+
 ### Authentication
 
 #### `GET /api/auth/session`

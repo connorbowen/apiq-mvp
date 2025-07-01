@@ -985,6 +985,104 @@ For external services (OpenAI, external APIs), we use mocks in tests but ensure:
    };
    ```
 
+### Secrets Management
+
+The Secrets Vault provides secure storage and management of sensitive data. Here's how to use it in development:
+
+1. **Environment Setup**
+   ```env
+   # Required for Secrets Vault
+   ENCRYPTION_MASTER_KEY="your-32-character-master-key-for-secrets-vault"
+   ```
+
+2. **Using the Secrets Vault**
+   ```typescript
+   // lib/secrets/secretsVault.ts
+   import { SecretsVault } from '@/lib/secrets/secretsVault';
+
+   const vault = new SecretsVault();
+
+   // Store a secret
+   const secretData = {
+     value: 'sk_test_your_api_key_here',
+     metadata: {
+       description: 'Stripe test API key',
+       environment: 'test'
+     }
+   };
+
+   const secret = await vault.storeSecret(
+     userId,
+     'stripe-test-key',
+     secretData,
+     'api_key'
+   );
+
+   // Retrieve a secret (metadata only)
+   const secretMetadata = await vault.getSecretMetadata(userId, 'stripe-test-key');
+
+   // Retrieve secret value (for use in workflows)
+   const secretValue = await vault.getSecretValue(userId, 'stripe-test-key');
+   ```
+
+3. **Input Validation**
+   ```typescript
+   // The vault automatically validates all inputs:
+   // - Secret names: alphanumeric, hyphens, underscores only
+   // - User IDs: non-empty strings
+   // - Values: non-empty strings
+   // - Rate limiting: 100 requests/minute per user
+
+   // Example validation error
+   try {
+     await vault.storeSecret(userId, 'invalid name!', { value: 'test' });
+   } catch (error) {
+     // Error: "Invalid secret name: contains invalid characters"
+   }
+   ```
+
+4. **Security Best Practices**
+   ```typescript
+   // Never log sensitive information
+   const secretValue = await vault.getSecretValue(userId, 'api-key');
+   
+   // ✅ Good - log metadata only
+   console.log(`Retrieved secret: ${secretMetadata.name} (version ${secretMetadata.version})`);
+   
+   // ❌ Bad - never log the actual value
+   console.log(`Secret value: ${secretValue}`); // This will be caught by security rules
+   ```
+
+5. **Testing Secrets**
+   ```typescript
+   // tests/unit/lib/secrets/secretsVault.test.ts
+   describe('SecretsVault', () => {
+     beforeEach(async () => {
+       // Clear test data and reset rate limits
+       await prisma.secret.deleteMany({ where: { userId: testUserId } });
+       if (vault && vault['rateLimitCache']) {
+         vault['rateLimitCache'].clear();
+       }
+     });
+
+     it('should store and retrieve secrets securely', async () => {
+       const secretData = { value: 'test-secret-value' };
+       
+       const secret = await vault.storeSecret(
+         testUserId,
+         'test-secret',
+         secretData
+       );
+       
+       expect(secret.name).toBe('test-secret');
+       expect(secret.version).toBe(1);
+       
+       const retrievedValue = await vault.getSecretValue(testUserId, 'test-secret');
+       expect(retrievedValue).toBe('test-secret-value');
+     });
+   });
+   ```
+
 ## Performance Guidelines
 
 ### Frontend Optimization
