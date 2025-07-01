@@ -766,6 +766,122 @@ describe('User Management', () => {
 
 ## Documentation Rules
 
+### Documentation Leverage Guidelines
+
+When working on the APIQ project, leverage documentation files in the following priority order based on the task type:
+
+#### **1. Project Planning & Requirements**
+**Primary Documents:**
+- **`docs/prd.md`** - Use for understanding product vision, user personas, feature requirements, and success metrics
+- **`docs/implementation-plan.md`** - Use for current project status, phase tracking, and next steps
+- **`docs/user-rules.md`** - Use for development constraints, coding standards, and project rules
+
+**When to Leverage:**
+- Starting new features or phases
+- Understanding product requirements
+- Planning development work
+- Ensuring compliance with project rules
+
+#### **2. Architecture & Design**
+**Primary Documents:**
+- **`docs/ARCHITECTURE.md`** - Use for system design, component relationships, and technical architecture
+- **`docs/DEVELOPMENT_GUIDE.md`** - Use for coding standards, project structure, and development patterns
+- **`src/lib/README.md`** - Use for wrapper pattern implementation and third-party library integration
+
+**When to Leverage:**
+- Designing new components or services
+- Understanding system architecture
+- Implementing new features
+- Following coding standards
+
+#### **3. API Development & Integration**
+**Primary Documents:**
+- **`docs/API_REFERENCE.md`** - Use for endpoint specifications, request/response formats, and API patterns
+- **`docs/SECURITY_GUIDE.md`** - Use for authentication, authorization, and security implementation
+- **`docs/TESTING.md`** - Use for testing strategies, patterns, and OAuth2 testing
+
+**When to Leverage:**
+- Building new API endpoints
+- Implementing authentication flows
+- Writing tests for new functionality
+- Ensuring security compliance
+
+#### **4. Setup & Configuration**
+**Primary Documents:**
+- **`docs/DEV_SETUP.md`** - Use for development environment setup and configuration
+- **`docs/QUICK_START.md`** - Use for initial project setup and basic configuration
+- **`docs/DATABASE_SETUP.md`** - Use for database configuration and schema management
+- **`docs/DEPLOYMENT_GUIDE.md`** - Use for production deployment and environment management
+
+**When to Leverage:**
+- Setting up development environment
+- Configuring new services
+- Database migrations and setup
+- Production deployments
+
+#### **5. User Experience & Frontend**
+**Primary Documents:**
+- **`docs/UI_PAGES.md`** - Use for user interface flows, page functionality, and UX patterns
+- **`docs/USER_GUIDE.md`** - Use for end-user functionality and feature descriptions
+- **`docs/oauth2-frontend-integration.md`** - Use for OAuth2 UI implementation
+
+**When to Leverage:**
+- Building user interfaces
+- Implementing user flows
+- Creating frontend components
+- Understanding user experience requirements
+
+#### **6. Troubleshooting & Debugging**
+**Primary Documents:**
+- **`docs/TROUBLESHOOTING.md`** - Use for common issues and solutions
+- **`docs/TEST_SUMMARY.md`** - Use for test implementation status and recent fixes
+- **`docs/IMPLEMENTATION_AUDIT.md`** - Use for project status and audit findings
+
+**When to Leverage:**
+- Debugging issues
+- Understanding test failures
+- Resolving common problems
+- Assessing project health
+
+#### **7. Specialized Features**
+**Primary Documents:**
+- **`docs/oauth2-setup-guide.md`** - Use for OAuth2 provider configuration
+- **`docs/oauth2-testing-plan.md`** - Use for OAuth2 testing strategies
+- **`docs/UI_TEST_OPTIMIZATION.md`** - Use for UI testing optimization
+- **`docs/agentic-code-generation-plan.md`** - Use for AI-powered code generation features
+- **`docs/b2c-prd.md`** & **`docs/b2c-implementation-plan.md`** - Use for B2C feature development
+
+**When to Leverage:**
+- Implementing OAuth2 flows
+- Optimizing test performance
+- Building AI features
+- Developing B2C functionality
+
+### Documentation Usage Rules
+
+#### **Always Reference:**
+1. **`docs/user-rules.md`** - Before starting any development work
+2. **`docs/implementation-plan.md`** - To understand current project status
+3. **`docs/TESTING.md`** - When writing or modifying tests
+
+#### **Context-Specific References:**
+- **API Development**: `docs/API_REFERENCE.md` + `docs/SECURITY_GUIDE.md`
+- **Frontend Development**: `docs/UI_PAGES.md` + `docs/USER_GUIDE.md`
+- **Architecture Changes**: `docs/ARCHITECTURE.md` + `docs/DEVELOPMENT_GUIDE.md`
+- **OAuth2 Implementation**: `docs/oauth2-setup-guide.md` + `docs/oauth2-testing-plan.md`
+
+#### **Documentation Maintenance:**
+- Update relevant documentation when making changes
+- Follow the documentation structure and format
+- Ensure all new features are documented
+- Keep implementation plan current with progress
+
+#### **Cross-Reference Requirements:**
+- Link related documentation sections
+- Reference specific API endpoints when discussing features
+- Include test file references in documentation
+- Maintain consistency across all documentation files
+
 ### Code Documentation
 1. **JSDoc Comments**: Document all public functions and classes
 2. **README Files**: Include README for each major component
