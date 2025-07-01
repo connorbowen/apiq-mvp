@@ -1,4 +1,4 @@
-import PgBoss from 'pg-boss';
+import { getQueueClient, QueueClient } from '../queueWrapper';
 import { PrismaClient } from '../../generated/prisma';
 import { logError, logInfo } from '../../utils/logger';
 // @ts-ignore
@@ -304,7 +304,7 @@ class PrometheusMetricsCollector {
 }
 
 export class QueueService {
-  private boss: PgBoss;
+  private boss: QueueClient;
   private prisma: PrismaClient;
   private config: QueueConfig;
   private isInitialized: boolean = false;
@@ -324,8 +324,8 @@ export class QueueService {
       throw new Error('DATABASE_URL environment variable is required');
     }
 
-    this.boss = new PgBoss(connectionString);
-    
+    this.boss = getQueueClient({ connectionString });
+    console.log('getQueueClient result:', this.boss);
     // Set up error handling
     this.boss.on('error', (error: Error) => {
       logError('PgBoss error', error);

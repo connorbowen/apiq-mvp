@@ -1,15 +1,15 @@
-import { NextApiRequest, NextApiResponse } from 'next'
-import { errorHandler, handleApiError, ApplicationError, Errors, validateRequest, requireAuth, requireRole } from '../../../src/middleware/errorHandler'
-import * as logger from '../../../src/utils/logger'
-
-// Mock the logger
+// Mock the logger first
 jest.mock('../../../src/utils/logger', () => ({
   logError: jest.fn(),
   logWarn: jest.fn(),
   logInfo: jest.fn(),
   logDebug: jest.fn(),
-  handleError: jest.fn(() => ({ message: 'err', code: 'ERR' }))
+  handleError: jest.fn().mockReturnValue({ message: 'err', code: 'ERR' })
 }))
+
+import { NextApiRequest, NextApiResponse } from 'next'
+import { errorHandler, handleApiError, ApplicationError, Errors, validateRequest, requireAuth, requireRole } from '../../../src/middleware/errorHandler'
+import * as logger from '../../../src/utils/logger'
 
 // Mock Next.js request/response
 const createMockReq = (): Partial<NextApiRequest> => ({
@@ -39,6 +39,8 @@ describe('ErrorHandler', () => {
   beforeEach(() => {
     mockReq = createMockReq()
     mockRes = createMockRes()
+    // Ensure the mock is properly set up
+    jest.mocked(logger.handleError).mockReturnValue({ message: 'err', code: 'ERR' })
   })
 
   afterEach(() => {

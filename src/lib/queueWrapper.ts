@@ -6,14 +6,15 @@ export interface QueueConfig {
 }
 
 export interface QueueClient {
-  initialize: () => Promise<void>;
+  start: () => Promise<void>;
   stop: () => Promise<void>;
+  createQueue: (queueName: string) => Promise<void>;
   send: (queueName: string, data: any, options?: any) => Promise<string | null>;
-  work: (queueName: string, handler: (job: any) => Promise<any>, options?: any) => Promise<string>;
+  work: (queueName: string, options: any, handler: (job: any) => Promise<any>) => Promise<any>;
   cancel: (queueName: string, jobId: string) => Promise<void>;
   getJobById: (queueName: string, jobId: string) => Promise<any>;
-  on: (event: 'stopped', handler: () => void) => void;
-  off: (event: 'stopped', handler: () => void) => void;
+  on: (event: string, handler: (error?: Error) => void) => void;
+  off: (event: string, handler: (error?: Error) => void) => void;
 }
 
 /**
@@ -36,16 +37,19 @@ export const getQueueClient = (config: QueueConfig): QueueClient => {
 
   // Return a typed interface
   return {
-    initialize: async () => {
+    start: async () => {
       await boss.start();
     },
     stop: async () => {
       await boss.stop();
     },
+    createQueue: async (queueName: string) => {
+      await boss.createQueue(queueName);
+    },
     send: async (queueName: string, data: any, options?: any) => {
       return await boss.send(queueName, data, options);
     },
-    work: async (queueName: string, handler: (job: any) => Promise<any>, options?: any) => {
+    work: async (queueName: string, options: any, handler: (job: any) => Promise<any>) => {
       return await boss.work(queueName, options, handler);
     },
     cancel: async (queueName: string, jobId: string) => {
@@ -54,11 +58,11 @@ export const getQueueClient = (config: QueueConfig): QueueClient => {
     getJobById: async (queueName: string, jobId: string) => {
       return await boss.getJobById(queueName, jobId);
     },
-    on: (event: 'stopped', handler: () => void) => {
-      boss.on(event, handler);
+    on: (event: string, handler: (error?: Error) => void) => {
+      boss.on(event as any, handler);
     },
-    off: (event: 'stopped', handler: () => void) => {
-      boss.off(event, handler);
+    off: (event: string, handler: (error?: Error) => void) => {
+      boss.off(event as any, handler);
     },
   };
 };

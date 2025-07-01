@@ -23,6 +23,60 @@
 - Resend verification functionality
 - Navigation and user recovery options
 
+## Third-Party Wrapper Testing Patterns
+
+### Overview
+All third-party libraries are wrapped in local modules for consistent testing and maintainability. This approach ensures reliable mocking and isolates external dependencies.
+
+### Implemented Wrappers
+- **OpenAI Wrapper** (`src/lib/openaiWrapper.ts`) - OpenAI client wrapper
+- **Email Wrapper** (`src/lib/emailWrapper.ts`) - Nodemailer wrapper
+- **Queue Wrapper** (`src/lib/queueWrapper.ts`) - PgBoss wrapper
+- **Swagger Wrapper** (`src/lib/swaggerWrapper.ts`) - Swagger-parser wrapper
+
+### Testing Strategy
+1. **Mock the wrapper, not the library**: Use `jest.mock()` to mock the wrapper module
+2. **Import after mocking**: Import the service under test AFTER setting up mocks
+3. **Clear cache if needed**: Use `jest.resetModules()` for fresh imports
+
+### Advanced Testing Patterns
+
+#### Dynamic Import Pattern
+For services with complex dependencies (like QueueService), use the dynamic import pattern:
+
+```typescript
+// 1. Set up mocks first
+jest.doMock('../../../../src/lib/queueWrapper', () => ({
+  getQueueClient: jest.fn().mockReturnValue(mockQueueClient),
+}));
+
+// 2. Dynamically import after mocks
+const queueServiceModule = await import('../../../../src/lib/queue/queueService');
+QueueService = queueServiceModule.QueueService;
+```
+
+This pattern prevents Jest hoisting issues and ensures mocks are applied before module loading.
+
+#### Type-Only Imports
+Use type-only imports for test data structures:
+
+```typescript
+import type { QueueJob, QueueConfig } from '../../../../src/lib/queue/queueService';
+```
+
+### Recent Improvements
+
+#### QueueService Testing Enhancement
+- **Issue**: QueueService tests were failing due to Jest hoisting and pg-boss mocking complexity
+- **Solution**: Implemented dynamic import pattern with `jest.doMock()` and `await import()`
+- **Result**: All 36 QueueService tests now pass consistently
+- **Files Updated**: `tests/unit/lib/queue/queueService.test.ts`
+
+#### Linter Warning Resolution
+- **Issue**: TypeScript linter warnings about missing types and incorrect type annotations
+- **Solution**: Added type-only imports and removed problematic type annotations for dynamically imported modules
+- **Result**: Clean linter output with only acceptable `any` type warnings for test context
+
 ## Test Quality Standards
 
 - **No Mock Data**: Tests use real API calls and database operations

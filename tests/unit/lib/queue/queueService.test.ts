@@ -1,38 +1,107 @@
-// PgBoss mock factory must be defined before imports for Jest hoisting
-const createMockBoss = () => ({
-  on: jest.fn(),
-  start: jest.fn(),
-  stop: jest.fn(),
-  createQueue: jest.fn(),
-  send: jest.fn(),
-  work: jest.fn(),
-  cancel: jest.fn(),
-  getJobById: jest.fn(),
-  off: jest.fn(),
+// Type-only imports for test data structures
+import type { QueueJob, QueueConfig } from '../../../../src/lib/queue/queueService';
+
+// Mock pg-boss first to ensure it's mocked before the wrapper loads it
+jest.mock('pg-boss', () => {
+  console.log('Setting up pg-boss mock');
+  const MockPgBoss = jest.fn().mockImplementation(() => ({
+    start: jest.fn(),
+    stop: jest.fn(),
+    createQueue: jest.fn(),
+    send: jest.fn(),
+    work: jest.fn(),
+    cancel: jest.fn(),
+    getJobById: jest.fn(),
+    on: jest.fn(),
+    off: jest.fn(),
+  }));
+  return {
+    __esModule: true,
+    default: MockPgBoss,
+  };
 });
 
-const MockPgBoss = jest.fn().mockImplementation(() => createMockBoss());
-
-jest.mock('pg-boss', () => ({
-  __esModule: true,
-  default: MockPgBoss,
-  MockPgBoss,
-}));
-
-import { QueueService, QueueJob, QueueConfig } from '../../../../src/lib/queue/queueService';
-import { PrismaClient } from '../../../../src/generated/prisma';
-import { logError, logInfo } from '../../../../src/utils/logger';
+// Mock the queue wrapper
+jest.mock('../../../../src/lib/queueWrapper', () => {
+  console.log('Setting up queueWrapper mock');
+  const mockQueueClient = {
+    start: jest.fn(),
+    stop: jest.fn(),
+    createQueue: jest.fn(),
+    send: jest.fn(),
+    work: jest.fn(),
+    cancel: jest.fn(),
+    getJobById: jest.fn(),
+    on: jest.fn(),
+    off: jest.fn(),
+  };
+  const mockGetQueueClient = jest.fn().mockImplementation((config) => {
+    console.log('Mock getQueueClient called with config:', config);
+    return mockQueueClient;
+  });
+  return {
+    getQueueClient: mockGetQueueClient,
+  };
+});
 
 // Mock dependencies
 jest.mock('../../../../src/generated/prisma');
 jest.mock('../../../../src/utils/logger');
 
-const mockLogError = logError as jest.MockedFunction<typeof logError>;
-const mockLogInfo = logInfo as jest.MockedFunction<typeof logInfo>;
+// Reset modules to ensure mocks are applied
+jest.resetModules();
+
+let QueueService: any;
+let PrismaClient: any;
+let logError: any;
+let logInfo: any;
+let getQueueClient: any;
+let mockQueueClient: any;
+
+beforeEach(async () => {
+  jest.resetModules();
+
+  mockQueueClient = {
+    start: jest.fn(),
+    stop: jest.fn(),
+    createQueue: jest.fn(),
+    send: jest.fn(),
+    work: jest.fn(),
+    cancel: jest.fn(),
+    getJobById: jest.fn(),
+    on: jest.fn(),
+    off: jest.fn(),
+  };
+
+  jest.doMock('../../../../src/lib/queueWrapper', () => ({
+    getQueueClient: jest.fn().mockReturnValue(mockQueueClient),
+  }));
+  jest.doMock('../../../../src/generated/prisma', () => ({
+    PrismaClient: jest.fn().mockImplementation(() => ({})),
+  }));
+  jest.doMock('../../../../src/utils/logger', () => ({
+    logError: jest.fn(),
+    logInfo: jest.fn(),
+  }));
+
+  // Dynamically import after mocks
+  const queueServiceModule = await import('../../../../src/lib/queue/queueService');
+  QueueService = queueServiceModule.QueueService;
+
+  const loggerModule = await import('../../../../src/utils/logger');
+  logError = loggerModule.logError;
+  logInfo = loggerModule.logInfo;
+
+  const wrapperModule = await import('../../../../src/lib/queueWrapper');
+  getQueueClient = wrapperModule.getQueueClient;
+
+  PrismaClient = (await import('../../../../src/generated/prisma')).PrismaClient;
+});
 
 describe('QueueService', () => {
-  let queueService: QueueService;
-  let mockPrisma: jest.Mocked<PrismaClient>;
+  let queueService: any;
+  let mockPrisma: any;
+  let mockQueueClient: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -41,10 +110,13 @@ describe('QueueService', () => {
     process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     
     // Create mock Prisma client
-    mockPrisma = new PrismaClient() as jest.Mocked<PrismaClient>;
+    mockPrisma = new PrismaClient();
     
     // Create queue service instance
     queueService = new QueueService(mockPrisma);
+    
+    // Get the current mock queue client
+    mockQueueClient = getQueueClient();
   });
 
   afterEach(() => {
@@ -55,7 +127,7 @@ describe('QueueService', () => {
   describe('Constructor', () => {
     it('should initialize with default configuration', () => {
       expect(queueService).toBeInstanceOf(QueueService);
-      expect(createMockBoss().on).toHaveBeenCalledWith('error', expect.any(Function));
+      expect(mockQueueClient.on).toHaveBeenCalledWith('error', expect.any(Function));
     });
 
     it('should throw error when DATABASE_URL is not provided', () => {
@@ -80,45 +152,45 @@ describe('QueueService', () => {
 
   describe('initialize', () => {
     it('should initialize the queue service successfully', async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
 
       await queueService.initialize();
 
-      expect(createMockBoss().start).toHaveBeenCalled();
-      expect(mockLogInfo).toHaveBeenCalledWith('Queue service initialized', expect.any(Object));
+      expect(mockQueueClient.start).toHaveBeenCalled();
+      expect(logInfo).toHaveBeenCalledWith('Queue service initialized', expect.any(Object));
     });
 
     it('should not initialize twice', async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
 
       await queueService.initialize();
       await queueService.initialize();
 
-      expect(createMockBoss().start).toHaveBeenCalledTimes(1);
+      expect(mockQueueClient.start).toHaveBeenCalledTimes(1);
     });
 
     it('should handle initialization errors', async () => {
       const error = new Error('Database connection failed');
-      createMockBoss().start.mockRejectedValue(error);
+      mockQueueClient.start.mockRejectedValue(error);
 
       await expect(queueService.initialize()).rejects.toThrow('Database connection failed');
-      expect(mockLogError).toHaveBeenCalledWith('Failed to initialize queue service', error);
+      expect(logError).toHaveBeenCalledWith('Failed to initialize queue service', error);
     });
   });
 
   describe('stop', () => {
     beforeEach(async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
     });
 
     it('should stop the queue service successfully', async () => {
-      createMockBoss().stop.mockResolvedValue(undefined);
+      mockQueueClient.stop.mockResolvedValue(undefined);
 
       await queueService.stop();
 
-      expect(createMockBoss().stop).toHaveBeenCalled();
-      expect(mockLogInfo).toHaveBeenCalledWith('Queue service stopped');
+      expect(mockQueueClient.stop).toHaveBeenCalled();
+      expect(logInfo).toHaveBeenCalledWith('Queue service stopped');
     });
 
     it('should not stop if not initialized', async () => {
@@ -126,21 +198,21 @@ describe('QueueService', () => {
       
       await uninitializedService.stop();
 
-      expect(createMockBoss().stop).not.toHaveBeenCalled();
+      expect(mockQueueClient.stop).not.toHaveBeenCalled();
     });
 
     it('should handle stop errors', async () => {
       const error = new Error('Stop failed');
-      createMockBoss().stop.mockRejectedValue(error);
+      mockQueueClient.stop.mockRejectedValue(error);
 
       await expect(queueService.stop()).rejects.toThrow('Stop failed');
-      expect(mockLogError).toHaveBeenCalledWith('Failed to stop queue service', error);
+      expect(logError).toHaveBeenCalledWith('Failed to stop queue service', error);
     });
   });
 
   describe('submitJob', () => {
     beforeEach(async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
     });
 
@@ -151,15 +223,15 @@ describe('QueueService', () => {
         data: { test: 'data' }
       };
 
-      createMockBoss().createQueue.mockResolvedValue(undefined);
-      createMockBoss().send.mockResolvedValue('job-123');
+      mockQueueClient.createQueue.mockResolvedValue(undefined);
+      mockQueueClient.send.mockResolvedValue('job-123');
 
       const result = await queueService.submitJob(job);
 
       expect(result).toEqual({ queueName: 'test-queue', jobId: 'job-123' });
-      expect(createMockBoss().createQueue).toHaveBeenCalledWith('test-queue');
-      expect(createMockBoss().send).toHaveBeenCalledWith('test-queue', { test: 'data' }, expect.any(Object));
-      expect(mockLogInfo).toHaveBeenCalledWith('Job submitted to queue', expect.any(Object));
+      expect(mockQueueClient.createQueue).toHaveBeenCalledWith('test-queue');
+      expect(mockQueueClient.send).toHaveBeenCalledWith('test-queue', { test: 'data' }, expect.any(Object));
+      expect(logInfo).toHaveBeenCalledWith('Job submitted to queue', expect.any(Object));
     });
 
     it('should throw error if not initialized', async () => {
@@ -191,11 +263,11 @@ describe('QueueService', () => {
       };
 
       const error = new Error('Queue full');
-      createMockBoss().createQueue.mockResolvedValue(undefined);
-      createMockBoss().send.mockRejectedValue(error);
+      mockQueueClient.createQueue.mockResolvedValue(undefined);
+      mockQueueClient.send.mockRejectedValue(error);
 
       await expect(queueService.submitJob(job)).rejects.toThrow('Queue full');
-      expect(mockLogError).toHaveBeenCalledWith('Failed to submit job to queue', error, expect.any(Object));
+      expect(logError).toHaveBeenCalledWith('Failed to submit job to queue', error, expect.any(Object));
     });
 
     it('should sanitize sensitive data in logs', async () => {
@@ -209,12 +281,12 @@ describe('QueueService', () => {
         }
       };
 
-      createMockBoss().createQueue.mockResolvedValue(undefined);
-      createMockBoss().send.mockRejectedValue(new Error('Test error'));
+      mockQueueClient.createQueue.mockResolvedValue(undefined);
+      mockQueueClient.send.mockRejectedValue(new Error('Test error'));
 
       await expect(queueService.submitJob(job)).rejects.toThrow('Test error');
       
-      expect(mockLogError).toHaveBeenCalledWith(
+      expect(logError).toHaveBeenCalledWith(
         'Failed to submit job to queue',
         expect.any(Error),
         expect.objectContaining({
@@ -230,7 +302,7 @@ describe('QueueService', () => {
 
   describe('registerWorker', () => {
     beforeEach(async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
     });
 
@@ -239,14 +311,14 @@ describe('QueueService', () => {
       const handler = jest.fn().mockResolvedValue('result');
       const mockWorker = { off: jest.fn() };
 
-      createMockBoss().createQueue.mockResolvedValue(undefined);
-      createMockBoss().work.mockResolvedValue(mockWorker);
+      mockQueueClient.createQueue.mockResolvedValue(undefined);
+      mockQueueClient.work.mockResolvedValue(mockWorker);
 
       await queueService.registerWorker(jobName, handler);
 
-      expect(createMockBoss().createQueue).toHaveBeenCalledWith(jobName);
-      expect(createMockBoss().work).toHaveBeenCalledWith(jobName, expect.any(Object), expect.any(Function));
-      expect(mockLogInfo).toHaveBeenCalledWith('Worker registered', expect.any(Object));
+      expect(mockQueueClient.createQueue).toHaveBeenCalledWith(jobName);
+      expect(mockQueueClient.work).toHaveBeenCalledWith(jobName, expect.any(Object), expect.any(Function));
+      expect(logInfo).toHaveBeenCalledWith('Worker registered', expect.any(Object));
     });
 
     it('should throw error if not initialized', async () => {
@@ -261,11 +333,11 @@ describe('QueueService', () => {
       const handler = jest.fn();
       const error = new Error('Worker registration failed');
 
-      createMockBoss().createQueue.mockResolvedValue(undefined);
-      createMockBoss().work.mockRejectedValue(error);
+      mockQueueClient.createQueue.mockResolvedValue(undefined);
+      mockQueueClient.work.mockRejectedValue(error);
 
       await expect(queueService.registerWorker(jobName, handler)).rejects.toThrow('Worker registration failed');
-      expect(mockLogError).toHaveBeenCalledWith('Failed to register worker', error, { queueName: jobName });
+      expect(logError).toHaveBeenCalledWith('Failed to register worker', error, { queueName: jobName });
     });
 
     it('should track worker statistics', async () => {
@@ -274,8 +346,8 @@ describe('QueueService', () => {
       const mockWorker = { off: jest.fn() };
       let workHandler: any;
 
-      createMockBoss().createQueue.mockResolvedValue(undefined);
-      createMockBoss().work.mockImplementation((name, options, wh) => {
+      mockQueueClient.createQueue.mockResolvedValue(undefined);
+      mockQueueClient.work.mockImplementation((name, options, wh) => {
         workHandler = wh;
         return Promise.resolve(mockWorker);
       });
@@ -315,7 +387,7 @@ describe('QueueService', () => {
     });
 
     it('should return health status when initialized', async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
 
       const health = await queueService.getHealthStatus();
@@ -333,7 +405,7 @@ describe('QueueService', () => {
     });
 
     it('should handle health check errors', async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
 
       // Test that health check returns proper error handling
@@ -346,19 +418,19 @@ describe('QueueService', () => {
 
   describe('cancelJob', () => {
     beforeEach(async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
     });
 
     it('should cancel a job successfully', async () => {
       const queueName = 'test-queue';
       const jobId = 'job-123';
-      createMockBoss().cancel.mockResolvedValue(undefined);
+      mockQueueClient.cancel.mockResolvedValue(undefined);
 
       await queueService.cancelJob(queueName, jobId);
 
-      expect(createMockBoss().cancel).toHaveBeenCalledWith(queueName, jobId);
-      expect(mockLogInfo).toHaveBeenCalledWith('Job cancelled', { queueName, jobId });
+      expect(mockQueueClient.cancel).toHaveBeenCalledWith(queueName, jobId);
+      expect(logInfo).toHaveBeenCalledWith('Job cancelled', { queueName, jobId });
     });
 
     it('should throw error if not initialized', async () => {
@@ -371,16 +443,16 @@ describe('QueueService', () => {
       const queueName = 'test-queue';
       const jobId = 'job-123';
       const error = new Error('Job not found');
-      createMockBoss().cancel.mockRejectedValue(error);
+      mockQueueClient.cancel.mockRejectedValue(error);
 
       await expect(queueService.cancelJob(queueName, jobId)).rejects.toThrow('Job not found');
-      expect(mockLogError).toHaveBeenCalledWith('Failed to cancel job', error, { queueName, jobId });
+      expect(logError).toHaveBeenCalledWith('Failed to cancel job', error, { queueName, jobId });
     });
   });
 
   describe('getJobStatus', () => {
     beforeEach(async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
     });
 
@@ -398,7 +470,7 @@ describe('QueueService', () => {
         completedOn: new Date()
       };
 
-      createMockBoss().getJobById.mockResolvedValue(mockJob);
+      mockQueueClient.getJobById.mockResolvedValue(mockJob);
 
       const status = await queueService.getJobStatus(queueName, jobId);
 
@@ -418,7 +490,7 @@ describe('QueueService', () => {
     it('should return null when job does not exist', async () => {
       const queueName = 'test-queue';
       const jobId = 'job-123';
-      createMockBoss().getJobById.mockResolvedValue(null);
+      mockQueueClient.getJobById.mockResolvedValue(null);
 
       const status = await queueService.getJobStatus(queueName, jobId);
 
@@ -435,16 +507,16 @@ describe('QueueService', () => {
       const queueName = 'test-queue';
       const jobId = 'job-123';
       const error = new Error('Database error');
-      createMockBoss().getJobById.mockRejectedValue(error);
+      mockQueueClient.getJobById.mockRejectedValue(error);
 
       await expect(queueService.getJobStatus(queueName, jobId)).rejects.toThrow('Database error');
-      expect(mockLogError).toHaveBeenCalledWith('Failed to get job status', error, { queueName, jobId });
+      expect(logError).toHaveBeenCalledWith('Failed to get job status', error, { queueName, jobId });
     });
   });
 
   describe('clearFailedJobs', () => {
     beforeEach(async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
     });
 
@@ -452,7 +524,7 @@ describe('QueueService', () => {
       const cleared = await queueService.clearFailedJobs();
 
       expect(cleared).toBe(0);
-      expect(mockLogInfo).toHaveBeenCalledWith('Failed jobs clear operation requested (not yet implemented)');
+      expect(logInfo).toHaveBeenCalledWith('Failed jobs clear operation requested (not yet implemented)');
     });
 
     it('should throw error if not initialized', async () => {
@@ -469,7 +541,7 @@ describe('QueueService', () => {
     });
 
     it('should return worker statistics when workers exist', async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
 
       const jobName = 'test-job';
@@ -477,8 +549,8 @@ describe('QueueService', () => {
       const mockWorker = { off: jest.fn() };
       let workHandler: any;
 
-      createMockBoss().createQueue.mockResolvedValue(undefined);
-      createMockBoss().work.mockImplementation((name, options, wh) => {
+      mockQueueClient.createQueue.mockResolvedValue(undefined);
+      mockQueueClient.work.mockImplementation((name, options, wh) => {
         workHandler = wh;
         return Promise.resolve(mockWorker);
       });
@@ -503,7 +575,7 @@ describe('QueueService', () => {
 
   describe('Job validation', () => {
     it('should validate job name', async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
 
       const invalidJob = {
@@ -516,7 +588,7 @@ describe('QueueService', () => {
     });
 
     it('should validate job data', async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
 
       const invalidJob = {
@@ -529,7 +601,7 @@ describe('QueueService', () => {
     });
 
     it('should validate retry limit', async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
 
       const invalidJob = {
@@ -543,7 +615,7 @@ describe('QueueService', () => {
     });
 
     it('should validate priority', async () => {
-      createMockBoss().start.mockResolvedValue(undefined);
+      mockQueueClient.start.mockResolvedValue(undefined);
       await queueService.initialize();
 
       const invalidJob = {
