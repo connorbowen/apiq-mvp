@@ -97,7 +97,7 @@ describe('SignupPage', () => {
     });
   });
 
-  it('should handle successful form submission', async () => {
+  it('should handle successful form submission and redirect to success page', async () => {
     const { apiClient } = require('../../../../src/lib/api/client');
     apiClient.register.mockResolvedValue({
       success: true,
@@ -127,7 +127,7 @@ describe('SignupPage', () => {
     });
     
     await waitFor(() => {
-      expect(screen.getByText(/registration successful/i)).toBeInTheDocument();
+      expect(mockRouter.push).toHaveBeenCalledWith('/signup-success?email=test%40example.com');
     });
   });
 

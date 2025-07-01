@@ -58,11 +58,21 @@ describe('VerifyPage', () => {
     expect(screen.getByText('The verification link may be invalid or expired.')).toBeInTheDocument();
   });
 
-  it('should handle successful email verification', async () => {
+  it('should handle successful email verification with automatic sign-in', async () => {
     const { apiClient } = require('../../../../src/lib/api/client');
     apiClient.verifyEmail.mockResolvedValue({
       success: true,
-      data: { message: 'Email verified successfully!' }
+      data: { 
+        message: 'Email verified successfully!',
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
+        user: {
+          id: 'user-123',
+          email: 'test@example.com',
+          name: 'Test User',
+          role: 'USER'
+        }
+      }
     });
 
     mockSearchParams.get.mockReturnValue('valid-token');
@@ -73,13 +83,13 @@ describe('VerifyPage', () => {
       expect(screen.getByText('Email verified successfully!')).toBeInTheDocument();
     });
     
-    expect(screen.getByText('Redirecting to login page...')).toBeInTheDocument();
+    expect(screen.getByText('Redirecting to dashboard...')).toBeInTheDocument();
     
-    // Test redirect after 3 seconds
-    jest.advanceTimersByTime(3000);
+    // Test redirect after 2 seconds
+    jest.advanceTimersByTime(2000);
     
     await waitFor(() => {
-      expect(mockRouter.push).toHaveBeenCalledWith('/login');
+      expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
     });
   });
 
@@ -171,7 +181,7 @@ describe('VerifyPage', () => {
     render(<VerifyPage />);
     
     await waitFor(() => {
-      expect(screen.getByText('Email verified successfully!')).toBeInTheDocument();
+      expect(screen.getByText('Email verified successfully! Welcome to APIQ!')).toBeInTheDocument();
     });
   });
 
