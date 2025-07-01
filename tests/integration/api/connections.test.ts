@@ -4,10 +4,26 @@ import { prisma } from '../../../lib/database/client';
 import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 import fs from 'fs';
+import path from 'path';
 
 // Import the real modules (no mocking)
 import { parseOpenApiSpec } from '../../../src/lib/api/parser';
 import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
+
+// Mock the OpenAPI service to avoid external network calls
+jest.mock('../../../src/services/openApiService', () => ({
+  openApiService: {
+    fetchSpec: jest.fn()
+  }
+}));
+
+// Load local fixture for Petstore API
+const petstoreFixture = JSON.parse(
+  fs.readFileSync(
+    path.join(__dirname, '../../fixtures/petstore-openapi.json'),
+    'utf-8'
+  )
+);
 
 describe('API Connections Integration Tests', () => {
   const testSuite = createTestSuite('Connections Tests');
@@ -30,7 +46,8 @@ describe('API Connections Integration Tests', () => {
   });
 
   beforeEach(() => {
-    // No need to clear mocks since we're not using them
+    // Clear mocks before each test
+    jest.clearAllMocks();
   });
 
   describe('POST /api/connections', () => {
@@ -54,6 +71,15 @@ describe('API Connections Integration Tests', () => {
     });
 
     it('should create API connection with OpenAPI spec and extract endpoints', async () => {
+      // Mock successful OpenAPI spec fetch
+      const { openApiService } = require('../../../src/services/openApiService');
+      openApiService.fetchSpec.mockResolvedValue({
+        success: true,
+        spec: petstoreFixture,
+        cached: false,
+        duration: 100
+      });
+
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'Petstore API',
@@ -73,6 +99,14 @@ describe('API Connections Integration Tests', () => {
     });
 
     it('should handle OpenAPI parsing errors gracefully', async () => {
+      // Mock failed OpenAPI spec fetch
+      const { openApiService } = require('../../../src/services/openApiService');
+      openApiService.fetchSpec.mockResolvedValue({
+        success: false,
+        error: 'HTTP 404: NOT FOUND',
+        duration: 100
+      });
+
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'Invalid API',

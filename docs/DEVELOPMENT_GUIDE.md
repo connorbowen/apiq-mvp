@@ -1151,4 +1151,8 @@ This development guide provides comprehensive coverage of the development proces
 
 ### Config Changes
 
-- `next.config.js` has been updated. Review for any new environment or build settings that may affect local or production builds. 
+- `next.config.js` has been updated. Review for any new environment or build settings that may affect local or production builds.
+
+### Integration Test Mocking
+- **Integration Test Mocking**: All integration tests must mock external API calls. Never rely on live network access for integration test reliability.
+- **Correct Import Paths**: Always import shared libraries (like the Prisma client) from `lib/database/client` to ensure compatibility across environments and test runners. 

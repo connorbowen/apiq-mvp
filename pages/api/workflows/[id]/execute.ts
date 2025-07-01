@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../../../src/lib/database/client';
+import { prisma } from '../../../../lib/database/client';
 import { logError, logInfo } from '../../../../src/utils/logger';
 import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/session';
 import { errorHandler } from '../../../../src/middleware/errorHandler';

@@ -757,3 +757,10 @@ DEBUG=oauth2:* npm run test:oauth2
 - **Parallel Testing**: Optimize test execution for faster feedback
 - **Visual Testing**: Add visual regression testing for UI components
 - **Accessibility Testing**: Ensure UI components meet accessibility standards
+
+### Integration Test Mocking and Reliability
+
+- All integration tests mock external API calls (such as OpenAPI spec fetches and third-party HTTP requests) to ensure tests are fast, reliable, and do not depend on network access.
+- Only the database and authentication flows use real infrastructure; all other external dependencies must be mocked in integration tests.
+- If you add new integration tests that interact with external APIs, you must mock those calls using Jest or a similar framework.
+- Never mock database or authentication logic in any environment except for isolated unit tests (see "No Mock Data Policy" above).

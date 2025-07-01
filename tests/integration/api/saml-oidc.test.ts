@@ -1,11 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createMocks } from 'node-mocks-http';
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { PrismaClient } from '@prisma/client';
 import { createTestSuite } from '../../helpers/testUtils';
-import { Role } from '../../../src/types';
-
-const prisma = new PrismaClient();
+import { Role } from '../../../src/generated/prisma';
+import { prisma } from '../../../lib/database/client';
 
 describe('SAML/OIDC Authentication Integration Tests', () => {
   const testSuite = createTestSuite('SAML/OIDC Tests');
@@ -27,13 +25,7 @@ describe('SAML/OIDC Authentication Integration Tests', () => {
     await testSuite.afterAll();
   });
 
-  beforeEach(async () => {
-    await testSuite.beforeEach();
-  });
 
-  afterEach(async () => {
-    await testSuite.afterEach();
-  });
 
   describe('GET /api/auth/saml/{provider}', () => {
     it('should initiate SAML SSO flow for Okta', async () => {

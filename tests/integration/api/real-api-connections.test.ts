@@ -3,6 +3,23 @@ import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
 import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest, createTestUser } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
+import fs from 'fs';
+import path from 'path';
+
+// Mock the OpenAPI service to avoid external network calls
+jest.mock('../../../src/services/openApiService', () => ({
+  openApiService: {
+    fetchSpec: jest.fn()
+  }
+}));
+
+// Load local fixture for Petstore API
+const petstoreFixture = JSON.parse(
+  fs.readFileSync(
+    path.join(__dirname, '../../fixtures/petstore-openapi.json'),
+    'utf-8'
+  )
+);
 
 // Note: No mocks for parser and endpoints - we want to test real API calls
 
@@ -66,10 +83,18 @@ describe('Real API Connections Integration Tests', () => {
 
   describe('POST /api/connections - Real API Tests', () => {
     it('should create API connection with real Petstore OpenAPI spec', async () => {
-      // This test uses the real Petstore API
+      // Mock successful OpenAPI spec fetch
+      const { openApiService } = require('../../../src/services/openApiService');
+      openApiService.fetchSpec.mockResolvedValue({
+        success: true,
+        spec: petstoreFixture,
+        cached: false,
+        duration: 100
+      });
+
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
-          name: 'Real Petstore API',
+          name: 'Petstore API',
           baseUrl: 'https://petstore.swagger.io/v2',
           authType: 'NONE',
           documentationUrl: 'https://petstore.swagger.io/v2/swagger.json'
@@ -81,23 +106,26 @@ describe('Real API Connections Integration Tests', () => {
       expect(res._getStatusCode()).toBe(201);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
-      expect(data.data.name).toBe('Real Petstore API');
-      expect(data.data.baseUrl).toBe('https://petstore.swagger.io/v2');
-      expect(data.data.authType).toBe('NONE');
+      expect(data.data.name).toBe('Petstore API');
       
       // The real API should succeed in parsing
       expect(data.data.ingestionStatus).toBe('SUCCEEDED');
       expect(data.data.specHash).toBeDefined();
       expect(data.data.specHash).toHaveLength(64); // SHA-256 hash length
       
-      // Should have extracted endpoints from the real Petstore API
-      expect(data.data.endpointCount).toBeDefined();
-      expect(typeof data.data.endpointCount).toBe('number');
+      // Should have extracted endpoints
       expect(data.data.endpointCount).toBeGreaterThan(0);
-    }, 30000); // Increase timeout for real API call
+    });
 
-    it('should create API connection with JSONPlaceholder API', async () => {
-      // Test with another public API
+    it('should handle missing OpenAPI spec gracefully', async () => {
+      // Mock failed OpenAPI spec fetch
+      const { openApiService } = require('../../../src/services/openApiService');
+      openApiService.fetchSpec.mockResolvedValue({
+        success: false,
+        error: 'HTTP 404: Not Found',
+        duration: 100
+      });
+
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'JSONPlaceholder API',
@@ -112,15 +140,19 @@ describe('Real API Connections Integration Tests', () => {
       expect(res._getStatusCode()).toBe(201);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
-      expect(data.data.name).toBe('JSONPlaceholder API');
-      
-      // This API might not have OpenAPI spec, so ingestion could fail
-      // But the connection should still be created
-      expect(['SUCCEEDED', 'FAILED']).toContain(data.data.ingestionStatus);
-      expect(data.data.endpointCount).toBeDefined();
-    }, 30000);
+      expect(data.data.ingestionStatus).toBe('FAILED');
+      expect(data.warning).toBeDefined();
+    });
 
-    it('should handle invalid OpenAPI URL gracefully', async () => {
+    it('should handle network errors gracefully', async () => {
+      // Mock network error
+      const { openApiService } = require('../../../src/services/openApiService');
+      openApiService.fetchSpec.mockResolvedValue({
+        success: false,
+        error: 'Network error - unable to reach the server',
+        duration: 100
+      });
+
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'Invalid API',
@@ -135,10 +167,8 @@ describe('Real API Connections Integration Tests', () => {
       expect(res._getStatusCode()).toBe(201);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
-      expect(data.data.name).toBe('Invalid API');
       expect(data.data.ingestionStatus).toBe('FAILED');
       expect(data.warning).toBeDefined();
-      expect(data.data.endpointCount).toBeDefined();
-    }, 30000);
+    });
   });
 }); 

@@ -622,6 +622,10 @@ npm test -- --testPathPattern=user.test.ts
 npm run test:e2e
 ```
 
+### Integration Test Mocking
+- **Integration Test Mocking**: All integration tests must mock external API calls (e.g., HTTP requests to third-party services, OpenAPI spec fetches). Do not rely on network access for tests. Use Jest mocks or similar.
+- **Import Paths**: When importing shared libraries (such as the Prisma client), always use the correct path (e.g., `lib/database/client`). Avoid deep or relative imports that may break in different environments.
+
 ## Documentation
 
 ### Code Documentation
