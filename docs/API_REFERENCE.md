@@ -230,6 +230,201 @@ Rotate the master encryption key for all secrets.
 }
 ```
 
+### Queue Management
+
+The Queue Management API provides robust job queue management using PgBoss 10.3.2 for workflow execution, ensuring reliable, scalable, and fault-tolerant job processing.
+
+#### Security Features
+- **Job Data Sanitization**: Sensitive data removed from logs
+- **Input Validation**: Zod schema validation for job payloads
+- **Error Handling**: Secure error messages without data exposure
+- **Access Control**: Queue operations require proper authentication
+
+#### `POST /api/queue/jobs`
+
+Submit a new job to the queue.
+
+**Request Body:**
+```json
+{
+  "queueName": "workflow-execution",
+  "name": "execute-workflow",
+  "data": {
+    "workflowId": "workflow_123",
+    "userId": "user_456",
+    "parameters": {
+      "input": "test data"
+    }
+  },
+  "options": {
+    "priority": 5,
+    "delay": 0,
+    "retryLimit": 3,
+    "retryDelay": 5000,
+    "timeout": 300000,
+    "jobKey": "unique-job-identifier"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "queueName": "workflow-execution",
+    "jobId": "job_789",
+    "jobKey": "unique-job-identifier"
+  },
+  "message": "Job submitted successfully"
+}
+```
+
+**Error Response (Validation Error):**
+```json
+{
+  "success": false,
+  "error": "Invalid job data: missing required fields",
+  "code": "VALIDATION_ERROR"
+}
+```
+
+#### `GET /api/queue/jobs/{queueName}/{jobId}`
+
+Get the status of a specific job.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "job_789",
+    "queueName": "workflow-execution",
+    "name": "execute-workflow",
+    "data": {
+      "workflowId": "workflow_123",
+      "userId": "user_456"
+    },
+    "state": "completed",
+    "retryCount": 0,
+    "retryLimit": 3,
+    "output": {
+      "result": "workflow completed successfully"
+    },
+    "createdOn": "2024-01-01T00:00:00.000Z",
+    "completedOn": "2024-01-01T00:01:30.000Z"
+  }
+}
+```
+
+#### `DELETE /api/queue/jobs/{queueName}/{jobId}`
+
+Cancel a running or queued job.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "queueName": "workflow-execution",
+    "jobId": "job_789"
+  },
+  "message": "Job cancelled successfully"
+}
+```
+
+#### `GET /api/queue/health`
+
+Get the health status of the queue system.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "message": "Queue system is operating normally",
+    "activeJobs": 5,
+    "queuedJobs": 12,
+    "failedJobs": 2,
+    "workers": 3,
+    "uptime": 86400000,
+    "lastHealthCheck": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### `GET /api/queue/workers`
+
+Get statistics for all workers.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "workers": [
+      {
+        "workerId": "worker_1",
+        "activeJobs": 2,
+        "completedJobs": 150,
+        "failedJobs": 3,
+        "lastActivity": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "totalWorkers": 3,
+    "totalActiveJobs": 5,
+    "totalCompletedJobs": 450,
+    "totalFailedJobs": 8
+  }
+}
+```
+
+#### `POST /api/queue/workers`
+
+Register a new worker for a queue.
+
+**Request Body:**
+```json
+{
+  "queueName": "workflow-execution",
+  "handler": "workflowHandler",
+  "options": {
+    "teamSize": 5,
+    "timeout": 300000,
+    "retryLimit": 3
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "queueName": "workflow-execution",
+    "workerId": "worker_4",
+    "teamSize": 5
+  },
+  "message": "Worker registered successfully"
+}
+```
+
+#### `DELETE /api/queue/failed-jobs`
+
+Clear all failed jobs from the queue.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "clearedCount": 15
+  },
+  "message": "Failed jobs cleared successfully"
+}
+```
+
 ### Authentication
 
 #### `GET /api/auth/session`
@@ -1279,160 +1474,6 @@ Get system statistics (admin only).
   }
 }
 ```
-
-### Queue Management
-
-The QueueService provides robust job queue management using PgBoss 10.3.2 for workflow execution. It includes max-concurrency limits, health checks, job deduplication, and comprehensive error handling.
-
-#### Features
-- **PgBoss 10.3.2 Compatibility**: Fully compatible with latest PgBoss version
-- **Job Deduplication**: Support for jobKey to prevent duplicate job execution
-- **Worker Management**: Team-based worker registration with configurable parallelism
-- **Health Monitoring**: Real-time queue health status and worker statistics
-- **Runtime Validation**: Zod schema validation for job payloads
-- **Security**: Job data sanitization for sensitive fields in logs
-- **Type Safety**: Comprehensive TypeScript support with proper error handling
-
-#### QueueService Class
-
-The QueueService is available as a TypeScript class for server-side usage:
-
-```typescript
-import { QueueService, QueueJob, QueueConfig } from '@/lib/queue/queueService';
-
-// Initialize with custom configuration
-const queueService = new QueueService(prisma, {
-  maxConcurrency: 10,
-  retryLimit: 3,
-  retryDelay: 5000,
-  timeout: 300000,
-  healthCheckInterval: 30000
-});
-
-await queueService.initialize();
-```
-
-#### Job Submission
-
-Submit jobs to the queue with comprehensive options:
-
-```typescript
-const job: QueueJob = {
-  queueName: 'workflow-execution',
-  name: 'process-customer-data',
-  data: { customerId: '123', action: 'sync' },
-  retryLimit: 3,
-  retryDelay: 5000,
-  timeout: 300000,
-  priority: 0,
-  delay: 0,
-  expireIn: 3600000,
-  jobKey: 'customer-sync-123' // Optional: for deduplication
-};
-
-const result = await queueService.submitJob(job);
-// Returns: { queueName: 'workflow-execution', jobId: 'job-123' }
-```
-
-#### Worker Registration
-
-Register workers to process jobs with configurable options:
-
-```typescript
-await queueService.registerWorker(
-  'workflow-execution',
-  async (jobData) => {
-    // Process the job
-    const result = await processWorkflow(jobData);
-    return result;
-  },
-  {
-    teamSize: 5, // Number of concurrent workers
-    timeout: 300000,
-    retryLimit: 3,
-    dataSchema: z.object({ // Optional: runtime validation
-      customerId: z.string(),
-      action: z.string()
-    })
-  }
-);
-```
-
-#### Job Management
-
-Cancel jobs and check their status:
-
-```typescript
-// Cancel a job
-await queueService.cancelJob('workflow-execution', 'job-123');
-
-// Get job status
-const status = await queueService.getJobStatus('workflow-execution', 'job-123');
-// Returns JobStatus object with state, retry info, timestamps, etc.
-```
-
-#### Health Monitoring
-
-Monitor queue health and worker statistics:
-
-```typescript
-// Get overall health status
-const health = await queueService.getHealthStatus();
-// Returns: QueueHealth with status, message, metrics, etc.
-
-// Get worker statistics
-const stats = queueService.getWorkerStats();
-// Returns: Array of WorkerStats with active/completed/failed job counts
-```
-
-#### Job States
-
-Supported job states (PgBossJobState):
-
-- `created` - Job created and queued
-- `retry` - Job failed and scheduled for retry
-- `active` - Job currently being processed
-- `completed` - Job completed successfully
-- `cancelled` - Job was cancelled
-- `expired` - Job expired before execution
-- `failed` - Job failed after all retries
-
-#### Configuration Options
-
-QueueService configuration options:
-
-```typescript
-interface QueueConfig {
-  maxConcurrency: number;      // Default: 10
-  retryLimit: number;          // Default: 3
-  retryDelay: number;          // Default: 5000ms
-  timeout: number;             // Default: 300000ms
-  healthCheckInterval: number; // Default: 30000ms
-  connectionString?: string;   // Optional: custom DB connection
-}
-```
-
-#### Error Handling
-
-The QueueService includes comprehensive error handling:
-
-- **Validation Errors**: Invalid job data or configuration
-- **Connection Errors**: Database connection issues
-- **Job Errors**: Processing failures with retry logic
-- **Deduplication Errors**: Duplicate jobKey violations
-- **Timeout Errors**: Job execution timeouts
-
-All errors are logged with sanitized data (no sensitive information exposed).
-
-#### Best Practices
-
-1. **Always provide queueName**: Required for all job operations
-2. **Use jobKey for deduplication**: Prevents duplicate job execution
-3. **Validate job data**: Use zod schemas for runtime validation
-4. **Handle errors gracefully**: Implement proper error handling in workers
-5. **Monitor health**: Regular health checks for queue status
-6. **Configure timeouts**: Set appropriate timeouts for job execution
-7. **Use teamSize for parallelism**: Configure worker concurrency appropriately
 
 ## Error Codes
 

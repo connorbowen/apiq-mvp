@@ -516,39 +516,321 @@ Level 4: Executive Team (8+ hours)
 - Log retention and analysis
 - Security information and event management (SIEM)
 
-## Security Checklist
+### Input Validation
+- Always validate user inputs at API boundaries
+- Use TypeScript for compile-time type safety
+- Implement runtime validation with zod schemas
+- Sanitize data before database storage
 
-### Pre-Deployment Checklist
-- [ ] Security code review completed
-- [ ] Vulnerability scan passed
-- [ ] Penetration testing completed
-- [ ] Security configuration reviewed
-- [ ] Access controls verified
-- [ ] Encryption implemented
-- [ ] Logging configured
-- [ ] Monitoring enabled
-- [ ] Incident response plan tested
-- [ ] Compliance requirements met
+### Authentication & Authorization
+- Use NextAuth.js for secure session management
+- Implement proper RBAC (Role-Based Access Control)
+- Validate user permissions on all operations
+- Use secure token storage and rotation
 
-### Ongoing Security Tasks
-- [ ] Regular security assessments
-- [ ] Vulnerability management
-- [ ] Access control reviews
-- [ ] Security training updates
-- [ ] Incident response drills
-- [ ] Compliance audits
-- [ ] Security metrics review
-- [ ] Threat intelligence updates
+### Data Protection
+- Encrypt sensitive data at rest
+- Use HTTPS for all communications
+- Implement proper audit logging
+- Never log sensitive information
 
-### Emergency Response
-- [ ] Incident detection and classification
-- [ ] Immediate containment measures
-- [ ] Stakeholder notification
-- [ ] Investigation and analysis
-- [ ] Remediation and recovery
-- [ ] Post-incident review
-- [ ] Lessons learned documentation
-- [ ] Process improvement implementation
+## Encrypted Secrets Vault Security
+
+### Overview
+The Encrypted Secrets Vault provides enterprise-grade security for storing sensitive data such as API keys, OAuth2 tokens, and custom secrets. All secrets are encrypted with AES-256 and include comprehensive input validation, rate limiting, and audit logging.
+
+### Security Features
+
+#### Encryption
+- **AES-256 Encryption**: All secret values encrypted at rest using industry-standard AES-256
+- **Master Key Rotation**: Support for key rotation without data loss or service interruption
+- **Encrypted Metadata**: Sensitive metadata also encrypted to prevent information leakage
+- **Key Management**: Environment-based master key with CLI rotation tools
+
+#### Input Validation & Sanitization
+- **Character Restrictions**: Secret names limited to alphanumeric characters, hyphens, and underscores only
+- **Length Validation**: Names ≤ 100 characters, values ≤ 10,000 characters
+- **Type Validation**: Support for predefined secret types (api_key, oauth2_token, webhook_secret, custom)
+- **Expiration Validation**: Future date validation for expiration timestamps
+- **SQL Injection Prevention**: Parameterized queries and input sanitization
+
+#### Rate Limiting
+- **Per-User Limits**: 100 requests per minute per user to prevent abuse
+- **Configurable Windows**: Adjustable rate limiting windows via environment variables
+- **Graceful Degradation**: Rate limit exceeded responses with retry information
+- **DoS Protection**: Prevents denial-of-service attacks through rapid requests
+
+#### Audit & Compliance
+- **Complete Audit Trail**: All operations logged (create, read, update, delete)
+- **No Sensitive Logging**: Never logs secret values, tokens, or personally identifiable information
+- **Operation Tracking**: User, action, timestamp, and metadata for all operations
+- **Compliance Ready**: Audit logs support compliance reporting (SOC 2, GDPR, etc.)
+
+### Security Implementation
+
+#### Database Security
+```sql
+-- Secret table with encrypted storage
+CREATE TABLE "Secret" (
+  "id" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "type" TEXT NOT NULL,
+  "encryptedData" TEXT NOT NULL,  -- AES-256 encrypted
+  "keyId" TEXT NOT NULL,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "isActive" BOOLEAN NOT NULL DEFAULT true,
+  "expiresAt" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  
+  CONSTRAINT "Secret_pkey" PRIMARY KEY ("id")
+);
+
+-- Indexes for performance (no sensitive data exposure)
+CREATE INDEX "Secret_userId_idx" ON "Secret"("userId");
+CREATE INDEX "Secret_name_idx" ON "Secret"("name");
+CREATE INDEX "Secret_type_idx" ON "Secret"("type");
+```
+
+#### Encryption Process
+```typescript
+// AES-256 encryption with master key
+private encrypt(data: string): { encryptedData: string; keyId: string } {
+  const key = this.currentKey.key;
+  const encrypted = CryptoJS.AES.encrypt(data, key).toString();
+  
+  return {
+    encryptedData: encrypted,
+    keyId: this.currentKey.id
+  };
+}
+
+// Secure decryption
+private decrypt(encryptedData: string, keyId: string): string {
+  const key = this.keyCache.get(keyId)?.key;
+  if (!key) {
+    throw new Error('Encryption key not found');
+  }
+  
+  const decrypted = CryptoJS.AES.decrypt(encryptedData, key);
+  return decrypted.toString(CryptoJS.enc.Utf8);
+}
+```
+
+#### Input Validation
+```typescript
+private validateInput(userId: string, name: string, secretData?: SecretData): void {
+  // Validate userId
+  if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+    throw new Error('Invalid userId: must be a non-empty string');
+  }
+
+  // Validate and sanitize name
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    throw new Error('Invalid secret name: must be a non-empty string');
+  }
+
+  // Sanitize name (alphanumeric, hyphens, underscores only)
+  const sanitizedName = name.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+  if (sanitizedName !== name.trim()) {
+    throw new Error('Invalid secret name: contains invalid characters');
+  }
+
+  // Validate name length
+  if (sanitizedName.length > 100) {
+    throw new Error('Invalid secret name: too long (max 100 characters)');
+  }
+
+  // Validate secret data
+  if (secretData) {
+    if (!secretData.value || typeof secretData.value !== 'string') {
+      throw new Error('Invalid secret value: must be a non-empty string');
+    }
+
+    if (secretData.value.length > 10000) {
+      throw new Error('Invalid secret value: too long (max 10,000 characters)');
+    }
+  }
+}
+```
+
+#### Rate Limiting
+```typescript
+private checkRateLimit(userId: string): void {
+  const now = Date.now();
+  const key = `secrets:${userId}`;
+  const entry = this.rateLimitCache.get(key);
+
+  if (!entry || now > entry.resetTime) {
+    // Reset or create new rate limit entry
+    this.rateLimitCache.set(key, {
+      count: 1,
+      resetTime: now + RATE_LIMIT_WINDOW
+    });
+  } else {
+    // Increment count
+    entry.count++;
+    if (entry.count > RATE_LIMIT_MAX_REQUESTS) {
+      throw new Error(`Rate limit exceeded: maximum ${RATE_LIMIT_MAX_REQUESTS} requests per minute`);
+    }
+  }
+}
+```
+
+### Security Configuration
+
+#### Environment Variables
+```bash
+# Required: Master encryption key (32+ characters)
+ENCRYPTION_MASTER_KEY=your-secure-master-key-here
+
+# Optional: Rate limiting configuration
+SECRETS_RATE_LIMIT_WINDOW=60000    # 1 minute in milliseconds
+SECRETS_RATE_LIMIT_MAX_REQUESTS=100 # Max requests per window
+```
+
+#### Master Key Management
+```bash
+# Generate new master key
+npm run generate-master-key
+
+# Rotate master key (re-encrypts all secrets)
+npm run rotate-secrets
+```
+
+### Security Testing
+
+#### Unit Tests
+```typescript
+describe('SecretsVault Security', () => {
+  it('should not log sensitive data', async () => {
+    const vault = new SecretsVault(mockPrisma);
+    const secretValue = 'sk_test_sensitive_key_123';
+    
+    // Store secret
+    await vault.storeSecret('user1', 'test-secret', { value: secretValue });
+    
+    // Verify no sensitive data in logs
+    expect(logSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(secretValue)
+    );
+  });
+  
+  it('should validate input sanitization', async () => {
+    const vault = new SecretsVault(mockPrisma);
+    
+    // Test invalid characters
+    await expect(
+      vault.storeSecret('user1', 'secret with spaces', { value: 'test' })
+    ).rejects.toThrow('Invalid secret name: contains invalid characters');
+    
+    // Test SQL injection attempt
+    await expect(
+      vault.storeSecret('user1', "'; DROP TABLE secrets; --", { value: 'test' })
+    ).rejects.toThrow('Invalid secret name: contains invalid characters');
+  });
+  
+  it('should enforce rate limiting', async () => {
+    const vault = new SecretsVault(mockPrisma);
+    
+    // Submit requests up to limit
+    for (let i = 0; i < 100; i++) {
+      await vault.storeSecret('user1', `secret-${i}`, { value: 'test' });
+    }
+    
+    // Next request should be rate limited
+    await expect(
+      vault.storeSecret('user1', 'secret-101', { value: 'test' })
+    ).rejects.toThrow('Rate limit exceeded');
+  });
+});
+```
+
+#### Integration Tests
+```typescript
+describe('Secrets API Security', () => {
+  it('should handle authentication properly', async () => {
+    // Test without authentication
+    const response = await request(app)
+      .post('/api/secrets')
+      .send({
+        name: 'test-secret',
+        type: 'api_key',
+        value: 'sk_test_...'
+      });
+    
+    expect(response.status).toBe(401);
+  });
+  
+  it('should validate user ownership', async () => {
+    // Create secret as user1
+    const secret = await createSecret('user1', 'test-secret');
+    
+    // Try to access as user2
+    const response = await request(app)
+      .get(`/api/secrets/${secret.id}`)
+      .set('Authorization', `Bearer ${user2Token}`);
+    
+    expect(response.status).toBe(403);
+  });
+});
+```
+
+### Compliance Features
+
+#### Data Protection
+- **Encryption at Rest**: All secret data encrypted with AES-256
+- **No Plaintext Storage**: Never store unencrypted secret values
+- **Secure Key Management**: Master keys managed via environment variables
+- **Access Control**: User-based access with proper authentication
+
+#### Audit & Monitoring
+- **Complete Audit Trail**: All operations logged with user context
+- **No Sensitive Logging**: Zero sensitive data in logs
+- **Rate Limiting**: Prevents abuse and DoS attacks
+- **Health Monitoring**: Real-time vault health status
+
+#### Compliance Features
+- **Input Validation**: Comprehensive validation prevents injection attacks
+- **Error Handling**: Secure error messages without data exposure
+- **Soft Delete**: Audit trail preservation for compliance
+- **Version Control**: Secret versioning for change tracking
+
+### Security Checklist
+
+- [ ] Master encryption key is 32+ characters and securely stored
+- [ ] All secret values are encrypted with AES-256
+- [ ] Input validation prevents injection attacks
+- [ ] Rate limiting is configured and enforced
+- [ ] No sensitive data is logged
+- [ ] Audit trail is complete and immutable
+- [ ] User authentication and authorization is enforced
+- [ ] Key rotation process is tested and documented
+- [ ] Security tests are comprehensive and passing
+- [ ] Error messages don't expose sensitive information
+
+### Incident Response
+
+#### Security Breach Procedures
+1. **Immediate Response**: Rotate master encryption key
+2. **Investigation**: Review audit logs for unauthorized access
+3. **Containment**: Disable affected user accounts if necessary
+4. **Recovery**: Re-encrypt all secrets with new master key
+5. **Documentation**: Document incident and response actions
+6. **Prevention**: Implement additional security measures
+
+#### Key Rotation Process
+1. Generate new master encryption key
+2. Re-encrypt all existing secrets with new key
+3. Update environment variables
+4. Verify all secrets are accessible
+5. Remove old key from environment
+6. Update documentation and audit trail
+
+## Security Monitoring
+
+// ... existing code ...
 
 ---
 

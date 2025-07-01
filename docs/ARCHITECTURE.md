@@ -337,6 +337,176 @@ interface QueueJob {
 - **Performance Metrics**: Job duration and throughput tracking
 - **Error Tracking**: Comprehensive error logging and alerting
 
+### 5. Encrypted Secrets Vault Architecture
+
+The Encrypted Secrets Vault provides secure storage and management of sensitive data such as API keys, OAuth2 tokens, and custom secrets. All secrets are encrypted with AES-256 and include comprehensive input validation, rate limiting, and audit logging.
+
+#### Vault Architecture Overview
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   API Client    │    │   SecretsVault  │    │   Database      │
+│   (Frontend)    │───►│   (Encryption)  │───►│   (PostgreSQL)  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Rate Limiter  │    │   Master Key    │    │   Audit Logs    │
+│   (Per User)    │    │   Management    │    │   (Immutable)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+#### Security Features
+
+**Encryption:**
+- **AES-256 Encryption**: All secret values encrypted at rest
+- **Master Key Rotation**: Support for key rotation without data loss
+- **Encrypted Metadata**: Sensitive metadata also encrypted
+- **Key Management**: Environment-based master key with CLI rotation tools
+
+**Input Validation & Sanitization:**
+- **Character Restrictions**: Names limited to alphanumeric, hyphens, underscores
+- **Length Validation**: Names ≤ 100 chars, values ≤ 10,000 chars
+- **Type Validation**: Support for api_key, oauth2_token, webhook_secret, custom
+- **Expiration Validation**: Future date validation for expiration timestamps
+
+**Rate Limiting:**
+- **Per-User Limits**: 100 requests per minute per user
+- **Configurable Windows**: Adjustable rate limiting windows
+- **Graceful Degradation**: Rate limit exceeded responses with retry information
+
+**Audit & Compliance:**
+- **Complete Audit Trail**: All operations logged (create, read, update, delete)
+- **No Sensitive Logging**: Never logs secret values, tokens, or PII
+- **Operation Tracking**: User, action, timestamp, and metadata for all operations
+- **Compliance Ready**: Audit logs support compliance reporting
+
+#### Data Models
+
+**Secret Model:**
+```typescript
+interface Secret {
+  id: string;                    // Unique identifier
+  userId: string;                // Owner user ID
+  name: string;                  // Secret name (sanitized)
+  type: SecretType;              // Secret type
+  encryptedData: string;         // AES-256 encrypted value
+  keyId: string;                 // Encryption key identifier
+  version: number;               // Version for rotation
+  isActive: boolean;             // Soft delete flag
+  expiresAt?: Date;              // Optional expiration
+  createdAt: Date;               // Creation timestamp
+  updatedAt: Date;               // Last update timestamp
+}
+
+type SecretType = 'api_key' | 'oauth2_token' | 'webhook_secret' | 'custom';
+```
+
+**Encryption Key Model:**
+```typescript
+interface EncryptionKey {
+  id: string;                    // Key identifier
+  key: string;                   // Master encryption key
+  version: number;               // Key version
+  isActive: boolean;             // Active status
+  createdAt: Date;               // Creation timestamp
+  expiresAt?: Date;              // Optional expiration
+}
+```
+
+#### API Operations
+
+**Secret Management:**
+- **Store Secret**: Encrypt and store new secret with validation
+- **Retrieve Secret**: Decrypt and return secret value (metadata only for listing)
+- **Update Secret**: Re-encrypt and update existing secret
+- **Delete Secret**: Soft delete with audit trail preservation
+- **List Secrets**: Return metadata for all user secrets
+- **Rotate Keys**: Re-encrypt all secrets with new master key
+
+**Health & Monitoring:**
+- **Health Status**: Vault health with key count and active secrets
+- **Key Management**: Master key status and rotation capabilities
+- **Usage Metrics**: Rate limiting statistics and operation counts
+
+#### Data Flow
+
+```
+Secret Storage Request
+         │
+         ▼
+┌─────────────────┐
+│  Input          │
+│  Validation     │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Rate Limit     │
+│  Check          │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  AES-256        │
+│  Encryption     │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Database       │
+│  Storage        │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Audit Log      │
+│  Recording      │
+└─────────────────┘
+```
+
+#### Configuration
+
+**Environment Variables:**
+```bash
+# Required: Master encryption key (32+ characters)
+ENCRYPTION_MASTER_KEY=your-secure-master-key-here
+
+# Optional: Rate limiting configuration
+SECRETS_RATE_LIMIT_WINDOW=60000    # 1 minute in milliseconds
+SECRETS_RATE_LIMIT_MAX_REQUESTS=100 # Max requests per window
+```
+
+**CLI Tools:**
+```bash
+# Key rotation script
+npm run rotate-secrets
+
+# Generate new master key
+npm run generate-master-key
+```
+
+#### Security Compliance
+
+**Data Protection:**
+- **Encryption at Rest**: All secret data encrypted with AES-256
+- **No Plaintext Storage**: Never store unencrypted secret values
+- **Secure Key Management**: Master keys managed via environment variables
+- **Access Control**: User-based access with proper authentication
+
+**Audit & Monitoring:**
+- **Complete Audit Trail**: All operations logged with user context
+- **No Sensitive Logging**: Zero sensitive data in logs
+- **Rate Limiting**: Prevents abuse and DoS attacks
+- **Health Monitoring**: Real-time vault health status
+
+**Compliance Features:**
+- **Input Validation**: Comprehensive validation prevents injection attacks
+- **Error Handling**: Secure error messages without data exposure
+- **Soft Delete**: Audit trail preservation for compliance
+- **Version Control**: Secret versioning for change tracking
+
 ## Security Architecture
 
 ### 1. Authentication & Authorization
