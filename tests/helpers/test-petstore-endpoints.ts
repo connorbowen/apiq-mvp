@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 
 import axios from 'axios';
-import { parseOpenApiSpec } from '../src/lib/api/parser';
-import { logInfo, logError } from '../src/utils/logger';
+import { parseOpenApiSpec } from '../../src/lib/api/parser';
+import { logInfo, logError } from '../../src/utils/logger';
 
 const PETSTORE_API_URL = 'https://petstore.swagger.io/v2/swagger.json';
 const PETSTORE_BASE_URL = 'https://petstore.swagger.io/v2';

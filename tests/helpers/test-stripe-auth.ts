@@ -6,7 +6,7 @@
  */
 
 import axios from 'axios';
-import { logInfo, logError } from '../src/utils/logger';
+import { logInfo, logError } from '../../src/utils/logger';
 
 // Load environment variables
 import dotenv from 'dotenv';

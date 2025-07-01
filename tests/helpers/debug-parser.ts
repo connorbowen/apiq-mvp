@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { parseOpenApiSpec } from '../src/lib/api/parser';
+import { parseOpenApiSpec } from '../../src/lib/api/parser';
 
 const PETSTORE_API_URL = 'https://petstore.swagger.io/v2/swagger.json';
 

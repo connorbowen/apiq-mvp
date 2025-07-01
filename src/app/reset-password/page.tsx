@@ -11,7 +11,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token") || "";
+  const token = searchParams?.get("token") || "";
 
   useEffect(() => {
     if (!token) setError("Missing or invalid reset token.");

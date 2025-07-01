@@ -1,4 +1,4 @@
-import { prisma, testDatabaseConnection } from '../lib/database/client';
+import { prisma, testDatabaseConnection } from '../../lib/database/client';
 
 async function testDatabase() {
   console.log('🧪 Testing database connection and schema...\n');
