@@ -94,6 +94,151 @@ Sign out the current user.
 }
 ```
 
+#### `POST /api/auth/register`
+Register a new user account.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "name": "User Name",
+  "password": "password123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Registration successful! Please check your email to verify your account.",
+    "userId": "user_id"
+  },
+  "message": "Registration successful"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Email already exists",
+  "code": "EMAIL_EXISTS"
+}
+```
+
+#### `POST /api/auth/verify`
+Verify user email address using verification token.
+
+**Request Body:**
+```json
+{
+  "token": "verification_token_from_email"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Email verified successfully! Welcome to APIQ!",
+    "user": {
+      "id": "user_id",
+      "email": "user@example.com",
+      "name": "User Name",
+      "role": "USER"
+    },
+    "accessToken": "jwt_token",
+    "refreshToken": "refresh_token",
+    "expiresIn": 900
+  },
+  "message": "Email verification successful"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Invalid or expired verification token",
+  "code": "INVALID_TOKEN"
+}
+```
+
+#### `POST /api/auth/resend-verification`
+Resend verification email to user.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Verification email sent successfully"
+  },
+  "message": "Verification email sent"
+}
+```
+
+#### `POST /api/auth/request-password-reset`
+Request a password reset email.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "If an account with this email exists, a password reset link has been sent."
+  },
+  "message": "Password reset email sent"
+}
+```
+
+#### `POST /api/auth/reset-password`
+Reset password using reset token.
+
+**Request Body:**
+```json
+{
+  "token": "reset_token_from_email",
+  "password": "new_password123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Password reset successfully"
+  },
+  "message": "Password reset successful"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Invalid or expired reset token",
+  "code": "INVALID_TOKEN"
+}
+```
+
 #### `POST /api/auth/login`
 Authenticate user with email and password.
 
