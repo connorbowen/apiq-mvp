@@ -183,6 +183,20 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - [ ] **Integration Tests** - Add template system and visual builder tests
 - [ ] **Documentation** - Update `/docs/workflow-templates.md` and `/docs/nl-planning.md`
 
+#### 🔄 Priority 1D: Comprehensive E2E Testing Strategy 🚧 PLANNED
+- [ ] **UI Component E2E Tests** - Dashboard, WorkflowBuilder, ConnectionManager, Settings Panel
+- [ ] **User Journey E2E Tests** - Complete user workflows from login to workflow execution
+- [ ] **Error Recovery E2E Tests** - Network failures, API timeouts, authentication errors
+- [ ] **Performance E2E Tests** - Large workflows (100+ steps), concurrent users, load testing
+- [ ] **Cross-Browser E2E Tests** - Chromium, Firefox, WebKit validation for all critical flows
+- [ ] **Visual Regression Tests** - Screenshot comparison for UI consistency across browsers
+- [ ] **Accessibility E2E Tests** - WCAG 2.1 AA compliance testing with axe-core
+- [ ] **Mobile Responsiveness E2E Tests** - Mobile device testing (iOS Safari, Android Chrome)
+- [ ] **Data Validation E2E Tests** - Edge cases in form inputs, API responses, error handling
+- [ ] **Security E2E Tests** - Session timeout, CSRF protection, rate limiting UI
+- [ ] **Integration Tests** - Add comprehensive E2E test suite with 95%+ coverage
+- [ ] **Documentation** - Update `/docs/e2e-testing.md` with testing strategy and best practices
+
 ### Phase 2.5: Observability & Monitoring 🚧 PLANNED
 
 #### 🔄 Priority 2A: Health Checks 🚧 PLANNED
@@ -210,6 +224,16 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - [ ] **Rate Limit Headers** - Proper rate limit response headers
 - [ ] **Integration Tests** - Add dashboard, alert, and rate limiting tests
 - [ ] **Documentation** - Update `/docs/alerts.md` and `/docs/rate-limiting.md`
+
+#### 🔄 Priority 2D: Monitoring E2E Tests 🚧 PLANNED
+- [ ] **Health Check E2E Tests** - Test health check UI and alert displays
+- [ ] **Execution Monitoring E2E Tests** - Real-time workflow execution monitoring UI
+- [ ] **Alert System E2E Tests** - Email/Slack notification testing and alert history
+- [ ] **Dashboard E2E Tests** - Grafana dashboard functionality and data visualization
+- [ ] **Rate Limiting E2E Tests** - Test rate limit UI feedback and user experience
+- [ ] **Performance Metrics E2E Tests** - Test performance dashboard and metrics display
+- [ ] **Integration Tests** - Add monitoring E2E test suite with real-time data validation
+- [ ] **Documentation** - Update `/docs/monitoring-e2e.md` with monitoring test scenarios
 
 ### Phase 2.6: Security Hardening 🚧 PLANNED
 
@@ -243,6 +267,17 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - [ ] **Integration Tests** - Add compliance report generation tests
 - [ ] **Documentation** - Update `/docs/compliance.md` with report formats
 
+#### 🔄 Priority 3E: Security E2E Tests 🚧 PLANNED
+- [ ] **Authentication Security E2E Tests** - Session timeout, CSRF protection, JWT validation
+- [ ] **Rate Limiting E2E Tests** - Test rate limit enforcement and user feedback
+- [ ] **IP Allow-List E2E Tests** - Test IP restriction functionality and blocked access
+- [ ] **Security Headers E2E Tests** - Validate security headers are properly set
+- [ ] **Secrets Management E2E Tests** - Test secrets vault UI and access controls
+- [ ] **OAuth2 Security E2E Tests** - Test OAuth2 state validation and token security
+- [ ] **SAML/OIDC Security E2E Tests** - Test enterprise SSO security features
+- [ ] **Integration Tests** - Add security E2E test suite with penetration testing scenarios
+- [ ] **Documentation** - Update `/docs/security-e2e.md` with security testing guidelines
+
 ## Key Changes Based on Feedback Analysis
 
 ### ✅ Critical Missing Components Added
@@ -254,6 +289,9 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - **Basic NL Planning** - Added to Priority 1C (single-prompt → plan → confirm)
 - **Onboarding Wizard** - Added to Phase 2.7 for first-time user experience
 - **Frontend Error Boundary** - Added to Phase 2.7 for user-friendly error handling
+- **Comprehensive E2E Testing Strategy** - Added to Priority 1D for complete frontend testing coverage
+- **Monitoring E2E Tests** - Added to Priority 2D for observability UI testing
+- **Security E2E Tests** - Added to Priority 3E for security feature validation
 
 ### 🔄 Priority Reordering
 - **Rate Limiting** - Moved from Phase 2.6 to Phase 2.5 (observability) for operational reasons
@@ -286,6 +324,8 @@ Based on feedback analysis, here's the laser-focused sequence for first external
    - 3-5 common workflow patterns
 8. **Observability** (Phase 2.5)
    - Health checks, execution telemetry, basic dashboard, rate limiting
+9. **E2E Testing Coverage** (Phase 2.4 Priority 1D)
+   - UI component tests, user journey tests, error recovery tests
 
 **Everything else** (IP allow-list, security headers, SOC-2 reports, advanced AI) follows once early adopters prove the core flow works.
 
@@ -296,14 +336,17 @@ Based on feedback analysis, here's the laser-focused sequence for first external
 3. **Event Triggers & Data Flow** (P1B) - Webhooks, cron, and step interconnection
 4. **Templates & Visual Builder** (P1C) - Pre-built patterns and confirmation UI
 5. **Basic NL Planning** (P1C) - Single-prompt planning + confirmation
-6. **Observability Stack** (P2) - Monitoring, alerts, and rate limiting
-7. **Security Hardening** (P3) - Secrets management and enterprise features
+6. **E2E Testing Coverage** (P1D) - Comprehensive frontend testing and user experience validation
+7. **Observability Stack** (P2) - Monitoring, alerts, and rate limiting
+8. **Security Hardening** (P3) - Secrets management and enterprise features
 
 ## Additional Low-Effort Wins
 
 ### Automated Testing
 - Add integration tests as you deliver P1A/B to avoid regressions
+- Add E2E tests as you deliver P1D to ensure user experience quality
 - Maintain 100% test pass rate throughout development
+- Target 95%+ E2E test coverage for critical user journeys
 
 ### Rollback Strategy
 - Define idempotency & partial-failure handling early (part of P1A)
