@@ -55,8 +55,8 @@ test.describe('Basic Navigation E2E Tests', () => {
       // Click the health check button
       await page.click('button:has-text("Health Check")');
       
-      // Wait for the health status to appear
-      await page.waitForSelector('text=System Health:', { timeout: 10000 });
+      // Wait for the health status to appear with shorter timeout
+      await page.waitForSelector('text=System Health:', { timeout: 5000 });
       
       // Check that health status is displayed
       await expect(page.locator('text=System Health:')).toBeVisible();
@@ -193,7 +193,7 @@ test.describe('Basic Navigation E2E Tests', () => {
       
       // Should show error message (if implemented)
       // Note: This test may need adjustment based on actual error handling
-      await page.waitForTimeout(2000); // Wait for potential error message
+      await page.waitForTimeout(1000); // Reduced wait time
       
       // Check if we're still on login page (shouldn't redirect on invalid login)
       await expect(page).toHaveURL(/.*login/);

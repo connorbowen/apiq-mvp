@@ -14,6 +14,12 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 **Last Updated**: January 2025
 **Next Milestone**: Phase 2.4 - Workflow Orchestration Engine (Priority 1A)
 
+**E2E Test Status**: 
+- Auth e2e tests: ✅ 9/9 passing (fixed error handling and API client redirects)
+- Connections e2e tests: 🚧 25/25 failing (debugging in progress - authentication and UI navigation issues)
+- UI e2e tests: ✅ Passing
+- Workflow e2e tests: ✅ Passing
+
 ## Phase 1: Core Infrastructure ✅ COMPLETED
 
 ### ✅ Foundation Setup
@@ -50,6 +56,18 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - [x] End-to-end tests for user flows
 - [x] Database testing utilities
 - [x] Authentication testing helpers
+
+**Recent Debugging Work (January 2025)**:
+- [x] **Auth E2E Test Fixes** - Fixed API client 401 redirect behavior and loading state waits
+- [x] **Connections E2E Test Debugging** - Identified authentication and UI navigation issues
+- [x] **Test Configuration** - Updated connections e2e tests to run only on Chromium
+- [x] **Debug Screenshots** - Added screenshot capture for debugging UI state after login
+
+**Current Issues**:
+- [ ] **Connections E2E Tests** - 25/25 failing due to authentication/UI navigation issues
+- [ ] **UI Navigation** - Tests timeout waiting for connections tab/link after login
+- [ ] **Authentication Flow** - Potential issues with test user creation or session management
+- [ ] **Dashboard Rendering** - Connections UI may not be rendering for test users
 
 **Phase 1 Deliverables**: ✅ All completed and tested
 
@@ -432,31 +450,32 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 ### ✅ Mitigated Risks
 - **Authentication Security**: JWT tokens with proper validation
-- **Data Integrity**: Prisma ORM with transaction support
-- **API Reliability**: Comprehensive error handling
-- **Testing Coverage**: 100% test pass rate maintained
-- **OAuth2 Security**: Encrypted tokens, CSRF protection, audit logging
-- **SAML/OIDC Security**: Certificate validation, signature verification, secure token handling
+- [ ] **Data Integrity**: Prisma ORM with transaction support
+- [ ] **API Reliability**: Comprehensive error handling
+- [ ] **Testing Coverage**: 100% test pass rate maintained
+- [ ] **OAuth2 Security**: Encrypted tokens, CSRF protection, audit logging
+- [ ] **SAML/OIDC Security**: Certificate validation, signature verification, secure token handling
 
 ### 🔄 Active Risks
-- **Performance**: Need monitoring for API response times
-- **Scalability**: Database optimization required for growth
-- **Security**: Regular security audits needed
-- **AI Integration**: Complex natural language processing implementation
+- [ ] **Performance**: Need monitoring for API response times
+- [ ] **Scalability**: Database optimization required for growth
+- [ ] **Security**: Regular security audits needed
+- [ ] **AI Integration**: Complex natural language processing implementation
 
 ### ❌ Future Risks
-- **AI Integration Complexity**: Phase 3 implementation challenges
-- **Production Deployment**: Infrastructure scaling requirements
-- **User Adoption**: Market validation needed
-- **AI Safety**: Ensuring AI-generated workflows are secure and compliant
+- [ ] **AI Integration Complexity**: Phase 3 implementation challenges
+- [ ] **Production Deployment**: Infrastructure scaling requirements
+- [ ] **User Adoption**: Market validation needed
+- [ ] **AI Safety**: Ensuring AI-generated workflows are secure and compliant
 
 ## Next Steps
 
 ### Immediate (Phase 2.4 - Priority 1A)
-1. **Workflow Executor Core** - Build the core step execution engine (currently placeholder)
-2. **Loop & Retry Logic** - Implement workflow loops and automatic retry mechanisms
-3. **Rollback Strategy** - Define idempotency and partial-failure handling
-4. **Integration Tests** - Add comprehensive integration tests for executor
+1. **Fix Connections E2E Tests** - Resolve authentication and UI navigation issues
+2. **Workflow Executor Core** - Build the core step execution engine (currently placeholder)
+3. **Loop & Retry Logic** - Implement workflow loops and automatic retry mechanisms
+4. **Rollback Strategy** - Define idempotency and partial-failure handling
+5. **Integration Tests** - Add comprehensive integration tests for executor
 
 ### Short-term (Phase 2.4 - Priority 1B & 1C)
 1. **Data Flow & Conditional Logic** - Map outputs → inputs across workflow steps

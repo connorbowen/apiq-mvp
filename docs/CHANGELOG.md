@@ -145,6 +145,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Config**: Updated `next.config.js` for new environment or build settings.
 - **Testing & Reports**: Cleaned up old Playwright and test-results error-context files. Improved E2E and integration test reliability.
 - **Debug/Test Scripts**: Added `clear-cache.js`, `debug-openapi.js`, `debug-parser.js`, and `/api/oauth/test.ts` for easier debugging and admin/dev workflows.
+- **Debug screenshot capture for e2e test debugging**
+- **Chromium-only configuration for connections e2e tests**
 
 ### Changed
 - **Platform Focus** - Refactored from complex API management to NLP-first workflow creation
@@ -199,6 +201,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Test scripts moved from `scripts/` to `tests/helpers/`
   - Removed JavaScript scripts to maintain TypeScript-only codebase
   - Kept only essential utility scripts in `scripts/` directory
+- **Updated connections e2e tests to run only on Chromium browser**
+- **Enhanced test debugging with screenshot capture**
 
 ### Deprecated
 - N/A
@@ -242,6 +246,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Standardized all environments to use port 3000 consistently
   - Fixed OAuth callback URL mismatches that were causing authentication failures
   - Updated all environment files and documentation to reflect correct port configuration
+- **Auth e2e tests error handling and API client 401 redirect behavior**
+- **Loading state waits in authentication e2e tests**
 
 ### Security
 - Implemented secure authentication with NextAuth.js
@@ -514,3 +520,10 @@ When contributing to the changelog:
 ---
 
 *This changelog is maintained by the APIQ team and community contributors.* 
+
+## [Previous Releases]
+
+### Known Issues
+- Connections e2e tests failing due to authentication/UI navigation issues (25/25 failing)
+- Tests timeout waiting for connections tab/link after login
+- Potential issues with test user creation or session management 

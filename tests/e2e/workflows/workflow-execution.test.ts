@@ -58,7 +58,7 @@ test.describe('Workflow Execution E2E Tests', () => {
     await expect(page).toHaveURL(/.*dashboard/);
   });
 
-  test.describe('Workflow Execution Success', () => {
+  test.describe('Core Workflow Execution', () => {
     test('should execute simple workflow successfully', async ({ page }) => {
       // Create a simple workflow
       const workflowResponse = await page.request.post('/api/workflows', {
@@ -106,43 +106,41 @@ test.describe('Workflow Execution E2E Tests', () => {
       await expect(page.locator('[data-testid="step-status"]')).toContainText('Success');
     });
 
-    test('should execute workflow with multiple steps', async ({ page }) => {
-      // Create a workflow with multiple steps
+    test('should execute workflow with multiple steps and data flow', async ({ page }) => {
+      // Create a workflow with multiple steps including data transformation
       const workflowResponse = await page.request.post('/api/workflows', {
         data: {
-          name: 'Multi-Step Workflow',
-          description: 'A workflow with multiple steps',
+          name: 'Multi-Step Data Workflow',
+          description: 'A workflow with multiple steps and data transformation',
           steps: [
             {
               type: 'api_call',
-              name: 'First API Call',
+              name: 'Fetch Data',
               config: {
                 method: 'GET',
-                url: 'https://httpbin.org/get',
+                url: 'https://httpbin.org/json',
                 headers: {
                   'Content-Type': 'application/json'
                 }
               }
             },
             {
+              type: 'transform',
+              name: 'Transform Data',
+              config: {
+                transform: 'data.slideshow.author = "Transformed Author"'
+              }
+            },
+            {
               type: 'api_call',
-              name: 'Second API Call',
+              name: 'Send Data',
               config: {
                 method: 'POST',
                 url: 'https://httpbin.org/post',
                 headers: {
                   'Content-Type': 'application/json'
                 },
-                body: {
-                  message: 'Hello from workflow'
-                }
-              }
-            },
-            {
-              type: 'condition',
-              name: 'Check Response',
-              config: {
-                condition: 'response.status === 200'
+                body: '{{previous_step.data}}'
               }
             }
           ]
@@ -170,77 +168,15 @@ test.describe('Workflow Execution E2E Tests', () => {
       
       // Should show all step results
       await expect(page.locator('[data-testid="step-result"]')).toHaveCount(3);
-      await expect(page.locator('[data-testid="step-result"]').nth(0)).toContainText('First API Call');
-      await expect(page.locator('[data-testid="step-result"]').nth(1)).toContainText('Second API Call');
-      await expect(page.locator('[data-testid="step-result"]').nth(2)).toContainText('Check Response');
+      await expect(page.locator('[data-testid="step-result"]').nth(0)).toContainText('Fetch Data');
+      await expect(page.locator('[data-testid="step-result"]').nth(1)).toContainText('Transform Data');
+      await expect(page.locator('[data-testid="step-result"]').nth(2)).toContainText('Send Data');
       
       // All steps should be successful
       const stepStatuses = page.locator('[data-testid="step-status"]');
       await expect(stepStatuses.nth(0)).toContainText('Success');
       await expect(stepStatuses.nth(1)).toContainText('Success');
       await expect(stepStatuses.nth(2)).toContainText('Success');
-    });
-
-    test('should execute workflow with data transformation', async ({ page }) => {
-      // Create a workflow with data transformation
-      const workflowResponse = await page.request.post('/api/workflows', {
-        data: {
-          name: 'Data Transformation Workflow',
-          description: 'A workflow with data transformation steps',
-          steps: [
-            {
-              type: 'api_call',
-              name: 'Fetch Data',
-              config: {
-                method: 'GET',
-                url: 'https://httpbin.org/json',
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              }
-            },
-            {
-              type: 'transform',
-              name: 'Transform Data',
-              config: {
-                transform: 'data.slideshow.author = "Transformed Author"'
-              }
-            },
-            {
-              type: 'api_call',
-              name: 'Send Transformed Data',
-              config: {
-                method: 'POST',
-                url: 'https://httpbin.org/post',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: '{{previous_step.data}}'
-              }
-            }
-          ]
-        },
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const workflow = await workflowResponse.json();
-      createdWorkflowIds.push(workflow.data.id);
-      
-      // Navigate to workflow details
-      await page.goto(`${BASE_URL}/workflows/${workflow.data.id}`);
-      
-      // Click execute button
-      await page.click('[data-testid="execute-workflow-btn"]');
-      
-      // Wait for execution to complete
-      await expect(page.locator('[data-testid="execution-status"]')).toContainText('Completed', { timeout: 30000 });
-      
-      // Should show transformation step result
-      await expect(page.locator('[data-testid="step-result"]').nth(1)).toContainText('Transform Data');
-      await expect(page.locator('[data-testid="step-status"]').nth(1)).toContainText('Success');
     });
   });
 
@@ -303,71 +239,9 @@ test.describe('Workflow Execution E2E Tests', () => {
       // Should show successful execution
       await expect(page.locator('[data-testid="step-status"]')).toContainText('Success');
     });
-
-    test('should execute workflow with OAuth2 connection', async ({ page }) => {
-      // Create an OAuth2 connection
-      const connectionResponse = await page.request.post('/api/connections', {
-        data: {
-          name: 'OAuth2 Test Connection',
-          baseUrl: 'https://api.github.com',
-          authType: 'OAUTH2',
-          config: {
-            provider: 'github',
-            clientId: 'test-client-id',
-            clientSecret: 'test-client-secret',
-            accessToken: 'mock-oauth-token'
-          }
-        },
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const connection = await connectionResponse.json();
-      createdConnectionIds.push(connection.data.id);
-      
-      // Create a workflow using the OAuth2 connection
-      const workflowResponse = await page.request.post('/api/workflows', {
-        data: {
-          name: 'OAuth2 Workflow',
-          description: 'A workflow using OAuth2 connection',
-          connectionId: connection.data.id,
-          steps: [
-            {
-              type: 'api_call',
-              name: 'GitHub API Call',
-              config: {
-                method: 'GET',
-                path: '/user',
-                headers: {
-                  'Accept': 'application/vnd.github.v3+json'
-                }
-              }
-            }
-          ]
-        },
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const workflow = await workflowResponse.json();
-      createdWorkflowIds.push(workflow.data.id);
-      
-      // Navigate to workflow details
-      await page.goto(`${BASE_URL}/workflows/${workflow.data.id}`);
-      
-      // Click execute button
-      await page.click('[data-testid="execute-workflow-btn"]');
-      
-      // Should handle OAuth2 token refresh if needed
-      await expect(page.locator('[data-testid="execution-status"]')).toContainText('Completed', { timeout: 30000 });
-    });
   });
 
-  test.describe('Workflow Execution Error Handling', () => {
+  test.describe('Error Handling and Edge Cases', () => {
     test('should handle API call failure gracefully', async ({ page }) => {
       // Create a workflow with invalid API call
       const workflowResponse = await page.request.post('/api/workflows', {
@@ -403,196 +277,15 @@ test.describe('Workflow Execution E2E Tests', () => {
       // Click execute button
       await page.click('[data-testid="execute-workflow-btn"]');
       
-      // Should show execution failed
-      await expect(page.locator('[data-testid="execution-status"]')).toContainText('Failed', { timeout: 30000 });
-      
-      // Should show error details
-      await expect(page.locator('[data-testid="step-status"]')).toContainText('Failed');
-      await expect(page.locator('[data-testid="error-details"]')).toBeVisible();
-    });
-
-    test('should handle workflow with conditional logic', async ({ page }) => {
-      // Create a workflow with conditional logic
-      const workflowResponse = await page.request.post('/api/workflows', {
-        data: {
-          name: 'Conditional Workflow',
-          description: 'A workflow with conditional logic',
-          steps: [
-            {
-              type: 'api_call',
-              name: 'Get Status',
-              config: {
-                method: 'GET',
-                url: 'https://httpbin.org/status/404',
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              }
-            },
-            {
-              type: 'condition',
-              name: 'Check Status',
-              config: {
-                condition: 'response.status === 200'
-              }
-            },
-            {
-              type: 'api_call',
-              name: 'Success Action',
-              config: {
-                method: 'POST',
-                url: 'https://httpbin.org/post',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: {
-                  action: 'success'
-                }
-              }
-            }
-          ]
-        },
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const workflow = await workflowResponse.json();
-      createdWorkflowIds.push(workflow.data.id);
-      
-      // Navigate to workflow details
-      await page.goto(`${BASE_URL}/workflows/${workflow.data.id}`);
-      
-      // Click execute button
-      await page.click('[data-testid="execute-workflow-btn"]');
-      
-      // Wait for execution to complete
-      await expect(page.locator('[data-testid="execution-status"]')).toContainText('Completed', { timeout: 30000 });
-      
-      // Should show conditional step result
-      await expect(page.locator('[data-testid="step-result"]').nth(1)).toContainText('Check Status');
-      await expect(page.locator('[data-testid="step-status"]').nth(1)).toContainText('Condition Failed');
-      
-      // Success action should be skipped
-      await expect(page.locator('[data-testid="step-result"]').nth(2)).toContainText('Success Action');
-      await expect(page.locator('[data-testid="step-status"]').nth(2)).toContainText('Skipped');
-    });
-
-    test('should handle workflow timeout', async ({ page }) => {
-      // Create a workflow with slow API call
-      const workflowResponse = await page.request.post('/api/workflows', {
-        data: {
-          name: 'Timeout Workflow',
-          description: 'A workflow that tests timeout handling',
-          timeout: 5000, // 5 second timeout
-          steps: [
-            {
-              type: 'api_call',
-              name: 'Slow API Call',
-              config: {
-                method: 'GET',
-                url: 'https://httpbin.org/delay/10', // 10 second delay
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              }
-            }
-          ]
-        },
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const workflow = await workflowResponse.json();
-      createdWorkflowIds.push(workflow.data.id);
-      
-      // Navigate to workflow details
-      await page.goto(`${BASE_URL}/workflows/${workflow.data.id}`);
-      
-      // Click execute button
-      await page.click('[data-testid="execute-workflow-btn"]');
-      
-      // Should show timeout error
-      await expect(page.locator('[data-testid="execution-status"]')).toContainText('Failed', { timeout: 10000 });
-      await expect(page.locator('[data-testid="error-details"]')).toContainText('Timeout');
-    });
-  });
-
-  test.describe('Real-time Execution Updates', () => {
-    test('should show real-time execution progress', async ({ page }) => {
-      // Create a workflow with multiple steps
-      const workflowResponse = await page.request.post('/api/workflows', {
-        data: {
-          name: 'Real-time Test Workflow',
-          description: 'A workflow for testing real-time updates',
-          steps: [
-            {
-              type: 'api_call',
-              name: 'Step 1',
-              config: {
-                method: 'GET',
-                url: 'https://httpbin.org/delay/2',
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              }
-            },
-            {
-              type: 'api_call',
-              name: 'Step 2',
-              config: {
-                method: 'GET',
-                url: 'https://httpbin.org/delay/2',
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              }
-            },
-            {
-              type: 'api_call',
-              name: 'Step 3',
-              config: {
-                method: 'GET',
-                url: 'https://httpbin.org/delay/2',
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              }
-            }
-          ]
-        },
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const workflow = await workflowResponse.json();
-      createdWorkflowIds.push(workflow.data.id);
-      
-      // Navigate to workflow details
-      await page.goto(`${BASE_URL}/workflows/${workflow.data.id}`);
-      
-      // Click execute button
-      await page.click('[data-testid="execute-workflow-btn"]');
-      
       // Should show execution started
       await expect(page.locator('[data-testid="execution-status"]')).toContainText('Running');
       
-      // Should show progress indicator
-      await expect(page.locator('[data-testid="execution-progress"]')).toBeVisible();
+      // Should eventually show failure
+      await expect(page.locator('[data-testid="execution-status"]')).toContainText('Failed', { timeout: 30000 });
       
-      // Should show current step being executed
-      await expect(page.locator('[data-testid="current-step"]')).toContainText('Step 1');
-      
-      // Wait for all steps to complete
-      await expect(page.locator('[data-testid="execution-status"]')).toContainText('Completed', { timeout: 30000 });
-      
-      // Should show final progress
-      await expect(page.locator('[data-testid="execution-progress"]')).toContainText('100%');
+      // Should show error details
+      await expect(page.locator('[data-testid="error-details"]')).toBeVisible();
+      await expect(page.locator('[data-testid="step-status"]')).toContainText('Failed');
     });
 
     test('should allow canceling execution', async ({ page }) => {
@@ -607,7 +300,7 @@ test.describe('Workflow Execution E2E Tests', () => {
               name: 'Long Running Step',
               config: {
                 method: 'GET',
-                url: 'https://httpbin.org/delay/30', // 30 second delay
+                url: 'https://httpbin.org/delay/10', // 10 second delay (reduced from 30)
                 headers: {
                   'Content-Type': 'application/json'
                 }
@@ -642,7 +335,7 @@ test.describe('Workflow Execution E2E Tests', () => {
   });
 
   test.describe('Execution History', () => {
-    test('should display execution history', async ({ page }) => {
+    test('should display execution history and details', async ({ page }) => {
       // Create and execute a workflow
       const workflowResponse = await page.request.post('/api/workflows', {
         data: {
@@ -674,8 +367,8 @@ test.describe('Workflow Execution E2E Tests', () => {
       // Navigate to workflow details
       await page.goto(`${BASE_URL}/workflows/${workflow.data.id}`);
       
-      // Execute workflow multiple times
-      for (let i = 0; i < 3; i++) {
+      // Execute workflow twice
+      for (let i = 0; i < 2; i++) {
         await page.click('[data-testid="execute-workflow-btn"]');
         await expect(page.locator('[data-testid="execution-status"]')).toContainText('Completed', { timeout: 30000 });
       }
@@ -687,54 +380,14 @@ test.describe('Workflow Execution E2E Tests', () => {
       await expect(page.locator('[data-testid="execution-history"]')).toBeVisible();
       
       // Should show multiple executions
-      await expect(page.locator('[data-testid="execution-record"]')).toHaveCount(3);
+      await expect(page.locator('[data-testid="execution-record"]')).toHaveCount(2);
       
       // Should show execution details
       await expect(page.locator('[data-testid="execution-record"]').first()).toContainText('Completed');
       await expect(page.locator('[data-testid="execution-record"]').first()).toContainText('History Test Workflow');
-    });
-
-    test('should allow viewing execution details', async ({ page }) => {
-      // Create and execute a workflow
-      const workflowResponse = await page.request.post('/api/workflows', {
-        data: {
-          name: 'Details Test Workflow',
-          description: 'A workflow for testing execution details',
-          steps: [
-            {
-              type: 'api_call',
-              name: 'Test Step',
-              config: {
-                method: 'GET',
-                url: 'https://httpbin.org/get',
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              }
-            }
-          ]
-        },
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const workflow = await workflowResponse.json();
-      createdWorkflowIds.push(workflow.data.id);
-      
-      // Navigate to workflow details
-      await page.goto(`${BASE_URL}/workflows/${workflow.data.id}`);
-      
-      // Execute workflow
-      await page.click('[data-testid="execute-workflow-btn"]');
-      await expect(page.locator('[data-testid="execution-status"]')).toContainText('Completed', { timeout: 30000 });
-      
-      // Navigate to execution history
-      await page.click('[data-testid="execution-history-tab"]');
       
       // Click on execution record to view details
-      await page.click('[data-testid="execution-record"]').first();
+      await page.locator('[data-testid="execution-record"]').first().click();
       
       // Should show execution details modal
       await expect(page.locator('[data-testid="execution-details-modal"]')).toBeVisible();

@@ -3,6 +3,9 @@ import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/t
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
+// Configure tests to run only in Chromium
+test.use({ browserName: 'chromium' });
+
 let testUser;
 let jwt;
 let createdConnectionIds: string[] = [];
@@ -43,7 +46,8 @@ test.describe('Connections Management E2E Tests', () => {
     
     // Wait for successful login and redirect to dashboard
     await expect(page).toHaveURL(/.*dashboard/);
-    
+    // Take a screenshot after login
+    await page.screenshot({ path: 'debug-after-login.png', fullPage: true });
     // Navigate to connections tab
     await page.click('[data-testid="tab-connections"]');
   });

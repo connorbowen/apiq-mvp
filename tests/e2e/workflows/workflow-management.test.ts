@@ -9,7 +9,7 @@ test.describe('Workflow Management', () => {
     await page.goto('/dashboard');
   });
 
-  test('Create new workflow', async ({ page }) => {
+  test('Create and edit workflow', async ({ page }) => {
     // Navigate to workflows page
     await page.getByRole('link', { name: /workflows/i }).click();
     await expect(page.getByRole('heading', { name: /workflows/i })).toBeVisible();
@@ -34,14 +34,8 @@ test.describe('Workflow Management', () => {
     // Verify workflow was created
     await expect(page.getByText('Test Workflow')).toBeVisible();
     await expect(page.getByText('A test workflow for automation')).toBeVisible();
-  });
-
-  test('Edit existing workflow', async ({ page }) => {
-    // Navigate to workflows and select existing workflow
-    await page.getByRole('link', { name: /workflows/i }).click();
-    await page.getByText('Test Workflow').click();
     
-    // Click edit button
+    // Edit the workflow
     await page.getByRole('button', { name: /edit/i }).click();
     
     // Modify workflow details
@@ -56,7 +50,7 @@ test.describe('Workflow Management', () => {
     await expect(page.getByText('Updated description')).toBeVisible();
   });
 
-  test('Execute workflow', async ({ page }) => {
+  test('Execute and monitor workflow', async ({ page }) => {
     // Mock workflow execution API
     await page.route('**/api/workflows/*/execute', async route => {
       await route.fulfill({
@@ -69,17 +63,6 @@ test.describe('Workflow Management', () => {
       });
     });
     
-    // Navigate to workflows and execute
-    await page.getByRole('link', { name: /workflows/i }).click();
-    await page.getByText('Test Workflow').click();
-    await page.getByRole('button', { name: /run|execute/i }).click();
-    
-    // Verify execution started
-    await expect(page.getByText(/execution started/i)).toBeVisible();
-    await expect(page.getByText(/exec-123/i)).toBeVisible();
-  });
-
-  test('Monitor workflow execution', async ({ page }) => {
     // Mock execution status API
     await page.route('**/api/workflows/*/executions/*', async route => {
       await route.fulfill({
@@ -100,6 +83,15 @@ test.describe('Workflow Management', () => {
       });
     });
     
+    // Navigate to workflows and execute
+    await page.getByRole('link', { name: /workflows/i }).click();
+    await page.getByText('Test Workflow').click();
+    await page.getByRole('button', { name: /run|execute/i }).click();
+    
+    // Verify execution started
+    await expect(page.getByText(/execution started/i)).toBeVisible();
+    await expect(page.getByText(/exec-123/i)).toBeVisible();
+    
     // Navigate to execution details
     await page.goto('/workflows/wf-1/executions/exec-123');
     
@@ -110,27 +102,7 @@ test.describe('Workflow Management', () => {
     await expect(page.getByText(/process data/i)).toBeVisible();
   });
 
-  test('Delete workflow', async ({ page }) => {
-    // Mock delete API
-    await page.route('**/api/workflows/*', async route => {
-      if (route.request().method() === 'DELETE') {
-        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) });
-      }
-    });
-    
-    // Navigate to workflows and delete
-    await page.getByRole('link', { name: /workflows/i }).click();
-    await page.getByText('Test Workflow').click();
-    await page.getByRole('button', { name: /delete/i }).click();
-    
-    // Confirm deletion
-    await page.getByRole('button', { name: /confirm/i }).click();
-    
-    // Verify workflow was deleted
-    await expect(page.getByText('Test Workflow')).not.toBeVisible();
-  });
-
-  test('Workflow validation', async ({ page }) => {
+  test('Workflow validation and step management', async ({ page }) => {
     // Navigate to create workflow
     await page.getByRole('link', { name: /workflows/i }).click();
     await page.getByRole('button', { name: /create workflow/i }).click();
@@ -141,12 +113,6 @@ test.describe('Workflow Management', () => {
     // Verify validation errors
     await expect(page.getByText(/workflow name is required/i)).toBeVisible();
     await expect(page.getByText(/at least one step is required/i)).toBeVisible();
-  });
-
-  test('Workflow step management', async ({ page }) => {
-    // Navigate to create workflow
-    await page.getByRole('link', { name: /workflows/i }).click();
-    await page.getByRole('button', { name: /create workflow/i }).click();
     
     // Fill basic info
     await page.getByLabel(/workflow name/i).fill('Step Test Workflow');
@@ -168,5 +134,25 @@ test.describe('Workflow Management', () => {
     await expect(page.getByText('Step 1: Get Data')).toBeVisible();
     await expect(page.getByText('Step 2: Send Results')).toBeVisible();
     await expect(page.getByText('Step 3: Send Results')).not.toBeVisible();
+  });
+
+  test('Delete workflow', async ({ page }) => {
+    // Mock delete API
+    await page.route('**/api/workflows/*', async route => {
+      if (route.request().method() === 'DELETE') {
+        await route.fulfill({ status: 200, body: JSON.stringify({ success: true }) });
+      }
+    });
+    
+    // Navigate to workflows and delete
+    await page.getByRole('link', { name: /workflows/i }).click();
+    await page.getByText('Test Workflow').click();
+    await page.getByRole('button', { name: /delete/i }).click();
+    
+    // Confirm deletion
+    await page.getByRole('button', { name: /confirm/i }).click();
+    
+    // Verify workflow was deleted
+    await expect(page.getByText('Test Workflow')).not.toBeVisible();
   });
 }); 

@@ -123,6 +123,11 @@ AI: "I'll help you create a workflow that monitors GitHub for new issues and sen
    npm run test:e2e:workflows   # Workflow orchestration tests
    npm run test:e2e:connections # API connection management tests
    npm run test:e2e:ui          # User interface and navigation tests
+   
+   # Fast UI testing (Chromium only)
+   npm run test:e2e:ui-fast     # Optimized UI tests with Chromium
+   npm run test:e2e:ui-critical # Critical UI tests only (fastest)
+   npm run test:e2e:ui-script   # Run with automatic server management
    ```
 
 ### Authentication Configuration

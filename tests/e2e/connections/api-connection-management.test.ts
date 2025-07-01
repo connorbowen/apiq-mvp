@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// Configure tests to run only in Chromium
+test.use({ browserName: 'chromium' });
+
 test.describe('API Connection Management', () => {
   test.beforeEach(async ({ page }) => {
     // Mock authentication
@@ -7,6 +10,8 @@ test.describe('API Connection Management', () => {
       window.localStorage.setItem('auth-token', 'mock-token');
     });
     await page.goto('/dashboard');
+    // Take a screenshot after navigation
+    await page.screenshot({ path: 'debug-after-dashboard.png', fullPage: true });
   });
 
   test('Create API connection with API key', async ({ page }) => {

@@ -30,8 +30,8 @@ test.describe('Dashboard Navigation E2E Tests', () => {
     await page.fill('input[name="password"]', 'e2eTestPass123');
     await page.click('button[type="submit"]');
     
-    // Wait for successful login and redirect to dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
+    // Wait for successful login and redirect to dashboard with shorter timeout
+    await expect(page).toHaveURL(/.*dashboard/, { timeout: 10000 });
   });
 
   test.describe('Tab Navigation', () => {
