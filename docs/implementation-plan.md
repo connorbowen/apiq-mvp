@@ -146,27 +146,33 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 #### 🔄 Priority 1A: Workflow Executor Core 🚧 IN PROGRESS
 - [ ] **Step Runner Engine** - Build the core step execution engine (currently placeholder JSON response)
+- [ ] **In-Process Queue & Concurrency** - Implement queue system (BullMQ/pg-boss) with max-concurrency limits
+- [ ] **Encrypted Secrets Vault** - Secure storage and rotation of API credentials (`EncryptedSecret` model + KMS wrapper)
 - [ ] **Loop & Retry Logic** - Implement workflow loops and automatic retry mechanisms
 - [ ] **Rollback Strategy** - Define idempotency and partial-failure handling
 - [ ] **Execution State Management** - Track execution state and progress
 - [ ] **Integration Tests** - Add comprehensive integration tests for executor
 - [ ] **Documentation** - Update `/docs/workflow-execution.md` with executor specification
 
-#### 🔄 Priority 1B: Data Flow & Conditional Logic 🚧 PLANNED
+#### 🔄 Priority 1B: Event Triggers & Data Flow 🚧 PLANNED
+- [ ] **Event/Trigger Ingestion** - Webhook listeners and event processing (`/api/triggers`, `Trigger` model)
+- [ ] **Cron Scheduler** - Basic cron-like scheduling (node-cron) for recurring workflows
 - [ ] **Data Mapping** - Map outputs → inputs across workflow steps
 - [ ] **Basic Transform Helpers** - Built-in data transformation utilities
 - [ ] **Conditional Logic Engine** - If/then/else workflow branching
 - [ ] **Step Dependencies** - Handle step ordering and dependencies
-- [ ] **Integration Tests** - Add data flow and conditional logic tests
-- [ ] **Documentation** - Update `/docs/workflow-data-flow.md` with examples
+- [ ] **Integration Tests** - Add trigger, scheduler, and data flow tests
+- [ ] **Documentation** - Update `/docs/workflow-triggers.md` and `/docs/workflow-data-flow.md`
 
-#### 🔄 Priority 1C: Workflow Templates 🚧 PLANNED
+#### 🔄 Priority 1C: Workflow Templates & Visual Builder 🚧 PLANNED
 - [ ] **Template System** - Seed handful of YAML/JSON workflow blueprints
 - [ ] **Template Library** - Pre-built workflow patterns (customer onboarding, data sync, etc.)
 - [ ] **Template Validation** - Validate templates before execution
 - [ ] **Template Sharing** - Share templates within organization
-- [ ] **Integration Tests** - Add template system tests
-- [ ] **Documentation** - Update `/docs/workflow-templates.md` with template format
+- [ ] **Visual Builder v0** - Read-only workflow view + Confirm button (minimal UI for AI-generated plans)
+- [ ] **Basic NL Planning** - Single-prompt GPT function-calling → JSON plan (no optimization yet)
+- [ ] **Integration Tests** - Add template system and visual builder tests
+- [ ] **Documentation** - Update `/docs/workflow-templates.md` and `/docs/nl-planning.md`
 
 ### Phase 2.5: Observability & Monitoring 🚧 PLANNED
 
@@ -191,18 +197,19 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - [ ] **Alert System** - Email/Slack notifications on failures
 - [ ] **Alert Rules** - Configurable alert thresholds and conditions
 - [ ] **Alert History** - Track and manage alert history
-- [ ] **Integration Tests** - Add dashboard and alert tests
-- [ ] **Documentation** - Update `/docs/alerts.md` with alert configuration
+- [ ] **Rate Limiting Middleware** - Implement via `next-rate-limit` (per-user and per-API limits)
+- [ ] **Rate Limit Headers** - Proper rate limit response headers
+- [ ] **Integration Tests** - Add dashboard, alert, and rate limiting tests
+- [ ] **Documentation** - Update `/docs/alerts.md` and `/docs/rate-limiting.md`
 
 ### Phase 2.6: Security Hardening 🚧 PLANNED
 
-#### 🔄 Priority 3A: Rate Limiting 🚧 PLANNED
-- [ ] **Rate Limiting Middleware** - Implement via `next-rate-limit`
-- [ ] **Per-User Limits** - User-specific rate limiting
-- [ ] **Per-API Limits** - API-specific rate limiting
-- [ ] **Rate Limit Headers** - Proper rate limit response headers
-- [ ] **Integration Tests** - Add rate limiting tests
-- [ ] **Documentation** - Update `/docs/security.md` with rate limiting config
+#### 🔄 Priority 3A: Secrets Management 🚧 PLANNED
+- [ ] **Secrets in CI/CD & .env Policy** - Codify `.env` handling and GitHub Actions masking
+- [ ] **Key Rotation Automation** - Automated secret rotation for long-lived tokens
+- [ ] **Secrets Audit Logging** - Track secret access and rotation events
+- [ ] **Integration Tests** - Add secrets management tests
+- [ ] **Documentation** - Update `/docs/security.md` with secrets policy
 
 #### 🔄 Priority 3B: IP Allow-List 🚧 PLANNED
 - [ ] **IP Allow-List Middleware** - Restrict API access by IP address
@@ -227,14 +234,61 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - [ ] **Integration Tests** - Add compliance report generation tests
 - [ ] **Documentation** - Update `/docs/compliance.md` with report formats
 
+## Key Changes Based on Feedback Analysis
+
+### ✅ Critical Missing Components Added
+- **Event/Trigger Ingestion** - Added to Priority 1B for webhook listeners and event processing
+- **Encrypted Secrets Vault** - Added to Priority 1A for secure API credential storage
+- **In-Process Queue & Concurrency** - Added to Priority 1A to prevent server starvation
+- **Cron Scheduler** - Added to Priority 1B for recurring workflow support
+- **Visual Builder v0** - Added to Priority 1C for AI-generated plan confirmation
+- **Basic NL Planning** - Added to Priority 1C (single-prompt → plan → confirm)
+- **Onboarding Wizard** - Added to Phase 2.7 for first-time user experience
+- **Frontend Error Boundary** - Added to Phase 2.7 for user-friendly error handling
+
+### 🔄 Priority Reordering
+- **Rate Limiting** - Moved from Phase 2.6 to Phase 2.5 (observability) for operational reasons
+- **User Registration** - Prioritized to complete before executor goes live
+- **Basic NL Planning** - Moved forward to end of Phase 2.4 (before full AI orchestration)
+- **Secrets Management** - Added as new Priority 3A in Phase 2.6
+
+### 🎯 MVP Focus
+- **Laser-focused sequence** - 8-step sequence for first external demo
+- **Core value prop** - "describe → confirm → run → see results"
+- **Enterprise features deferred** - IP allow-list, compliance reports moved behind core functionality
+
+## Revised "Tight MVP" Sequence (One Quarter)
+
+Based on feedback analysis, here's the laser-focused sequence for first external demo:
+
+1. **Auth / Registration Complete** (Phase 2.7)
+   - Email verification, basic onboarding wizard, error boundaries
+2. **Executor Core** (Phase 2.4 Priority 1A)
+   - Step runner, in-process queue, retry, rollback, encrypted secrets
+3. **Event & Cron Triggers** (Phase 2.4 Priority 1B)
+   - Webhook listener, simple cron scheduler
+4. **Data-flow & Conditional Logic** (Phase 2.4 Priority 1B)
+   - Step interconnection and basic transformations
+5. **Visual Builder v0** (Phase 2.4 Priority 1C)
+   - Read-only workflow view + Confirm button
+6. **Basic NL Planning** (Phase 2.4 Priority 1C)
+   - Single-prompt GPT → plan → confirm (no optimization yet)
+7. **Templates Seed** (Phase 2.4 Priority 1C)
+   - 3-5 common workflow patterns
+8. **Observability** (Phase 2.5)
+   - Health checks, execution telemetry, basic dashboard, rate limiting
+
+**Everything else** (IP allow-list, security headers, SOC-2 reports, advanced AI) follows once early adopters prove the core flow works.
+
 ## Dependency Order
 
-1. **Auth / RBAC** (✅ Completed in Phase 2.2)
-2. **Executor** (P1A) - Core workflow execution engine
-3. **Data-flow & Conditional Logic** (P1B) - Step interconnection
-4. **Templates** (P1C) - Pre-built workflow patterns
-5. **Observability Stack** (P2) - Monitoring and alerting
-6. **Security Hardening** (P3) - Production security measures
+1. **Auth / Registration** (Phase 2.7) - Complete before executor goes live
+2. **Executor Core** (P1A) - Core workflow execution engine with queue and secrets
+3. **Event Triggers & Data Flow** (P1B) - Webhooks, cron, and step interconnection
+4. **Templates & Visual Builder** (P1C) - Pre-built patterns and confirmation UI
+5. **Basic NL Planning** (P1C) - Single-prompt planning + confirmation
+6. **Observability Stack** (P2) - Monitoring, alerts, and rate limiting
+7. **Security Hardening** (P3) - Secrets management and enterprise features
 
 ## Additional Low-Effort Wins
 
@@ -258,7 +312,10 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - [ ] **OAuth2 Signup** - OAuth2 sign-up (Google, GitHub, Slack) via NextAuth providers
 - [ ] **SAML/OIDC Signup** - Enterprise SSO signup (Okta, Azure AD, Google Workspace)
 - [ ] **Email Verification Screen** - Verification email screen & resend link functionality
+- [ ] **Onboarding Wizard** - "Getting started" flow leading to "Connect your first API"
 - [ ] **Welcome Flow** - First-time "Welcome" walkthrough (sets `hasSeenWelcome=true`)
+- [ ] **Frontend Error Boundary** - Global error handling and toast notifications
+- [ ] **Toast Notification System** - User-friendly error and success messaging
 
 #### 🚧 Backend / API
 - [ ] **Registration API** - POST `/api/auth/register` (rate-limited, captcha optional)
