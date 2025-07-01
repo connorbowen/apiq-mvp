@@ -541,6 +541,166 @@
    };
    ```
 
+### Queue Management
+
+The QueueService provides robust job queue management using PgBoss 10.3.2 for workflow execution. It's designed for server-side usage and includes comprehensive error handling, health monitoring, and type safety.
+
+#### 1. Service Setup
+```typescript
+// lib/queue/queueService.ts
+import { QueueService, QueueConfig } from '@/lib/queue/queueService';
+import { prisma } from '@/lib/database/client';
+
+// Initialize with custom configuration
+const queueConfig: Partial<QueueConfig> = {
+  maxConcurrency: 10,
+  retryLimit: 3,
+  retryDelay: 5000,
+  timeout: 300000,
+  healthCheckInterval: 30000
+};
+
+const queueService = new QueueService(prisma, queueConfig);
+await queueService.initialize();
+```
+
+#### 2. Job Submission
+```typescript
+// Submit a job to the queue
+const job = {
+  queueName: 'workflow-execution',
+  name: 'process-customer-data',
+  data: { customerId: '123', action: 'sync' },
+  retryLimit: 3,
+  retryDelay: 5000,
+  timeout: 300000,
+  priority: 0,
+  delay: 0,
+  expireIn: 3600000,
+  jobKey: 'customer-sync-123' // Optional: for deduplication
+};
+
+const result = await queueService.submitJob(job);
+// Returns: { queueName: 'workflow-execution', jobId: 'job-123' }
+```
+
+#### 3. Worker Registration
+```typescript
+// Register a worker to process jobs
+await queueService.registerWorker(
+  'workflow-execution',
+  async (jobData) => {
+    // Process the job
+    const result = await processWorkflow(jobData);
+    return result;
+  },
+  {
+    teamSize: 5, // Number of concurrent workers
+    timeout: 300000,
+    retryLimit: 3,
+    dataSchema: z.object({ // Optional: runtime validation
+      customerId: z.string(),
+      action: z.string()
+    })
+  }
+);
+```
+
+#### 4. Job Management
+```typescript
+// Cancel a job
+await queueService.cancelJob('workflow-execution', 'job-123');
+
+// Get job status
+const status = await queueService.getJobStatus('workflow-execution', 'job-123');
+// Returns JobStatus object with state, retry info, timestamps, etc.
+```
+
+#### 5. Health Monitoring
+```typescript
+// Get overall health status
+const health = await queueService.getHealthStatus();
+// Returns: QueueHealth with status, message, metrics, etc.
+
+// Get worker statistics
+const stats = queueService.getWorkerStats();
+// Returns: Array of WorkerStats with active/completed/failed job counts
+```
+
+#### 6. Error Handling
+```typescript
+try {
+  const result = await queueService.submitJob(job);
+} catch (error) {
+  if (error.message.includes('duplicate jobKey')) {
+    // Handle deduplication error
+    console.log('Job already exists with this key');
+  } else if (error.message.includes('Queue service not initialized')) {
+    // Handle initialization error
+    await queueService.initialize();
+  } else {
+    // Handle other errors
+    console.error('Job submission failed:', error);
+  }
+}
+```
+
+#### 7. Best Practices
+
+**Job Identification**
+- Always provide `queueName` for all job operations
+- Use `jobKey` for deduplication when needed
+- Store both `queueName` and `jobId` for job tracking
+
+**Worker Configuration**
+- Use `teamSize` for parallelism (default: 10)
+- Set appropriate `timeout` values for job execution
+- Configure `retryLimit` and `retryDelay` for resilience
+
+**Data Validation**
+- Use zod schemas for runtime validation
+- Sanitize sensitive data in job payloads
+- Validate job data at API boundaries
+
+**Monitoring**
+- Regular health checks for queue status
+- Monitor worker statistics for performance
+- Set up alerts for failed jobs
+
+**Security**
+- Never log sensitive job data
+- Use job data sanitization for logs
+- Implement proper error handling
+
+#### 8. Testing
+```typescript
+// tests/unit/lib/queue/queueService.test.ts
+describe('QueueService', () => {
+  let queueService: QueueService;
+  let mockPrisma: jest.Mocked<PrismaClient>;
+
+  beforeEach(() => {
+    mockPrisma = createMockPrisma();
+    queueService = new QueueService(mockPrisma);
+  });
+
+  it('should submit a job successfully', async () => {
+    const job: QueueJob = {
+      queueName: 'test-queue',
+      name: 'test-job',
+      data: { test: 'data' }
+    };
+
+    mockBoss.createQueue.mockResolvedValue(undefined);
+    mockBoss.send.mockResolvedValue('job-123');
+
+    const result = await queueService.submitJob(job);
+
+    expect(result).toEqual({ queueName: 'test-queue', jobId: 'job-123' });
+  });
+});
+```
+
 ## Frontend Development
 
 ### Component Guidelines

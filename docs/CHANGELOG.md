@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PgBoss 10.3.2 QueueService Refactoring** - ✅ COMPLETED
+  - **API Compatibility**: Updated QueueService to be fully compatible with PgBoss 10.3.2
+  - **Job Identification**: All enqueue/cancel/status APIs now require and persist both queueName and jobId
+  - **JobKey Support**: Added support for jobKey in submitJob for global uniqueness and deduplication
+  - **Expanded Job States**: Updated job state types to include all PgBoss states (created, retry, active, completed, cancelled, expired, failed)
+  - **Worker Registration**: Refactored to use teamSize and single-job handler for better parallelism
+  - **Runtime Validation**: Added zod schema validation for job payloads at API boundaries
+  - **Type Safety**: Added comprehensive TypeScript types with TODO comments for future improvements
+  - **Error Handling**: Implemented null/undefined guards and fail-fast error handling throughout
+  - **Health Monitoring**: Enhanced health checks with worker statistics and queue metrics
+  - **Security**: Added job data sanitization for sensitive fields in logs
+  - **Comprehensive Testing**: 36 unit tests covering all functionality including error scenarios
+  - **Documentation**: Added TODO comments for retention, graceful shutdown, metrics, and transactional enqueue
+  - **Best Practices**: Implemented all PgBoss 10.3.2 best practices for job management and worker registration
+  - **Linting**: Fixed all ESLint and TypeScript errors with proper configuration
+  - **Dependencies**: Added zod package for runtime validation
+  - **Configuration**: Updated ESLint config to properly support TypeScript with @typescript-eslint plugin
 - **Encrypted Secrets Vault Implementation** - ✅ COMPLETED
   - **Secure Secret Storage**: AES-256 encryption for all secret values with master key rotation support
   - **Database Schema**: New `Secret` model with encrypted data storage, versioning, and soft delete

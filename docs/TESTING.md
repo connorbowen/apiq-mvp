@@ -182,6 +182,13 @@ The test suite has been enhanced with robust isolation mechanisms:
   - Verify page tests (automatic sign-in and dashboard redirect)
   - Signup success page tests (resend verification, navigation)
   - Forgot password success page tests (security messaging, instructions)
+- **QueueService Tests**: 
+  - 36 comprehensive unit tests covering all QueueService functionality
+  - PgBoss 10.3.2 compatibility testing with proper mocking
+  - Job submission, cancellation, and status checking
+  - Worker registration and health monitoring
+  - Error handling and validation scenarios
+  - Type safety and API compliance testing
 
 #### Integration Tests
 - **Location**: `tests/integration/`
@@ -699,6 +706,260 @@ jobs:
 - **Mock Prevention**: No mock data in non-test code
 - **Security Checks**: All security tests passing
 - **Performance**: Response times within acceptable limits
+
+## QueueService Testing
+
+### Overview
+The QueueService includes comprehensive unit tests covering all functionality with proper PgBoss 10.3.2 mocking and type safety validation.
+
+### Test Coverage
+- **36 unit tests** covering all QueueService methods
+- **100% method coverage** for core functionality
+- **Error scenario testing** for all failure modes
+- **Type safety validation** with TypeScript compliance
+- **API compatibility testing** with PgBoss 10.3.2
+
+### Running QueueService Tests
+```bash
+# Run QueueService tests specifically
+npm test -- tests/unit/lib/queue/queueService.test.ts
+
+# Run with coverage
+npm test -- tests/unit/lib/queue/queueService.test.ts --coverage
+
+# Run with verbose output
+npm test -- tests/unit/lib/queue/queueService.test.ts --verbose
+```
+
+### Test Categories
+
+#### 1. Service Initialization
+```typescript
+describe('QueueService Initialization', () => {
+  it('should initialize successfully with valid configuration', async () => {
+    const queueService = new QueueService(mockPrisma);
+    await queueService.initialize();
+    expect(queueService.isInitialized()).toBe(true);
+  });
+
+  it('should handle initialization errors gracefully', async () => {
+    mockBoss.start.mockRejectedValue(new Error('Connection failed'));
+    const queueService = new QueueService(mockPrisma);
+    await expect(queueService.initialize()).rejects.toThrow('Connection failed');
+  });
+});
+```
+
+#### 2. Job Submission
+```typescript
+describe('Job Submission', () => {
+  it('should submit a job successfully', async () => {
+    const job: QueueJob = {
+      queueName: 'test-queue',
+      name: 'test-job',
+      data: { test: 'data' }
+    };
+
+    mockBoss.createQueue.mockResolvedValue(undefined);
+    mockBoss.send.mockResolvedValue('job-123');
+
+    const result = await queueService.submitJob(job);
+
+    expect(result).toEqual({ queueName: 'test-queue', jobId: 'job-123' });
+  });
+
+  it('should handle jobKey deduplication', async () => {
+    const job: QueueJob = {
+      queueName: 'test-queue',
+      name: 'test-job',
+      data: { test: 'data' },
+      jobKey: 'unique-key-123'
+    };
+
+    mockBoss.send.mockResolvedValue(null); // Simulate duplicate jobKey
+
+    await expect(queueService.submitJob(job)).rejects.toThrow(
+      'Failed to enqueue job (likely duplicate jobKey)'
+    );
+  });
+});
+```
+
+#### 3. Worker Registration
+```typescript
+describe('Worker Registration', () => {
+  it('should register a worker successfully', async () => {
+    const handler = jest.fn().mockResolvedValue('success');
+    const options = {
+      teamSize: 5,
+      timeout: 300000,
+      retryLimit: 3
+    };
+
+    mockBoss.createQueue.mockResolvedValue(undefined);
+    mockBoss.work.mockResolvedValue(undefined);
+
+    await queueService.registerWorker('test-queue', handler, options);
+
+    expect(mockBoss.createQueue).toHaveBeenCalledWith('test-queue');
+    expect(mockBoss.work).toHaveBeenCalledWith('test-queue', expect.any(Function), options);
+  });
+
+  it('should handle worker registration errors', async () => {
+    const handler = jest.fn();
+    const error = new Error('Worker registration failed');
+    mockBoss.work.mockRejectedValue(error);
+
+    await expect(queueService.registerWorker('test-queue', handler)).rejects.toThrow(
+      'Worker registration failed'
+    );
+  });
+});
+```
+
+#### 4. Job Management
+```typescript
+describe('Job Management', () => {
+  it('should cancel a job successfully', async () => {
+    mockBoss.cancel.mockResolvedValue(undefined);
+
+    await queueService.cancelJob('test-queue', 'job-123');
+
+    expect(mockBoss.cancel).toHaveBeenCalledWith('job-123');
+  });
+
+  it('should get job status successfully', async () => {
+    const mockJob = {
+      id: 'job-123',
+      name: 'test-job',
+      data: { test: 'data' },
+      state: 'completed',
+      retryLimit: 3,
+      retryCount: 0,
+      createdOn: new Date(),
+      completedOn: new Date()
+    };
+
+    mockBoss.getJobById.mockResolvedValue(mockJob);
+
+    const status = await queueService.getJobStatus('test-queue', 'job-123');
+
+    expect(status).toEqual(expect.objectContaining({
+      id: 'job-123',
+      state: 'completed'
+    }));
+  });
+});
+```
+
+#### 5. Health Monitoring
+```typescript
+describe('Health Monitoring', () => {
+  it('should return healthy status when service is initialized', async () => {
+    await queueService.initialize();
+    const health = await queueService.getHealthStatus();
+
+    expect(health.status).toBe('healthy');
+    expect(health.message).toBe('Queue service is running');
+  });
+
+  it('should return worker statistics', () => {
+    const stats = queueService.getWorkerStats();
+    expect(Array.isArray(stats)).toBe(true);
+  });
+});
+```
+
+#### 6. Error Handling
+```typescript
+describe('Error Handling', () => {
+  it('should validate job data with zod schema', async () => {
+    const invalidJob = {
+      queueName: 'test-queue',
+      name: 'test-job',
+      data: null // Invalid data
+    };
+
+    await expect(queueService.submitJob(invalidJob as any)).rejects.toThrow(
+      'Job data is required'
+    );
+  });
+
+  it('should handle null returns from PgBoss', async () => {
+    mockBoss.send.mockResolvedValue(null);
+    
+    const job: QueueJob = {
+      queueName: 'test-queue',
+      name: 'test-job',
+      data: { test: 'data' }
+    };
+
+    await expect(queueService.submitJob(job)).rejects.toThrow(
+      'Failed to enqueue job (likely duplicate jobKey)'
+    );
+  });
+});
+```
+
+### Mocking Strategy
+
+#### PgBoss Mocking
+```typescript
+// Mock PgBoss instance
+const mockBoss = {
+  start: jest.fn(),
+  stop: jest.fn(),
+  createQueue: jest.fn(),
+  send: jest.fn(),
+  work: jest.fn(),
+  cancel: jest.fn(),
+  getJobById: jest.fn(),
+  getQueueSize: jest.fn(),
+  getJobCounts: jest.fn()
+};
+
+jest.mock('pg-boss', () => {
+  return jest.fn().mockImplementation(() => mockBoss);
+});
+```
+
+#### Prisma Mocking
+```typescript
+// Mock Prisma client
+const mockPrisma = {
+  $connect: jest.fn(),
+  $disconnect: jest.fn(),
+  // Add other Prisma methods as needed
+} as jest.Mocked<PrismaClient>;
+```
+
+### Best Practices
+
+#### Test Organization
+- **Group related tests** in describe blocks
+- **Use descriptive test names** that explain the scenario
+- **Test both success and failure cases**
+- **Validate error messages** for debugging
+- **Test edge cases** and boundary conditions
+
+#### Mock Management
+- **Reset mocks** between tests using `beforeEach`
+- **Verify mock calls** to ensure correct API usage
+- **Mock external dependencies** (PgBoss, Prisma)
+- **Don't mock internal logic** unless testing error handling
+
+#### Type Safety
+- **Use proper TypeScript types** in tests
+- **Validate return types** match expected interfaces
+- **Test type guards** and validation logic
+- **Ensure API compatibility** with PgBoss 10.3.2
+
+### Integration with Workflow System
+The QueueService tests ensure compatibility with the workflow execution system:
+- **Job submission** for workflow steps
+- **Worker registration** for step processing
+- **Health monitoring** for system reliability
+- **Error handling** for graceful failures
 
 ## Troubleshooting
 

@@ -1280,6 +1280,160 @@ Get system statistics (admin only).
 }
 ```
 
+### Queue Management
+
+The QueueService provides robust job queue management using PgBoss 10.3.2 for workflow execution. It includes max-concurrency limits, health checks, job deduplication, and comprehensive error handling.
+
+#### Features
+- **PgBoss 10.3.2 Compatibility**: Fully compatible with latest PgBoss version
+- **Job Deduplication**: Support for jobKey to prevent duplicate job execution
+- **Worker Management**: Team-based worker registration with configurable parallelism
+- **Health Monitoring**: Real-time queue health status and worker statistics
+- **Runtime Validation**: Zod schema validation for job payloads
+- **Security**: Job data sanitization for sensitive fields in logs
+- **Type Safety**: Comprehensive TypeScript support with proper error handling
+
+#### QueueService Class
+
+The QueueService is available as a TypeScript class for server-side usage:
+
+```typescript
+import { QueueService, QueueJob, QueueConfig } from '@/lib/queue/queueService';
+
+// Initialize with custom configuration
+const queueService = new QueueService(prisma, {
+  maxConcurrency: 10,
+  retryLimit: 3,
+  retryDelay: 5000,
+  timeout: 300000,
+  healthCheckInterval: 30000
+});
+
+await queueService.initialize();
+```
+
+#### Job Submission
+
+Submit jobs to the queue with comprehensive options:
+
+```typescript
+const job: QueueJob = {
+  queueName: 'workflow-execution',
+  name: 'process-customer-data',
+  data: { customerId: '123', action: 'sync' },
+  retryLimit: 3,
+  retryDelay: 5000,
+  timeout: 300000,
+  priority: 0,
+  delay: 0,
+  expireIn: 3600000,
+  jobKey: 'customer-sync-123' // Optional: for deduplication
+};
+
+const result = await queueService.submitJob(job);
+// Returns: { queueName: 'workflow-execution', jobId: 'job-123' }
+```
+
+#### Worker Registration
+
+Register workers to process jobs with configurable options:
+
+```typescript
+await queueService.registerWorker(
+  'workflow-execution',
+  async (jobData) => {
+    // Process the job
+    const result = await processWorkflow(jobData);
+    return result;
+  },
+  {
+    teamSize: 5, // Number of concurrent workers
+    timeout: 300000,
+    retryLimit: 3,
+    dataSchema: z.object({ // Optional: runtime validation
+      customerId: z.string(),
+      action: z.string()
+    })
+  }
+);
+```
+
+#### Job Management
+
+Cancel jobs and check their status:
+
+```typescript
+// Cancel a job
+await queueService.cancelJob('workflow-execution', 'job-123');
+
+// Get job status
+const status = await queueService.getJobStatus('workflow-execution', 'job-123');
+// Returns JobStatus object with state, retry info, timestamps, etc.
+```
+
+#### Health Monitoring
+
+Monitor queue health and worker statistics:
+
+```typescript
+// Get overall health status
+const health = await queueService.getHealthStatus();
+// Returns: QueueHealth with status, message, metrics, etc.
+
+// Get worker statistics
+const stats = queueService.getWorkerStats();
+// Returns: Array of WorkerStats with active/completed/failed job counts
+```
+
+#### Job States
+
+Supported job states (PgBossJobState):
+
+- `created` - Job created and queued
+- `retry` - Job failed and scheduled for retry
+- `active` - Job currently being processed
+- `completed` - Job completed successfully
+- `cancelled` - Job was cancelled
+- `expired` - Job expired before execution
+- `failed` - Job failed after all retries
+
+#### Configuration Options
+
+QueueService configuration options:
+
+```typescript
+interface QueueConfig {
+  maxConcurrency: number;      // Default: 10
+  retryLimit: number;          // Default: 3
+  retryDelay: number;          // Default: 5000ms
+  timeout: number;             // Default: 300000ms
+  healthCheckInterval: number; // Default: 30000ms
+  connectionString?: string;   // Optional: custom DB connection
+}
+```
+
+#### Error Handling
+
+The QueueService includes comprehensive error handling:
+
+- **Validation Errors**: Invalid job data or configuration
+- **Connection Errors**: Database connection issues
+- **Job Errors**: Processing failures with retry logic
+- **Deduplication Errors**: Duplicate jobKey violations
+- **Timeout Errors**: Job execution timeouts
+
+All errors are logged with sanitized data (no sensitive information exposed).
+
+#### Best Practices
+
+1. **Always provide queueName**: Required for all job operations
+2. **Use jobKey for deduplication**: Prevents duplicate job execution
+3. **Validate job data**: Use zod schemas for runtime validation
+4. **Handle errors gracefully**: Implement proper error handling in workers
+5. **Monitor health**: Regular health checks for queue status
+6. **Configure timeouts**: Set appropriate timeouts for job execution
+7. **Use teamSize for parallelism**: Configure worker concurrency appropriately
+
 ## Error Codes
 
 | Code | Description |

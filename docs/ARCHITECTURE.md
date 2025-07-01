@@ -217,6 +217,126 @@ User Natural Language Query
 └─────────────────┘
 ```
 
+### 4. Queue Management Architecture
+
+The QueueService provides robust job queue management using PgBoss 10.3.2 for workflow execution, ensuring reliable, scalable, and fault-tolerant job processing.
+
+#### Queue Service Components
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Workflow      │    │   QueueService  │    │   PgBoss        │
+│   Executor      │───►│   (Job Queue)   │───►│   (PostgreSQL)  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Worker        │    │   Health        │    │   Job Status    │
+│   Processes     │    │   Monitoring    │    │   Tracking      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+#### Key Features
+
+**Job Management:**
+- **Job Submission**: Submit jobs with comprehensive options (retry, timeout, priority)
+- **Job Deduplication**: Support for jobKey to prevent duplicate execution
+- **Job Cancellation**: Cancel running or queued jobs
+- **Status Tracking**: Real-time job status monitoring
+
+**Worker Management:**
+- **Team-based Workers**: Configurable parallelism with teamSize
+- **Worker Registration**: Register handlers for specific queue types
+- **Health Monitoring**: Worker statistics and performance tracking
+- **Error Handling**: Comprehensive error handling with retry logic
+
+**Queue Operations:**
+- **Queue Creation**: Automatic queue creation on first use
+- **Queue Health**: Real-time health status and metrics
+- **Queue Statistics**: Worker performance and job counts
+- **Queue Configuration**: Configurable timeouts, retries, and limits
+
+#### Data Flow
+
+```
+Workflow Step Execution
+         │
+         ▼
+┌─────────────────┐
+│  Job Creation   │
+│  (QueueService) │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Job Queue      │
+│  (PgBoss)       │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Worker         │
+│  Processing     │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Result         │
+│  Storage        │
+└─────────────────┘
+```
+
+#### Configuration Options
+
+**Queue Configuration:**
+```typescript
+interface QueueConfig {
+  maxConcurrency: number;      // Default: 10
+  retryLimit: number;          // Default: 3
+  retryDelay: number;          // Default: 5000ms
+  timeout: number;             // Default: 300000ms
+  healthCheckInterval: number; // Default: 30000ms
+  connectionString?: string;   // Optional: custom DB connection
+}
+```
+
+**Job Options:**
+```typescript
+interface QueueJob {
+  queueName: string;           // Required: queue identifier
+  name: string;                // Required: job name
+  data: any;                   // Required: job payload
+  retryLimit?: number;         // Optional: retry attempts
+  retryDelay?: number;         // Optional: retry delay
+  timeout?: number;            // Optional: job timeout
+  priority?: number;           // Optional: job priority
+  delay?: number;              // Optional: execution delay
+  expireIn?: number;           // Optional: job expiration
+  jobKey?: string;             // Optional: deduplication key
+}
+```
+
+#### Security & Reliability
+
+**Security Features:**
+- **Job Data Sanitization**: Sensitive data removed from logs
+- **Input Validation**: Zod schema validation for job payloads
+- **Error Handling**: Secure error messages without data exposure
+- **Access Control**: Queue operations require proper authentication
+
+**Reliability Features:**
+- **Fault Tolerance**: Automatic retry with exponential backoff
+- **Health Monitoring**: Real-time queue and worker health status
+- **Graceful Degradation**: Service continues operating during partial failures
+- **Data Consistency**: ACID transactions for job operations
+
+**Monitoring & Observability:**
+- **Health Checks**: Regular health status monitoring
+- **Worker Statistics**: Active, completed, and failed job counts
+- **Performance Metrics**: Job duration and throughput tracking
+- **Error Tracking**: Comprehensive error logging and alerting
+
 ## Security Architecture
 
 ### 1. Authentication & Authorization
