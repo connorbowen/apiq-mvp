@@ -75,8 +75,8 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle 401 by redirecting to login
-        if (response.status === 401) {
+        // Handle 401 by redirecting to login, except for login endpoint
+        if (response.status === 401 && !endpoint.includes('/auth/login')) {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');

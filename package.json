@@ -17,6 +17,7 @@
     "test:integration": "jest tests/integration",
     "test:oauth2": "dotenv -e .env.test -- jest tests/integration/api/oauth2.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:all-browsers": "CI=true playwright test",
     "test:e2e:auth": "playwright test tests/e2e/auth/",
     "test:e2e:workflows": "playwright test tests/e2e/workflows/",
     "test:e2e:connections": "playwright test tests/e2e/connections/",
