@@ -67,7 +67,21 @@
    # Security
    ENCRYPTION_KEY="your-32-character-encryption-key-here"
    JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+   
+   # Email Service (for password reset and verification)
+   SMTP_HOST="smtp.gmail.com"
+   SMTP_PORT="587"
+   SMTP_SECURE="false"
+   SMTP_USER="your-email@gmail.com"
+   SMTP_PASS="your-app-password"
+   SMTP_FROM="your-email@gmail.com"
    ```
+
+   **Email Setup Notes:**
+   - For Gmail, use an App Password (not your regular password)
+   - Enable 2-Factor Authentication on your Google account
+   - Generate an App Password: Google Account → Security → 2-Step Verification → App passwords
+   - For development, you can use services like Mailtrap for testing
 
 4. **Database setup**
    ```bash

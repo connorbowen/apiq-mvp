@@ -64,6 +64,18 @@ cp env.example .env
 
 # Update database URL (replace with your username)
 sed -i '' 's|DATABASE_URL=./data/apiq.db|DATABASE_URL="postgresql://connorbowen@localhost:5432/apiq"|' .env
+
+# Configure email service (optional - for password reset and verification)
+# For Gmail, you'll need to:
+# 1. Enable 2-Factor Authentication on your Google account
+# 2. Generate an App Password: Google Account → Security → 2-Step Verification → App passwords
+# 3. Add these to your .env file:
+echo 'SMTP_HOST=smtp.gmail.com' >> .env
+echo 'SMTP_PORT=587' >> .env
+echo 'SMTP_SECURE=false' >> .env
+echo 'SMTP_USER=your-email@gmail.com' >> .env
+echo 'SMTP_PASS=your-app-password' >> .env
+echo 'SMTP_FROM=your-email@gmail.com' >> .env
 ```
 
 ### 4. Database Migration
