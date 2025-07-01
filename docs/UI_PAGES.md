@@ -1,119 +1,185 @@
 # UI Pages Documentation
 
+This document describes all the user-facing pages in the APIQ application, their functionality, and user experience flows.
+
 ## Authentication Pages
 
-### Login Page (`/login`)
-- **Purpose**: User authentication with email/password and OAuth2 providers
-- **Features**: 
-  - Email/password login form
-  - OAuth2 providers (GitHub, Google, Slack)
-  - Links to forgot password and resend verification
-  - Sign up link for new users
-- **File**: `src/app/login/page.tsx`
+### Signup Flow (`/signup`)
 
-### Signup Page (`/signup`)
-- **Purpose**: New user registration
-- **Features**:
-  - Email/password registration form
-  - OAuth2 signup options
-  - Client-side validation
-  - Success/error feedback
-- **File**: `src/app/signup/page.tsx`
+**Purpose**: User registration with email verification
 
-### Forgot Password Page (`/forgot-password`)
-- **Purpose**: Request password reset email
-- **Features**:
-  - Email input form
-  - Sends reset email via API
-  - Success/error feedback
-  - User-friendly messaging
-- **File**: `src/app/forgot-password/page.tsx`
-- **API Endpoint**: `POST /api/auth/reset-password`
+**User Experience**:
+1. User fills out registration form (email, name, password)
+2. Form validates input (email format, password strength, matching passwords)
+3. On successful registration, user is redirected to `/signup-success?email=...`
+4. If registration fails, error message is shown with recovery options
 
-### Reset Password Page (`/reset-password`)
-- **Purpose**: Set new password using reset token
-- **Features**:
-  - Password and confirm password fields
-  - Token validation from URL query
-  - Client-side password matching validation
-  - Automatic redirect to login on success
-- **File**: `src/app/reset-password/page.tsx`
-- **API Endpoint**: `POST /api/auth/reset-password`
+**Features**:
+- Client-side validation
+- OAuth2 social login options (Google, GitHub, Slack)
+- Clear error messages with recovery links
+- Redirects to dedicated success page
 
-### Email Verification Page (`/verify`)
-- **Purpose**: Verify email address using token
-- **Features**:
-  - Automatic token processing from URL
-  - Success/error feedback
-  - Links to resend verification
-  - Automatic redirect to login on success
-- **File**: `src/app/verify/page.tsx`
-- **API Endpoint**: `POST /api/auth/verify`
+### Signup Success (`/signup-success`)
 
-### Resend Verification Page (`/resend-verification`)
-- **Purpose**: Request new verification email
-- **Features**:
-  - Email input form
-  - Sends verification email via API
-  - Success/error feedback
-  - User-friendly messaging
-- **File**: `src/app/resend-verification/page.tsx`
-- **API Endpoint**: `POST /api/auth/resend-verification`
+**Purpose**: Confirmation page after successful registration
 
-## User Experience Flow
+**User Experience**:
+1. Shows success message with user's email address
+2. Clear next steps (check email, click verification link, sign in)
+3. Option to resend verification email if needed
+4. Links to sign in or return home
 
-### Password Reset Flow
-1. User clicks "Forgot password?" on login page
-2. User enters email on `/forgot-password`
-3. System sends reset email with token
-4. User clicks link in email → `/reset-password?token=xxx`
-5. User sets new password
-6. System redirects to login page
+**Features**:
+- Step-by-step instructions
+- Resend verification functionality
+- Professional success messaging
+- Clear call-to-action buttons
 
-### Email Verification Flow
-1. User registers on `/signup`
-2. System sends verification email with token
-3. User clicks link in email → `/verify?token=xxx`
-4. System verifies token and activates account
-5. System redirects to login page
+### Login (`/login`)
 
-### Resend Verification Flow
-1. User clicks "Resend verification email?" on login page
-2. User enters email on `/resend-verification`
-3. System sends new verification email
-4. User follows verification flow
+**Purpose**: User authentication
 
-## Error Handling
+**User Experience**:
+1. User enters email and password
+2. Form validates input
+3. On successful login, user is redirected to dashboard
+4. If login fails, error message is shown
 
-### Common Error Scenarios
-- **Invalid/Expired Token**: Show error with link to request new token
-- **Email Not Found**: Show generic success message (security)
-- **Network Errors**: User-friendly error messages
-- **Validation Errors**: Clear feedback on form fields
+**Features**:
+- Client-side validation
+- OAuth2 social login options
+- Links to forgot password and signup
+- Clear error messages
 
-### Error Recovery
-- **Reset Password**: Link to `/forgot-password` for new request
-- **Email Verification**: Link to `/resend-verification` for new email
-- **Login Issues**: Links to relevant recovery pages
+### Email Verification (`/verify`)
 
-## Security Features
+**Purpose**: Email address verification
 
-### Token Security
-- Tokens are cryptographically secure (32 bytes random)
-- Tokens expire after 24 hours (verification) or 1 hour (reset)
-- Tokens are single-use and deleted after use
-- Invalid tokens are handled gracefully
+**User Experience**:
+1. User clicks verification link from email
+2. Token is validated
+3. On success, user is redirected to login with success message
+4. If token is invalid/expired, error message with resend option
 
-### User Privacy
-- Email existence is not revealed in error messages
-- Generic success messages for security
-- No sensitive data in URLs or logs
+**Features**:
+- Token validation
+- Clear success/error messaging
+- Link to resend verification if needed
 
-### Form Security
-- Client-side validation for immediate feedback
+### Forgot Password (`/forgot-password`)
+
+**Purpose**: Request password reset email
+
+**User Experience**:
+1. User enters email address
+2. Form validates email format
+3. On success, user is redirected to `/forgot-password-success?email=...`
+4. If request fails, error message is shown
+
+**Features**:
+- Email validation
+- Security-conscious messaging (doesn't reveal if email exists)
+- Redirects to dedicated success page
+
+### Forgot Password Success (`/forgot-password-success`)
+
+**Purpose**: Confirmation page after password reset request
+
+**User Experience**:
+1. Shows confirmation message with user's email
+2. Clear next steps (check email, click reset link, sign in)
+3. Security note about not revealing email existence
+4. Option to try different email
+
+**Features**:
+- Step-by-step instructions
+- Security messaging
+- Professional confirmation design
+- Clear call-to-action buttons
+
+### Reset Password (`/reset-password?token=...`)
+
+**Purpose**: Set new password using reset token
+
+**User Experience**:
+1. User enters new password and confirmation
+2. Form validates password strength and matching
+3. On success, user is redirected to login with success message
+4. If token is invalid/expired, error message with new request option
+
+**Features**:
+- Token validation
+- Password strength validation
+- Clear success/error messaging
+- Link to request new reset if needed
+
+### Resend Verification (`/resend-verification`)
+
+**Purpose**: Request new verification email
+
+**User Experience**:
+1. User enters email address
+2. Form validates email format
+3. On success, confirmation message is shown
+4. If request fails, error message is shown
+
+**Features**:
+- Email validation
+- Clear success/error messaging
+- Link back to login
+
+## User Experience Improvements
+
+### Success Pages
+- **Dedicated success pages** for major actions (signup, forgot password)
+- **Clear next steps** with numbered instructions
+- **Professional messaging** that builds confidence
+- **Recovery options** for common issues
+
+### Error Handling
+- **Specific error messages** for different failure types
+- **Recovery links** to help users get back on track
+- **Validation feedback** for form inputs
+- **Network error handling** with retry options
+
+### Navigation Flow
+- **Logical progression** through authentication flows
+- **Clear call-to-action buttons** at each step
+- **Consistent styling** across all pages
+- **Mobile-responsive design** for all screen sizes
+
+### Security Features
+- **Client-side validation** to prevent unnecessary server requests
+- **Security-conscious messaging** (doesn't reveal user existence)
+- **Token-based verification** for sensitive operations
+- **Rate limiting** on all authentication endpoints
+
+## Technical Implementation
+
+### Form Validation
+- Real-time client-side validation
 - Server-side validation for security
-- CSRF protection via Next.js
-- Rate limiting on API endpoints
+- Clear error messaging
+- Accessibility features (ARIA labels, keyboard navigation)
+
+### State Management
+- Local state for form data
+- Loading states for better UX
+- Error state handling
+- Success state management
+
+### API Integration
+- Consistent error handling
+- Loading state management
+- Retry mechanisms for network failures
+- Proper HTTP status code handling
+
+### Responsive Design
+- Mobile-first approach
+- Consistent spacing and typography
+- Accessible color contrast
+- Touch-friendly button sizes
 
 ## Testing
 

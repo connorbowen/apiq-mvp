@@ -3,6 +3,7 @@ import { prisma } from '../../../../lib/database/client';
 import { logError, logInfo } from '../../../../src/utils/logger';
 import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/session';
 import { errorHandler } from '../../../../src/middleware/errorHandler';
+import { workflowExecutor } from '../../../../src/lib/workflow/executor';
 
 async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
@@ -57,58 +58,40 @@ async function executeWorkflow(req: NextApiRequest, res: NextApiResponse, userId
       return res.status(400).json({ success: false, error: 'Workflow has no steps' });
     }
 
-    // Create execution record
-    const execution = await prisma.workflowExecution.create({
-      data: {
-        workflowId,
-        userId,
-        status: 'PENDING',
-        metadata: { parameters }
-      }
-    });
-
-    logInfo('Workflow execution started', { 
+    logInfo('Starting workflow execution', { 
       userId, 
       workflowId, 
-      executionId: execution.id,
       stepCount: workflow.steps.length 
     });
 
-    // For now, we'll just mark it as completed since we don't have the actual execution engine yet
-    // In a real implementation, this would trigger the workflow execution engine
-    await prisma.workflowExecution.update({
-      where: { id: execution.id },
-      data: {
-        status: 'COMPLETED',
-        completedAt: new Date(),
-        result: { message: 'Workflow execution completed (placeholder)' }
-      }
-    });
-
-    // Create execution log entry
-    await prisma.executionLog.create({
-      data: {
-        executionId: execution.id,
-        level: 'INFO',
-        message: 'Workflow execution completed successfully',
-        data: { parameters }
-      }
-    });
+    // Execute workflow using the executor
+    const result = await workflowExecutor.executeWorkflow(
+      workflow as any,
+      workflow.steps as any,
+      userId,
+      parameters
+    );
 
     return res.status(200).json({
-      success: true,
+      success: result.success,
       data: {
-        executionId: execution.id,
-        status: 'completed',
-        startedAt: execution.startedAt,
-        completedAt: execution.completedAt,
+        executionId: result.executionId,
+        status: result.status.toLowerCase(),
+        startedAt: new Date(),
+        completedAt: new Date(),
         workflow: {
           id: workflow.id,
           name: workflow.name,
           stepCount: workflow.steps.length
+        },
+        execution: {
+          totalSteps: result.totalSteps,
+          completedSteps: result.completedSteps,
+          failedSteps: result.failedSteps,
+          totalDuration: result.totalDuration
         }
       },
-      message: 'Workflow execution completed'
+      message: result.success ? 'Workflow execution completed successfully' : `Workflow execution failed: ${result.error}`
     });
   } catch (error) {
     logError('Failed to execute workflow', error as Error);

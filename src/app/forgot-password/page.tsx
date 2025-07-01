@@ -1,28 +1,29 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiClient } from "../../lib/api/client";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setSuccess("");
     setError("");
     try {
       const response = await apiClient.requestPasswordReset(email);
       if (response.success) {
-        setSuccess("If an account with this email exists, a password reset link has been sent.");
+        // Redirect to success page with email parameter
+        router.push(`/forgot-password-success?email=${encodeURIComponent(email)}`);
       } else {
         setError(response.error || "Failed to send reset email");
+        setIsLoading(false);
       }
     } catch {
       setError("Network error. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -35,7 +36,6 @@ export default function ForgotPasswordPage() {
           <p className="mt-2 text-center text-sm text-gray-600">Enter your email to receive a password reset link.</p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {success && <div className="rounded-md bg-green-50 p-4 text-green-800">{success}</div>}
           {error && <div className="rounded-md bg-red-50 p-4 text-red-800">{error}</div>}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
