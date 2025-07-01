@@ -90,6 +90,7 @@ model User {
   executions     WorkflowExecution[]
   auditLogs      AuditLog[]
   credentials    ApiCredential[]
+  secrets        Secret[]
 
   @@map("users")
 }
@@ -264,6 +265,28 @@ model ApiCredential {
 
   @@unique([userId, apiConnectionId])
   @@map("api_credentials")
+}
+
+// Secrets Vault (Encrypted)
+model Secret {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  type            String   // api_key, oauth2_token, webhook_secret, custom
+  encryptedData   String   // Encrypted secret data
+  keyId           String   // Encryption key identifier
+  version         Int      @default(1) // Secret version for rotation tracking
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime?
+  metadata        Json?    // Additional metadata about the secret
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@map("secrets")
 }
 
 // Email Verification Tokens

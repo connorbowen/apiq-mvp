@@ -37,6 +37,7 @@
     "db:generate": "prisma generate",
     "db:reset": "prisma migrate reset",
     "db:setup": "npm run db:migrate && npm run db:generate",
+    "rotate-secrets": "node scripts/rotate-secrets.js",
     "check:no-mock-data": "grep -r -E 'test-user-123|test-user-456|demo-key|demo-token|fake API|mock.*api|create-test-user' . --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=.git --exclude=package-lock.json --exclude=package.json --exclude=.husky || exit 0"
   },
   "keywords": [
