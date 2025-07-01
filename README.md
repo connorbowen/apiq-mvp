@@ -32,7 +32,7 @@ A semi-agentic, low-code web application that enables non-technincal users to cr
 
 ### Developer Experience
 - **TypeScript** - Full type safety throughout the application
-- **Comprehensive Testing** - 282+ tests with 100% pass rate
+- **Comprehensive Testing** - 318+ tests with 100% pass rate, organized into logical groups
 - **Dependency Injection** - Testable service architecture
 - **API Documentation** - Complete API reference documentation
 - **Development Tools** - Hot reloading, linting, and debugging support
@@ -115,7 +115,14 @@ AI: "I'll help you create a workflow that monitors GitHub for new issues and sen
 
 6. **Run tests**
    ```bash
+   # Run all tests
    npm test
+   
+   # Run specific test groups
+   npm run test:e2e:auth        # Authentication & SSO tests
+   npm run test:e2e:workflows   # Workflow orchestration tests
+   npm run test:e2e:connections # API connection management tests
+   npm run test:e2e:ui          # User interface and navigation tests
    ```
 
 ### Authentication Configuration

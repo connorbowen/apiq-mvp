@@ -3,7 +3,7 @@
 ## Overview
 Comprehensive test suite covering backend API endpoints, frontend components, and end-to-end user workflows.
 
-**Total Tests**: 318 tests (36 additional tests added)
+**Total Tests**: 318 tests (180 E2E tests organized into logical groups)
 **Pass Rate**: 100%
 **Last Updated**: January 2025
 
@@ -49,25 +49,25 @@ Comprehensive test suite covering backend API endpoints, frontend components, an
 - **LoadingSpinner**: 6 tests - Different sizes, states, accessibility
 - **NotificationToast**: 4 tests - Different types, auto-dismiss, user interaction
 
-### End-to-End Tests (36 tests)
+### End-to-End Tests (180 tests)
 
-#### SSO Workflows (12 tests)
-- **SAML Login Flow**: 3 tests - Okta integration, certificate validation, error handling
-- **OIDC Login Flow**: 3 tests - Azure AD integration, token validation, error handling
-- **SSO Error Handling**: 3 tests - Invalid certificates, access denied scenarios
-- **SSO Session Management**: 3 tests - Session persistence, logout flow
+#### Authentication & SSO (123 tests)
+- **Authentication Session**: 45 tests - Login, session management, SSO flows
+- **OAuth2 Workflow**: 45 tests - OAuth2 provider integration tests
+- **SSO Workflows**: 33 tests - SAML/OIDC enterprise SSO tests
 
-#### Workflow Management (12 tests)
-- **Workflow Creation**: 3 tests - Form validation, step management, save operations
-- **Workflow Execution**: 3 tests - Execution flow, monitoring, status updates
-- **Workflow Editing**: 3 tests - Update operations, validation, step reordering
-- **Workflow Deletion**: 3 tests - Confirmation flow, cleanup operations
+#### Workflow Orchestration (57 tests)
+- **Workflow Execution**: 33 tests - Workflow execution and monitoring
+- **Workflow Management**: 24 tests - Workflow CRUD operations
 
-#### API Connection Management (12 tests)
-- **Connection Creation**: 3 tests - API key, OAuth2, validation
-- **Connection Testing**: 3 tests - Health checks, performance monitoring
-- **OAuth2 Authorization**: 3 tests - Authorization flow, token management
-- **Connection Monitoring**: 3 tests - Status tracking, uptime monitoring
+#### API Connection Management (varies)
+- **API Connection Management**: Tests - API connection CRUD operations
+- **Connections Management**: Tests - Connection testing and validation
+
+#### User Interface & Navigation (varies)
+- **Application Tests**: Tests - General application smoke tests
+- **Basic Navigation**: Tests - Navigation and routing tests
+- **Dashboard Navigation**: Tests - Dashboard functionality tests
 
 ## Test Coverage by Feature
 
@@ -108,6 +108,36 @@ Comprehensive test suite covering backend API endpoints, frontend components, an
 
 ## Test Infrastructure
 
+### E2E Test Organization
+
+The E2E tests have been reorganized into logical groups for improved maintainability and faster execution:
+
+#### Test Group Structure
+```
+tests/e2e/
+├── auth/                    # Authentication & SSO tests (123 tests)
+│   ├── authentication-session.test.ts
+│   ├── oauth2-workflow.test.ts
+│   └── sso-workflows.test.ts
+├── workflows/               # Workflow orchestration tests (57 tests)
+│   ├── workflow-execution.test.ts
+│   └── workflow-management.test.ts
+├── connections/             # API connection management tests
+│   ├── api-connection-management.test.ts
+│   └── connections-management.test.ts
+└── ui/                      # User interface and navigation tests
+    ├── app.test.ts
+    ├── basic-navigation.test.ts
+    └── dashboard-navigation.test.ts
+```
+
+#### Benefits
+- **Faster Execution**: Run only needed tests (e.g., `npm run test:e2e:auth`)
+- **Better Organization**: Logical grouping by functionality
+- **Easier Debugging**: Isolate issues to specific areas
+- **Parallel Development**: Teams can work on different test groups
+- **CI/CD Optimization**: Run critical tests first, others in parallel
+
 ### Testing Framework
 - **Unit Testing**: Jest + React Testing Library
 - **Integration Testing**: Jest + Supertest
@@ -133,11 +163,12 @@ Comprehensive test suite covering backend API endpoints, frontend components, an
 - **Utility Components**: Error boundaries, loading states, notifications
 - **SSO Components**: Enterprise SSO button and flow testing
 
-### E2E Workflow Tests (36 tests)
-- **SSO Workflows**: Complete SAML/OIDC authentication flows
-- **Workflow Management**: End-to-end workflow lifecycle testing
-- **API Connection Management**: Connection setup and monitoring
-- **Error Scenarios**: Comprehensive error handling testing
+### E2E Test Reorganization (180 tests)
+- **Authentication & SSO**: 123 tests covering login, OAuth2, and SSO flows
+- **Workflow Orchestration**: 57 tests covering workflow execution and management
+- **API Connection Management**: Tests covering connection CRUD and validation
+- **User Interface & Navigation**: Tests covering UI components and navigation
+- **Test Grouping**: Organized into logical groups for faster execution and better maintainability
 
 ## Next Steps
 

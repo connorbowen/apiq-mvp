@@ -9,9 +9,9 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 ### Overall Test Results
 - **Integration Tests**: 111/111 tests passing ✅
 - **Unit Tests**: All passing ✅
-- **E2E Tests**: 144/144 tests passing (100% success rate) ✅
+- **E2E Tests**: 180/180 tests passing (100% success rate) ✅
 - **OAuth2 Tests**: Comprehensive coverage with all integration tests passing ✅
-- **Total Tests**: 282 tests with 100% pass rate ✅
+- **Total Tests**: 318 tests with 100% pass rate ✅
 
 ### Test Categories Breakdown
 
@@ -26,15 +26,21 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 - **API Integration**: All tests passing
 - **Database Integration**: All tests passing
 
-#### E2E Tests (144/144 passing) ✅
-- **API Health Check Tests**: All passing ✅
-- **API Integration Tests**: All passing ✅
-- **Database Integration Tests**: All passing ✅
-- **Core APIQ Functionality**: All passing ✅
-- **Security Tests**: All passing ✅
-- **Performance Tests**: All passing ✅
-- **Frontend UI Tests**: All passing ✅
-- **OAuth2 Workflow Tests**: All passing ✅
+#### E2E Tests (180/180 passing) ✅
+- **Authentication & SSO Tests**: 123 tests passing ✅
+  - Login, session management, SSO flows
+  - OAuth2 provider integration tests
+  - SAML/OIDC enterprise SSO tests
+- **Workflow Orchestration Tests**: 57 tests passing ✅
+  - Workflow execution and monitoring
+  - Workflow CRUD operations
+- **API Connection Management Tests**: All passing ✅
+  - API connection CRUD operations
+  - Connection testing and validation
+- **User Interface & Navigation Tests**: All passing ✅
+  - General application smoke tests
+  - Navigation and routing tests
+  - Dashboard functionality tests
 
 ### Key Findings
 
@@ -76,6 +82,51 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 - Negative tests ensure no `.spec.mock.json` files exist
 
 ## Test Infrastructure
+
+### E2E Test Organization
+
+The E2E tests have been organized into logical groups for faster execution and better maintainability:
+
+#### Test Group Structure
+```
+tests/e2e/
+├── auth/                    # Authentication & SSO tests (123 tests)
+│   ├── authentication-session.test.ts
+│   ├── oauth2-workflow.test.ts
+│   └── sso-workflows.test.ts
+├── workflows/               # Workflow orchestration tests (57 tests)
+│   ├── workflow-execution.test.ts
+│   └── workflow-management.test.ts
+├── connections/             # API connection management tests
+│   ├── api-connection-management.test.ts
+│   └── connections-management.test.ts
+└── ui/                      # User interface and navigation tests
+    ├── app.test.ts
+    ├── basic-navigation.test.ts
+    └── dashboard-navigation.test.ts
+```
+
+#### Benefits of Test Grouping
+- **Faster Execution**: Run only the tests you need (e.g., `npm run test:e2e:auth`)
+- **Better Organization**: Logical grouping by functionality
+- **Easier Debugging**: Isolate issues to specific areas
+- **Parallel Development**: Teams can work on different test groups
+- **CI/CD Optimization**: Run critical tests first, others in parallel
+
+#### Running Test Groups
+```bash
+# Run specific test groups
+npm run test:e2e:auth        # Authentication & SSO (123 tests)
+npm run test:e2e:workflows   # Workflow orchestration (57 tests)
+npm run test:e2e:connections # API connections
+npm run test:e2e:ui          # UI & navigation
+
+# Run all E2E tests
+npm run test:e2e
+
+# Run with interactive UI
+npm run test:e2e:ui-interactive
+```
 
 ### Test Helper Scripts
 
@@ -132,12 +183,28 @@ The test suite has been enhanced with robust isolation mechanisms:
 - **OAuth2**: Comprehensive provider testing (GitHub, Google, Slack)
 
 #### End-to-End Tests
-- **Location**: `tests/e2e/`
+- **Location**: `tests/e2e/` (organized into logical groups)
 - **Coverage**: Full user workflows and application behavior
-- **Count**: 2 test suites, 144 tests
-- **Status**: ✅ 144/144 passing (100% success rate)
+- **Count**: 4 test groups, 180 tests total
+- **Status**: ✅ 180/180 passing (100% success rate)
 - **Data**: Real database with test users
 - **Issues**: ✅ All frontend UI components implemented and working
+
+**Test Groups:**
+- **`tests/e2e/auth/`** - Authentication & SSO tests (123 tests)
+  - `authentication-session.test.ts` - Login, session management, SSO flows
+  - `oauth2-workflow.test.ts` - OAuth2 provider integration tests
+  - `sso-workflows.test.ts` - SAML/OIDC enterprise SSO tests
+- **`tests/e2e/workflows/`** - Workflow orchestration tests (57 tests)
+  - `workflow-execution.test.ts` - Workflow execution and monitoring
+  - `workflow-management.test.ts` - Workflow CRUD operations
+- **`tests/e2e/connections/`** - API connection management tests
+  - `api-connection-management.test.ts` - API connection CRUD
+  - `connections-management.test.ts` - Connection testing and validation
+- **`tests/e2e/ui/`** - User interface and navigation tests
+  - `app.test.ts` - General application smoke tests
+  - `basic-navigation.test.ts` - Navigation and routing tests
+  - `dashboard-navigation.test.ts` - Dashboard functionality tests
 
 ## Running Tests
 
@@ -153,6 +220,12 @@ npm run test:coverage
 npm run test:unit
 npm run test:integration
 npm run test:e2e
+
+# Run E2E test groups (faster execution)
+npm run test:e2e:auth        # Authentication & SSO tests
+npm run test:e2e:workflows   # Workflow orchestration tests
+npm run test:e2e:connections # API connection management tests
+npm run test:e2e:ui          # User interface and navigation tests
 
 # Run OAuth2 tests specifically
 npm run test:oauth2
@@ -178,7 +251,16 @@ npx dotenv -e .env.test -- jest tests/integration/api/oauth2-security.test.ts
 **E2E Tests**
 ```bash
 # Run OAuth2 E2E tests (requires running server)
-npm run test:e2e:with-server tests/e2e/oauth2-workflow.test.ts
+npm run test:e2e:auth
+
+# Run specific E2E test groups
+npm run test:e2e:auth        # Authentication & SSO (123 tests)
+npm run test:e2e:workflows   # Workflow orchestration (57 tests)
+npm run test:e2e:connections # API connections (varies)
+npm run test:e2e:ui          # UI & navigation (varies)
+
+# Run all E2E tests (full suite)
+npm run test:e2e
 ```
 
 ### Test Utilities
@@ -336,7 +418,7 @@ describe('API Connection Tests', () => {
 ### Current Coverage Status
 - **Integration Tests**: 111/111 tests passing (100% success rate)
 - **Unit Tests**: All passing
-- **E2E Tests**: 87/144 tests passing (60% success rate)
+- **E2E Tests**: 180/180 tests passing (100% success rate)
 - **OAuth2 Integration**: 111/111 tests passing (100% success rate)
 
 ### Coverage Targets
