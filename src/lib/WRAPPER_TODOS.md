@@ -147,6 +147,28 @@ import type { QueueJob, QueueConfig } from '../../../../src/lib/queue/queueServi
 - **Solution**: Added type-only imports and removed problematic type annotations for dynamically imported modules
 - **Result**: Clean linter output with only acceptable `any` type warnings for test context
 
+## Test-Specific Issues
+
+### 📋 TODO: Dashboard Test Memory Issue
+**Issue**: `tests/unit/app/dashboard/page.test.tsx` fails with "JavaScript heap out of memory" error
+**Files affected**:
+- `tests/unit/app/dashboard/page.test.tsx`
+- `src/app/dashboard/page.tsx` (may need optimization)
+
+**Potential causes**:
+- Large component rendering (510+ lines)
+- Infinite loops in component logic
+- Memory leaks in test setup/teardown
+- Complex API client mocking
+
+**Next steps**:
+- [ ] Investigate dashboard component for memory leaks
+- [ ] Optimize test setup/teardown
+- [ ] Consider splitting large component into smaller pieces
+- [ ] Add memory profiling to identify exact cause
+
+**Priority**: Medium (affects test suite completion)
+
 ## Notes
 
 - **React/Next.js libraries** (like `next/navigation`, `react`) don't need wrappers as they're framework-specific

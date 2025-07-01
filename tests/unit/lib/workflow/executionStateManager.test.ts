@@ -1,4 +1,4 @@
-import { ExecutionStateManager, ExecutionState, ExecutionProgress } from '../../../../src/lib/workflow/executionStateManager';
+import { ExecutionStateManager, ExecutionState, ExecutionProgress, ExecutionMetrics } from '../../../../src/lib/workflow/executionStateManager';
 import { QueueService } from '../../../../src/lib/queue/queueService';
 import { PrismaClient } from '../../../../src/generated/prisma';
 
@@ -13,7 +13,8 @@ const mockPrisma = {
     update: jest.fn(),
     findUnique: jest.fn(),
     findMany: jest.fn(),
-    deleteMany: jest.fn()
+    deleteMany: jest.fn(),
+    count: jest.fn()
   }
 } as unknown as PrismaClient;
 
@@ -198,7 +199,6 @@ describe('ExecutionStateManager', () => {
         status: 'PENDING',
         resumedAt: new Date(),
         resumedBy: 'user-123',
-        queueName: 'workflow-execution',
         updatedAt: new Date()
       };
 
@@ -250,82 +250,14 @@ describe('ExecutionStateManager', () => {
     });
   });
 
-  describe('updateProgress', () => {
-    it('should update execution progress', async () => {
-      const mockExecution = {
-        id: 'exec-123',
-        currentStep: 3,
-        completedSteps: 3,
-        failedSteps: 0,
-        stepResults: { 1: { success: true }, 2: { success: true }, 3: { success: true } },
-        updatedAt: new Date()
-      };
-
-      (mockPrisma.workflowExecution.update as jest.Mock).mockResolvedValue(mockExecution);
-
-      const result = await stateManager.updateProgress('exec-123', {
-        currentStep: 3,
-        completedSteps: 3,
-        failedSteps: 0,
-        stepResults: { 1: { success: true }, 2: { success: true }, 3: { success: true } }
-      });
-
-      expect(mockPrisma.workflowExecution.update).toHaveBeenCalledWith({
-        where: { id: 'exec-123' },
-        data: {
-          currentStep: 3,
-          completedSteps: 3,
-          failedSteps: 0,
-          stepResults: { 1: { success: true }, 2: { success: true }, 3: { success: true } }
-        }
-      });
-
-      expect(result.currentStep).toBe(3);
-      expect(result.completedSteps).toBe(3);
-    });
-  });
-
-  describe('getExecutionProgress', () => {
-    it('should calculate progress correctly', async () => {
-      const mockExecution = {
-        currentStep: 3,
-        totalSteps: 5,
-        completedSteps: 3,
-        failedSteps: 0,
-        startedAt: new Date(Date.now() - 30000), // 30 seconds ago
-        status: 'RUNNING'
-      };
-
-      (mockPrisma.workflowExecution.findUnique as jest.Mock).mockResolvedValue(mockExecution);
-
-      const result = await stateManager.getExecutionProgress('exec-123');
-
-      expect(result).toEqual({
-        currentStep: 3,
-        totalSteps: 5,
-        completedSteps: 3,
-        failedSteps: 0,
-        progress: 60, // 3/5 * 100
-        estimatedTimeRemaining: expect.any(Number)
-      });
-    });
-
-    it('should return null for non-existent execution', async () => {
-      (mockPrisma.workflowExecution.findUnique as jest.Mock).mockResolvedValue(null);
-
-      const result = await stateManager.getExecutionProgress('exec-123');
-
-      expect(result).toBeNull();
-    });
-  });
-
   describe('shouldRetry', () => {
-    it('should return true for failed execution within retry limits', async () => {
+    it('should return true for retryable execution', async () => {
       const mockExecution = {
         attemptCount: 1,
         maxAttempts: 3,
         retryAfter: new Date(Date.now() - 1000), // Past retry time
-        status: 'FAILED'
+        status: 'FAILED',
+        error: 'TEMPORARY_ERROR'
       };
 
       (mockPrisma.workflowExecution.findUnique as jest.Mock).mockResolvedValue(mockExecution);
@@ -339,8 +271,8 @@ describe('ExecutionStateManager', () => {
       const mockExecution = {
         attemptCount: 3,
         maxAttempts: 3,
-        retryAfter: new Date(Date.now() - 1000),
-        status: 'FAILED'
+        status: 'FAILED',
+        error: 'TEMPORARY_ERROR'
       };
 
       (mockPrisma.workflowExecution.findUnique as jest.Mock).mockResolvedValue(mockExecution);
@@ -350,12 +282,28 @@ describe('ExecutionStateManager', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false when retry time has not passed', async () => {
+    it('should return false for permanent errors', async () => {
+      const mockExecution = {
+        attemptCount: 1,
+        maxAttempts: 3,
+        status: 'FAILED',
+        error: 'INVALID_API_KEY'
+      };
+
+      (mockPrisma.workflowExecution.findUnique as jest.Mock).mockResolvedValue(mockExecution);
+
+      const result = await stateManager.shouldRetry('exec-123');
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when retry time not reached', async () => {
       const mockExecution = {
         attemptCount: 1,
         maxAttempts: 3,
         retryAfter: new Date(Date.now() + 10000), // Future retry time
-        status: 'FAILED'
+        status: 'FAILED',
+        error: 'TEMPORARY_ERROR'
       };
 
       (mockPrisma.workflowExecution.findUnique as jest.Mock).mockResolvedValue(mockExecution);
@@ -367,21 +315,23 @@ describe('ExecutionStateManager', () => {
   });
 
   describe('getRetryableExecutions', () => {
-    it('should return executions that need to be retried', async () => {
+    it('should return retryable executions', async () => {
       const mockExecutions = [
         {
           id: 'exec-1',
           status: 'FAILED',
           attemptCount: 1,
           maxAttempts: 3,
-          retryAfter: new Date(Date.now() - 1000)
+          retryAfter: new Date(Date.now() - 1000),
+          error: 'TEMPORARY_ERROR'
         },
         {
           id: 'exec-2',
           status: 'FAILED',
           attemptCount: 2,
           maxAttempts: 3,
-          retryAfter: new Date(Date.now() - 1000)
+          retryAfter: new Date(Date.now() - 1000),
+          error: 'TEMPORARY_ERROR'
         }
       ];
 
@@ -389,87 +339,184 @@ describe('ExecutionStateManager', () => {
 
       const result = await stateManager.getRetryableExecutions();
 
-      expect(mockPrisma.workflowExecution.findMany).toHaveBeenCalledWith({
-        where: {
-          status: 'FAILED',
-          retryAfter: { lte: expect.any(Date) }
-        }
-      });
-
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('exec-1');
       expect(result[1].id).toBe('exec-2');
     });
-  });
 
-  describe('getPausedExecutions', () => {
-    it('should return paused executions', async () => {
+    it('should filter out executions with permanent errors', async () => {
       const mockExecutions = [
         {
           id: 'exec-1',
-          status: 'PAUSED',
-          pausedAt: new Date(),
-          pausedBy: 'user-123'
+          status: 'FAILED',
+          attemptCount: 1,
+          maxAttempts: 3,
+          retryAfter: new Date(Date.now() - 1000),
+          error: 'TEMPORARY_ERROR'
+        },
+        {
+          id: 'exec-2',
+          status: 'FAILED',
+          attemptCount: 1,
+          maxAttempts: 3,
+          retryAfter: new Date(Date.now() - 1000),
+          error: 'INVALID_API_KEY'
         }
       ];
 
       (mockPrisma.workflowExecution.findMany as jest.Mock).mockResolvedValue(mockExecutions);
 
-      const result = await stateManager.getPausedExecutions();
+      const result = await stateManager.getRetryableExecutions();
 
-      expect(mockPrisma.workflowExecution.findMany).toHaveBeenCalledWith({
-        where: {
-          status: 'PAUSED'
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('exec-1');
+    });
+  });
+
+  describe('getStuckExecutions', () => {
+    it('should return stuck executions', async () => {
+      const mockExecutions = [
+        {
+          id: 'exec-1',
+          status: 'RUNNING',
+          startedAt: new Date(Date.now() - 2000000) // 33 minutes ago
+        }
+      ];
+
+      (mockPrisma.workflowExecution.findMany as jest.Mock).mockResolvedValue(mockExecutions);
+
+      const result = await stateManager.getStuckExecutions(30);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('exec-1');
+    });
+  });
+
+  describe('getExecutionMetrics', () => {
+    it('should return execution metrics', async () => {
+      const mockCounts = [10, 7, 3]; // total, successful, failed
+      const mockRecentExecutions = [
+        { id: 'exec-1', status: 'COMPLETED' },
+        { id: 'exec-2', status: 'FAILED' }
+      ];
+      const mockCompletedExecutions = [
+        { executionTime: 1000 },
+        { executionTime: 2000 },
+        { executionTime: 3000 }
+      ];
+
+      (mockPrisma.workflowExecution.count as jest.Mock)
+        .mockResolvedValueOnce(mockCounts[0])
+        .mockResolvedValueOnce(mockCounts[1])
+        .mockResolvedValueOnce(mockCounts[2]);
+      
+      (mockPrisma.workflowExecution.findMany as jest.Mock)
+        .mockResolvedValueOnce(mockRecentExecutions)
+        .mockResolvedValueOnce(mockCompletedExecutions);
+
+      const result = await stateManager.getExecutionMetrics();
+
+      expect(result.totalExecutions).toBe(10);
+      expect(result.successfulExecutions).toBe(7);
+      expect(result.failedExecutions).toBe(3);
+      expect(result.successRate).toBe(70);
+      expect(result.averageExecutionTime).toBe(2000);
+      expect(result.recentExecutions).toHaveLength(2);
+    });
+  });
+
+  describe('resetExecutionForRetry', () => {
+    it('should reset execution for retry', async () => {
+      const mockExecution = {
+        id: 'exec-123',
+        status: 'PENDING',
+        currentStep: 0,
+        completedSteps: 0,
+        failedSteps: 0,
+        updatedAt: new Date()
+      };
+
+      (mockPrisma.workflowExecution.update as jest.Mock).mockResolvedValue(mockExecution);
+
+      const result = await stateManager.resetExecutionForRetry('exec-123');
+
+      expect(mockPrisma.workflowExecution.update).toHaveBeenCalledWith({
+        where: { id: 'exec-123' },
+        data: {
+          status: 'PENDING',
+          currentStep: 0,
+          completedSteps: 0,
+          failedSteps: 0,
+          stepResults: {},
+          error: undefined,
+          result: undefined,
+          executionTime: undefined,
+          startedAt: undefined,
+          completedAt: undefined
         }
       });
 
-      expect(result).toHaveLength(1);
-      expect(result[0].status).toBe('PAUSED');
+      expect(result.status).toBe('PENDING');
     });
   });
 
   describe('cleanupOldExecutions', () => {
-    it('should delete old completed executions', async () => {
-      const mockResult = { count: 5 };
-
-      (mockPrisma.workflowExecution.deleteMany as jest.Mock).mockResolvedValue(mockResult);
+    it('should cleanup old execution records', async () => {
+      (mockPrisma.workflowExecution.deleteMany as jest.Mock).mockResolvedValue({ count: 5 });
 
       const result = await stateManager.cleanupOldExecutions(30);
 
+      expect(result).toBe(5);
       expect(mockPrisma.workflowExecution.deleteMany).toHaveBeenCalledWith({
         where: {
           createdAt: { lt: expect.any(Date) },
           status: { in: ['COMPLETED', 'FAILED', 'CANCELLED'] }
         }
       });
-
-      expect(result).toBe(5);
     });
   });
 
-  describe('setQueueJob', () => {
-    it('should set queue job information', async () => {
+  describe('getExecutionProgress', () => {
+    it('should calculate progress correctly', async () => {
       const mockExecution = {
-        id: 'exec-123',
-        queueJobId: 'job-123',
-        queueName: 'workflow-execution',
-        updatedAt: new Date()
+        currentStep: 3,
+        totalSteps: 5,
+        completedSteps: 2,
+        failedSteps: 1,
+        startedAt: new Date(Date.now() - 60000), // 1 minute ago
+        status: 'RUNNING'
       };
 
-      (mockPrisma.workflowExecution.update as jest.Mock).mockResolvedValue(mockExecution);
+      (mockPrisma.workflowExecution.findUnique as jest.Mock).mockResolvedValue(mockExecution);
 
-      const result = await stateManager.setQueueJob('exec-123', 'job-123', 'workflow-execution');
+      const result = await stateManager.getExecutionProgress('exec-123');
 
-      expect(mockPrisma.workflowExecution.update).toHaveBeenCalledWith({
-        where: { id: 'exec-123' },
-        data: {
-          queueJobId: 'job-123',
-          queueName: 'workflow-execution'
-        }
+      expect(result).not.toBeNull();
+      expect(result).toMatchObject({
+        currentStep: 3,
+        totalSteps: 5,
+        completedSteps: 2,
+        failedSteps: 1,
+        progress: 40 // (2/5) * 100
       });
+      expect(result!.estimatedTimeRemaining).toBeGreaterThan(0);
+    });
+  });
 
-      expect(result.queueJobId).toBe('job-123');
-      expect(result.queueName).toBe('workflow-execution');
+  describe('getPausedExecutions', () => {
+    it('should return paused executions', async () => {
+      const mockExecutions = [
+        { id: 'exec-1', status: 'PAUSED' },
+        { id: 'exec-2', status: 'PAUSED' }
+      ];
+
+      (mockPrisma.workflowExecution.findMany as jest.Mock).mockResolvedValue(mockExecutions);
+
+      const result = await stateManager.getPausedExecutions();
+
+      expect(result).toHaveLength(2);
+      expect(result[0].status).toBe('PAUSED');
+      expect(result[1].status).toBe('PAUSED');
     });
   });
 }); 

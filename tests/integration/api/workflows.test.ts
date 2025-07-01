@@ -212,4 +212,130 @@ describe('Workflow API Integration', () => {
       expect(data.success).toBe(false);
     });
   });
+
+  describe('End-to-End Workflow Execution', () => {
+    let user: TestUser;
+    let wfId: string;
+
+    beforeAll(async () => {
+      user = await createTestUser();
+    });
+
+    afterAll(async () => {
+      await cleanupTestUser(user);
+    });
+
+    afterEach(async () => {
+      await prisma.workflowExecution.deleteMany({ where: { workflowId: wfId } });
+      await prisma.workflowStep.deleteMany({ where: { workflowId: wfId } });
+      await prisma.workflow.deleteMany({ where: { id: wfId } });
+    });
+
+    it('should execute a multi-step workflow and track state/logs', async () => {
+      // Create workflow
+      const wf = await prisma.workflow.create({ data: { userId: user.id, name: 'E2E Workflow', status: 'ACTIVE', isPublic: false } });
+      wfId = wf.id;
+      // Add steps: noop, data transform, condition
+      await prisma.workflowStep.createMany({
+        data: [
+          {
+            workflowId: wfId,
+            stepOrder: 1,
+            name: 'Noop Step',
+            action: 'noop',
+            parameters: {},
+            isActive: true,
+          },
+          {
+            workflowId: wfId,
+            stepOrder: 2,
+            name: 'Transform Step',
+            action: 'transform',
+            parameters: { operation: 'map', input: { foo: 1 }, output: { bar: 2 } },
+            isActive: true,
+          },
+          {
+            workflowId: wfId,
+            stepOrder: 3,
+            name: 'Condition Step',
+            action: 'condition',
+            parameters: { condition: true, trueStep: null, falseStep: null },
+            isActive: true,
+          },
+        ],
+      });
+      // Execute workflow
+      const { req, res } = createAuthenticatedRequest('POST', user, {
+        query: { id: wfId },
+        body: { parameters: { foo: 'bar' } },
+      });
+      await executeHandler(req, res);
+      expect(res._getStatusCode()).toBe(200);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(true);
+      expect(data.data.status).toBe('completed');
+      expect(data.data.workflow.id).toBe(wfId);
+      // Check execution state
+      const executions = await prisma.workflowExecution.findMany({ where: { workflowId: wfId } });
+      expect(executions.length).toBe(1);
+      const execution = executions[0];
+      expect(execution.status).toBe('COMPLETED');
+      expect(execution.completedSteps).toBe(3);
+      expect(execution.failedSteps).toBe(0);
+      // Check logs
+      const logs = await prisma.executionLog.findMany({ where: { executionId: execution.id } });
+      expect(logs.length).toBeGreaterThanOrEqual(3);
+      // Check step results
+      expect(execution.stepResults).toBeDefined();
+      if (execution.stepResults) {
+        expect(Object.keys(execution.stepResults).length).toBe(3);
+      }
+    });
+
+    it('should retry a failed step and eventually succeed', async () => {
+      // Create workflow
+      const wf = await prisma.workflow.create({ data: { userId: user.id, name: 'Retry Workflow', status: 'ACTIVE', isPublic: false } });
+      wfId = wf.id;
+      // Add a step that will fail once, then succeed
+      let failFirst = true;
+      await prisma.workflowStep.create({
+        data: {
+          workflowId: wfId,
+          stepOrder: 1,
+          name: 'Flaky Step',
+          action: 'noop',
+          parameters: {},
+          isActive: true,
+        },
+      });
+      // Patch the stepRunner to simulate failure on first attempt
+      const origExecuteStep = require('../../../src/lib/workflow/stepRunner').stepRunner.executeStep;
+      require('../../../src/lib/workflow/stepRunner').stepRunner.executeStep = async (step, ctx) => {
+        if (failFirst) {
+          failFirst = false;
+          return { success: false, error: 'Simulated failure', duration: 10, retryCount: 0 };
+        }
+        return origExecuteStep(step, ctx);
+      };
+      // Execute workflow
+      const { req, res } = createAuthenticatedRequest('POST', user, {
+        query: { id: wfId },
+        body: {},
+      });
+      await executeHandler(req, res);
+      expect(res._getStatusCode()).toBe(200);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(true);
+      expect(data.data.status).toBe('completed');
+      // Check execution state
+      const executions = await prisma.workflowExecution.findMany({ where: { workflowId: wfId } });
+      expect(executions.length).toBe(1);
+      const execution = executions[0];
+      expect(execution.status).toBe('COMPLETED');
+      expect(execution.completedSteps).toBe(1);
+      expect(execution.failedSteps).toBe(0);
+      // Restore stepRunner
+      require('../../../src/lib/workflow/stepRunner').stepRunner.executeStep = origExecuteStep;
+    });
+  });
 }); 

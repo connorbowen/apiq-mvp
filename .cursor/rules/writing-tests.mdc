@@ -1,0 +1,6 @@
+---
+description: This rule is helpful for writing tests
+globs: 
+alwaysApply: false
+---
+Reference my [TESTING.md](mdc:docs/TESTING.md) documents for additional insight

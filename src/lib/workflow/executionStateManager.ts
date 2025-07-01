@@ -45,9 +45,24 @@ export interface RetryConfig {
   maxRetryDelay: number; // maximum delay in milliseconds
 }
 
+export interface ExecutionMetrics {
+  totalExecutions: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  averageExecutionTime: number;
+  successRate: number;
+  recentExecutions: ExecutionState[];
+}
+
 export class ExecutionStateManager {
   private prisma: PrismaClient;
   private queueService: QueueService;
+  private defaultRetryConfig: RetryConfig = {
+    maxAttempts: 3,
+    retryDelay: 5000, // 5 seconds
+    exponentialBackoff: true,
+    maxRetryDelay: 300000 // 5 minutes
+  };
 
   constructor(prisma: PrismaClient, queueService: QueueService) {
     this.prisma = prisma;
@@ -121,7 +136,7 @@ export class ExecutionStateManager {
         break;
       case 'RETRYING':
         updateData.attemptCount = { increment: 1 };
-        updateData.retryAfter = this.calculateRetryTime(executionId);
+        updateData.retryAfter = await this.calculateRetryTime(executionId);
         break;
     }
 
@@ -326,7 +341,7 @@ export class ExecutionStateManager {
   }
 
   /**
-   * Check if execution should be retried
+   * Check if execution should be retried with enhanced logic
    */
   async shouldRetry(executionId: string): Promise<boolean> {
     const execution = await this.prisma.workflowExecution.findUnique({
@@ -335,7 +350,8 @@ export class ExecutionStateManager {
         attemptCount: true,
         maxAttempts: true,
         retryAfter: true,
-        status: true
+        status: true,
+        error: true
       }
     });
 
@@ -343,16 +359,39 @@ export class ExecutionStateManager {
 
     // Check if we've exceeded max attempts
     if (execution.attemptCount >= execution.maxAttempts) {
+      logInfo('Execution exceeded max attempts', {
+        executionId,
+        attemptCount: execution.attemptCount,
+        maxAttempts: execution.maxAttempts
+      });
       return false;
     }
 
     // Check if retry time has passed
     if (execution.retryAfter && execution.retryAfter > new Date()) {
+      logDebug('Execution retry time not yet reached', {
+        executionId,
+        retryAfter: execution.retryAfter,
+        currentTime: new Date()
+      });
       return false;
     }
 
-    // Only retry if status is FAILED
-    return execution.status === 'FAILED';
+    // Only retry if status is FAILED and not cancelled
+    if (execution.status !== 'FAILED') {
+      return false;
+    }
+
+    // Check if error is retryable (not a permanent failure)
+    if (execution.error && this.isPermanentError(execution.error)) {
+      logInfo('Execution has permanent error, not retrying', {
+        executionId,
+        error: execution.error
+      });
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -366,10 +405,18 @@ export class ExecutionStateManager {
       }
     });
 
-    // Filter by attempt count in memory since Prisma doesn't support this comparison
-    const retryableExecutions = executions.filter(execution => 
-      execution.attemptCount < execution.maxAttempts
-    );
+    // Filter by attempt count and check for permanent errors
+    const retryableExecutions = executions.filter(execution => {
+      if (execution.attemptCount >= execution.maxAttempts) {
+        return false;
+      }
+      
+      if (execution.error && this.isPermanentError(execution.error)) {
+        return false;
+      }
+      
+      return true;
+    });
 
     return retryableExecutions.map(execution => this.mapToExecutionState(execution));
   }
@@ -385,6 +432,78 @@ export class ExecutionStateManager {
     });
 
     return executions.map(execution => this.mapToExecutionState(execution));
+  }
+
+  /**
+   * Get executions that are stuck (RUNNING for too long)
+   */
+  async getStuckExecutions(timeoutMinutes: number = 30): Promise<ExecutionState[]> {
+    const timeoutDate = new Date();
+    timeoutDate.setMinutes(timeoutDate.getMinutes() - timeoutMinutes);
+
+    const executions = await this.prisma.workflowExecution.findMany({
+      where: {
+        status: 'RUNNING',
+        startedAt: { lt: timeoutDate }
+      }
+    });
+
+    return executions.map(execution => this.mapToExecutionState(execution));
+  }
+
+  /**
+   * Get execution metrics for monitoring
+   */
+  async getExecutionMetrics(
+    workflowId?: string,
+    userId?: string,
+    timeRange?: { start: Date; end: Date }
+  ): Promise<ExecutionMetrics> {
+    const whereClause: any = {};
+    
+    if (workflowId) whereClause.workflowId = workflowId;
+    if (userId) whereClause.userId = userId;
+    if (timeRange) {
+      whereClause.createdAt = {
+        gte: timeRange.start,
+        lte: timeRange.end
+      };
+    }
+
+    const [totalExecutions, successfulExecutions, failedExecutions, recentExecutions] = await Promise.all([
+      this.prisma.workflowExecution.count({ where: whereClause }),
+      this.prisma.workflowExecution.count({ 
+        where: { ...whereClause, status: 'COMPLETED' } 
+      }),
+      this.prisma.workflowExecution.count({ 
+        where: { ...whereClause, status: 'FAILED' } 
+      }),
+      this.prisma.workflowExecution.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        take: 10
+      })
+    ]);
+
+    // Calculate average execution time
+    const completedExecutions = await this.prisma.workflowExecution.findMany({
+      where: { ...whereClause, status: 'COMPLETED', executionTime: { not: null } },
+      select: { executionTime: true }
+    });
+
+    const totalExecutionTime = completedExecutions.reduce((sum, exec) => sum + (exec.executionTime || 0), 0);
+    const averageExecutionTime = completedExecutions.length > 0 ? totalExecutionTime / completedExecutions.length : 0;
+
+    const successRate = totalExecutions > 0 ? (successfulExecutions / totalExecutions) * 100 : 0;
+
+    return {
+      totalExecutions,
+      successfulExecutions,
+      failedExecutions,
+      averageExecutionTime,
+      successRate,
+      recentExecutions: recentExecutions.map(exec => this.mapToExecutionState(exec))
+    };
   }
 
   /**
@@ -411,6 +530,30 @@ export class ExecutionStateManager {
   }
 
   /**
+   * Reset execution for retry
+   */
+  async resetExecutionForRetry(executionId: string): Promise<ExecutionState> {
+    const execution = await this.prisma.workflowExecution.update({
+      where: { id: executionId },
+      data: {
+        status: 'PENDING',
+        currentStep: 0,
+        completedSteps: 0,
+        failedSteps: 0,
+        stepResults: {},
+        error: undefined,
+        result: undefined,
+        executionTime: undefined,
+        startedAt: undefined,
+        completedAt: undefined
+      }
+    });
+
+    logInfo('Reset execution for retry', { executionId });
+    return this.mapToExecutionState(execution);
+  }
+
+  /**
    * Private helper methods
    */
   private async getExecutionStartTime(executionId: string): Promise<number> {
@@ -422,13 +565,54 @@ export class ExecutionStateManager {
     return execution?.startedAt.getTime() || Date.now();
   }
 
-  private calculateRetryTime(executionId: string): Date {
-    // Simple exponential backoff: 2^attempt * base delay
-    // This will be enhanced with the actual attempt count from the database
-    const baseDelay = 5000; // 5 seconds
+  private async calculateRetryTime(executionId: string): Promise<Date> {
+    const execution = await this.prisma.workflowExecution.findUnique({
+      where: { id: executionId },
+      select: { attemptCount: true, maxAttempts: true }
+    });
+
+    if (!execution) {
+      return new Date(Date.now() + this.defaultRetryConfig.retryDelay);
+    }
+
+    let delay = this.defaultRetryConfig.retryDelay;
+    
+    if (this.defaultRetryConfig.exponentialBackoff) {
+      // Exponential backoff: 2^attempt * base delay
+      delay = Math.min(
+        Math.pow(2, execution.attemptCount) * this.defaultRetryConfig.retryDelay,
+        this.defaultRetryConfig.maxRetryDelay
+      );
+    }
+
     const retryTime = new Date();
-    retryTime.setSeconds(retryTime.getSeconds() + (baseDelay / 1000));
+    retryTime.setTime(retryTime.getTime() + delay);
+    
+    logDebug('Calculated retry time', {
+      executionId,
+      attemptCount: execution.attemptCount,
+      delay,
+      retryTime
+    });
+
     return retryTime;
+  }
+
+  private isPermanentError(error: string): boolean {
+    // Define permanent errors that shouldn't be retried
+    const permanentErrors = [
+      'INVALID_API_KEY',
+      'UNAUTHORIZED',
+      'FORBIDDEN',
+      'NOT_FOUND',
+      'VALIDATION_ERROR',
+      'INVALID_WORKFLOW',
+      'USER_CANCELLED'
+    ];
+
+    return permanentErrors.some(permanentError => 
+      error.toUpperCase().includes(permanentError)
+    );
   }
 
   private mapToExecutionState(execution: any): ExecutionState {

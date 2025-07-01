@@ -1268,6 +1268,141 @@ Get detailed information about a specific execution.
 }
 ```
 
+#### `POST /api/workflows/executions/{executionId}/cancel`
+
+Cancel a running workflow execution.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "executionId": "execution_id",
+    "status": "cancelled",
+    "cancelledAt": "2024-01-01T00:00:00.000Z",
+    "message": "Execution cancelled successfully"
+  }
+}
+```
+
+**Error Response (Execution not found):**
+```json
+{
+  "success": false,
+  "error": "Execution not found",
+  "code": "EXECUTION_NOT_FOUND"
+}
+```
+
+**Error Response (Execution already completed):**
+```json
+{
+  "success": false,
+  "error": "Cannot cancel completed execution",
+  "code": "EXECUTION_ALREADY_COMPLETED"
+}
+```
+
+#### `POST /api/workflows/executions/{executionId}/pause`
+
+Pause a running workflow execution.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "executionId": "execution_id",
+    "status": "paused",
+    "pausedAt": "2024-01-01T00:00:00.000Z",
+    "message": "Execution paused successfully"
+  }
+}
+```
+
+**Error Response (Execution not found):**
+```json
+{
+  "success": false,
+  "error": "Execution not found",
+  "code": "EXECUTION_NOT_FOUND"
+}
+```
+
+**Error Response (Execution not running):**
+```json
+{
+  "success": false,
+  "error": "Cannot pause non-running execution",
+  "code": "EXECUTION_NOT_RUNNING"
+}
+```
+
+#### `POST /api/workflows/executions/{executionId}/resume`
+
+Resume a paused workflow execution.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "executionId": "execution_id",
+    "status": "running",
+    "resumedAt": "2024-01-01T00:00:00.000Z",
+    "message": "Execution resumed successfully"
+  }
+}
+```
+
+**Error Response (Execution not found):**
+```json
+{
+  "success": false,
+  "error": "Execution not found",
+  "code": "EXECUTION_NOT_FOUND"
+}
+```
+
+**Error Response (Execution not paused):**
+```json
+{
+  "success": false,
+  "error": "Cannot resume non-paused execution",
+  "code": "EXECUTION_NOT_PAUSED"
+}
+```
+
+#### `GET /api/workflows/executions/{executionId}/status`
+
+Get the current status of a workflow execution.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "executionId": "execution_id",
+    "status": "running",
+    "currentStep": 2,
+    "totalSteps": 5,
+    "progress": 40,
+    "startedAt": "2024-01-01T00:00:00.000Z",
+    "estimatedCompletion": "2024-01-01T00:00:05.000Z",
+    "lastActivity": "2024-01-01T00:00:02.000Z"
+  }
+}
+```
+
+**Error Response (Execution not found):**
+```json
+{
+  "success": false,
+  "error": "Execution not found",
+  "code": "EXECUTION_NOT_FOUND"
+}
+```
+
 ### AI Chat
 
 #### `POST /api/chat`

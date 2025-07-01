@@ -81,13 +81,6 @@ import { UserProfile } from '@/components/UserProfile';
    [optional footer(s)]
    ```
 
-3. **Pull Request Process**
-   - Create feature branch from `main`
-   - Make focused, atomic commits
-   - Write descriptive PR description
-   - Include tests for new functionality
-   - Request review from at least one maintainer
-
 ### Code Review Requirements
 - All code must be reviewed before merging
 - Address all review comments
@@ -98,38 +91,31 @@ import { UserProfile } from '@/components/UserProfile';
 ## Branch Management Rules
 
 ### Step-by-Step Development Process
-1. **Create Feature Branch**: Each development step must be on its own branch
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b feature/step-description
-   ```
 
-2. **Development**: Work on the specific step/feature
+1. **Development**: Work on the specific step/feature
    - Make focused, atomic commits
    - Follow coding standards
    - Write tests for new functionality
    - Update documentation as needed
 
-3. **Testing**: Ensure all tests pass
+2. **Testing**: Ensure all tests pass
    ```bash
    npm test
    npm run lint
    npm run build
    ```
 
-4. **Pull Request**: Create PR for the step
+3. **Commit**: Create commit for the step
    - Clear description of what was accomplished
    - Link to relevant documentation sections
    - Include testing results
    - Request review
 
-5. **Review & Merge**: After approval and merge
-   - Delete the feature branch
+4. **Review & Merge**: After approval and merge
    - Update task tracking
    - Mark step as complete
 
-### Branch Naming Convention
+### Commit Naming Convention
 - **Feature Steps**: `feature/step-{number}-{description}`
   - Example: `feature/step-1-prisma-schema-setup`
   - Example: `feature/step-2-nextauth-configuration`
@@ -179,9 +165,6 @@ import { UserProfile } from '@/components/UserProfile';
    ```
 
 4. **Cleanup Checklist**: Before completing any step
-   - [ ] Feature branch successfully merged to `main`
-   - [ ] Local feature branch deleted
-   - [ ] Remote feature branch deleted (if applicable)
    - [ ] No stale branches remaining
    - [ ] Repository is clean and organized
 
@@ -189,7 +172,7 @@ import { UserProfile } from '@/components/UserProfile';
    - Currently in active development
    - Waiting for review/approval
    - Hotfix branches for production issues
-   - Long-running feature branches (document why)
+
 
 6. **Documentation**: Update branch status in project tracking
    - Mark branches as "merged and cleaned up" in implementation plan
@@ -220,14 +203,12 @@ A task/step is considered complete when:
    - User guide updated if applicable
 
 4. **Review Process**
-   - Pull request created
    - Code review completed
    - All feedback addressed
    - Approved by maintainer
 
 5. **Merge & Deployment**
    - Successfully merged to `main`
-   - Feature branch deleted
    - No merge conflicts
    - Deployment successful (if applicable)
 
@@ -244,8 +225,6 @@ Before marking a step as complete:
 - [ ] All tests passing
 - [ ] Documentation updated
 - [ ] Code review completed
-- [ ] Pull request merged to `main`
-- [ ] Feature branch deleted
 - [ ] Implementation plan updated
 - [ ] Next step identified and planned
 

@@ -4,7 +4,7 @@ import type { WorkflowExecution } from '../../../src/generated/prisma';
 import { logError, logInfo, logDebug, logWorkflowExecution } from '../../utils/logger';
 import { prisma } from '../../../lib/database/client';
 import { stepRunner } from './stepRunner';
-import { ExecutionStateManager, ExecutionState } from './executionStateManager';
+import { ExecutionStateManager, ExecutionState, ExecutionMetrics } from './executionStateManager';
 import { QueueService } from '../queue/queueService';
 
 // Workflow execution configuration
@@ -16,6 +16,8 @@ export interface ExecutionConfig {
   maxRetries?: number;
   useQueue?: boolean;
   queueName?: string;
+  enableMonitoring?: boolean;
+  stuckExecutionTimeout?: number; // minutes
 }
 
 // Workflow execution result
@@ -52,6 +54,8 @@ export class WorkflowExecutor {
       maxRetries: 3,
       useQueue: true,
       queueName: 'workflow-execution',
+      enableMonitoring: true,
+      stuckExecutionTimeout: 30, // 30 minutes
       ...config
     };
     this.stateManager = stateManager;
@@ -161,14 +165,20 @@ export class WorkflowExecutor {
       });
 
       // Update execution record with error
-      await this.stateManager.updateStatus(execution.id, 'FAILED', {
-        error: errorMessage,
-        result: {
-          success: false,
+      try {
+        await this.stateManager.updateStatus(execution.id, 'FAILED', {
           error: errorMessage,
-          totalDuration
-        }
-      });
+          result: {
+            success: false,
+            error: errorMessage,
+            totalDuration
+          }
+        });
+      } catch (updateError) {
+        logError('Failed to update execution status after error', updateError as Error, {
+          executionId: execution.id
+        });
+      }
 
       return {
         success: false,
@@ -257,7 +267,7 @@ export class WorkflowExecutor {
   }
 
   /**
-   * Execute a single step with retry logic
+   * Execute a single step with enhanced retry logic
    */
   private async executeStepWithRetry(step: any, context: ExecutionContext): Promise<StepResult> {
     let lastResult: StepResult | null = null;
@@ -351,7 +361,7 @@ export class WorkflowExecutor {
     const jobData = {
       executionId: execution.id,
       workflowId: workflow.id,
-        userId,
+      userId,
       steps,
       parameters,
       config: this.config
@@ -433,15 +443,59 @@ export class WorkflowExecutor {
   }
 
   /**
+   * Get execution metrics for monitoring
+   */
+  async getExecutionMetrics(
+    workflowId?: string,
+    userId?: string,
+    timeRange?: { start: Date; end: Date }
+  ): Promise<ExecutionMetrics> {
+    return await this.stateManager.getExecutionMetrics(workflowId, userId, timeRange);
+  }
+
+  /**
+   * Get stuck executions that need attention
+   */
+  async getStuckExecutions(timeoutMinutes?: number): Promise<ExecutionState[]> {
+    const timeout = timeoutMinutes || this.config.stuckExecutionTimeout || 30;
+    return await this.stateManager.getStuckExecutions(timeout);
+  }
+
+  /**
+   * Get retryable executions
+   */
+  async getRetryableExecutions(): Promise<ExecutionState[]> {
+    return await this.stateManager.getRetryableExecutions();
+  }
+
+  /**
+   * Get paused executions
+   */
+  async getPausedExecutions(): Promise<ExecutionState[]> {
+    return await this.stateManager.getPausedExecutions();
+  }
+
+  /**
+   * Reset execution for retry
+   */
+  async resetExecutionForRetry(executionId: string): Promise<ExecutionState> {
+    return await this.stateManager.resetExecutionForRetry(executionId);
+  }
+
+  /**
+   * Clean up old execution records
+   */
+  async cleanupOldExecutions(retentionDays: number = 30): Promise<number> {
+    return await this.stateManager.cleanupOldExecutions(retentionDays);
+  }
+
+  /**
    * Utility function for sleeping
    */
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
-
-// Note: WorkflowExecutor now requires dependencies (ExecutionStateManager and QueueService)
-// Use dependency injection or create instances with required dependencies
 
 // Factory function to create WorkflowExecutor with dependencies
 export function createWorkflowExecutor(
