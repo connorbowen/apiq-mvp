@@ -160,3 +160,37 @@ export const apiClient = new ApiClient();
 
 // Export types
 export type { ApiResponse }; 
+
+// Workflow Execution State Management API
+export async function getExecutionStatus(executionId: string) {
+  const res = await fetch(`/api/workflows/executions/${executionId}/status`);
+  if (!res.ok) throw new Error('Failed to fetch execution status');
+  return res.json();
+}
+
+export async function pauseExecution(executionId: string) {
+  const res = await fetch(`/api/workflows/executions/${executionId}/pause`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) throw new Error('Failed to pause execution');
+  return res.json();
+}
+
+export async function resumeExecution(executionId: string) {
+  const res = await fetch(`/api/workflows/executions/${executionId}/resume`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) throw new Error('Failed to resume execution');
+  return res.json();
+}
+
+export async function cancelExecution(executionId: string) {
+  const res = await fetch(`/api/workflows/executions/${executionId}/cancel`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!res.ok) throw new Error('Failed to cancel execution');
+  return res.json();
+} 

@@ -98,6 +98,211 @@ const DEFAULT_CONFIG: QueueConfig = {
 // Example zod schema for job data (customize per job type)
 const DefaultJobDataSchema = z.any();
 
+// Prometheus metrics types
+interface QueueMetrics {
+  jobsTotal: number;
+  jobsCompleted: number;
+  jobsFailed: number;
+  jobsRetry: number;
+  jobsActive: number;
+  jobsDelayed: number;
+  jobsCancelled: number;
+  jobsExpired: number;
+  queueSize: number;
+  workerCount: number;
+  avgProcessingTime: number;
+  avgWaitTime: number;
+  throughputPerMinute: number;
+  errorRate: number;
+}
+
+// Enhanced job state types
+export type JobState = 
+  | 'created' 
+  | 'retry' 
+  | 'active' 
+  | 'completed' 
+  | 'cancelled' 
+  | 'expired' 
+  | 'failed';
+
+// Job payload validation schema
+const JobPayloadSchema = z.object({
+  data: z.any(),
+  options: z.object({
+    priority: z.number().min(1).max(10).optional(),
+    delay: z.number().min(0).optional(),
+    retryLimit: z.number().min(0).optional(),
+    retryDelay: z.number().min(0).optional(),
+    timeout: z.number().min(0).optional(),
+    jobKey: z.string().optional(),
+  }).optional(),
+});
+
+// Queue statistics interface
+export interface QueueStatistics {
+  queueName: string;
+  metrics: QueueMetrics;
+  lastUpdated: Date;
+  health: 'healthy' | 'degraded' | 'unhealthy';
+}
+
+// Enhanced job interface
+export interface Job {
+  id: string;
+  name: string;
+  data: any;
+  state: JobState;
+  created: Date;
+  started?: Date;
+  completed?: Date;
+  failed?: Date;
+  retryCount: number;
+  retryLimit: number;
+  retryDelay: number;
+  timeout: number;
+  priority: number;
+  delay: number;
+  jobKey?: string;
+  queueName: string;
+}
+
+// Worker statistics interface
+export interface WorkerStatistics {
+  workerId: string;
+  queueName: string;
+  jobsProcessed: number;
+  jobsFailed: number;
+  avgProcessingTime: number;
+  lastJobProcessed?: Date;
+  isActive: boolean;
+  startTime: Date;
+}
+
+// Queue service configuration
+export interface QueueServiceConfig {
+  connectionString: string;
+  schema?: string;
+  poolSize?: number;
+  maxConcurrency?: number;
+  retentionDays?: number;
+  archiveCompletedJobs?: boolean;
+  archiveFailedJobs?: boolean;
+  enableMetrics?: boolean;
+  metricsInterval?: number; // in milliseconds
+}
+
+// Prometheus metrics collector
+class PrometheusMetricsCollector {
+  private metrics: Map<string, QueueMetrics> = new Map();
+  private lastUpdate: Date = new Date();
+
+  updateMetrics(queueName: string, metrics: Partial<QueueMetrics>): void {
+    const existing = this.metrics.get(queueName) || this.getDefaultMetrics();
+    this.metrics.set(queueName, { ...existing, ...metrics });
+    this.lastUpdate = new Date();
+  }
+
+  getMetrics(queueName: string): QueueMetrics | null {
+    return this.metrics.get(queueName) || null;
+  }
+
+  getAllMetrics(): Map<string, QueueMetrics> {
+    return new Map(Array.from(this.metrics.entries()));
+  }
+
+  getLastUpdate(): Date {
+    return this.lastUpdate;
+  }
+
+  private getDefaultMetrics(): QueueMetrics {
+    return {
+      jobsTotal: 0,
+      jobsCompleted: 0,
+      jobsFailed: 0,
+      jobsRetry: 0,
+      jobsActive: 0,
+      jobsDelayed: 0,
+      jobsCancelled: 0,
+      jobsExpired: 0,
+      queueSize: 0,
+      workerCount: 0,
+      avgProcessingTime: 0,
+      avgWaitTime: 0,
+      throughputPerMinute: 0,
+      errorRate: 0,
+    };
+  }
+
+  // Generate Prometheus format metrics
+  generatePrometheusMetrics(): string {
+    const lines: string[] = [];
+    const timestamp = Date.now();
+
+    for (const [queueName, metrics] of Array.from(this.metrics.entries())) {
+      const labels = `queue="${queueName}"`;
+      
+      lines.push(`# HELP pg_boss_jobs_total Total number of jobs`);
+      lines.push(`# TYPE pg_boss_jobs_total counter`);
+      lines.push(`pg_boss_jobs_total{${labels}} ${metrics.jobsTotal} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_jobs_completed Total number of completed jobs`);
+      lines.push(`# TYPE pg_boss_jobs_completed counter`);
+      lines.push(`pg_boss_jobs_completed{${labels}} ${metrics.jobsCompleted} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_jobs_failed Total number of failed jobs`);
+      lines.push(`# TYPE pg_boss_jobs_failed counter`);
+      lines.push(`pg_boss_jobs_failed{${labels}} ${metrics.jobsFailed} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_jobs_retry Total number of jobs in retry`);
+      lines.push(`# TYPE pg_boss_jobs_retry gauge`);
+      lines.push(`pg_boss_jobs_retry{${labels}} ${metrics.jobsRetry} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_jobs_active Total number of active jobs`);
+      lines.push(`# TYPE pg_boss_jobs_active gauge`);
+      lines.push(`pg_boss_jobs_active{${labels}} ${metrics.jobsActive} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_jobs_delayed Total number of delayed jobs`);
+      lines.push(`# TYPE pg_boss_jobs_delayed gauge`);
+      lines.push(`pg_boss_jobs_delayed{${labels}} ${metrics.jobsDelayed} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_jobs_cancelled Total number of cancelled jobs`);
+      lines.push(`# TYPE pg_boss_jobs_cancelled counter`);
+      lines.push(`pg_boss_jobs_cancelled{${labels}} ${metrics.jobsCancelled} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_jobs_expired Total number of expired jobs`);
+      lines.push(`# TYPE pg_boss_jobs_expired counter`);
+      lines.push(`pg_boss_jobs_expired{${labels}} ${metrics.jobsExpired} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_queue_size Current queue size`);
+      lines.push(`# TYPE pg_boss_queue_size gauge`);
+      lines.push(`pg_boss_queue_size{${labels}} ${metrics.queueSize} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_worker_count Number of active workers`);
+      lines.push(`# TYPE pg_boss_worker_count gauge`);
+      lines.push(`pg_boss_worker_count{${labels}} ${metrics.workerCount} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_avg_processing_time Average job processing time in milliseconds`);
+      lines.push(`# TYPE pg_boss_avg_processing_time gauge`);
+      lines.push(`pg_boss_avg_processing_time{${labels}} ${metrics.avgProcessingTime} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_avg_wait_time Average job wait time in milliseconds`);
+      lines.push(`# TYPE pg_boss_avg_wait_time gauge`);
+      lines.push(`pg_boss_avg_wait_time{${labels}} ${metrics.avgWaitTime} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_throughput_per_minute Jobs processed per minute`);
+      lines.push(`# TYPE pg_boss_throughput_per_minute gauge`);
+      lines.push(`pg_boss_throughput_per_minute{${labels}} ${metrics.throughputPerMinute} ${timestamp}`);
+
+      lines.push(`# HELP pg_boss_error_rate Error rate as percentage`);
+      lines.push(`# TYPE pg_boss_error_rate gauge`);
+      lines.push(`pg_boss_error_rate{${labels}} ${metrics.errorRate} ${timestamp}`);
+    }
+
+    return lines.join('\n');
+  }
+}
+
 export class QueueService {
   private boss: PgBoss;
   private prisma: PrismaClient;
@@ -107,6 +312,8 @@ export class QueueService {
   private workerStats: Map<string, WorkerStats> = new Map();
   private lastHealthCheck: Date = new Date();
   private workers: Map<string, any> = new Map(); // TODO: Replace with proper PgBoss worker type
+  private metricsCollector: PrometheusMetricsCollector;
+  private metricsInterval?: NodeJS.Timeout;
 
   constructor(prisma: PrismaClient, config: Partial<QueueConfig> = {}) {
     this.prisma = prisma;
@@ -123,6 +330,8 @@ export class QueueService {
     this.boss.on('error', (error: Error) => {
       logError('PgBoss error', error);
     });
+
+    this.metricsCollector = new PrometheusMetricsCollector();
   }
 
   async initialize(): Promise<void> {
@@ -139,6 +348,7 @@ export class QueueService {
       });
 
       this.startHealthCheck();
+      this.startMetricsCollection();
     } catch (error) {
       logError('Failed to initialize queue service', error as Error);
       throw error;
@@ -510,6 +720,28 @@ export class QueueService {
       return sanitized;
     }
     return data;
+  }
+
+  private startMetricsCollection(): void {
+    if (this.metricsInterval) {
+      clearInterval(this.metricsInterval);
+    }
+
+    this.metricsInterval = setInterval(async () => {
+      try {
+        // Update metrics for all registered queues
+        for (const queueName of Array.from(this.workers.keys())) {
+          await this.getQueueStatistics(queueName);
+        }
+      } catch (error) {
+        logError('Metrics collection failed:', error as Error);
+      }
+    }, (this.config as any).metricsInterval || 30000);
+  }
+
+  private getQueueStatistics(queueName: string): Promise<QueueStatistics> {
+    // Implementation of getQueueStatistics method
+    throw new Error('Method not implemented');
   }
 }
 

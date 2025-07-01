@@ -12,6 +12,7 @@ interface WorkflowCardProps {
     stepCount: number;
     executionCount: number;
     lastExecuted?: string;
+    lastExecutionId?: string;
     createdAt: string;
     updatedAt: string;
   };
@@ -144,6 +145,15 @@ export default function WorkflowCard({ workflow, onDelete, onExecute }: Workflow
             >
               View
             </Link>
+            
+            {workflow.lastExecutionId && (
+              <Link
+                href={`/workflows/${workflow.id}/executions/${workflow.lastExecutionId}`}
+                className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Monitor
+              </Link>
+            )}
             
             {workflow.status === 'ACTIVE' && onExecute && (
               <button

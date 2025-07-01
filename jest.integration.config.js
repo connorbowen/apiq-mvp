@@ -7,14 +7,11 @@ const createJestConfig = nextJest({
 
 // Add any custom config to be passed to Jest
 const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  setupFiles: ['<rootDir>/jest.polyfill.js'],
-  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.integration.setup.js'],
+  testEnvironment: 'node',
   testMatch: [
-    '<rootDir>/tests/unit/**/*.test.ts',
-    '<rootDir>/tests/unit/**/*.test.tsx',
-    '<rootDir>/tests/unit/**/*.test.js',
-    '<rootDir>/tests/unit/**/*.test.jsx'
+    '<rootDir>/tests/integration/**/*.test.ts',
+    '<rootDir>/tests/integration/**/*.test.js'
   ],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
@@ -22,32 +19,24 @@ const customJestConfig = {
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/.next/**',
-    '!**/coverage/**',
-    '!**/tests/**'
+    '!**/coverage/**'
   ],
-  coverageDirectory: 'coverage/unit',
+  coverageDirectory: 'coverage/integration',
   coverageReporters: ['text', 'lcov', 'html'],
-  testTimeout: 10000,
+  testTimeout: 30000,
   verbose: true,
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
-  // Handle environment variables for tests
-  testEnvironmentOptions: {
-    url: 'http://localhost:3000'
-  },
-  // Increase memory limit for tests
-  maxWorkers: '50%',
-  // Handle large test suites
-  bail: false,
-  // Clear mocks between tests
+  forceExit: true,
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
-  // Transform ES modules
-  transformIgnorePatterns: [
-    '/node_modules/(?!(node-fetch)/)'
-  ]
+  moduleNameMapping: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  // Handle environment variables for integration tests
+  setupFiles: ['<rootDir>/jest.polyfill.js'],
+  testEnvironmentOptions: {
+    url: 'http://localhost:3000'
+  }
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

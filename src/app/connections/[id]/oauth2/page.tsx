@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient, OAuth2Provider, ApiConnection } from '../../../../lib/api/client';
@@ -16,23 +16,16 @@ export default function OAuth2SetupPage() {
   const params = useParams();
   const connectionId = params?.id as string;
 
-  useEffect(() => {
-    checkAuth();
-    loadConnection();
-    loadProviders();
-  }, [connectionId]);
-
-  const checkAuth = () => {
+  const checkAuth = useCallback(() => {
     const token = localStorage.getItem('accessToken');
     if (!token) {
       router.push('/login');
     }
-  };
+  }, [router]);
 
-  const loadConnection = async () => {
+  const loadConnection = useCallback(async () => {
     try {
       const response = await apiClient.getConnection(connectionId);
-
       if (response.success && response.data) {
         setConnection(response.data);
       } else {
@@ -41,9 +34,9 @@ export default function OAuth2SetupPage() {
     } catch (error) {
       setError('Network error');
     }
-  };
+  }, [connectionId]);
 
-  const loadProviders = async () => {
+  const loadProviders = useCallback(async () => {
     try {
       const response = await apiClient.getOAuth2Providers();
       if (response.success && response.data) {
@@ -54,7 +47,13 @@ export default function OAuth2SetupPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+    loadConnection();
+    loadProviders();
+  }, [connectionId, checkAuth, loadConnection, loadProviders]);
 
   const initiateOAuth2Flow = async (provider: string) => {
     setIsAuthorizing(true);

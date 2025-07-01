@@ -4,6 +4,8 @@ import type { WorkflowExecution } from '../../../src/generated/prisma';
 import { logError, logInfo, logDebug, logWorkflowExecution } from '../../utils/logger';
 import { prisma } from '../../../lib/database/client';
 import { stepRunner } from './stepRunner';
+import { ExecutionStateManager, ExecutionState } from './executionStateManager';
+import { QueueService } from '../queue/queueService';
 
 // Workflow execution configuration
 export interface ExecutionConfig {
@@ -12,13 +14,15 @@ export interface ExecutionConfig {
   enableRollback?: boolean;
   retryOnFailure?: boolean;
   maxRetries?: number;
+  useQueue?: boolean;
+  queueName?: string;
 }
 
 // Workflow execution result
 export interface WorkflowExecutionResult {
   success: boolean;
   executionId: string;
-  status: 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  status: 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'PAUSED';
   totalSteps: number;
   completedSteps: number;
   failedSteps: number;
@@ -26,21 +30,32 @@ export interface WorkflowExecutionResult {
   results: Record<number, StepResult>;
   error?: string;
   metadata?: Record<string, any>;
+  queueJobId?: string;
 }
 
 // Workflow Executor
 export class WorkflowExecutor {
   private config: ExecutionConfig;
+  private stateManager: ExecutionStateManager;
+  private queueService: QueueService;
 
-  constructor(config: ExecutionConfig = {}) {
+  constructor(
+    config: ExecutionConfig = {},
+    stateManager: ExecutionStateManager,
+    queueService: QueueService
+  ) {
     this.config = {
       maxConcurrency: 1, // Sequential execution by default
       timeout: 300000, // 5 minutes
       enableRollback: true,
       retryOnFailure: true,
       maxRetries: 3,
+      useQueue: true,
+      queueName: 'workflow-execution',
       ...config
     };
+    this.stateManager = stateManager;
+    this.queueService = queueService;
   }
 
   /**
@@ -54,8 +69,14 @@ export class WorkflowExecutor {
   ): Promise<WorkflowExecutionResult> {
     const startTime = Date.now();
     
-    // Create execution record
-    const execution = await this.createExecutionRecord(workflow.id, userId, parameters);
+    // Create execution record with enhanced state tracking
+    const execution = await this.stateManager.createExecution(
+      workflow.id,
+      userId,
+      steps.length,
+      this.config.maxRetries,
+      { parameters, workflowName: workflow.name }
+    );
     
     logInfo('Workflow execution started', {
       workflowId: workflow.id,
@@ -77,10 +98,10 @@ export class WorkflowExecutor {
       };
 
       // Update execution status to RUNNING
-      await this.updateExecutionStatus(execution.id, 'RUNNING');
+      await this.stateManager.updateStatus(execution.id, 'RUNNING');
 
-      // Execute steps
-      const results = await this.executeSteps(steps, context);
+      // Execute steps with progress tracking
+      const results = await this.executeStepsWithProgress(steps, context, execution.id);
 
       // Calculate execution summary
       const completedSteps = Object.values(results).filter(r => r.success).length;
@@ -91,10 +112,10 @@ export class WorkflowExecutor {
       const status = failedSteps === 0 ? 'COMPLETED' : 'FAILED';
       const success = status === 'COMPLETED';
 
-      // Update execution record
-      await this.updateExecutionRecord(execution.id, {
-        status,
-        completedAt: new Date(),
+      // Update execution record with final results
+      await this.stateManager.updateStatus(execution.id, status, {
+        completedSteps,
+        failedSteps,
         result: {
           success,
           totalSteps: steps.length,
@@ -140,9 +161,7 @@ export class WorkflowExecutor {
       });
 
       // Update execution record with error
-      await this.updateExecutionRecord(execution.id, {
-        status: 'FAILED',
-        completedAt: new Date(),
+      await this.stateManager.updateStatus(execution.id, 'FAILED', {
         error: errorMessage,
         result: {
           success: false,
@@ -170,19 +189,59 @@ export class WorkflowExecutor {
   }
 
   /**
-   * Execute workflow steps sequentially or with concurrency
+   * Execute workflow steps with progress tracking
    */
-  private async executeSteps(steps: any[], context: ExecutionContext): Promise<Record<number, StepResult>> {
+  private async executeStepsWithProgress(
+    steps: any[], 
+    context: ExecutionContext, 
+    executionId: string
+  ): Promise<Record<number, StepResult>> {
     const results: Record<number, StepResult> = {};
+    let completedSteps = 0;
+    let failedSteps = 0;
 
     if (this.config.maxConcurrency === 1) {
-      // Sequential execution
-      for (const step of steps) {
+      // Sequential execution with progress tracking
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        
+        // Update current step
+        await this.stateManager.updateProgress(executionId, {
+          currentStep: i,
+          completedSteps,
+          failedSteps
+        });
+
+        // Check if execution has been paused or cancelled
+        const currentState = await this.stateManager.getExecutionState(executionId);
+        if (currentState?.status === 'PAUSED') {
+          logInfo('Execution paused', { executionId, currentStep: i });
+          throw new Error('Execution paused by user');
+        }
+        if (currentState?.status === 'CANCELLED') {
+          logInfo('Execution cancelled', { executionId, currentStep: i });
+          throw new Error('Execution cancelled by user');
+        }
+
         const result = await this.executeStepWithRetry(step, context);
         results[step.stepOrder] = result;
         
         // Update context with step result
         context.stepResults[step.stepOrder] = result;
+        
+        // Update progress
+        if (result.success) {
+          completedSteps++;
+        } else {
+          failedSteps++;
+        }
+
+        // Update step results
+        await this.stateManager.updateProgress(executionId, {
+          completedSteps,
+          failedSteps,
+          stepResults: { ...results }
+        });
         
         // Check if we should continue on failure
         if (!result.success && !this.config.retryOnFailure) {
@@ -266,79 +325,101 @@ export class WorkflowExecutor {
   }
 
   /**
-   * Create execution record in database
+   * Submit workflow for queue execution
    */
-  private async createExecutionRecord(
-    workflowId: string,
+  async submitWorkflowForExecution(
+    workflow: any,
+    steps: any[],
     userId: string,
-    parameters: Record<string, any>
-  ): Promise<WorkflowExecution> {
-    return await prisma.workflowExecution.create({
-      data: {
-        workflowId,
-        userId,
-        status: 'PENDING',
-        metadata: { parameters }
-      }
-    });
-  }
-
-  /**
-   * Update execution status
-   */
-  private async updateExecutionStatus(executionId: string, status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'): Promise<void> {
-    await prisma.workflowExecution.update({
-      where: { id: executionId },
-      data: { status }
-    });
-  }
-
-  /**
-   * Update execution record with results
-   */
-  private async updateExecutionRecord(
-    executionId: string,
-    data: {
-      status: 'COMPLETED' | 'FAILED' | 'CANCELLED';
-      completedAt: Date;
-      error?: string;
-      result?: any;
+    parameters: Record<string, any> = {}
+  ): Promise<{ executionId: string; queueJobId: string }> {
+    if (!this.config.useQueue) {
+      throw new Error('Queue execution is disabled');
     }
-  ): Promise<void> {
-    await prisma.workflowExecution.update({
-      where: { id: executionId },
-      data
+
+    // Create execution record
+    const execution = await this.stateManager.createExecution(
+      workflow.id,
+      userId,
+      steps.length,
+      this.config.maxRetries,
+      { parameters, workflowName: workflow.name }
+    );
+
+    // Submit job to queue
+    const queueName = this.config.queueName || 'workflow-execution';
+    const jobData = {
+      executionId: execution.id,
+      workflowId: workflow.id,
+        userId,
+      steps,
+      parameters,
+      config: this.config
+    };
+
+    const { jobId } = await this.queueService.submitJob({
+      queueName,
+      name: 'execute-workflow',
+      data: jobData,
+      retryLimit: this.config.maxRetries,
+      retryDelay: 5000,
+      timeout: this.config.timeout
     });
+
+    // Update execution with queue job info
+    await this.stateManager.setQueueJob(execution.id, jobId, queueName);
+
+    logInfo('Submitted workflow for queue execution', {
+      executionId: execution.id,
+      queueJobId: jobId,
+      queueName,
+      workflowId: workflow.id,
+      userId
+    });
+
+    return { executionId: execution.id, queueJobId: jobId };
+  }
+
+  /**
+   * Pause workflow execution
+   */
+  async pauseExecution(executionId: string, pausedBy: string): Promise<void> {
+    await this.stateManager.pauseExecution(executionId, pausedBy);
+  }
+
+  /**
+   * Resume workflow execution
+   */
+  async resumeExecution(executionId: string, resumedBy: string): Promise<void> {
+    const execution = await this.stateManager.resumeExecution(executionId, resumedBy);
+    
+    // Re-queue the job if queue execution is enabled
+    if (this.config.useQueue && execution.queueName) {
+      // This would typically involve re-queuing the job
+      // For now, we'll just update the status
+      logInfo('Execution resumed, ready for re-queuing', { executionId });
+    }
   }
 
   /**
    * Cancel workflow execution
    */
-  async cancelExecution(executionId: string): Promise<void> {
-    logInfo('Cancelling workflow execution', { executionId });
-
-    await prisma.workflowExecution.update({
-      where: { id: executionId },
-      data: {
-        status: 'CANCELLED',
-        completedAt: new Date(),
-        result: { cancelled: true, cancelledAt: new Date() }
-      }
-    });
+  async cancelExecution(executionId: string, cancelledBy: string): Promise<void> {
+    await this.stateManager.cancelExecution(executionId, cancelledBy);
   }
 
   /**
    * Get execution status
    */
-  async getExecutionStatus(executionId: string): Promise<WorkflowExecution | null> {
-    return await prisma.workflowExecution.findUnique({
-      where: { id: executionId },
-      include: {
-        logs: {
-          orderBy: { timestamp: 'asc' }
-        }
-      }
-    });
+  async getExecutionStatus(executionId: string): Promise<ExecutionState | null> {
+    return await this.stateManager.getExecutionState(executionId);
+  }
+
+  /**
+   * Get execution progress
+   */
+  async getExecutionProgress(executionId: string): Promise<any> {
+    return await this.stateManager.getExecutionProgress(executionId);
   }
 
   /**
@@ -359,5 +440,24 @@ export class WorkflowExecutor {
   }
 }
 
-// Export singleton instance with default configuration
-export const workflowExecutor = new WorkflowExecutor(); 
+// Note: WorkflowExecutor now requires dependencies (ExecutionStateManager and QueueService)
+// Use dependency injection or create instances with required dependencies
+
+// Factory function to create WorkflowExecutor with dependencies
+export function createWorkflowExecutor(
+  stateManager: ExecutionStateManager,
+  queueService: QueueService,
+  config: ExecutionConfig = {}
+): WorkflowExecutor {
+  return new WorkflowExecutor(config, stateManager, queueService);
+}
+
+// TODO: Remove this singleton export once all consumers are updated to use dependency injection
+// For now, we'll create a placeholder that throws an error to prevent usage
+export const workflowExecutor = new Proxy({} as WorkflowExecutor, {
+  get() {
+    throw new Error(
+      'workflowExecutor singleton is deprecated. Use createWorkflowExecutor() with dependencies instead.'
+    );
+  }
+}); 

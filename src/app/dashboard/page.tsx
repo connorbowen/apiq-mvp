@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient, ApiConnection, CreateConnectionRequest } from '../../lib/api/client';
@@ -22,32 +22,23 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'chat' | 'connections'>('chat');
   const router = useRouter();
 
-  useEffect(() => {
-    checkAuth();
-    loadConnections();
-    handleOAuth2Callback();
-  }, []);
-
-  const checkAuth = () => {
+  const checkAuth = useCallback(() => {
     const token = localStorage.getItem('accessToken');
     const userData = localStorage.getItem('user');
-    
     if (!token || !userData) {
       router.push('/login');
       return;
     }
-
     try {
       setUser(JSON.parse(userData));
     } catch (error) {
       router.push('/login');
     }
-  };
+  }, [router]);
 
-  const loadConnections = async () => {
+  const loadConnections = useCallback(async () => {
     try {
       const response = await apiClient.getConnections();
-
       if (response.success && response.data) {
         setConnections(response.data.connections || []);
       } else {
@@ -58,7 +49,39 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  const handleOAuth2Callback = useCallback(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauth2Success = urlParams.get('oauth2_success');
+    if (oauth2Success === 'true') {
+      const accessToken = urlParams.get('accessToken');
+      const refreshToken = urlParams.get('refreshToken');
+      const userData = urlParams.get('user');
+      if (accessToken && refreshToken && userData) {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('user', userData);
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('oauth2_success');
+        newUrl.searchParams.delete('accessToken');
+        newUrl.searchParams.delete('refreshToken');
+        newUrl.searchParams.delete('user');
+        window.history.replaceState({}, '', newUrl.toString());
+        try {
+          setUser(JSON.parse(userData));
+        } catch (error) {
+          console.error('Failed to parse user data:', error);
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+    loadConnections();
+    handleOAuth2Callback();
+  }, [checkAuth, loadConnections, handleOAuth2Callback]);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -70,39 +93,6 @@ export default function DashboardPage() {
   const handleWorkflowGenerated = (workflow: any, steps: any[]) => {
     // Handle workflow generation - could save to database or show success message
     console.log('Workflow generated:', workflow, steps);
-  };
-
-  const handleOAuth2Callback = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const oauth2Success = urlParams.get('oauth2_success');
-    
-    if (oauth2Success === 'true') {
-      const accessToken = urlParams.get('accessToken');
-      const refreshToken = urlParams.get('refreshToken');
-      const userData = urlParams.get('user');
-      
-      if (accessToken && refreshToken && userData) {
-        // Store tokens and user data
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('user', userData);
-        
-        // Clear URL parameters
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('oauth2_success');
-        newUrl.searchParams.delete('accessToken');
-        newUrl.searchParams.delete('refreshToken');
-        newUrl.searchParams.delete('user');
-        window.history.replaceState({}, '', newUrl.toString());
-        
-        // Reload user data
-        try {
-          setUser(JSON.parse(userData));
-        } catch (error) {
-          console.error('Failed to parse user data:', error);
-        }
-      }
-    }
   };
 
   if (isLoading) {

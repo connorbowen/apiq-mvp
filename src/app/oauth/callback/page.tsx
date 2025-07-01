@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -11,45 +11,32 @@ export default function OAuth2CallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    handleCallback();
-  }, []);
-
-  const handleCallback = async () => {
+  const handleCallback = useCallback(async () => {
     try {
-      // Get URL parameters
       if (!searchParams) {
         setStatus('error');
         setError('Unable to read URL parameters');
         return;
       }
-      
       const code = searchParams.get('code');
       const state = searchParams.get('state');
       const errorParam = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
-
       if (errorParam) {
         setStatus('error');
         setError(errorDescription || 'OAuth2 authorization was denied or failed');
         return;
       }
-
       if (!code || !state) {
         setStatus('error');
         setError('Missing required OAuth2 parameters');
         return;
       }
-
-      // Process the callback
       const response = await fetch(`/api/oauth/callback?code=${code}&state=${state}`);
       const data = await response.json();
-
       if (data.success) {
         setStatus('success');
         setMessage('OAuth2 authorization completed successfully!');
-        
-        // Redirect to dashboard after a short delay
         setTimeout(() => {
           router.push('/dashboard');
         }, 3000);
@@ -61,7 +48,11 @@ export default function OAuth2CallbackPage() {
       setStatus('error');
       setError('Network error during OAuth2 callback processing');
     }
-  };
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    handleCallback();
+  }, [handleCallback]);
 
   if (status === 'loading') {
     return (

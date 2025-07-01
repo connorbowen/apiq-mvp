@@ -56,6 +56,8 @@ enum ExecutionStatus {
   COMPLETED
   FAILED
   CANCELLED
+  PAUSED
+  RETRYING
 }
 
 enum LogLevel {
@@ -201,8 +203,30 @@ model WorkflowExecution {
   error       String?
   result      Json?           // Final execution result
   metadata    Json?           // Additional execution metadata
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  
+  // Enhanced execution state management
+  attemptCount    Int      @default(0) // Number of execution attempts
+  maxAttempts     Int      @default(3) // Maximum number of retry attempts
+  retryAfter      DateTime? // When to retry if failed
+  queueJobId      String?  // PgBoss job ID for queue integration
+  queueName       String?  // Queue name for job tracking
+  pausedAt        DateTime? // When execution was paused
+  pausedBy        String?  // User ID who paused the execution
+  resumedAt       DateTime? // When execution was resumed
+  resumedBy       String?  // User ID who resumed the execution
+  
+  // Execution progress tracking
+  currentStep     Int?     // Current step being executed (0-based)
+  totalSteps      Int      @default(0) // Total number of steps in workflow
+  completedSteps  Int      @default(0) // Number of completed steps
+  failedSteps     Int      @default(0) // Number of failed steps
+  
+  // Performance metrics
+  executionTime   Int?     // Total execution time in milliseconds
+  stepResults     Json?    // Results from individual steps
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
   workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)

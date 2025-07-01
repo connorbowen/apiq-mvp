@@ -3,7 +3,9 @@ import { prisma } from '../../../../lib/database/client';
 import { logError, logInfo } from '../../../../src/utils/logger';
 import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/session';
 import { errorHandler } from '../../../../src/middleware/errorHandler';
-import { workflowExecutor } from '../../../../src/lib/workflow/executor';
+import { createWorkflowExecutor } from '../../../../src/lib/workflow/executor';
+import { ExecutionStateManager } from '../../../../src/lib/workflow/executionStateManager';
+import { QueueService } from '../../../../src/lib/queue/queueService';
 
 async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
@@ -63,6 +65,13 @@ async function executeWorkflow(req: NextApiRequest, res: NextApiResponse, userId
       workflowId, 
       stepCount: workflow.steps.length 
     });
+
+    // Create dependencies
+    const queueService = new QueueService(prisma);
+    const stateManager = new ExecutionStateManager(prisma, queueService);
+    
+    // Create workflow executor with dependencies
+    const workflowExecutor = createWorkflowExecutor(stateManager, queueService);
 
     // Execute workflow using the executor
     const result = await workflowExecutor.executeWorkflow(

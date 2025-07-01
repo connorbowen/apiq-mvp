@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '../../../lib/api/client';
@@ -13,33 +13,24 @@ export default function OAuth2AuthorizePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    handleAuthorization();
-  }, []);
-
-  const handleAuthorization = async () => {
+  const handleAuthorization = useCallback(async () => {
     try {
-      // Get URL parameters
       if (!searchParams) {
         setError('Unable to read URL parameters');
         setIsLoading(false);
         return;
       }
-      
       const apiConnectionId = searchParams.get('apiConnectionId');
       const providerName = searchParams.get('provider');
       const clientId = searchParams.get('clientId');
       const clientSecret = searchParams.get('clientSecret');
       const redirectUri = searchParams.get('redirectUri');
       const scope = searchParams.get('scope');
-
       if (!apiConnectionId || !providerName || !clientId || !clientSecret || !redirectUri) {
         setError('Missing required OAuth2 parameters');
         setIsLoading(false);
         return;
       }
-
-      // Load connection details
       const connectionResponse = await apiClient.getConnection(apiConnectionId);
       if (!connectionResponse.success || !connectionResponse.data) {
         setError('Failed to load connection details');
@@ -47,15 +38,12 @@ export default function OAuth2AuthorizePage() {
         return;
       }
       setConnection(connectionResponse.data);
-
-      // Load provider details
       const providersResponse = await apiClient.getOAuth2Providers();
       if (!providersResponse.success || !providersResponse.data) {
         setError('Failed to load OAuth2 providers');
         setIsLoading(false);
         return;
       }
-
       const providerConfig = providersResponse.data.providers.find((p: any) => p.name === providerName);
       if (!providerConfig) {
         setError(`OAuth2 provider ${providerName} is not supported`);
@@ -63,8 +51,6 @@ export default function OAuth2AuthorizePage() {
         return;
       }
       setProvider(providerConfig);
-
-      // Generate authorization URL and redirect
       const authUrl = await apiClient.initiateOAuth2Flow(
         apiConnectionId,
         providerName,
@@ -73,15 +59,16 @@ export default function OAuth2AuthorizePage() {
         redirectUri,
         scope || undefined
       );
-
-      // Redirect to the OAuth2 provider
       window.location.href = authUrl;
-
     } catch (error) {
       setError('Failed to initiate OAuth2 authorization');
       setIsLoading(false);
     }
-  };
+  }, [searchParams]);
+
+  useEffect(() => {
+    handleAuthorization();
+  }, [handleAuthorization]);
 
   if (isLoading) {
     return (
