@@ -217,7 +217,102 @@ User Natural Language Query
 └─────────────────┘
 ```
 
-### 4. Queue Management Architecture
+### 4. Execution State Management Architecture
+
+The Execution State Management system provides comprehensive state tracking, retry logic, and execution control for workflow orchestration. It integrates with the QueueService and provides durable status tracking with pause/resume/cancel capabilities.
+
+#### Execution State Management Components
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Workflow      │    │   Execution     │    │   QueueService  │
+│   Executor      │───►│   StateManager  │───►│   (PgBoss)      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   API Endpoints │    │   Database      │    │   Monitoring    │
+│   (Control)     │    │   (State)       │    │   (Metrics)     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+#### Key Features
+
+**State Management:**
+- **Durable Status Tracking**: Persistent execution state with proper state transitions
+- **Attempt Count Tracking**: Comprehensive retry attempt monitoring
+- **Retry Scheduling**: Exponential backoff with circuit breaker patterns
+- **Queue Integration**: Full integration with PgBoss for job management
+- **Pause/Resume**: Ability to pause running executions and resume later
+- **Cancel Execution**: Immediate cancellation with proper cleanup
+
+**API Endpoints:**
+- **Cancel Execution**: `POST /api/workflows/executions/{id}/cancel`
+- **Pause Execution**: `POST /api/workflows/executions/{id}/pause`
+- **Resume Execution**: `POST /api/workflows/executions/{id}/resume`
+- **Execution Status**: `GET /api/workflows/executions/{id}`
+
+**Monitoring & Metrics:**
+- **Execution Progress**: Real-time progress tracking and percentage completion
+- **Performance Metrics**: Duration, throughput, and success rate tracking
+- **Error Analysis**: Comprehensive error categorization and analysis
+- **Health Monitoring**: Execution health status and stuck execution detection
+
+#### State Transitions
+
+```
+PENDING ──► RUNNING ──► COMPLETED
+   │           │           │
+   │           │           │
+   ▼           ▼           ▼
+RETRYING   PAUSED      FAILED
+   │           │           │
+   │           │           │
+   ▼           ▼           ▼
+RUNNING   RESUMED    CANCELLED
+```
+
+#### Data Flow
+
+```
+Workflow Execution Request
+         │
+         ▼
+┌─────────────────┐
+│  Execution      │
+│  Creation       │
+│  (StateManager) │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  State          │
+│  Transition     │
+│  (PENDING)      │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Queue Job      │
+│  Creation       │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Execution      │
+│  Processing     │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  State          │
+│  Update         │
+│  (COMPLETED)    │
+└─────────────────┘
+```
+
+### 5. Queue Management Architecture
 
 The QueueService provides robust job queue management using PgBoss 10.3.2 for workflow execution, ensuring reliable, scalable, and fault-tolerant job processing.
 

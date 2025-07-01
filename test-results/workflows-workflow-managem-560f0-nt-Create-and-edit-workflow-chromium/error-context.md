@@ -17,8 +17,15 @@
 - textbox "Email address"
 - text: Password
 - textbox "Password"
+- link "Forgot password?":
+  - /url: /forgot-password
+- link "Resend verification email?":
+  - /url: /resend-verification
 - button "Sign in"
 - link "Back to home":
   - /url: /
+- text: Don't have an account?
+- link "Sign up":
+  - /url: /signup
 - alert
 ```

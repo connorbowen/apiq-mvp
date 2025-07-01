@@ -13,6 +13,7 @@ export interface QueueClient {
   work: (queueName: string, options: any, handler: (job: any) => Promise<any>) => Promise<any>;
   cancel: (queueName: string, jobId: string) => Promise<void>;
   getJobById: (queueName: string, jobId: string) => Promise<any>;
+  purge: () => Promise<void>;
   on: (event: string, handler: (error?: Error) => void) => void;
   off: (event: string, handler: (error?: Error) => void) => void;
 }
@@ -57,6 +58,12 @@ export const getQueueClient = (config: QueueConfig): QueueClient => {
     },
     getJobById: async (queueName: string, jobId: string) => {
       return await boss.getJobById(queueName, jobId);
+    },
+    purge: async () => {
+      // PgBoss doesn't have a purge method, so we'll use a different approach
+      // For now, we'll just log that purge was called
+      console.log('Purge called - PgBoss does not support purge() method');
+      return Promise.resolve();
     },
     on: (event: string, handler: (error?: Error) => void) => {
       boss.on(event as any, handler);

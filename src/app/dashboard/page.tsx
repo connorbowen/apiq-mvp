@@ -22,7 +22,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'chat' | 'connections'>('chat');
   const router = useRouter();
 
-  const checkAuth = useCallback(() => {
+  useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const userData = localStorage.getItem('user');
     if (!token || !userData) {
@@ -34,7 +34,7 @@ export default function DashboardPage() {
     } catch (error) {
       router.push('/login');
     }
-  }, [router]);
+  }, []);
 
   const loadConnections = useCallback(async () => {
     try {
@@ -78,10 +78,9 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    checkAuth();
     loadConnections();
     handleOAuth2Callback();
-  }, [checkAuth, loadConnections, handleOAuth2Callback]);
+  }, [loadConnections, handleOAuth2Callback]);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -104,164 +103,51 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <h1 className="text-2xl font-bold text-gray-900">APIQ</h1>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-500">AI-Powered API Assistant</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              {user && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700">Welcome, {user.name}</span>
-                  <button
-                    onClick={handleLogout}
-                    className="text-sm text-indigo-600 hover:text-indigo-500"
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
+    <main role="main" className="min-h-screen bg-gray-50">
+      <header role="banner" className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <div className="flex items-center space-x-4">
+            {user && <span className="text-gray-700">Welcome, {user.name}</span>}
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {/* Quick Stats */}
-        <div className="px-4 py-6 sm:px-0 mb-6">
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Connected APIs</dt>
-                      <dd className="text-lg font-medium text-gray-900">{connections.length}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Active</dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {connections.filter(c => c.status === 'ACTIVE').length}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Ready to Chat</dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {connections.filter(c => c.status === 'ACTIVE').length > 0 ? 'Yes' : 'No'}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <section className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
+          <nav className="flex space-x-4" aria-label="Tabs">
+            <button
+              className={`px-3 py-2 font-medium text-sm rounded-md ${activeTab === 'chat' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('chat')}
+            >
+              Chat
+            </button>
+            <button
+              className={`px-3 py-2 font-medium text-sm rounded-md ${activeTab === 'connections' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
+              onClick={() => setActiveTab('connections')}
+            >
+              Connections
+            </button>
+          </nav>
         </div>
-
-        {/* Tab Navigation */}
-        <div className="px-4 sm:px-0 mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('chat')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'chat'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Chat with AI
-              </button>
-              <button
-                onClick={() => setActiveTab('connections')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'connections'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                API Connections
-              </button>
-            </nav>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div className="px-4 sm:px-0">
-          {activeTab === 'chat' ? (
-            <div className="h-96">
-              {connections.filter(c => c.status === 'ACTIVE').length === 0 ? (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-                  <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Active API Connections</h3>
-                  <p className="text-gray-500 mb-4">
-                    You need to connect at least one API before you can start chatting with AI.
-                  </p>
-                  <button
-                    onClick={() => setActiveTab('connections')}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Add API Connection
-                  </button>
-                </div>
-              ) : (
-                <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
-              )}
-            </div>
-          ) : (
-            <ConnectionsTab 
-              connections={connections}
-              onConnectionCreated={loadConnections}
-              showCreateForm={showCreateForm}
-              setShowCreateForm={setShowCreateForm}
-            />
-          )}
-        </div>
-      </main>
-    </div>
+        {error && <div className="mb-4 text-red-600">{error}</div>}
+        {activeTab === 'chat' ? (
+          <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
+        ) : (
+          <ConnectionsTab
+            connections={connections}
+            onConnectionCreated={loadConnections}
+            showCreateForm={showCreateForm}
+            setShowCreateForm={setShowCreateForm}
+          />
+        )}
+      </section>
+    </main>
   );
 }
 

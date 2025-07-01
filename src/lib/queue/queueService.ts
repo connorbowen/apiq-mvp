@@ -181,10 +181,14 @@ export interface WorkerStatistics {
 
 // Queue service configuration
 export interface QueueServiceConfig {
-  connectionString: string;
+  connectionString?: string;
   schema?: string;
   poolSize?: number;
   maxConcurrency?: number;
+  retryLimit?: number;
+  retryDelay?: number;
+  timeout?: number;
+  healthCheckInterval?: number;
   retentionDays?: number;
   archiveCompletedJobs?: boolean;
   archiveFailedJobs?: boolean;
@@ -306,7 +310,7 @@ class PrometheusMetricsCollector {
 export class QueueService {
   private boss: QueueClient;
   private prisma: PrismaClient;
-  private config: QueueConfig;
+  private config: QueueServiceConfig;
   private isInitialized: boolean = false;
   private healthCheckTimer?: NodeJS.Timeout;
   private workerStats: Map<string, WorkerStats> = new Map();
@@ -327,8 +331,8 @@ export class QueueService {
     this.boss = getQueueClient({ connectionString });
     console.log('getQueueClient result:', this.boss);
     // Set up error handling
-    this.boss.on('error', (error: Error) => {
-      logError('PgBoss error', error);
+    this.boss.on('error', (error: any) => {
+      logError('PgBoss error', error instanceof Error ? error : new Error(String(error)));
     });
 
     this.metricsCollector = new PrometheusMetricsCollector();
@@ -363,10 +367,11 @@ export class QueueService {
       // TODO: Graceful shutdown: await this.boss.stop({ graceful: true }) in SIGTERM handler
       this.workers.forEach(async (worker, workerId) => {
         try {
-          await worker.off();
-          logInfo('Worker stopped', { workerId });
+          // PgBoss workers don't have an off() method, they are automatically cleaned up
+          // when the boss instance is stopped
+          logInfo('Worker cleanup initiated', { workerId });
         } catch (error) {
-          logError('Failed to stop worker', error as Error, { workerId });
+          logError('Failed to cleanup worker', error instanceof Error ? error : new Error(String(error)), { workerId });
         }
       });
       this.workers.clear();
@@ -465,14 +470,28 @@ export class QueueService {
       const workerOptions = {
         teamSize: options.teamSize ?? this.config.maxConcurrency,
         timeout: options.timeout ?? this.config.timeout,
-        retryLimit: options.retryLimit ?? this.config.retryLimit,
-        batchSize: 1 // Always single-job handler for clarity
+        retryLimit: options.retryLimit ?? this.config.retryLimit
       };
       const dataSchema = options.dataSchema ?? DefaultJobDataSchema;
-      const worker = await this.boss.work(queueName, workerOptions, async (job: any) => { // TODO: Replace with proper PgBoss job type
+      const worker = await this.boss.work(queueName, workerOptions, async (jobs: any) => { // TODO: Replace with proper PgBoss job type
         const startTime = Date.now();
         try {
+          // PgBoss passes an array of jobs, but we expect single jobs
+          const job = Array.isArray(jobs) ? jobs[0] : jobs;
+          
+          // Debug: Log the job object structure
+          logInfo('Job received by worker', {
+            jobId: job?.id,
+            jobKeys: job ? Object.keys(job) : 'job is null/undefined',
+            jobData: job?.data,
+            queueName,
+            workerId
+          });
+          
           // Validate job data at runtime
+          if (!job || !job.data) {
+            throw new Error(`Invalid job object received: ${JSON.stringify(job)}`);
+          }
           dataSchema.parse(job.data);
           this.updateWorkerStats(workerId, 'active');
           logInfo('Processing job', {
@@ -480,7 +499,7 @@ export class QueueService {
             queueName,
             workerId
           });
-          const result = await handler(job.data);
+          const result = await handler(job);
           this.updateWorkerStats(workerId, 'completed');
           logInfo('Job completed successfully', {
             jobId: job.id,
@@ -492,7 +511,7 @@ export class QueueService {
         } catch (error) {
           this.updateWorkerStats(workerId, 'failed');
           logError('Job failed', error as Error, {
-            jobId: job.id,
+            jobId: Array.isArray(jobs) ? jobs[0]?.id : jobs?.id,
             queueName,
             workerId,
             duration: Date.now() - startTime
@@ -591,10 +610,11 @@ export class QueueService {
       const job = await this.boss.getJobById(queueName, jobId);
       if (!job) return null;
       // Defensive: map PgBoss job fields to our JobStatus
+      // PgBoss doesn't store job names, so we use the queue name as fallback
       return {
         id: job.id,
         queueName,
-        name: job.name,
+        name: job.name || queueName, // Use queue name as fallback if job name not available
         data: job.data,
         state: job.state as PgBossJobState,
         retryLimit: job.retryLimit ?? undefined,
@@ -691,8 +711,8 @@ export class QueueService {
     if (job.retryLimit !== undefined && (job.retryLimit < 0 || job.retryLimit > 10)) {
       throw new Error('Retry limit must be between 0 and 10');
     }
-    if (job.retryDelay !== undefined && (job.retryDelay < 1000 || job.retryDelay > 300000)) {
-      throw new Error('Retry delay must be between 1 and 300 seconds');
+    if (job.retryDelay !== undefined && (job.retryDelay < 100 || job.retryDelay > 300000)) {
+      throw new Error('Retry delay must be between 0.1 and 300 seconds');
     }
     if (job.timeout !== undefined && (job.timeout < 1000 || job.timeout > 3600000)) {
       throw new Error('Timeout must be between 1 and 3600 seconds');
@@ -742,6 +762,63 @@ export class QueueService {
   private getQueueStatistics(queueName: string): Promise<QueueStatistics> {
     // Implementation of getQueueStatistics method
     throw new Error('Method not implemented');
+  }
+
+  async shutdown(): Promise<void> {
+    logInfo('Shutting down queue service');
+    
+    // Stop all workers
+    for (const [workerId, worker] of Array.from(this.workers.entries())) {
+      try {
+        await worker.off();
+        logInfo('Worker stopped', { workerId });
+      } catch (error) {
+        logError('Error stopping worker', error as Error, { workerId });
+      }
+    }
+    
+    // Clear worker collections
+    this.workers.clear();
+    this.workerStats.clear();
+    
+    // Stop the boss
+    if (this.boss) {
+      await this.boss.stop();
+      logInfo('Queue service shutdown complete');
+    }
+  }
+
+  async purge(): Promise<void> {
+    if (!this.boss) {
+      logInfo('PgBoss not initialized, skipping purge');
+      return;
+    }
+
+    try {
+      const schema = this.config.schema || 'pgboss';
+      const table = `"${schema}"."job"`;
+
+      // 1) Stop PgBoss so it releases any locks
+      await this.boss.stop();
+
+      // 2) Truncate parent + all partitions, reset IDs
+      await this.prisma.$executeRawUnsafe(`
+        TRUNCATE TABLE ${table} RESTART IDENTITY CASCADE
+      `);
+
+      // 3) Restart PgBoss so it rebuilds its partition map
+      await this.boss.start();
+
+      logInfo('Queue purged via TRUNCATE and PgBoss restart');
+    } catch (err: any) {
+      logError('Failed to purge queue', err as Error);
+      // Try to restart PgBoss even if truncate failed
+      try {
+        await this.boss.start();
+      } catch (restartError) {
+        logError('Failed to restart PgBoss after purge failure', restartError as Error);
+      }
+    }
   }
 }
 
