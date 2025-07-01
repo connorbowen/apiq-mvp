@@ -24,12 +24,28 @@ export default function SignupPage() {
     setSuccess('');
 
     // Client-side validation
+    if (!formData.name.trim()) {
+      setError('Name is required');
+      setIsLoading(false);
+      return;
+    }
+    if (!formData.email.trim()) {
+      setError('Email is required');
+      setIsLoading(false);
+      return;
+    }
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      setIsLoading(false);
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setIsLoading(false);
       return;
     }
-
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters long');
       setIsLoading(false);
@@ -111,7 +127,7 @@ export default function SignupPage() {
             className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6.194 14.644c0 1.139-.943 2.063-2.106 2.063-1.163 0-2.106-.924-2.106-2.063s.943-2.063 2.106-2.063c1.163 0 2.106.924 2.106 2.063zm5.735 0c0 1.139-.943 2.063-2.106 2.063-1.163 0-2.106-.924-2.106-2.063s.943-2.063 2.106-2.063c1.163 0 2.106.924 2.106 2.063zm5.735 0c0 1.139-.943 2.063-2.106 2.063-1.163 0-2.106-.924-2.106-2.063s.943-2.063 2.106-2.063c1.163 0 2.106.924 2.106 2.063z"/>
+              <path d="M6.194 14.644c0 1.139-.943 2.063-2.106 2.063-1.163 0-2.106-.924-2.106-2.063s.943-2.106 2.106-2.106c1.163 0 2.106.924 2.106 2.106zm5.735 0c0 1.139-.943 2.063-2.106 2.063-1.163 0-2.106-.924-2.106-2.063s.943-2.106 2.106-2.106c1.163 0 2.106.924 2.106 2.106zm5.735 0c0 1.139-.943 2.063-2.106 2.063-1.163 0-2.106-.924-2.106-2.063s.943-2.106 2.106-2.106c1.163 0 2.106.924 2.106 2.106z"/>
             </svg>
             Continue with Slack
           </button>
@@ -174,7 +190,6 @@ export default function SignupPage() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -190,7 +205,6 @@ export default function SignupPage() {
                 name="name"
                 type="text"
                 autoComplete="name"
-                required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -206,7 +220,6 @@ export default function SignupPage() {
                 name="password"
                 type="password"
                 autoComplete="new-password"
-                required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
@@ -222,7 +235,6 @@ export default function SignupPage() {
                 name="confirmPassword"
                 type="password"
                 autoComplete="new-password"
-                required
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"

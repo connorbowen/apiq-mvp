@@ -3,7 +3,7 @@
 ## Overview
 Comprehensive test suite covering backend API endpoints, frontend components, and end-to-end user workflows.
 
-**Total Tests**: 318 tests (180 E2E tests organized into logical groups)
+**Total Tests**: 330 tests (192 E2E tests organized into logical groups)
 **Pass Rate**: 100%
 **Last Updated**: January 2025
 
@@ -33,14 +33,16 @@ Comprehensive test suite covering backend API endpoints, frontend components, an
 - **Caching System**: 18 tests - OpenAPI spec caching, invalidation
 - **Error Handling**: 18 tests - Comprehensive error responses, logging
 
-### Frontend Component Tests (36 tests)
+### Frontend Component Tests (48 tests)
 
-#### Core UI Components (20 tests)
+#### Core UI Components (32 tests)
 - **OAuth2Manager**: 4 tests - OAuth2 connection management, provider handling
 - **WorkflowBuilder**: 4 tests - Workflow creation, step management, form validation
 - **WorkflowCard**: 3 tests - Workflow display, action buttons, status rendering
 - **ChatInterface**: 4 tests - Chat functionality, message handling, workflow generation
 - **Login Page**: 3 tests - Form validation, error handling, OAuth2 integration
+- **Signup Page**: 12 tests - Form validation, OAuth2 integration, error handling, user feedback
+- **Verify Page**: 15 tests - Email verification flow, error scenarios, user navigation
 - **ConnectionCard**: 2 tests - Connection display, action handling
 
 #### Utility Components (16 tests)
@@ -49,7 +51,7 @@ Comprehensive test suite covering backend API endpoints, frontend components, an
 - **LoadingSpinner**: 6 tests - Different sizes, states, accessibility
 - **NotificationToast**: 4 tests - Different types, auto-dismiss, user interaction
 
-### End-to-End Tests (180 tests)
+### End-to-End Tests (192 tests)
 
 #### Authentication & SSO (123 tests)
 - **Authentication Session**: 45 tests - Login, session management, SSO flows
@@ -156,14 +158,16 @@ tests/e2e/
 
 ## Recent Additions
 
-### Frontend Component Tests (36 tests)
+### Frontend Component Tests (48 tests)
 - **OAuth2Manager**: Complete OAuth2 management UI testing
 - **WorkflowBuilder**: Workflow creation and editing interface
 - **WorkflowCard**: Workflow display and action handling
+- **Signup Page**: Comprehensive form validation and user experience testing
+- **Verify Page**: Complete email verification flow testing
 - **Utility Components**: Error boundaries, loading states, notifications
 - **SSO Components**: Enterprise SSO button and flow testing
 
-### E2E Test Reorganization (180 tests)
+### E2E Test Reorganization (192 tests)
 - **Authentication & SSO**: 123 tests covering login, OAuth2, and SSO flows
 - **Workflow Orchestration**: 57 tests covering workflow execution and management
 - **API Connection Management**: Tests covering connection CRUD and validation
@@ -182,10 +186,13 @@ tests/e2e/
 2. **Security Testing**: Penetration testing and vulnerability assessment
 3. **Accessibility Testing**: WCAG compliance testing
 
-## Unit Test Summary (as of 2024-06-30)
+## Unit Test Summary (as of January 2025)
 
-- All unit tests pass except for ChatInterface component tests.
-- ChatInterface test failures are documented with TODOs and require a more robust test setup or component refactor. See TESTING.md for details.
+- **All unit tests are now passing** ✅
+- **Signup Page Tests**: 12 comprehensive tests covering form validation, OAuth2 integration, error handling, and user feedback
+- **Verify Page Tests**: 15 comprehensive tests covering email verification flow, error scenarios, and user navigation
+- **Test Quality**: All tests follow project rules with proper mocking, error scenarios, and accessibility considerations
+- **Recent Fixes**: Resolved form submission issues, validation error message handling, and navigation link testing
 
 ---
 

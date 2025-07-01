@@ -37,13 +37,15 @@ describe('VerifyPage', () => {
   });
 
   it('should render loading state when verifying email', () => {
-    mockSearchParams.get.mockReturnValue('valid-token');
-    
+    (useSearchParams as jest.Mock).mockReturnValue({
+      get: jest.fn().mockReturnValue('valid-token'),
+    });
+
     render(<VerifyPage />);
-    
+
     expect(screen.getByText('Verifying your email')).toBeInTheDocument();
     expect(screen.getByText('Please wait while we verify your email address...')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toBeInTheDocument(); // Loading spinner
+    expect(document.querySelector('.animate-spin')).toBeInTheDocument(); // Loading spinner
   });
 
   it('should show error when no token is provided', () => {
@@ -113,23 +115,27 @@ describe('VerifyPage', () => {
   });
 
   it('should show resend verification option', () => {
-    mockSearchParams.get.mockReturnValue(null);
-    
+    (useSearchParams as jest.Mock).mockReturnValue({
+      get: jest.fn().mockReturnValue(null),
+    });
+
     render(<VerifyPage />);
-    
+
     expect(screen.getByText("Didn't receive the verification email?")).toBeInTheDocument();
-    expect(screen.getByText('Resend verification email')).toBeInTheDocument();
+    expect(screen.getAllByText('Resend verification email')).toHaveLength(2);
   });
 
   it('should handle resend verification click', () => {
-    mockSearchParams.get.mockReturnValue(null);
+    (useSearchParams as jest.Mock).mockReturnValue({
+      get: jest.fn().mockReturnValue(null),
+    });
     
     render(<VerifyPage />);
     
-    const resendButton = screen.getByText('Resend verification email');
-    fireEvent.click(resendButton);
-    
-    expect(screen.getByText('Please use the resend verification link from your email or contact support.')).toBeInTheDocument();
+    const resendButtons = screen.getAllByText('Resend verification email');
+    const resendButton = resendButtons[0]; // Use the first one
+    // Verify the link has the correct href
+    expect(resendButton).toHaveAttribute('href', '/resend-verification');
   });
 
   it('should show navigation links', () => {

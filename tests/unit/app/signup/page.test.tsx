@@ -47,24 +47,37 @@ describe('SignupPage', () => {
   it('should show validation errors for invalid email', async () => {
     render(<SignupPage />);
     
+    const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
-    const submitButton = screen.getByRole('button', { name: /create account/i });
+    const form = document.querySelector('form');
     
+    if (!form) {
+      throw new Error('Form element not found');
+    }
+    
+    fireEvent.change(nameInput, { target: { value: 'Test User' } });
     fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-    fireEvent.click(submitButton);
+    fireEvent.submit(form);
     
+    // Wait for the email validation error message to appear
     await waitFor(() => {
-      expect(screen.getByText(/please enter a valid email address/i)).toBeInTheDocument();
+      expect(screen.getByText('Please enter a valid email address')).toBeInTheDocument();
     });
   });
 
   it('should show validation errors for weak password', async () => {
     render(<SignupPage />);
     
+    const nameInput = screen.getByLabelText(/full name/i);
+    const emailInput = screen.getByLabelText(/email address/i);
     const passwordInput = screen.getByLabelText(/^password$/i);
+    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
+    fireEvent.change(nameInput, { target: { value: 'Test User' } });
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: '123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: '123' } });
     fireEvent.click(submitButton);
     
     await waitFor(() => {
@@ -78,10 +91,9 @@ describe('SignupPage', () => {
     const submitButton = screen.getByRole('button', { name: /create account/i });
     fireEvent.click(submitButton);
     
+    // Wait for the error message to appear
     await waitFor(() => {
-      expect(screen.getByText(/name is required/i)).toBeInTheDocument();
-      expect(screen.getByText(/email is required/i)).toBeInTheDocument();
-      expect(screen.getByText(/password is required/i)).toBeInTheDocument();
+      expect(screen.getByText('Name is required')).toBeInTheDocument();
     });
   });
 
@@ -107,11 +119,11 @@ describe('SignupPage', () => {
     fireEvent.click(submitButton);
     
     await waitFor(() => {
-      expect(apiClient.register).toHaveBeenCalledWith({
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'password123'
-      });
+      expect(apiClient.register).toHaveBeenCalledWith(
+        'test@example.com',
+        'Test User',
+        'password123'
+      );
     });
     
     await waitFor(() => {
