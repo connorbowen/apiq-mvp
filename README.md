@@ -306,6 +306,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Issues**: Report bugs and feature requests via GitHub Issues
 - **Security**: Report security issues to security@apiq.com
 
+## Unit Test Status (as of 2024-06-30)
+
+- All unit tests pass except for the ChatInterface component tests, which are documented with TODOs (see TESTING.md).
+- Failing tests are not commented out or disabled; instead, they are clearly marked with context and next steps per project rules.
+
 ---
 
 **APIQ** - Democratizing API orchestration through natural language and AI.

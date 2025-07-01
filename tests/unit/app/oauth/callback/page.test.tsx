@@ -332,19 +332,19 @@ describe('OAuth2 Callback Page', () => {
     });
   });
 
-  it('displays proper icons for success and error states', async () => {
-    // Test success state
+  it('displays success state with proper icon', async () => {
     mockFetch.mockResolvedValueOnce({
       json: async () => ({ success: true }),
     } as Response);
 
-    const { rerender } = render(<OAuth2CallbackPage />);
+    render(<OAuth2CallbackPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/authorization successful/i)).toBeInTheDocument();
+      expect(screen.getByText('Authorization Successful!')).toBeInTheDocument();
     });
+  });
 
-    // Test error state
+  it('displays error state with proper icon', async () => {
     mockFetch.mockResolvedValueOnce({
       json: async () => ({ 
         success: false, 
@@ -352,10 +352,10 @@ describe('OAuth2 Callback Page', () => {
       }),
     } as Response);
 
-    rerender(<OAuth2CallbackPage />);
+    render(<OAuth2CallbackPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/authorization failed/i)).toBeInTheDocument();
+      expect(screen.getByText('Authorization Failed')).toBeInTheDocument();
     });
   });
 
@@ -395,7 +395,8 @@ describe('OAuth2 Callback Page', () => {
     render(<OAuth2CallbackPage />);
 
     await waitFor(() => {
-      const container = screen.getByText(/authorization successful/i).closest('div');
+      // Find the outer container with min-h-screen class
+      const container = document.querySelector('.min-h-screen');
       expect(container).toHaveClass('min-h-screen');
     });
   });

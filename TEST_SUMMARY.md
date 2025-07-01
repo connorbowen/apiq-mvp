@@ -182,6 +182,11 @@ tests/e2e/
 2. **Security Testing**: Penetration testing and vulnerability assessment
 3. **Accessibility Testing**: WCAG compliance testing
 
+## Unit Test Summary (as of 2024-06-30)
+
+- All unit tests pass except for ChatInterface component tests.
+- ChatInterface test failures are documented with TODOs and require a more robust test setup or component refactor. See TESTING.md for details.
+
 ---
 
 *Last updated: January 2025*

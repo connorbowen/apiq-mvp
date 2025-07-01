@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom'
 
+// Polyfill for setImmediate
+global.setImmediate = global.setImmediate || ((fn, ...args) => setTimeout(fn, 0, ...args))
+
 // Mock Next.js router
 jest.mock('next/router', () => ({
   useRouter() {

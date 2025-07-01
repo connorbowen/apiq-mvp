@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 // Mock the SSO login button component
 const SSOLoginButton = ({ provider, onLogin }: { provider: string; onLogin: (provider: string) => void }) => (

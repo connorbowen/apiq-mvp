@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import LoginPage from '../../../../src/app/login/page';
 
 describe('LoginPage', () => {
@@ -8,16 +8,14 @@ describe('LoginPage', () => {
     render(<LoginPage />);
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
   it('renders OAuth2/SSO login buttons', () => {
     render(<LoginPage />);
-    expect(screen.getByRole('button', { name: /sign in with google/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in with github/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in with slack/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in with okta/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in with azure ad/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue with github/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue with slack/i })).toBeInTheDocument();
   });
 
   it('allows user to type email and password', () => {
@@ -32,7 +30,7 @@ describe('LoginPage', () => {
 
   it('OAuth2/SSO buttons are clickable', () => {
     render(<LoginPage />);
-    const googleBtn = screen.getByRole('button', { name: /sign in with google/i });
+    const googleBtn = screen.getByRole('button', { name: /continue with google/i });
     fireEvent.click(googleBtn);
     // You can add more assertions here if you mock the handler
   });

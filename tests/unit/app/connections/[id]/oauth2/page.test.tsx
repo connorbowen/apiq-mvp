@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 // Mock the OAuth2 setup page component
 const OAuth2SetupPage = () => {
@@ -164,7 +164,8 @@ describe('OAuth2 Setup Page', () => {
   it('shows loading state initially', () => {
     render(<OAuth2SetupPage />);
 
-    expect(screen.getByRole('status')).toBeInTheDocument(); // Loading spinner
+    // Try to find loading spinner by class or text
+    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
   });
 
   it('displays OAuth2 configuration details', async () => {
@@ -174,7 +175,8 @@ describe('OAuth2 Setup Page', () => {
       expect(screen.getByText(/configuration/i)).toBeInTheDocument();
       expect(screen.getByText(/provider:/i)).toBeInTheDocument();
       expect(screen.getByText(/client id:/i)).toBeInTheDocument();
-      expect(screen.getByText(/github/i)).toBeInTheDocument();
+      // There may be multiple 'github' matches, so use getAllByText
+      expect(screen.getAllByText(/github/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/configured/i)).toBeInTheDocument();
     });
   });

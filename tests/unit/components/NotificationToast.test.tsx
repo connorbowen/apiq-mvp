@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 
 // Mock NotificationToast component
 const NotificationToast = ({ 
@@ -102,16 +102,16 @@ describe('NotificationToast', () => {
 
   it('applies correct type classes', () => {
     const { rerender } = render(<NotificationToast title="Test" type="success" />);
-    expect(screen.getByText('Test').closest('div')).toHaveClass('bg-green-50');
+    expect(screen.getByText('Test').closest('.notification-toast')).toHaveClass('bg-green-50');
     
     rerender(<NotificationToast title="Test" type="error" />);
-    expect(screen.getByText('Test').closest('div')).toHaveClass('bg-red-50');
+    expect(screen.getByText('Test').closest('.notification-toast')).toHaveClass('bg-red-50');
     
     rerender(<NotificationToast title="Test" type="warning" />);
-    expect(screen.getByText('Test').closest('div')).toHaveClass('bg-yellow-50');
+    expect(screen.getByText('Test').closest('.notification-toast')).toHaveClass('bg-yellow-50');
     
     rerender(<NotificationToast title="Test" type="info" />);
-    expect(screen.getByText('Test').closest('div')).toHaveClass('bg-blue-50');
+    expect(screen.getByText('Test').closest('.notification-toast')).toHaveClass('bg-blue-50');
   });
 
   it('calls onClose when close button is clicked', () => {
