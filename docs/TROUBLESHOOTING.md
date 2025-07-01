@@ -156,6 +156,42 @@ grep -E "DATABASE_URL|JWT_SECRET|OPENAI_API_KEY" .env
 
 ## 🧪 Testing & Verification
 
+### Jest Configuration Issues
+
+#### Issue: TextEncoder is not defined
+**Solution**: The project includes comprehensive polyfills in `jest.polyfill.js`. If you encounter this error:
+```bash
+# Ensure Jest is using the polyfill configuration
+npm test -- --config=jest.config.js
+
+# If issues persist, run with increased memory
+NODE_OPTIONS="--max-old-space-size=4096" npm test
+```
+
+#### Issue: Jest memory issues or heap out of memory
+**Solution**: The project is configured with memory optimization:
+```bash
+# Run tests with increased memory allocation
+NODE_OPTIONS="--max-old-space-size=4096" npm test
+
+# Run with limited workers to reduce memory usage
+npm test -- --maxWorkers=2
+
+# Run specific test categories to reduce load
+npm test -- --testPathPattern="unit"
+npm test -- --testPathPattern="integration"
+```
+
+#### Issue: ES module import errors in tests
+**Solution**: The Jest configuration includes transform patterns for ES modules:
+```bash
+# Clear Jest cache
+npm test -- --clearCache
+
+# Run tests with verbose output to debug import issues
+npm test -- --verbose
+```
+
 ### Health Check Commands
 ```bash
 # Test database connection

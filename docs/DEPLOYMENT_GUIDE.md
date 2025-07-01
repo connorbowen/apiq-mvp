@@ -134,7 +134,17 @@ npm run test:watch
 
 # Run specific test file
 npm test -- --testPathPattern=user.test.ts
+
+# Run with increased memory (for CI/CD environments)
+NODE_OPTIONS="--max-old-space-size=4096" npm test
+
+# Run specific test categories
+npm test -- --testPathPattern="unit"
+npm test -- --testPathPattern="integration"
+npm test -- --testPathPattern="e2e"
 ```
+
+**Note**: The project uses comprehensive Jest polyfills and separate configurations for different test types. See `docs/TESTING.md` for detailed configuration information.
 
 ## Staging Environment
 

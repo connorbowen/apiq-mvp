@@ -624,6 +624,13 @@ npm run test:e2e
 
 ### Integration Test Mocking
 - **Integration Test Mocking**: All integration tests must mock external API calls (e.g., HTTP requests to third-party services, OpenAPI spec fetches). Do not rely on network access for tests. Use Jest mocks or similar.
+
+### Jest Configuration
+- **Polyfills**: The project includes comprehensive polyfills for Node.js APIs (TextEncoder, TextDecoder, crypto, fetch, structuredClone) in `jest.polyfill.js`
+- **Memory Management**: For large test suites, use `NODE_OPTIONS="--max-old-space-size=4096" npm test` to increase memory allocation
+- **Test Categories**: Use `--testPathPattern` to run specific test categories (unit, integration, e2e)
+- **ES Modules**: The Jest configuration includes transform patterns for ES modules like `node-fetch`
+- **Mock Management**: Ensure mocks are properly cleared between tests using `beforeEach` and `afterEach` hooks
 - **Import Paths**: When importing shared libraries (such as the Prisma client), always use the correct path (e.g., `lib/database/client`). Avoid deep or relative imports that may break in different environments.
 - **File Deletion**: Never delete files without first confirming with the user. If tests or code are failing, prefer to disable them (using `.skip`, commenting out, or moving to a separate directory) rather than deleting them. Always explain your reasoning and get approval before removing any files.
 
