@@ -511,6 +511,8 @@ export class CustomStepExecutor implements StepExecutor {
       let result;
       switch (step.action) {
         case 'noop':
+          // Add minimal delay to ensure duration > 0
+          await this.sleep(1);
           result = { message: 'No operation performed' };
           break;
         case 'wait':

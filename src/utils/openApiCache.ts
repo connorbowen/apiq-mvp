@@ -75,7 +75,7 @@ export class OpenApiCache {
     const specString = JSON.stringify(spec);
     const size = Buffer.byteLength(specString, 'utf8');
 
-    // Check if adding this would exceed max size
+    // Check if adding this would exceed max size - evict oldest if at max
     if (this.cache.size >= this.config.maxSize) {
       this.evictOldest();
     }

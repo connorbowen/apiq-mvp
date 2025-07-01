@@ -69,7 +69,7 @@ describe('OpenApiCache', () => {
   });
 
   describe('cache eviction', () => {
-    it('should evict oldest when max size reached', () => {
+    it('should evict oldest when max size reached', async () => {
       // Create a fresh cache with maxSize 3 for this test
       const testCache = new OpenApiCache({
         ttl: 3600, // Use longer TTL to avoid expiration during test
@@ -79,10 +79,11 @@ describe('OpenApiCache', () => {
         slowSpecTimeout: 5000,
       });
       
-      // Add items sequentially - the cache should maintain insertion order
-      testCache.set('url1', { spec: '1' });
-      testCache.set('url2', { spec: '2' });
-      testCache.set('url3', { spec: '3' });
+      // Add items sequentially with small delays to ensure different timestamps
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+      await delay(2); testCache.set('url1', { spec: '1' });
+      await delay(2); testCache.set('url2', { spec: '2' });
+      await delay(2); testCache.set('url3', { spec: '3' });
       
       // Verify all 3 items are in cache
       expect(testCache.get('url1')).toEqual({ spec: '1' });
@@ -90,7 +91,7 @@ describe('OpenApiCache', () => {
       expect(testCache.get('url3')).toEqual({ spec: '3' });
       
       // This should evict the oldest (url1) since we're at max size
-      testCache.set('url4', { spec: '4' });
+      await delay(2); testCache.set('url4', { spec: '4' });
       
       // url1 should be evicted, others should remain
       expect(testCache.get('url1')).toBeNull();
