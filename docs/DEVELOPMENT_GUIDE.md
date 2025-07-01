@@ -1083,6 +1083,8 @@ All tests must pass in CI before code can be merged:
 - Security scanning
 - Coverage thresholds
 
+**Note**: For detailed testing workflows and when to run each type of test, see `docs/TESTING.md`.
+
 ### External Service Testing
 
 For external services (OpenAI, external APIs), we use mocks in tests but ensure:

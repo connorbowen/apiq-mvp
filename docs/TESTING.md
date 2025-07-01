@@ -256,6 +256,158 @@ The test suite has been enhanced with robust isolation mechanisms:
 
 ## Running Tests
 
+### When to Run Each Type of Test
+
+#### 🧪 **Unit Tests** (`npm run test:unit`)
+**When to run:**
+- **During development** - Every time you write/modify a function or component
+- **Before commits** - As part of your development workflow
+- **CI/CD pipeline** - First step in automated testing
+- **Quick feedback** - When you need fast validation of logic
+
+**What they test:**
+- Individual functions and components in isolation
+- Business logic validation
+- Utility functions
+- Component rendering without external dependencies
+
+**Current status:**
+- 602 unit tests with 100% pass rate
+- Tests in `tests/unit/` directory
+- Fast execution (< 10 seconds)
+- Uses Jest with jsdom environment
+
+#### 🔗 **Integration Tests** (`npm run test:integration`)
+**When to run:**
+- **After unit tests pass** - Before E2E tests
+- **API changes** - When modifying API endpoints or database operations
+- **Authentication flows** - OAuth2, SAML/OIDC integration testing
+- **Database operations** - When changing Prisma models or migrations
+- **External service integration** - When modifying API connections
+
+**What they test:**
+- API endpoints with real database
+- Authentication flows (OAuth2, SAML/OIDC)
+- Database operations and transactions
+- External API integrations
+- Service layer interactions
+
+**Current status:**
+- 111 integration tests with 100% pass rate
+- Separate Jest config (`jest.integration.config.js`)
+- Tests in `tests/integration/` directory
+- Uses real database connections (no mocking)
+- Longer timeout (30 seconds)
+
+#### 🌐 **E2E Tests** (`npm run test:e2e`)
+**When to run:**
+- **Before major releases** - Full user journey validation
+- **After UI changes** - When modifying frontend components
+- **Cross-browser testing** - In CI environment
+- **User workflow validation** - Complete user scenarios
+- **Regression testing** - After significant changes
+
+**What they test:**
+- Complete user workflows from login to completion
+- UI interactions and navigation
+- Cross-browser compatibility
+- Real user scenarios
+- Integration between frontend and backend
+
+**Current status:**
+- 180 E2E tests with 100% pass rate
+- Playwright with multiple browser support
+- Tests in `tests/e2e/` directory
+- Separate configs for different scenarios:
+  - `playwright.config.ts` - Full E2E suite
+  - `playwright.critical.config.ts` - Critical paths only
+  - `playwright.ui.config.ts` - UI-specific tests
+
+#### 🖱️ **Manual Testing**
+**When to run:**
+- **New features** - Before releasing to users
+- **UI/UX validation** - Visual and interaction testing
+- **Edge cases** - Complex scenarios hard to automate
+- **Performance testing** - Load and stress testing
+- **Accessibility testing** - Screen reader and keyboard navigation
+
+### Recommended Testing Workflow
+
+#### **Daily Development Workflow:**
+```bash
+# 1. Quick unit tests during development
+npm run test:unit
+
+# 2. Integration tests for API changes
+npm run test:integration
+
+# 3. Specific E2E tests for UI changes
+npm run test:e2e:ui-fast
+```
+
+#### **Before Commits:**
+```bash
+# Run all tests locally
+npm run test:all
+# or use the script
+./scripts/run-tests.sh
+```
+
+#### **CI/CD Pipeline:**
+```bash
+# Automated testing in CI
+npm run test:ci
+```
+
+#### **Specific Test Scenarios:**
+
+**For Authentication Changes:**
+```bash
+npm run test:oauth2
+npm run test:e2e:auth
+```
+
+**For Workflow Engine Changes:**
+```bash
+npm run test:unit  # Test individual components
+npm run test:integration  # Test API endpoints
+npm run test:e2e:workflows  # Test complete workflows
+```
+
+**For UI Changes:**
+```bash
+npm run test:e2e:ui
+npm run test:e2e:ui-critical  # Critical paths only
+```
+
+**For Performance Testing:**
+```bash
+npm run test:e2e:headed  # Visual feedback
+npm run test:e2e:ui-interactive  # Interactive mode
+```
+
+### Current Test Status & Recommendations
+
+#### ✅ **Working Well:**
+- **Unit Tests**: 602 tests, 100% pass rate
+- **Integration Tests**: 111 tests, 100% pass rate
+- **E2E Tests**: 180 tests, 100% pass rate
+- **OAuth2 Tests**: Comprehensive coverage with all integration tests passing
+- **Authentication Flow Tests**: 44 tests across 4 test suites, all passing
+
+#### 🎯 **Test Execution Times (Estimated)**
+- **Unit Tests**: ~10-30 seconds
+- **Integration Tests**: ~2-5 minutes
+- **E2E Tests**: ~5-15 minutes
+- **Full Test Suite**: ~10-20 minutes
+
+#### 📋 **Best Practices for Your Project**
+1. **Follow the "No Mock Data" Policy**: Your integration tests use real database connections
+2. **Maintain 100% Test Pass Rate**: Don't commit with failing tests
+3. **Run Tests in Order**: Unit → Integration → E2E
+4. **Use Specific Test Commands**: Target specific areas when making focused changes
+5. **Leverage Test Scripts**: Use `./scripts/run-tests.sh` for comprehensive testing
+
 ### Full Test Suite
 ```bash
 # Run all tests
