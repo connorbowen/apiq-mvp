@@ -185,17 +185,22 @@ This document describes all the user-facing pages in the APIQ application, their
 
 ## Testing
 
+### Test Coverage
+- **Comprehensive Authentication Flow Tests**: 44 tests across 4 test suites
+  - Signup page tests (redirect to success page, form validation, error handling)
+  - Verify page tests (automatic sign-in, token handling, dashboard redirect)
+  - Signup success page tests (resend verification, navigation, user feedback)
+  - Forgot password success page tests (security messaging, step-by-step instructions)
+- **UX Flow Validation**: Tests accurately reflect improved user experience
+- **Error Handling**: Comprehensive testing of failure cases and edge conditions
+- **Navigation Testing**: Verification of proper href attributes and link behavior
+- **Loading States**: Testing of user feedback during async operations
+
 ### Email Mocking
 - Tests use mocked email service (`tests/helpers/emailMock.ts`)
 - No real SMTP connections in tests
 - Email content and recipients are verified in tests
 - Mock can be configured to simulate failures
-
-### Test Coverage
-- All authentication flows are tested
-- Error scenarios are covered
-- UI interactions are tested
-- API integration is verified
 
 ## Styling
 
