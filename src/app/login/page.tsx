@@ -187,6 +187,10 @@ export default function LoginPage() {
                 placeholder="Enter your password"
               />
             </div>
+            <div className="flex justify-between text-sm">
+              <Link href="/forgot-password" className="text-indigo-600 hover:text-indigo-500">Forgot password?</Link>
+              <Link href="/resend-verification" className="text-indigo-600 hover:text-indigo-500">Resend verification email?</Link>
+            </div>
           </div>
 
           <div>
@@ -212,7 +216,7 @@ export default function LoginPage() {
               </Link>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Don't have an account? </span>
+              <span className="text-sm text-gray-600">Don&apos;t have an account? </span>
               <Link href="/signup" className="text-sm text-indigo-600 hover:text-indigo-500">
                 Sign up
               </Link>

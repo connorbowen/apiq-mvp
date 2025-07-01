@@ -142,7 +142,7 @@ ${process.env.NEXTAUTH_URL || 'http://localhost:3000'}
   /**
    * Send a generic email
    */
-  private async sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
+  protected async sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
     try {
       const mailOptions = {
         from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@apiq.com',

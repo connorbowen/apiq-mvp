@@ -124,7 +124,7 @@ export default function ChatInterface({ onWorkflowGenerated }: ChatInterfaceProp
             <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <p className="text-lg font-medium mb-2">Hi! I'm your AI assistant</p>
+            <p className="text-lg font-medium mb-2">Hi! I&apos;m your AI assistant</p>
             <p className="text-sm mb-6">I can help you create workflows that connect your APIs. Just tell me what you want to do!</p>
             
             <div className="space-y-3">
@@ -136,7 +136,7 @@ export default function ChatInterface({ onWorkflowGenerated }: ChatInterfaceProp
                     onClick={() => handleQuickExample(example)}
                     className="block w-full text-left p-3 text-sm text-gray-600 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors"
                   >
-                    "{example}"
+                    &quot;{example}&quot;
                   </button>
                 ))}
               </div>

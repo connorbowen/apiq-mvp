@@ -287,6 +287,17 @@ npm test -- tests/unit/lib/auth/oauth2.test.ts
 - 🚧 **OAuth2 Integration Testing** - In progress
 - ❌ **OAuth2 UI Components** - Planned
 
+## 🆕 Authentication & Recovery Flows
+
+APIQ now includes a complete set of user-friendly authentication and account recovery pages:
+
+- **Forgot Password** (`/forgot-password`): Request a password reset email
+- **Reset Password** (`/reset-password?token=...`): Set a new password using a secure token
+- **Resend Verification** (`/resend-verification`): Request a new verification email
+- **Signup, Login, and Verify**: All flows are linked and provide clear error recovery
+
+See [UI_PAGES.md](docs/UI_PAGES.md) for full details, user experience flows, and error handling.
+
 ## 🤝 Contributing
 
 1. Fork the repository

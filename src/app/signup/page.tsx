@@ -153,6 +153,11 @@ export default function SignupPage() {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-red-800">{error}</p>
+                {error.toLowerCase().includes('verify') && (
+                  <div className="mt-2">
+                    <a href="/resend-verification" className="text-indigo-600 hover:text-indigo-500 underline text-sm">Resend verification email</a>
+                  </div>
+                )}
               </div>
             </div>
           </div>

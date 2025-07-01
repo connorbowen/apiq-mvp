@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { createMocks } from 'node-mocks-http';
 import { PrismaClient } from '../../../src/generated/prisma';
 import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
+import { mockEmailService } from '../../helpers/emailMock';
 
 // Import handlers
 const registerHandler = require('../../../pages/api/auth/register').default;
@@ -64,6 +65,13 @@ describe('User Registration Integration Tests', () => {
       });
       expect(verificationToken).toBeDefined();
       expect(verificationToken?.email).toBe(testEmail);
+
+      // Verify email was sent
+      const sentEmails = mockEmailService.getEmailsTo(testEmail);
+      expect(sentEmails).toHaveLength(1);
+      expect(sentEmails[0].subject).toBe('Verify your APIQ account');
+      expect(sentEmails[0].html).toContain(verificationToken!.token);
+      expect(sentEmails[0].text).toContain(verificationToken!.token);
 
       // Clean up
       await prisma.verificationToken.deleteMany({
@@ -336,6 +344,13 @@ describe('User Registration Integration Tests', () => {
         where: { email: testEmail }
       });
       expect(verificationToken).toBeDefined();
+
+      // Verify email was sent
+      const sentEmails = mockEmailService.getEmailsTo(testEmail);
+      expect(sentEmails).toHaveLength(1);
+      expect(sentEmails[0].subject).toBe('Verify your APIQ account');
+      expect(sentEmails[0].html).toContain(verificationToken!.token);
+      expect(sentEmails[0].text).toContain(verificationToken!.token);
 
       // Clean up
       await prisma.verificationToken.deleteMany({

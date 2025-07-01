@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '../../lib/api/client';
@@ -13,17 +13,7 @@ export default function VerifyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    const token = searchParams?.get('token');
-    if (token) {
-      verifyEmail(token);
-    } else {
-      setIsVerifying(false);
-      setError('No verification token provided');
-    }
-  }, [searchParams]);
-
-  const verifyEmail = async (token: string) => {
+  const verifyEmail = useCallback(async (token: string) => {
     setIsLoading(true);
     setError('');
     setSuccess('');
@@ -48,7 +38,17 @@ export default function VerifyPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    const token = searchParams?.get('token');
+    if (token) {
+      verifyEmail(token);
+    } else {
+      setIsVerifying(false);
+      setError('No verification token provided');
+    }
+  }, [searchParams, verifyEmail]);
 
   const resendVerification = async () => {
     // This would need to be implemented with a form to collect email
@@ -119,7 +119,8 @@ export default function VerifyPage() {
               <div className="ml-3">
                 <p className="text-sm font-medium text-red-800">{error}</p>
                 <p className="mt-1 text-sm text-red-700">
-                  The verification link may be invalid or expired.
+                  The verification link may be invalid or expired.{' '}
+                  <Link href="/resend-verification" className="text-indigo-600 hover:text-indigo-500 underline">Resend verification email</Link>
                 </p>
               </div>
             </div>
@@ -129,13 +130,13 @@ export default function VerifyPage() {
         <div className="space-y-4">
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Didn't receive the verification email?{' '}
-              <button
-                onClick={resendVerification}
+              Didn&apos;t receive the verification email?{' '}
+              <Link
+                href="/resend-verification"
                 className="font-medium text-indigo-600 hover:text-indigo-500"
               >
                 Resend verification email
-              </button>
+              </Link>
             </p>
           </div>
 

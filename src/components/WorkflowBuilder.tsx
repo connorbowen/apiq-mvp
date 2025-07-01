@@ -229,7 +229,7 @@ export default function WorkflowBuilder({ workflow, onSave, onCancel }: Workflow
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               <p>No steps added yet</p>
-              <p className="text-sm">Click "Add Step" to get started</p>
+              <p className="text-sm">Click &quot;Add Step&quot; to get started</p>
             </div>
           ) : (
             <div className="space-y-4">

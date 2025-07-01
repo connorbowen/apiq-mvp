@@ -62,7 +62,7 @@ export default function Home() {
         <div className="px-4 py-6 sm:px-0">
           <div className="text-center">
             <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-              Just Ask, We'll Connect
+              Just Ask, We&apos;ll Connect
             </h2>
             <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
               Describe what you want to do with your APIs in plain English. Our AI understands your intent and orchestrates the complex connections for you.
@@ -99,13 +99,13 @@ export default function Home() {
               <div className="p-6 space-y-4">
                 <div className="flex justify-end">
                   <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-indigo-600 text-white">
-                    <div className="text-sm">"When a new customer signs up, add them to our CRM and send a welcome email"</div>
+                    <div className="text-sm">&quot;When a new customer signs up, add them to our CRM and send a welcome email&quot;</div>
                     <div className="text-xs text-indigo-200 mt-1">2:30 PM</div>
                   </div>
                 </div>
                 <div className="flex justify-start">
                   <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-gray-100 text-gray-900">
-                    <div className="text-sm">I'll help you create a workflow that:</div>
+                    <div className="text-sm">I&apos;ll help you create a workflow that:</div>
                     <div className="text-sm mt-2">
                       <div className="flex items-center space-x-2">
                         <span className="w-2 h-2 bg-green-400 rounded-full"></span>
@@ -144,7 +144,7 @@ export default function Home() {
               {/* Example 1 */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="text-sm text-gray-600 mb-4">
-                  "Get the latest orders from our e-commerce API and update our inventory system"
+                  &quot;Get the latest orders from our e-commerce API and update our inventory system&quot;
                 </div>
                 <div className="text-xs text-gray-500">
                   Creates a workflow that syncs order data with inventory management
@@ -154,7 +154,7 @@ export default function Home() {
               {/* Example 2 */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="text-sm text-gray-600 mb-4">
-                  "Monitor our GitHub repository for new issues and create Trello cards"
+                  &quot;Monitor our GitHub repository for new issues and create Trello cards&quot;
                 </div>
                 <div className="text-xs text-gray-500">
                   Automatically creates project management tasks from development issues
@@ -164,7 +164,7 @@ export default function Home() {
               {/* Example 3 */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="text-sm text-gray-600 mb-4">
-                  "Send me a daily summary of our sales data and customer feedback"
+                  &quot;Send me a daily summary of our sales data and customer feedback&quot;
                 </div>
                 <div className="text-xs text-gray-500">
                   Generates automated reports combining multiple data sources

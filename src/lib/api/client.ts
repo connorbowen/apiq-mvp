@@ -183,6 +183,18 @@ class ApiClient {
     });
   }
 
+  /**
+   * Verify user email using a valid verification token
+   * @param token - Verification token from email
+   * @returns Promise resolving to API response with success message
+   * @example
+   * ```typescript
+   * const response = await apiClient.verifyEmail('verification-token-123');
+   * if (response.success) {
+   *   console.log('Email verified');
+   * }
+   * ```
+   */
   async verifyEmail(token: string): Promise<ApiResponse<{
     message: string;
     userId: string;
@@ -190,6 +202,64 @@ class ApiClient {
     return this.request('/api/auth/verify', {
       method: 'POST',
       body: JSON.stringify({ token }),
+    });
+  }
+
+  /**
+   * Request a password reset email to be sent
+   * @param email - User's email address
+   * @returns Promise resolving to API response with success message
+   * @example
+   * ```typescript
+   * const response = await apiClient.requestPasswordReset('user@example.com');
+   * if (response.success) {
+   *   console.log('Password reset email sent');
+   * }
+   * ```
+   */
+  async requestPasswordReset(email: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  /**
+   * Reset user password using a valid reset token
+   * @param token - Password reset token from email
+   * @param password - New password to set
+   * @returns Promise resolving to API response with success message
+   * @example
+   * ```typescript
+   * const response = await apiClient.resetPassword('reset-token-123', 'newPassword123');
+   * if (response.success) {
+   *   console.log('Password reset successful');
+   * }
+   * ```
+   */
+  async resetPassword(token: string, password: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    });
+  }
+
+  /**
+   * Resend verification email for unverified accounts
+   * @param email - User's email address
+   * @returns Promise resolving to API response with success message
+   * @example
+   * ```typescript
+   * const response = await apiClient.resendVerification('user@example.com');
+   * if (response.success) {
+   *   console.log('Verification email sent');
+   * }
+   * ```
+   */
+  async resendVerification(email: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request('/api/auth/resend-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
     });
   }
 
