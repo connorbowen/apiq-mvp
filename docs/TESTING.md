@@ -84,6 +84,37 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 
 ## Test Infrastructure
 
+### Jest Configuration
+
+The project uses a comprehensive Jest setup with polyfills and separate configurations for different test types:
+
+#### Main Jest Configuration (`jest.config.js`)
+- **Environment**: jsdom for unit tests
+- **Polyfills**: Comprehensive polyfills for Node.js APIs (TextEncoder, TextDecoder, crypto, fetch, structuredClone)
+- **Coverage**: Separate coverage directories for unit tests
+- **Memory Management**: Optimized worker configuration and memory limits
+- **ES Module Support**: Transform patterns for ES modules like node-fetch
+
+#### Integration Test Configuration (`jest.integration.config.js`)
+- **Environment**: Node.js for integration tests
+- **Timeout**: Extended timeout (30s) for database and API operations
+- **Setup**: Separate setup file for integration test environment
+- **Coverage**: Dedicated coverage reporting for integration tests
+
+#### Polyfill Configuration (`jest.polyfill.js`)
+- **TextEncoder/TextDecoder**: Required for pg-boss and other Node.js modules
+- **Crypto API**: Web Crypto API polyfill for encryption operations
+- **Fetch API**: Custom fetch implementation for HTTP requests in tests
+- **StructuredClone**: JSON-based polyfill for object cloning
+- **GlobalThis**: Support for older Node.js versions
+
+#### Key Features
+- **Memory Optimization**: Configurable memory limits and worker counts
+- **Test Isolation**: Clear mocks between tests with resetMocks and restoreMocks
+- **Module Resolution**: Proper path mapping for TypeScript imports
+- **Environment Variables**: Test-specific environment configuration
+- **ES Module Compatibility**: Transform patterns for modern JavaScript modules
+
 ### E2E Test Organization
 
 The E2E tests have been organized into logical groups for faster execution and better maintainability:

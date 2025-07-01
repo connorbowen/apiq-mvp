@@ -954,31 +954,68 @@ ENCRYPTION_KEY="test-encryption-key-32-chars-long"
 ```
 
 #### Jest Configuration
+
+The project uses a comprehensive Jest setup with polyfills and separate configurations:
+
+**Main Configuration (`jest.config.js`)**
 ```javascript
-// jest.config.js
-module.exports = {
+const nextJest = require('next/jest')
+
+const createJestConfig = nextJest({
+  dir: './',
+})
+
+const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testEnvironment: 'node',
+  setupFiles: ['<rootDir>/jest.polyfill.js'],
+  testEnvironment: 'jsdom',
   testMatch: [
-    '<rootDir>/tests/**/*.test.ts',
-    '<rootDir>/tests/**/*.test.tsx'
+    '<rootDir>/tests/unit/**/*.test.ts',
+    '<rootDir>/tests/unit/**/*.test.tsx'
   ],
   collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
-    'pages/**/*.{ts,tsx}',
+    'src/**/*.{js,jsx,ts,tsx}',
+    'pages/**/*.{js,jsx,ts,tsx}',
     '!**/*.d.ts',
-    '!**/node_modules/**'
+    '!**/node_modules/**',
+    '!**/.next/**',
+    '!**/coverage/**',
+    '!**/tests/**'
   ],
-  coverageThreshold: {
-    global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
-    }
-  }
-};
+  coverageDirectory: 'coverage/unit',
+  testTimeout: 10000,
+  maxWorkers: '50%',
+  clearMocks: true,
+  resetMocks: true,
+  restoreMocks: true,
+  transformIgnorePatterns: [
+    '/node_modules/(?!(node-fetch)/)'
+  ]
+}
+
+module.exports = createJestConfig(customJestConfig)
 ```
+
+**Integration Test Configuration (`jest.integration.config.js`)**
+```javascript
+const customJestConfig = {
+  setupFilesAfterEnv: ['<rootDir>/jest.integration.setup.js'],
+  testEnvironment: 'node',
+  testMatch: [
+    '<rootDir>/tests/integration/**/*.test.ts'
+  ],
+  testTimeout: 30000,
+  forceExit: true,
+  setupFiles: ['<rootDir>/jest.polyfill.js']
+}
+```
+
+**Polyfill Configuration (`jest.polyfill.js`)**
+- TextEncoder/TextDecoder for Node.js compatibility
+- Crypto API polyfill for encryption operations
+- Fetch API polyfill for HTTP requests
+- StructuredClone polyfill for object cloning
+- GlobalThis support for older Node versions
 
 ### Running Tests
 

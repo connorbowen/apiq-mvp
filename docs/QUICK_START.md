@@ -107,7 +107,15 @@ npm test -- --coverage
 npm test -- --testPathPattern="unit"
 npm test -- --testPathPattern="integration"
 npm test -- --testPathPattern="e2e"
+
+# Run with increased memory (if needed)
+NODE_OPTIONS="--max-old-space-size=4096" npm test
+
+# Run specific test files
+npm test -- tests/unit/lib/queue/queueService.test.ts
 ```
+
+**Note**: The project uses a comprehensive Jest setup with polyfills for Node.js APIs (TextEncoder, TextDecoder, crypto, fetch) and separate configurations for unit and integration tests. See `docs/TESTING.md` for detailed configuration information.
 
 ## 🔄 Development Workflow
 
