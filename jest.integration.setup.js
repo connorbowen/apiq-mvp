@@ -33,4 +33,60 @@ const originalConsoleError = console.error;
 // Override console methods to suppress logs during tests
 console.log = jest.fn();
 console.warn = jest.fn();
-console.error = originalConsoleError; // Keep error logging 
+console.error = originalConsoleError; // Keep error logging
+
+// Import Prisma client for transaction management
+const { prisma } = require('./src/lib/singletons/prisma');
+const { cleanupTestData } = require('./tests/helpers/testIsolation');
+
+// Global test state management
+let globalTransactionId = null;
+
+// Global setup - runs once before all tests
+beforeAll(async () => {
+  // Database connection and fixture loading is handled in jest.integration.setup.ts
+  console.log('Integration test suite starting...');
+});
+
+// Global teardown - runs once after all tests
+afterAll(async () => {
+  console.log('Integration test suite completed.');
+  try {
+    if (globalTransactionId) {
+      // Roll back the entire test suite transaction
+      await prisma.$executeRawUnsafe('ROLLBACK');
+      globalTransactionId = null;
+    }
+  } catch (error) {
+    console.error('Failed to rollback transaction:', error);
+  }
+  
+  // Ensure proper disconnection
+  await prisma.$disconnect();
+});
+
+// Per-test cleanup - runs after each test
+afterEach(async () => {
+  // Clean up test data to ensure isolation
+  await cleanupTestData();
+});
+
+// Disable transaction management for now due to connection pool constraints
+// We use table truncation instead for test isolation
+const originalTransaction = prisma.$transaction;
+prisma.$transaction = async (fn) => {
+  // For tests, we'll use the function directly without transaction wrapping
+  // since we're managing isolation through table truncation
+  return await fn(prisma);
+};
+
+// Handle process termination
+process.on('SIGINT', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+}); 

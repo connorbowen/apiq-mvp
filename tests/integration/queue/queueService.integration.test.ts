@@ -1,25 +1,14 @@
 import { QueueService, QueueServiceConfig, Job, QueueStatistics, WorkerStatistics, QueueJob } from '../../../src/lib/queue/queueService';
-import { getTestDatabase } from '../../helpers/test-db';
-import { PrismaClient } from '../../../src/generated/prisma';
+import { prisma } from '../../../lib/database/client';
 
-describe('QueueService Integration Tests', () => {
+describe('QueueService Integration Tests (Optimized)', () => {
   let queueService: QueueService;
   let testConfig: QueueServiceConfig;
-  let testDb: any;
-  let prisma: PrismaClient;
 
   beforeAll(async () => {
-    // Setup test database
-    testDb = await getTestDatabase();
-    prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: testDb.connectionString,
-        },
-      },
-    });
+    // Setup queue service using standard database
     testConfig = {
-      connectionString: testDb.connectionString,
+      connectionString: process.env.DATABASE_URL!,
       schema: 'pgboss',
       poolSize: 5,
       maxConcurrency: 10,
@@ -31,10 +20,8 @@ describe('QueueService Integration Tests', () => {
     };
     queueService = new QueueService(prisma, testConfig);
     await queueService.initialize();
-    // Don't purge after initialization as it might clear workers
-    // await queueService.purge();
-    // Register all workers needed for the tests
-    // Basic Queue Operations
+    
+    // Register all workers needed for the tests once
     await queueService.registerWorker('test-simple-queue', async (job: any) => {
       globalThis.processedJob_simple = job.data;
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -46,26 +33,43 @@ describe('QueueService Integration Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       globalThis.jobProcessed_cancel = true;
     });
-    // ...register other workers as needed for your tests...
+    // Register additional workers as needed for other tests
+    await queueService.registerWorker('test-status-queue', async (job: any) => {
+      globalThis.processedJob_status = job.data;
+    });
+    await queueService.registerWorker('test-retry-queue', async (job: any) => {
+      globalThis.attemptCount = (globalThis.attemptCount || 0) + 1;
+      if (globalThis.attemptCount < 3) {
+        throw new Error(`Attempt ${globalThis.attemptCount} failed`);
+      }
+    });
+    await queueService.registerWorker('test-stats-queue', async (job: any) => {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    });
+    await queueService.registerWorker('test-validation-queue', async (job: any) => {
+      expect(job.data.message).toBe('Valid job data');
+    });
+    await queueService.registerWorker('test-large-payload-queue', async (job: any) => {
+      expect(job.data.message).toBe('Large payload test');
+      expect(job.data.data.length).toBe(10000);
+    });
+    await queueService.registerWorker('test-connection-loss-queue', async (job: any) => {
+      // Simulate work
+    });
   });
 
-  beforeEach(async () => {
-    // Lightweight per-test setup (mocks, DB resets, etc.)
+  beforeEach(() => {
+    // Lightweight per-test setup - just reset global variables
     globalThis.processedJob_simple = null;
     globalThis.processedJob_options = null;
     globalThis.jobProcessed_cancel = false;
-    // ...reset other globals as needed...
+    globalThis.processedJob_status = null;
+    globalThis.attemptCount = 0;
   });
 
   afterAll(async () => {
     if (queueService) {
       await queueService.stop();
-    }
-    if (prisma) {
-      await prisma.$disconnect();
-    }
-    if (testDb) {
-      await testDb.cleanup();
     }
   });
 

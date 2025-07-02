@@ -1,7 +1,7 @@
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
-import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest, createTestUser } from '../../helpers/testUtils';
+import { createTestSuite, createAuthenticatedRequest, createTestUser } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 import fs from 'fs';
 import path from 'path';
@@ -13,7 +13,7 @@ jest.mock('../../../src/services/openApiService', () => ({
   }
 }));
 
-// Load local fixture for Petstore API
+// Load local fixture for Petstore API once at module level
 const petstoreFixture = JSON.parse(
   fs.readFileSync(
     path.join(__dirname, '../../fixtures/petstore-openapi.json'),
@@ -21,7 +21,8 @@ const petstoreFixture = JSON.parse(
   )
 );
 
-// Note: No mocks for parser and endpoints - we want to test real API calls
+// Get the mocked service once at module level
+const { openApiService } = require('../../../src/services/openApiService');
 
 describe('Real API Connections Integration Tests', () => {
   const testSuite = createTestSuite('Real API Connections Tests');
@@ -30,9 +31,9 @@ describe('Real API Connections Integration Tests', () => {
   beforeAll(async () => {
     await testSuite.beforeAll();
     
-    // Create test user with unique email to avoid conflicts with other test files
+    // Create test user once for the entire suite
     testUser = await testSuite.createUser(
-      undefined, // Let createTestUser generate unique email
+      undefined,
       'admin123',
       Role.ADMIN,
       'Real API Test Admin User'
@@ -44,47 +45,16 @@ describe('Real API Connections Integration Tests', () => {
   });
 
   beforeEach(async () => {
+    // Clear mocks but don't recreate them
     jest.clearAllMocks();
-    await prisma.endpoint.deleteMany({
-      where: {
-        apiConnection: {
-          user: {
-            OR: [
-              { email: { contains: 'test-' } },
-              { email: { contains: '@example.com' } }
-            ]
-          }
-        }
-      }
-    });
-    await prisma.apiConnection.deleteMany({
-      where: {
-        user: {
-          OR: [
-            { email: { contains: 'test-' } },
-            { email: { contains: '@example.com' } }
-          ]
-        }
-      }
-    });
-    await prisma.user.deleteMany({
-      where: {
-        OR: [
-          { email: { contains: 'test-' } },
-          { email: { contains: '@example.com' } }
-        ]
-      }
-    });
-    // Recreate test users as needed for each test
-    if (typeof testUser !== 'undefined') {
-      testUser = await createTestUser(undefined, 'realapi123', Role.USER, 'Real API User');
-    }
+    
+    // Reset mock implementations for each test
+    openApiService.fetchSpec.mockReset();
   });
 
   describe('POST /api/connections - Real API Tests', () => {
     it('should create API connection with real Petstore OpenAPI spec', async () => {
       // Mock successful OpenAPI spec fetch
-      const { openApiService } = require('../../../src/services/openApiService');
       openApiService.fetchSpec.mockResolvedValue({
         success: true,
         spec: petstoreFixture,
@@ -119,7 +89,6 @@ describe('Real API Connections Integration Tests', () => {
 
     it('should handle missing OpenAPI spec gracefully', async () => {
       // Mock failed OpenAPI spec fetch
-      const { openApiService } = require('../../../src/services/openApiService');
       openApiService.fetchSpec.mockResolvedValue({
         success: false,
         error: 'HTTP 404: Not Found',
@@ -146,7 +115,6 @@ describe('Real API Connections Integration Tests', () => {
 
     it('should handle network errors gracefully', async () => {
       // Mock network error
-      const { openApiService } = require('../../../src/services/openApiService');
       openApiService.fetchSpec.mockResolvedValue({
         success: false,
         error: 'Network error - unable to reach the server',

@@ -1,16 +1,7 @@
-import { PrismaClient, Role } from '../../src/generated/prisma';
+import { Role } from '../../src/generated/prisma';
 import bcrypt from 'bcryptjs';
 import { generateTestId } from '../helpers/testUtils';
-
-// Test-specific Prisma client
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL || `postgresql://${process.env.TEST_DB_USER || 'connorbowen'}:${process.env.TEST_DB_PASSWORD || ''}@${process.env.TEST_DB_HOST || 'localhost'}:${process.env.TEST_DB_PORT || '5432'}/${process.env.TEST_DB_NAME || 'apiq_test'}`,
-    },
-  },
-  log: ['query', 'error', 'warn'],
-});
+import { prisma } from '../../lib/database/client';
 
 describe('Debug Authentication Issue', () => {
   beforeAll(async () => {
@@ -22,9 +13,7 @@ describe('Debug Authentication Issue', () => {
     });
   });
 
-  afterAll(async () => {
-    await prisma.$disconnect();
-  });
+
 
   test('should create and authenticate a test user', async () => {
     const testEmail = `test-debug-${generateTestId()}@example.com`;

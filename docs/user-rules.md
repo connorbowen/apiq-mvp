@@ -649,8 +649,9 @@ export const apiRateLimiter = rateLimit({
 4. **Regression Testing**: Ensure no regression in existing functionality
 
 ### Test Structure
-1. **Unit Tests**: Test individual functions and components
-2. **Integration Tests**: Test API endpoints and database operations
+1. **Unit Tests**: Test individual functions and components (may use mocks)
+2. **Integration Tests**: Test API endpoints and database operations **using real data and real integrations**
+   - **Integration tests must not use mocks for the system under test. They must exercise real API endpoints, database operations, and (where feasible) real third-party integrations.**
 3. **End-to-End Tests**: Test complete user workflows
 4. **Performance Tests**: Test performance under load
 
@@ -712,6 +713,7 @@ describe('/api/users', () => {
 2. **Fixtures**: Use consistent test data fixtures
 3. **Cleanup**: Clean up test data after each test
 4. **Isolation**: Ensure tests are isolated and independent
+5. **Integration Test Data**: Integration tests must use real data and real system components, not mocks or stubs, except for external failures or when real third-party integration is not feasible.
 
 ### E2E Test Guardrails for AI Development
 1. **Primary Quality Gate**: E2E tests serve as primary guardrails during AI development

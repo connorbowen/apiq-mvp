@@ -1,11 +1,5 @@
 /**
- * registration.test.ts – Performance optimized registration flow tests
- * This test file has been optimized for performance while maintaining 100% test coverage.
- * Key optimizations:
- * 1. Use database transactions for faster rollbacks
- * 2. Reduce beforeEach overhead
- * 3. Reuse test data where possible
- * 4. Simplified setup/teardown
+ * registration.test.ts – robust guaranteed mock for all registration flows
  */
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createMocks } from 'node-mocks-http';
@@ -15,34 +9,12 @@ import type { TestUser } from '../../helpers/testUtils';
 
 describe('User Registration Integration Tests', () => {
   let sendEmailSpy: jest.Mock;
+  let createdUserIds: string[] = [];
+  let createdVerificationTokens: string[] = [];
   let testUser: TestUser;
 
-  beforeAll(async () => {
-    // Create test user once for the entire suite
-    testUser = await createTestUser();
-  });
-
-  afterAll(async () => {
-    // Clean up test user
-    await cleanupTestUsers([testUser.id]);
-  });
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    
-    // Use transaction for faster setup/teardown
-    await prisma.$transaction(async (tx) => {
-      // Clear any verification tokens from previous tests
-      await tx.verificationToken.deleteMany({
-        where: {
-          email: {
-            contains: 'test-'
-          }
-        }
-      });
-    });
-
-    // Setup email mock
+  beforeEach(() => {
+    jest.resetModules();
     sendEmailSpy = jest.fn().mockResolvedValue(true);
     jest.doMock(
       '../../../src/lib/services/emailService',
@@ -56,10 +28,50 @@ describe('User Registration Integration Tests', () => {
   });
 
   afterEach(async () => {
+    await prisma.verificationToken.deleteMany({
+      where: { token: { in: createdVerificationTokens } },
+    });
+    await cleanupTestUsers(createdUserIds);
+    createdUserIds = [];
+    createdVerificationTokens = [];
     jest.dontMock('../../../src/lib/services/emailService');
   });
 
+  beforeEach(async () => {
+    // Create a fresh test user for each test (if needed)
+    testUser = await createTestUser();
+    createdUserIds.push(testUser.id);
+  });
+
   describe('POST /api/auth/register', () => {
+    // We'll re-create this spy in every test, so declare outside.
+    let sendEmailSpy: jest.Mock;
+
+    beforeEach(() => {
+      // Make sure we start each test with a clean module graph
+      jest.resetModules();
+
+      // Create a fresh spy for this test
+      sendEmailSpy = jest.fn().mockResolvedValue(true);
+
+      // Register the module mock *before* the handler is imported
+      jest.doMock(
+        '../../../src/lib/services/emailService',
+        () => ({
+          // Exact export signature the real module provides
+          emailService: {
+            sendVerificationEmail: sendEmailSpy,
+          },
+        }),
+        { virtual: false }, // not a virtual file – we're replacing a real one
+      );
+    });
+
+    afterEach(() => {
+      // Remove the mock so the next test can set up its own version
+      jest.dontMock('../../../src/lib/services/emailService');
+    });
+
     it('should register a new user successfully', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
       const testEmail = `test-register-${generateTestId()}@example.com`;
@@ -92,12 +104,22 @@ describe('User Registration Integration Tests', () => {
       expect(user?.name).toBe(testName);
       expect(user?.isActive).toBe(false); // Should be inactive until email verification
 
+      // Track the created user for cleanup
+      if (user) {
+        createdUserIds.push(user.id);
+      }
+
       // Verify verification token was created
       const verificationToken = await prisma.verificationToken.findFirst({
         where: { email: testEmail }
       });
       expect(verificationToken).toBeDefined();
       expect(verificationToken?.email).toBe(testEmail);
+
+      // Track the verification token for cleanup
+      if (verificationToken) {
+        createdVerificationTokens.push(verificationToken.token);
+      }
 
       // Verify email was sent (using the mocked service)
       expect(sendEmailSpy).toHaveBeenCalledWith(
@@ -170,12 +192,19 @@ describe('User Registration Integration Tests', () => {
 
     it('should reject registration with existing email', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      
-      // Use the existing test user's email
+      // Create a test user first
+      const existingUser = await createTestUser(
+        `test-existing-${generateTestId()}@example.com`,
+        'testpass123',
+        'USER',
+        'Existing User'
+      );
+      createdUserIds.push(existingUser.id);
+
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
-          email: testUser.email,
+          email: existingUser.email,
           name: 'New User',
           password: 'testpass123'
         }
@@ -198,89 +227,88 @@ describe('User Registration Integration Tests', () => {
       await registerHandler(req, res);
 
       expect(res._getStatusCode()).toBe(405);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(false);
+      expect(data.error).toContain('Method not allowed');
     });
 
-    it('should handle email service failure gracefully', async () => {
-      // Mock email service to throw error
-      sendEmailSpy.mockRejectedValue(new Error('EMAIL_SEND_FAILED'));
-      
+    it('500 ➟ email service throws', async () => {
+      sendEmailSpy.mockRejectedValueOnce(new Error('SMTP down'));
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-email-failure-${generateTestId()}@example.com`;
-      const testName = `Test User ${generateTestId()}`;
-      
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
-        body: {
-          email: testEmail,
-          name: testName,
-          password: 'testpass123'
-        }
+        body: { email: `user+iso2-${generateTestId()}@example.com`, name: 'User Iso2', password: 'Password123!' },
       });
 
       await registerHandler(req, res);
 
       expect(res._getStatusCode()).toBe(500);
-      const data = JSON.parse(res._getData());
-      expect(data.success).toBe(false);
-      expect(data.error).toContain('Failed to send verification email');
+      expect(res._getJSONData()).toMatchObject({
+        error: 'Failed to send verification email',
+      });
     });
   });
 
   describe('POST /api/auth/verify', () => {
     it('should verify email with valid token', async () => {
       const verifyHandler = require('../../../pages/api/auth/verify').default;
-      
-      // First register a user to get a verification token
-      const registerHandler = require('../../../pages/api/auth/register').default;
+      // Create a test user and verification token
       const testEmail = `test-verify-${generateTestId()}@example.com`;
       const testName = `Test User ${generateTestId()}`;
-      
-      const { req: registerReq, res: registerRes } = createMocks<NextApiRequest, NextApiResponse>({
-        method: 'POST',
-        body: {
+      const testPassword = 'testpass123';
+
+      const user = await prisma.user.create({
+        data: {
           email: testEmail,
           name: testName,
-          password: 'testpass123'
+          password: 'hashedpassword',
+          isActive: false
         }
       });
+      createdUserIds.push(user.id);
 
-      await registerHandler(registerReq, registerRes);
-      
-      // Get the verification token
-      const verificationToken = await prisma.verificationToken.findFirst({
-        where: { email: testEmail }
+      const verificationToken = await prisma.verificationToken.create({
+        data: {
+          email: testEmail,
+          token: `test-verification-token-${generateTestId()}`,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+        }
       });
-      expect(verificationToken).toBeDefined();
+      createdVerificationTokens.push(verificationToken.token);
 
-      // Now verify the email
-      const { req: verifyReq, res: verifyRes } = createMocks<NextApiRequest, NextApiResponse>({
+      const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
-          token: verificationToken!.token
+          token: verificationToken.token
         }
       });
 
-      await verifyHandler(verifyReq, verifyRes);
+      await verifyHandler(req, res);
 
-      expect(verifyRes._getStatusCode()).toBe(200);
-      const data = JSON.parse(verifyRes._getData());
+      expect(res._getStatusCode()).toBe(200);
+      const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.message).toContain('Email verified successfully');
 
       // Verify user is now active
-      const user = await prisma.user.findUnique({
-        where: { email: testEmail }
+      const updatedUser = await prisma.user.findUnique({
+        where: { id: user.id }
       });
-      expect(user?.isActive).toBe(true);
+      expect(updatedUser?.isActive).toBe(true);
+
+      // Verify token was deleted
+      const deletedToken = await prisma.verificationToken.findUnique({
+        where: { token: verificationToken.token }
+      });
+      expect(deletedToken).toBeNull();
     });
 
     it('should reject invalid verification token', async () => {
       const verifyHandler = require('../../../pages/api/auth/verify').default;
-      
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
-          token: 'invalid-token-123'
+          token: 'invalid-token'
         }
       });
 
@@ -294,9 +322,20 @@ describe('User Registration Integration Tests', () => {
 
     it('should reject expired verification token', async () => {
       const verifyHandler = require('../../../pages/api/auth/verify').default;
-      
-      // Create an expired verification token
+      // Create a test user and expired verification token
       const testEmail = `test-expired-${generateTestId()}@example.com`;
+      const testName = `Test User ${generateTestId()}`;
+
+      const user = await prisma.user.create({
+        data: {
+          email: testEmail,
+          name: testName,
+          password: 'hashedpassword',
+          isActive: false
+        }
+      });
+      createdUserIds.push(user.id);
+
       const expiredToken = await prisma.verificationToken.create({
         data: {
           email: testEmail,
@@ -304,6 +343,7 @@ describe('User Registration Integration Tests', () => {
           expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000) // 24 hours ago
         }
       });
+      createdVerificationTokens.push(expiredToken.token);
 
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
@@ -328,7 +368,6 @@ describe('User Registration Integration Tests', () => {
 
     it('should reject missing token', async () => {
       const verifyHandler = require('../../../pages/api/auth/verify').default;
-      
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {}
@@ -345,49 +384,56 @@ describe('User Registration Integration Tests', () => {
 
   describe('POST /api/auth/resend-verification', () => {
     it('should resend verification email for unverified user', async () => {
-      const resendHandler = require('../../../pages/api/auth/resend-verification').default;
-      
-      // First register a user
-      const registerHandler = require('../../../pages/api/auth/register').default;
+      const resendVerificationHandler = require('../../../pages/api/auth/resend-verification').default;
+      // Create a test user without verification token
       const testEmail = `test-resend-${generateTestId()}@example.com`;
       const testName = `Test User ${generateTestId()}`;
-      
-      const { req: registerReq, res: registerRes } = createMocks<NextApiRequest, NextApiResponse>({
-        method: 'POST',
-        body: {
+
+      const user = await prisma.user.create({
+        data: {
           email: testEmail,
           name: testName,
-          password: 'testpass123'
+          password: 'hashedpassword',
+          isActive: false
         }
       });
+      createdUserIds.push(user.id);
 
-      await registerHandler(registerReq, registerRes);
-      
-      // Clear the email spy to count new calls
-      sendEmailSpy.mockClear();
-
-      // Now resend verification
-      const { req: resendReq, res: resendRes } = createMocks<NextApiRequest, NextApiResponse>({
+      const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
           email: testEmail
         }
       });
 
-      await resendHandler(resendReq, resendRes);
+      await resendVerificationHandler(req, res);
 
-      expect(resendRes._getStatusCode()).toBe(200);
-      const data = JSON.parse(resendRes._getData());
+      expect(res._getStatusCode()).toBe(200);
+      const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.message).toContain('Verification email sent successfully');
 
-      // Verify email was sent again
-      expect(sendEmailSpy).toHaveBeenCalled();
+      // Verify new verification token was created
+      const verificationToken = await prisma.verificationToken.findFirst({
+        where: { email: testEmail }
+      });
+      expect(verificationToken).toBeDefined();
+
+      // Track the verification token for cleanup
+      if (verificationToken) {
+        createdVerificationTokens.push(verificationToken.token);
+      }
+
+      // Verify email was sent (using the mocked service)
+      expect(sendEmailSpy).toHaveBeenCalledWith(
+        testEmail,
+        verificationToken!.token,
+        testName
+      );
     });
 
     it('should handle non-existent user gracefully', async () => {
-      const resendHandler = require('../../../pages/api/auth/resend-verification').default;
-      
+      const resendVerificationHandler = require('../../../pages/api/auth/resend-verification').default;
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
@@ -395,7 +441,7 @@ describe('User Registration Integration Tests', () => {
         }
       });
 
-      await resendHandler(req, res);
+      await resendVerificationHandler(req, res);
 
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
@@ -404,17 +450,29 @@ describe('User Registration Integration Tests', () => {
     });
 
     it('should handle already verified user', async () => {
-      const resendHandler = require('../../../pages/api/auth/resend-verification').default;
-      
-      // Use the test user who is already verified
+      const resendVerificationHandler = require('../../../pages/api/auth/resend-verification').default;
+      // Create a verified test user
+      const testEmail = `test-verified-${generateTestId()}@example.com`;
+      const testName = `Test User ${generateTestId()}`;
+
+      const user = await prisma.user.create({
+        data: {
+          email: testEmail,
+          name: testName,
+          password: 'hashedpassword',
+          isActive: true
+        }
+      });
+      createdUserIds.push(user.id);
+
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
-          email: testUser.email
+          email: testEmail
         }
       });
 
-      await resendHandler(req, res);
+      await resendVerificationHandler(req, res);
 
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
@@ -423,8 +481,7 @@ describe('User Registration Integration Tests', () => {
     });
 
     it('should reject invalid email format', async () => {
-      const resendHandler = require('../../../pages/api/auth/resend-verification').default;
-      
+      const resendVerificationHandler = require('../../../pages/api/auth/resend-verification').default;
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
@@ -432,7 +489,7 @@ describe('User Registration Integration Tests', () => {
         }
       });
 
-      await resendHandler(req, res);
+      await resendVerificationHandler(req, res);
 
       expect(res._getStatusCode()).toBe(400);
       const data = JSON.parse(res._getData());
@@ -440,46 +497,33 @@ describe('User Registration Integration Tests', () => {
       expect(data.error).toContain('Invalid email format');
     });
 
-    it('should handle email service failure', async () => {
-      // Mock email service to throw error
-      sendEmailSpy.mockRejectedValue(new Error('SMTP down'));
+    it('500 ➟ email service throws', async () => {
+      sendEmailSpy.mockRejectedValueOnce(new Error('SMTP down'));
+      const resendVerificationHandler = require('../../../pages/api/auth/resend-verification').default;
       
-      const resendHandler = require('../../../pages/api/auth/resend-verification').default;
-      
-      // First register a user
-      const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-email-failure-${generateTestId()}@example.com`;
-      const testName = `Test User ${generateTestId()}`;
-      
-      const { req: registerReq, res: registerRes } = createMocks<NextApiRequest, NextApiResponse>({
-        method: 'POST',
-        body: {
+      // Create a test user first so the resend-verification can find it
+      const testEmail = `user+iso2-${generateTestId()}@example.com`;
+      const user = await prisma.user.create({
+        data: {
           email: testEmail,
-          name: testName,
-          password: 'testpass123'
+          name: 'User Iso2',
+          password: 'hashedpassword',
+          isActive: false
         }
       });
-
-      await registerHandler(registerReq, registerRes);
+      createdUserIds.push(user.id);
       
-      // Clear the email spy
-      sendEmailSpy.mockClear();
-      sendEmailSpy.mockRejectedValue(new Error('SMTP down'));
-
-      // Now try to resend verification
-      const { req: resendReq, res: resendRes } = createMocks<NextApiRequest, NextApiResponse>({
+      const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
-        body: {
-          email: testEmail
-        }
+        body: { email: testEmail },
       });
 
-      await resendHandler(resendReq, resendRes);
+      await resendVerificationHandler(req, res);
 
-      expect(resendRes._getStatusCode()).toBe(500);
-      const data = JSON.parse(resendRes._getData());
-      expect(data.success).toBe(false);
-      expect(data.error).toContain('Failed to send verification email');
+      expect(res._getStatusCode()).toBe(500);
+      expect(res._getJSONData()).toMatchObject({
+        error: 'Failed to send verification email',
+      });
     });
   });
 }); 

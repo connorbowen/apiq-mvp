@@ -25,7 +25,9 @@ if (process.env.NODE_ENV === 'test') {
     password: process.env.TEST_DB_PASSWORD || '',
   };
 
-  const connectionString = `postgresql://${testConfig.user}:${testConfig.password}@${testConfig.host}:${testConfig.port}/${testConfig.database}`;
+  // Add connection pooling parameters to connection string for tests
+  // Use reasonable pool size for tests
+  const connectionString = `postgresql://${testConfig.user}:${testConfig.password}@${testConfig.host}:${testConfig.port}/${testConfig.database}?connection_limit=5&pool_timeout=10&connect_timeout=10&max_connections=5`;
 
   prisma = new PrismaClient({
     datasources: {

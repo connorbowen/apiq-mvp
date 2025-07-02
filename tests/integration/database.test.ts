@@ -1,20 +1,12 @@
-import { prisma } from '../../lib/database/client';
-import { createTestSuite, generateTestId } from '../helpers/testUtils';
+import { prisma } from '../../src/lib/singletons/prisma';
+import { getTestFixtures } from '../helpers/testIsolation';
 
 describe('Database Integration Tests', () => {
-  const testSuite = createTestSuite('Database Tests');
-
-  beforeAll(async () => {
-    await testSuite.beforeAll();
-  });
-
-  afterAll(async () => {
-    await testSuite.afterAll();
-  });
+  const fixtures = getTestFixtures();
 
   it('should connect to the database', async () => {
     try {
-      await prisma.$connect();
+      // Connection is already established in globalSetup
       console.log('Database connection successful');
       
       // Try a simple query
@@ -28,30 +20,59 @@ describe('Database Integration Tests', () => {
     }
   });
 
-  it('should find existing users', async () => {
+  it('should find fixture users', async () => {
     try {
       const users = await prisma.user.findMany({
-        take: 5,
+        where: {
+          email: {
+            in: [fixtures.users.testUser1.email, fixtures.users.testUser2.email]
+          }
+        },
         select: { id: true, email: true, name: true, role: true }
       });
       
-      console.log('Found users:', users);
-      expect(Array.isArray(users)).toBe(true);
+      console.log('Found fixture users:', users);
+      expect(users).toHaveLength(2);
+      expect(users.map(u => u.email)).toContain(fixtures.users.testUser1.email);
+      expect(users.map(u => u.email)).toContain(fixtures.users.testUser2.email);
     } catch (error) {
       console.error('Database query failed:', error);
       throw error;
     }
   });
 
-  it('should create and delete test data', async () => {
+  it('should find fixture API connections', async () => {
+    try {
+      const connections = await prisma.apiConnection.findMany({
+        where: {
+          id: {
+            in: [fixtures.apiConnections.githubConnection.id, fixtures.apiConnections.slackConnection.id]
+          }
+        },
+        select: { id: true, provider: true, name: true, status: true }
+      });
+      
+      console.log('Found fixture connections:', connections);
+      expect(connections).toHaveLength(2);
+      expect(connections.map(c => c.provider)).toContain('github');
+      expect(connections.map(c => c.provider)).toContain('slack');
+    } catch (error) {
+      console.error('Database query failed:', error);
+      throw error;
+    }
+  });
+
+  it('should create and cleanup test data', async () => {
     // Create a test user
-    const testEmail = `test-db-user-${generateTestId()}@example.com`;
-    const testUser = await testSuite.createUser(
-      testEmail,
-      'testpass123',
-      'USER' as any,
-      'Test DB User'
-    );
+    const testEmail = `test-db-user-${Date.now()}@example.com`;
+    const testUser = await prisma.user.create({
+      data: {
+        email: testEmail,
+        name: 'Test DB User',
+        role: 'USER',
+        emailVerified: new Date(),
+      }
+    });
 
     // Verify the user was created
     const foundUser = await prisma.user.findUnique({
@@ -61,6 +82,6 @@ describe('Database Integration Tests', () => {
     expect(foundUser).toBeDefined();
     expect(foundUser?.email).toBe(testEmail);
 
-    // The cleanup will be handled by the test suite
+    // Cleanup is handled automatically by afterEach
   });
 }); 

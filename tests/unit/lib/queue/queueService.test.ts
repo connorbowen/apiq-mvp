@@ -1,5 +1,6 @@
 // Type-only imports for test data structures
 import type { QueueJob, QueueConfig } from '../../../../src/lib/queue/queueService';
+import { prisma } from '../../../../lib/database/client';
 
 // Mock pg-boss first to ensure it's mocked before the wrapper loads it
 jest.mock('pg-boss', () => {
@@ -95,7 +96,7 @@ beforeEach(async () => {
   const wrapperModule = await import('../../../../src/lib/queueWrapper');
   getQueueClient = wrapperModule.getQueueClient;
 
-  PrismaClient = (await import('../../../../src/generated/prisma')).PrismaClient;
+  // Use shared prisma client instead of creating new instance
 });
 
 describe('QueueService', () => {
@@ -110,7 +111,7 @@ describe('QueueService', () => {
     process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
     
     // Create mock Prisma client
-    mockPrisma = new PrismaClient();
+    mockPrisma = prisma;
     
     // Create queue service instance
     queueService = new QueueService(mockPrisma);

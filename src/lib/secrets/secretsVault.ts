@@ -1,5 +1,6 @@
 import CryptoJS from 'crypto-js';
-import { PrismaClient } from '../../generated/prisma';
+import { prisma } from '../../../lib/database/client';
+import { PrismaClient } from '../../../src/generated/prisma';
 import { logError, logInfo } from '../../utils/logger';
 
 /**
@@ -49,8 +50,8 @@ export class SecretsVault {
   private keyCache: Map<string, EncryptionKey> = new Map();
   private rateLimitCache: Map<string, RateLimitEntry> = new Map();
 
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
+  constructor(prismaClient: PrismaClient) {
+    this.prisma = prismaClient;
     this.initializeKeys();
   }
 
@@ -299,7 +300,7 @@ export class SecretsVault {
         }
       });
 
-      return secrets.map(secret => this.mapToSecretMetadata(secret, secret.type as SecretMetadata['type']));
+      return secrets.map((secret: any) => this.mapToSecretMetadata(secret, secret.type as SecretMetadata['type']));
     } catch (error) {
       logError('Failed to list secrets', error instanceof Error ? error : new Error(String(error)), {
         userId
@@ -570,4 +571,4 @@ export class SecretsVault {
 }
 
 // Export singleton instance
-export const secretsVault = new SecretsVault(new PrismaClient()); 
+export const secretsVault = new SecretsVault(prisma); 

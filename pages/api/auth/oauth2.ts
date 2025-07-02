@@ -1,9 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '../../../src/generated/prisma';
+import { prisma } from '../../../lib/database/client';
 import { generateToken } from '../../../src/lib/auth/session';
 import { ApplicationError } from '../../../src/middleware/errorHandler';
-
-const prisma = new PrismaClient();
 
 // Google OAuth2 configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;

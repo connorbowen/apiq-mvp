@@ -1,10 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '../../../src/generated/prisma';
+import { prisma } from '../../../lib/database/client';
 import { ApplicationError } from '../../../src/middleware/errorHandler';
 import { logInfo, logError } from '../../../src/utils/logger';
 import jwt from 'jsonwebtoken';
-
-const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

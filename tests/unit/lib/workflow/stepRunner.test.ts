@@ -61,7 +61,7 @@ describe('Step Runner Engine', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual({ message: 'No operation performed' });
-      expect(result.duration).toBeGreaterThan(0);
+      expect(result.duration).toBeGreaterThanOrEqual(0); // Duration can be 0 for very fast operations
       expect(result.retryCount).toBe(0);
     });
 

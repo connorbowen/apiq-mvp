@@ -1,5 +1,5 @@
 import { createAuthenticatedRequest, createUnauthenticatedRequest, createTestUser } from './testUtils';
-import { PrismaClient } from '../../src/generated/prisma';
+import { prisma } from '../../lib/database/client';
 import { oauth2Service } from '../../src/lib/auth/oauth2';
 
 export interface OAuth2TestState {
@@ -116,7 +116,6 @@ export function createTestOAuth2TokenResponse(provider: string = 'github') {
  * Create test OAuth2 API connection
  */
 export async function createTestOAuth2Connection(
-  prisma: PrismaClient,
   userId: string,
   provider: string = 'github',
   name?: string
@@ -270,7 +269,6 @@ export function mockOAuth2TokenRefresh(
  * Clean up OAuth2 test data
  */
 export async function cleanupOAuth2TestData(
-  prisma: PrismaClient,
   userId: string,
   apiConnectionId: string
 ) {
@@ -301,7 +299,6 @@ export async function cleanupOAuth2TestData(
  * Verify OAuth2 audit logs
  */
 export async function verifyOAuth2AuditLog(
-  prisma: PrismaClient,
   userId: string,
   action: string,
   resourceId: string
@@ -322,7 +319,6 @@ export async function verifyOAuth2AuditLog(
  * Verify OAuth2 credentials are encrypted
  */
 export async function verifyOAuth2CredentialsEncrypted(
-  prisma: PrismaClient,
   userId: string,
   apiConnectionId: string
 ) {

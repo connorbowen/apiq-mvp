@@ -1,7 +1,7 @@
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
-import { createTestUser, cleanupTestUsers, createAuthenticatedRequest, createUnauthenticatedRequest, cleanupTestConnections } from '../../helpers/testUtils';
+import { createTestUser, cleanupTestUsers, createAuthenticatedRequest, createUnauthenticatedRequest, cleanupTestConnections, createTestSuite } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 import fs from 'fs';
 import path from 'path';
@@ -27,9 +27,18 @@ const petstoreFixture = JSON.parse(
 );
 
 describe('API Connections Integration Tests', () => {
+  const testSuite = createTestSuite('API Connections Tests');
   let createdUserIds: string[] = [];
   let createdConnectionIds: string[] = [];
   let testUser: TestUser;
+
+  beforeAll(async () => {
+    await testSuite.beforeAll();
+  });
+
+  afterAll(async () => {
+    await testSuite.afterAll();
+  });
 
   afterEach(async () => {
     // Clean up in reverse dependency order
@@ -135,17 +144,13 @@ describe('API Connections Integration Tests', () => {
     });
 
     it('should prevent duplicate connection names for the same user', async () => {
-      // Create first connection
-      const connection1 = await prisma.apiConnection.create({
-        data: {
-          userId: testUser.id,
-          name: 'Duplicate API',
-          baseUrl: 'https://api.example.com',
-          authType: 'NONE',
-          authConfig: {},
-          status: 'ACTIVE'
-        }
-      });
+      // Create first connection using test suite
+      const connection1 = await testSuite.createConnection(
+        testUser,
+        'Duplicate API',
+        'https://api.example.com',
+        'NONE'
+      );
       createdConnectionIds.push(connection1.id);
 
       // Try to create second connection with same name
@@ -218,29 +223,21 @@ describe('API Connections Integration Tests', () => {
 
   describe('GET /api/connections', () => {
     it('should retrieve all connections for a user', async () => {
-      // Create test connections
-      const connection1 = await prisma.apiConnection.create({
-        data: {
-          userId: testUser.id,
-          name: 'Conn1',
-          baseUrl: 'https://api1.example.com',
-          authType: 'NONE',
-          authConfig: {},
-          status: 'ACTIVE'
-        }
-      });
+      // Create test connections using test suite
+      const connection1 = await testSuite.createConnection(
+        testUser,
+        'Conn1',
+        'https://api1.example.com',
+        'NONE'
+      );
       createdConnectionIds.push(connection1.id);
 
-      const connection2 = await prisma.apiConnection.create({
-        data: {
-          userId: testUser.id,
-          name: 'Conn2',
-          baseUrl: 'https://api2.example.com',
-          authType: 'NONE',
-          authConfig: {},
-          status: 'ACTIVE'
-        }
-      });
+      const connection2 = await testSuite.createConnection(
+        testUser,
+        'Conn2',
+        'https://api2.example.com',
+        'NONE'
+      );
       createdConnectionIds.push(connection2.id);
 
       const { req, res } = createAuthenticatedRequest('GET', testUser);

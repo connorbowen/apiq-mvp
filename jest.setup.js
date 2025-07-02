@@ -70,3 +70,12 @@ process.env.JWT_EXPIRES_IN = '24h'
 
 // Mock scrollIntoView for jsdom
 Element.prototype.scrollIntoView = jest.fn()
+
+// Global cleanup for any remaining async operations
+afterAll(async () => {
+  // Clear any remaining timers
+  jest.clearAllTimers();
+  
+  // Wait for any pending promises to resolve
+  await new Promise(resolve => setImmediate(resolve));
+});

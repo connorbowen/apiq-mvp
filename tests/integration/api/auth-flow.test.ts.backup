@@ -1,27 +1,23 @@
-// Authentication Flow Testing - Performance Optimized
-// This test file has been optimized for performance while maintaining 100% test coverage.
-// Key optimizations:
-// 1. Use database transactions for faster rollbacks
-// 2. Reduce beforeEach overhead
-// 3. Batch database operations
-// 4. Reuse test data where possible
-// 5. Parallel test execution where safe
+// TODO: [connorbowen] 2025-06-29 - This test file exceeds the 200-300 line threshold (currently 507 lines).
+// Consider splitting into smaller, focused test files:
+// - auth-flow.login.test.ts
+// - auth-flow.registration.test.ts  
+// - auth-flow.password-reset.test.ts
+// Priority: Low - tests are working well, refactoring for maintainability only.
 
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
-import { createTestSuite, createAuthenticatedRequest, createTestUser } from '../../helpers/testUtils';
+import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest, createTestUser } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 
 describe('Authentication Flow Testing - Phase 2.3', () => {
   const testSuite = createTestSuite('Authentication Flow Tests');
   let testUser: any;
-  let testConnectionId: string;
 
   beforeAll(async () => {
     await testSuite.beforeAll();
-    // Create test user once for the entire suite
-    testUser = await createTestUser(undefined, 'authflow123', Role.USER, 'Auth Flow User');
+    // testUser creation moved to beforeEach
   });
 
   afterAll(async () => {
@@ -30,43 +26,38 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    
-    // Use transaction for faster setup/teardown
-    await prisma.$transaction(async (tx) => {
-      // Create a reusable test connection
-      const connection = await tx.apiConnection.create({
-        data: {
-          userId: testUser.id,
-          name: `Test Connection ${Date.now()}`,
-          baseUrl: 'https://api.example.com',
-          authType: 'API_KEY',
-          status: 'ACTIVE',
-          ingestionStatus: 'PENDING',
-          authConfig: {}
+    await prisma.endpoint.deleteMany({
+      where: {
+        apiConnection: {
+          user: {
+            OR: [
+              { email: { contains: 'test-' } },
+              { email: { contains: '@example.com' } }
+            ]
+          }
         }
-      });
-      testConnectionId = connection.id;
+      }
     });
-  });
-
-  afterEach(async () => {
-    // Cleanup using transaction for speed
-    await prisma.$transaction(async (tx) => {
-      // Clean up any endpoints created during the test
-      await tx.endpoint.deleteMany({
-        where: { apiConnectionId: testConnectionId }
-      });
-      
-      // Clean up any credentials created during the test
-      await tx.apiCredential.deleteMany({
-        where: { apiConnectionId: testConnectionId }
-      });
-      
-      // Clean up the test connection
-      await tx.apiConnection.delete({
-        where: { id: testConnectionId }
-      });
+    await prisma.apiConnection.deleteMany({
+      where: {
+        user: {
+          OR: [
+            { email: { contains: 'test-' } },
+            { email: { contains: '@example.com' } }
+          ]
+        }
+      }
     });
+    await prisma.user.deleteMany({
+      where: {
+        OR: [
+          { email: { contains: 'test-' } },
+          { email: { contains: '@example.com' } }
+        ]
+      }
+    });
+    // Always create testUser after cleanup
+    testUser = await createTestUser(undefined, 'authflow123', Role.USER, 'Auth Flow User');
   });
 
   describe('API Key Authentication', () => {
@@ -81,7 +72,8 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
             keyName: 'Authorization',
             keyLocation: 'header',
             keyPrefix: 'token'
-          }
+          },
+          documentationUrl: 'https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json'
         }
       });
 
@@ -91,10 +83,28 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.authType).toBe('API_KEY');
+      expect(data.data.authConfig.keyName).toBe('Authorization');
+      expect(data.data.authConfig.keyLocation).toBe('header');
+      expect(data.data.authConfig.keyPrefix).toBe('token');
     });
 
     it('should store and retrieve API key credentials securely', async () => {
-      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
+      // First create a connection
+      const { req: createReq, res: createRes } = createAuthenticatedRequest('POST', testUser, {
+        body: {
+          name: 'Test API Key Connection',
+          baseUrl: 'https://api.example.com',
+          authType: 'API_KEY',
+          authConfig: {
+            keyName: 'X-API-Key',
+            keyLocation: 'header'
+          }
+        }
+      });
+
+      await handler(createReq as any, createRes as any);
+      const connectionData = JSON.parse(createRes._getData());
+      const connectionId = connectionData.data.id;
 
       // Store credentials
       const { req: storeReq, res: storeRes } = createAuthenticatedRequest('POST', testUser, {
@@ -108,14 +118,32 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
           expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
         }
       });
-      storeReq.query = { id: testConnectionId };
+      storeReq.query = { id: connectionId };
 
+      // Mock the credentials endpoint handler
+      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
       await credentialsHandler(storeReq as any, storeRes as any);
 
       expect(storeRes._getStatusCode()).toBe(201);
-      
+      const storeData = JSON.parse(storeRes._getData());
+      expect(storeData.success).toBe(true);
+      expect(storeData.data.keyId).toBeDefined();
+
+      // Retrieve credentials metadata (should not expose actual key)
+      const { req: getReq, res: getRes } = createAuthenticatedRequest('GET', testUser);
+      getReq.query = { id: connectionId };
+
+      await credentialsHandler(getReq as any, getRes as any);
+
+      expect(getRes._getStatusCode()).toBe(200);
+      const getData = JSON.parse(getRes._getData());
+      expect(getData.success).toBe(true);
+      expect(getData.data.hasCredentials).toBe(true);
+      expect(getData.data.credentialType).toBe('api_key');
+      expect(getData.data.isActive).toBe(true);
+
       // Verify the actual API key is not exposed
-      const responseText = storeRes._getData();
+      const responseText = getRes._getData();
       expect(responseText).not.toContain('test-api-key-12345');
     });
   });
@@ -140,11 +168,24 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.authType).toBe('BEARER_TOKEN');
+      expect(data.data.authConfig.tokenPrefix).toBe('Bearer');
     });
 
-    it('should store Bearer token credentials securely', async () => {
-      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
+    it('should store and retrieve Bearer token credentials securely', async () => {
+      // Create connection
+      const { req: createReq, res: createRes } = createAuthenticatedRequest('POST', testUser, {
+        body: {
+          name: 'Bearer Token Test',
+          baseUrl: 'https://api.example.com',
+          authType: 'BEARER_TOKEN'
+        }
+      });
 
+      await handler(createReq as any, createRes as any);
+      const connectionData = JSON.parse(createRes._getData());
+      const connectionId = connectionData.data.id;
+
+      // Store Bearer token
       const { req: storeReq, res: storeRes } = createAuthenticatedRequest('POST', testUser, {
         body: {
           credentialData: {
@@ -152,15 +193,16 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
             token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.bearer.token',
             tokenPrefix: 'Bearer'
           },
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
         }
       });
-      storeReq.query = { id: testConnectionId };
+      storeReq.query = { id: connectionId };
 
+      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
       await credentialsHandler(storeReq as any, storeRes as any);
 
       expect(storeRes._getStatusCode()).toBe(201);
-      
+
       // Verify token is not exposed in response
       const responseText = storeRes._getData();
       expect(responseText).not.toContain('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.bearer.token');
@@ -188,11 +230,25 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.authType).toBe('BASIC_AUTH');
+      expect(data.data.authConfig.usernameField).toBe('username');
+      expect(data.data.authConfig.passwordField).toBe('password');
     });
 
-    it('should store Basic auth credentials securely', async () => {
-      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
+    it('should store and retrieve Basic auth credentials securely', async () => {
+      // Create connection
+      const { req: createReq, res: createRes } = createAuthenticatedRequest('POST', testUser, {
+        body: {
+          name: 'Basic Auth Test',
+          baseUrl: 'https://api.example.com',
+          authType: 'BASIC_AUTH'
+        }
+      });
 
+      await handler(createReq as any, createRes as any);
+      const connectionData = JSON.parse(createRes._getData());
+      const connectionId = connectionData.data.id;
+
+      // Store Basic auth credentials
       const { req: storeReq, res: storeRes } = createAuthenticatedRequest('POST', testUser, {
         body: {
           credentialData: {
@@ -200,15 +256,16 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
             username: 'testuser',
             password: 'testpassword123'
           },
-          expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+          expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days
         }
       });
-      storeReq.query = { id: testConnectionId };
+      storeReq.query = { id: connectionId };
 
+      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
       await credentialsHandler(storeReq as any, storeRes as any);
 
       expect(storeRes._getStatusCode()).toBe(201);
-      
+
       // Verify credentials are not exposed in response
       const responseText = storeRes._getData();
       expect(responseText).not.toContain('testuser');
@@ -240,11 +297,25 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.authType).toBe('OAUTH2');
+      expect(data.data.authConfig.clientId).toBe('test-client-id');
+      expect(data.data.authConfig.scopes).toEqual(['repo', 'user']);
     });
 
-    it('should store OAuth2 credentials securely', async () => {
-      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
+    it('should store and retrieve OAuth2 credentials securely', async () => {
+      // Create connection
+      const { req: createReq, res: createRes } = createAuthenticatedRequest('POST', testUser, {
+        body: {
+          name: 'OAuth2 Test',
+          baseUrl: 'https://api.github.com',
+          authType: 'OAUTH2'
+        }
+      });
 
+      await handler(createReq as any, createRes as any);
+      const connectionData = JSON.parse(createRes._getData());
+      const connectionId = connectionData.data.id;
+
+      // Store OAuth2 credentials
       const { req: storeReq, res: storeRes } = createAuthenticatedRequest('POST', testUser, {
         body: {
           credentialData: {
@@ -255,15 +326,16 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
             expiresIn: 3600,
             scopes: ['repo', 'user']
           },
-          expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+          expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) // 60 days
         }
       });
-      storeReq.query = { id: testConnectionId };
+      storeReq.query = { id: connectionId };
 
+      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
       await credentialsHandler(storeReq as any, storeRes as any);
 
       expect(storeRes._getStatusCode()).toBe(201);
-      
+
       // Verify OAuth2 tokens are not exposed in response
       const responseText = storeRes._getData();
       expect(responseText).not.toContain('gho_test_access_token_12345');
@@ -273,7 +345,18 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
 
   describe('Security Validation', () => {
     it('should not expose credentials in API responses', async () => {
-      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
+      // Create connection with API key
+      const { req: createReq, res: createRes } = createAuthenticatedRequest('POST', testUser, {
+        body: {
+          name: 'Security Test API',
+          baseUrl: 'https://api.example.com',
+          authType: 'API_KEY'
+        }
+      });
+
+      await handler(createReq as any, createRes as any);
+      const connectionData = JSON.parse(createRes._getData());
+      const connectionId = connectionData.data.id;
 
       // Store sensitive credentials
       const sensitiveData = {
@@ -288,29 +371,54 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
           expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
         }
       });
-      storeReq.query = { id: testConnectionId };
+      storeReq.query = { id: connectionId };
 
+      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
       await credentialsHandler(storeReq as any, storeRes as any);
 
+      // Verify credentials are stored successfully
       expect(storeRes._getStatusCode()).toBe(201);
 
-      // Verify sensitive data is not exposed in response
+      // Verify sensitive data is not exposed in any response
       const storeResponseText = storeRes._getData();
       Object.values(sensitiveData).forEach(secret => {
         expect(storeResponseText).not.toContain(secret);
       });
+
+      // Test GET request doesn't expose credentials
+      const { req: getReq, res: getRes } = createAuthenticatedRequest('GET', testUser);
+      getReq.query = { id: connectionId };
+
+      await credentialsHandler(getReq as any, getRes as any);
+
+      const getResponseText = getRes._getData();
+      Object.values(sensitiveData).forEach(secret => {
+        expect(getResponseText).not.toContain(secret);
+      });
     });
 
     it('should enforce proper authorization for credential access', async () => {
-      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
+      // Create connection
+      const { req: createReq, res: createRes } = createAuthenticatedRequest('POST', testUser, {
+        body: {
+          name: 'Auth Test API',
+          baseUrl: 'https://api.example.com',
+          authType: 'API_KEY'
+        }
+      });
+
+      await handler(createReq as any, createRes as any);
+      const connectionData = JSON.parse(createRes._getData());
+      const connectionId = connectionData.data.id;
 
       // Create another user
       const otherUser = await testSuite.createUser(undefined, 'testpass123', Role.USER);
 
       // Try to access credentials with different user
       const { req: unauthorizedReq, res: unauthorizedRes } = createAuthenticatedRequest('GET', otherUser);
-      unauthorizedReq.query = { id: testConnectionId };
+      unauthorizedReq.query = { id: connectionId };
 
+      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
       await credentialsHandler(unauthorizedReq as any, unauthorizedRes as any);
 
       // Should be denied access
@@ -318,7 +426,18 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
     });
 
     it('should validate credential expiration', async () => {
-      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
+      // Create connection
+      const { req: createReq, res: createRes } = createAuthenticatedRequest('POST', testUser, {
+        body: {
+          name: 'Expiration Test API',
+          baseUrl: 'https://api.example.com',
+          authType: 'API_KEY'
+        }
+      });
+
+      await handler(createReq as any, createRes as any);
+      const connectionData = JSON.parse(createRes._getData());
+      const connectionId = connectionData.data.id;
 
       // Store credentials with past expiration
       const { req: storeReq, res: storeRes } = createAuthenticatedRequest('POST', testUser, {
@@ -330,15 +449,16 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
           expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
         }
       });
-      storeReq.query = { id: testConnectionId };
+      storeReq.query = { id: connectionId };
 
+      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
       await credentialsHandler(storeReq as any, storeRes as any);
 
       expect(storeRes._getStatusCode()).toBe(201);
 
       // Retrieve credentials and verify expiration status
       const { req: getReq, res: getRes } = createAuthenticatedRequest('GET', testUser);
-      getReq.query = { id: testConnectionId };
+      getReq.query = { id: connectionId };
 
       await credentialsHandler(getReq as any, getRes as any);
 
@@ -350,7 +470,18 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
 
   describe('Audit Logging', () => {
     it('should log credential access events', async () => {
-      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
+      // Create connection
+      const { req: createReq, res: createRes } = createAuthenticatedRequest('POST', testUser, {
+        body: {
+          name: 'Audit Test API',
+          baseUrl: 'https://api.example.com',
+          authType: 'API_KEY'
+        }
+      });
+
+      await handler(createReq as any, createRes as any);
+      const connectionData = JSON.parse(createRes._getData());
+      const connectionId = connectionData.data.id;
 
       // Store credentials
       const { req: storeReq, res: storeRes } = createAuthenticatedRequest('POST', testUser, {
@@ -362,8 +493,9 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
           expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
         }
       });
-      storeReq.query = { id: testConnectionId };
+      storeReq.query = { id: connectionId };
 
+      const credentialsHandler = require('../../../pages/api/connections/[id]/credentials').default;
       await credentialsHandler(storeReq as any, storeRes as any);
 
       // Verify audit log was created
@@ -377,7 +509,7 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
       });
 
       expect(auditLogs.length).toBeGreaterThan(0);
-      expect(auditLogs[0].resource).toContain(testConnectionId);
+      expect(auditLogs[0].resource).toContain(connectionId);
     });
   });
 }); 

@@ -1,11 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
-import { PrismaClient } from '../../../src/generated/prisma';
+import { prisma } from '../../../lib/database/client';
 import { ApplicationError } from '../../../src/middleware/errorHandler';
 import { emailService } from '../../../src/lib/services/emailService';
 import { logInfo, logError } from '../../../src/utils/logger';
-
-const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

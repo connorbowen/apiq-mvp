@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { oauth2Service } from '../../../src/lib/auth/oauth2';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { ApplicationError } from '../../../src/middleware/errorHandler';
+import { prisma } from '../../../lib/database/client';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -26,9 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Validate that the API connection belongs to the user
-    const { PrismaClient } = require('../../../src/generated/prisma');
-    const prisma = new PrismaClient();
-
     const apiConnection = await prisma.apiConnection.findFirst({
       where: {
         id: apiConnectionId,

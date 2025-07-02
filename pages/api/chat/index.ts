@@ -1,11 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../lib/database/client';
 import { logError, logInfo } from '../../../src/utils/logger';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { errorHandler } from '../../../src/middleware/errorHandler';
 import { OpenAIService } from '../../../src/services/openaiService';
 
-const prisma = new PrismaClient();
 const openaiService = new OpenAIService();
 
 async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
@@ -40,10 +39,9 @@ async function handleChatRequest(req: NextApiRequest, res: NextApiResponse, user
         name: true,
         description: true,
         baseUrl: true,
-        authType: true,
-        endpointCount: true
+        authType: true
       }
-    });
+    }) as any[];
 
     if (apiConnections.length === 0) {
       return res.status(400).json({ 
@@ -81,8 +79,7 @@ async function handleChatRequest(req: NextApiRequest, res: NextApiResponse, user
           confidence: 0.95, // Placeholder confidence score
           availableApis: apiConnections.map((conn: any) => ({
             id: conn.id,
-            name: conn.name,
-            endpointCount: conn.endpointCount
+            name: conn.name
           }))
         },
         message: 'Workflow generated successfully'

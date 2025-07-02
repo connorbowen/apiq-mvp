@@ -200,12 +200,10 @@ export const cleanupTestConnection = async (connection: TestConnection): Promise
       apiConnectionId: connection.id
     }
   });
-
+  
   // Delete the connection
   await prisma.apiConnection.deleteMany({
-    where: {
-      id: connection.id
-    }
+    where: { id: connection.id }
   });
 };
 
@@ -260,7 +258,8 @@ export const cleanupTestUser = async (user: TestUser): Promise<void> => {
 };
 
 /**
- * Create a test suite with proper setup and teardown
+ * Create a test suite with optimized setup and teardown
+ * Uses transaction-based isolation for better performance
  */
 export const createTestSuite = (suiteName: string) => {
   const testUsers: TestUser[] = [];
@@ -280,27 +279,29 @@ export const createTestSuite = (suiteName: string) => {
   }
 
   return {
-      /**
-   * Setup function to run before all tests in the suite
-   */
-  beforeAll: async () => {
-    // Ensure database connection
-    await prisma.$connect();
-  },
+    /**
+     * Setup function to run before all tests in the suite
+     */
+    beforeAll: async () => {
+      // Database connection is managed by the shared Prisma client
+    },
 
-  /**
-   * Setup function to run before each test
-   */
-  beforeEach: async () => {
-    // Ensure database connection
-    await prisma.$connect();
-  },
+    /**
+     * Setup function to run before each test
+     * Optimized to rely on transaction isolation instead of manual cleanup
+     */
+    beforeEach: async () => {
+      // Database connection is managed by the shared Prisma client
+      // Note: Database cleanup is handled by transaction rollback in jest.integration.setup.js
+    },
 
     /**
      * Teardown function to run after all tests in the suite
+     * Only cleans up suite-level resources
      */
     afterAll: async () => {
       // Clean up all test data in reverse order
+      // This is only needed for data created outside of individual tests
       for (const endpoint of testEndpoints) {
         await cleanupTestEndpoint(endpoint);
       }

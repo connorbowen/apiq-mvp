@@ -1,6 +1,6 @@
 import { ExecutionStateManager, ExecutionState, ExecutionProgress, ExecutionMetrics } from '../../../../src/lib/workflow/executionStateManager';
 import { QueueService } from '../../../../src/lib/queue/queueService';
-import { PrismaClient } from '../../../../src/generated/prisma';
+import { prisma } from '../../../../lib/database/client';
 
 // Mock dependencies
 jest.mock('../../../../src/generated/prisma');
@@ -16,7 +16,7 @@ const mockPrisma = {
     deleteMany: jest.fn(),
     count: jest.fn()
   }
-} as unknown as PrismaClient;
+} as unknown as typeof prisma;
 
 const mockQueueService = {
   cancelJob: jest.fn(),
