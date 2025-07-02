@@ -3,6 +3,7 @@ import { NextApiRequest } from 'next'
 import { prisma } from '../../../lib/database/client'
 
 import { healthHandler } from '../../../pages/api/health'
+import { createCommonTestData } from '../../helpers/createTestData';
 
 // Remove database health check mock
 // jest.mock('../../../src/database/init', ... )

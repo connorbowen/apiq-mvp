@@ -10,6 +10,7 @@ import { createTestSuite, createAuthenticatedRequest, createTestUser } from '../
 import { Role } from '../../../src/generated/prisma';
 import { getAvailableProviders } from '../../../src/lib/auth/sso-providers';
 import { prisma } from '../../../lib/database/client';
+import { createOAuth2TestData } from '../../helpers/createTestData';
 
 // Define a type for SSO provider for type assertions
 interface SSOProvider {
@@ -23,20 +24,13 @@ interface SSOProvider {
 
 describe('SSO Authentication Flow Testing - Real Integration', () => {
   let testUser: any;
+  let testApiConnection: any;
 
-  beforeAll(async () => {
-    // Create test user once per suite for reuse across all tests
-    testUser = await createTestUser(undefined, 'ssoauth123', Role.USER, 'SSO Auth User');
-  });
-
-  afterAll(async () => {
-    if (testUser) {
-      await prisma.user.delete({ where: { id: testUser.id } });
-    }
-  });
-
-  beforeEach(() => {
-    // No mocks needed for real integration tests
+  beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createOAuth2TestData();
+    testUser = testData.user;
+    testApiConnection = testData.connection;
   });
 
   describe('SSO Provider Configuration', () => {

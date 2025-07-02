@@ -8,46 +8,17 @@ import {
   findConnectionByOAuthState,
 } from '../../../../src/lib/services/connectionService';
 import { ConnectionStatus } from '../../../../src/generated/prisma';
-import { createTestUser } from '../../../helpers/testUtils';
+import { createConnectionTestData } from '../../../helpers/createTestData';
 
 describe('ConnectionService (integration) - Optimized', () => {
   let testConnection: any;
   let testUser: any;
 
-  beforeAll(async () => {
-    // Clean up any leftover test data
-    await prisma.apiConnection.deleteMany({ where: { name: 'Integration Test Connection' } });
-    await prisma.user.deleteMany({ where: { email: { contains: 'connection-test' } } });
-    
-    // Create test user first
-    testUser = await createTestUser(undefined, 'connection-test-pass', 'USER', 'Connection Test User');
-    
-    // Create test connection once per suite for reuse across all tests
-    testConnection = await prisma.apiConnection.create({
-      data: {
-        userId: testUser.id,
-        name: 'Integration Test Connection',
-        description: 'Integration test connection',
-        baseUrl: 'https://example.com',
-        authType: 'OAUTH2',
-        authConfig: {},
-        documentationUrl: '',
-        status: 'ACTIVE',
-        ingestionStatus: 'PENDING',
-        connectionStatus: ConnectionStatus.draft,
-      },
-    });
-  });
-
-  afterAll(async () => {
-    // Clean up test connection and user
-    await prisma.apiConnection.deleteMany({ where: { name: 'Integration Test Connection' } });
-    await prisma.user.deleteMany({ where: { email: { contains: 'connection-test' } } });
-  });
-
-  beforeEach(() => {
-    // Reset connection status to draft for each test
-    // This ensures each test starts with a clean state
+  beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createConnectionTestData();
+    testUser = testData.user;
+    testConnection = testData.connection;
   });
 
   it('should mark connection as connecting', async () => {

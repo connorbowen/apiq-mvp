@@ -1,5 +1,6 @@
 import { createTestUser } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
+import { createConnectionTestData } from '../../helpers/createTestData';
 
 // Import handlers
 const authorizeHandler = require('../../../pages/api/oauth/authorize').default;
@@ -11,34 +12,11 @@ describe('Google OAuth2 Flow Integration Tests', () => {
   let testUser: any;
   let testApiConnection: any;
 
-  beforeAll(async () => {
-    testUser = await createTestUser(undefined, 'test-password-123');
-    
-    // Create a real API connection for Google OAuth2
-    testApiConnection = await prisma.apiConnection.create({
-      data: {
-        userId: testUser.id,
-        name: 'Google OAuth2 Test Connection',
-        baseUrl: 'https://www.googleapis.com',
-        authType: 'OAUTH2',
-        status: 'ACTIVE',
-        authConfig: {
-          clientId: process.env.GOOGLE_CLIENT_ID || 'test-google-client-id',
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'test-google-client-secret',
-          redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
-          scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly'
-        }
-      }
-    });
-  });
-
-  afterAll(async () => {
-    if (testApiConnection) {
-      await prisma.apiConnection.delete({ where: { id: testApiConnection.id } });
-    }
-    if (testUser) {
-      await prisma.user.delete({ where: { id: testUser.id } });
-    }
+  beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createConnectionTestData();
+    testUser = testData.user;
+    testApiConnection = testData.connection;
   });
 
   beforeEach(() => {

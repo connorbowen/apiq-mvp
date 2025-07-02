@@ -3,12 +3,11 @@ import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/t
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-// Configure tests to run only in Chromium
-test.use({ browserName: 'chromium' });
+
 
 let testUser: any;
 let jwt: string;
-let createdConnectionIds: string[] = [];
+let createdConnectionIds: (string | undefined)[] = [];
 
 test.describe('Connections Management E2E Tests', () => {
   test.beforeAll(async () => {
@@ -470,7 +469,7 @@ test.describe('Connections Management E2E Tests', () => {
   test.describe('Connection Search and Filter', () => {
     test('should search connections by name', async ({ page }) => {
       // Create multiple connections
-      const testConnections = [];
+      const testConnections: any[] = [];
       for (let i = 0; i < 3; i++) {
         const response = await page.request.post('/api/connections', {
           data: {
@@ -504,7 +503,7 @@ test.describe('Connections Management E2E Tests', () => {
 
     test('should filter connections by auth type', async ({ page }) => {
       // Create connections with different auth types
-      const testConnections = [];
+      const testConnections: any[] = [];
       const authTypes = ['API_KEY', 'BEARER_TOKEN', 'BASIC'];
       
       for (const authType of authTypes) {
@@ -537,6 +536,106 @@ test.describe('Connections Management E2E Tests', () => {
       // Should show only API_KEY connections
       await expect(page.locator('[data-testid="connection-card"]')).toHaveCount(1);
       await expect(page.locator('[data-testid="connection-card"]')).toContainText('API_KEY Connection');
+    });
+  });
+
+  test.describe('Connection Status Monitoring', () => {
+    test('should monitor connection status and health', async ({ page }) => {
+      // Create a connection first
+      const response = await page.request.post('/api/connections', {
+        data: {
+          name: 'Status Test Connection',
+          baseUrl: 'https://httpbin.org',
+          authType: 'NONE'
+        },
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const connection = await response.json();
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
+      
+      // Refresh page to see new connection
+      await page.reload();
+      
+      // Click on connection to view details
+      await page.click(`[data-testid="connection-card-${connection.data.id}"]`);
+      
+      // Should show status information
+      await expect(page.locator('[data-testid="connection-status"]')).toBeVisible();
+      await expect(page.locator('[data-testid="last-checked"]')).toBeVisible();
+      await expect(page.locator('[data-testid="response-time"]')).toBeVisible();
+      await expect(page.locator('[data-testid="uptime"]')).toBeVisible();
+    });
+
+    test('should handle connection status errors gracefully', async ({ page }) => {
+      // Create a connection with invalid URL
+      const response = await page.request.post('/api/connections', {
+        data: {
+          name: 'Error Test Connection',
+          baseUrl: 'https://invalid-api.example.com',
+          authType: 'NONE'
+        },
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const connection = await response.json();
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
+      
+      // Refresh page to see new connection
+      await page.reload();
+      
+      // Click on connection to view details
+      await page.click(`[data-testid="connection-card-${connection.data.id}"]`);
+      
+      // Should show error status
+      await expect(page.locator('[data-testid="connection-status"]')).toContainText('Error');
+      await expect(page.locator('[data-testid="error-message"]')).toBeVisible();
+    });
+  });
+
+  test.describe('Connection Performance Testing', () => {
+    test('should measure connection response time', async ({ page }) => {
+      // Create a connection first
+      const response = await page.request.post('/api/connections', {
+        data: {
+          name: 'Performance Test Connection',
+          baseUrl: 'https://httpbin.org',
+          authType: 'NONE'
+        },
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const connection = await response.json();
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
+      
+      // Refresh page to see new connection
+      await page.reload();
+      
+      // Click test connection button
+      await page.click(`[data-testid="test-connection-${connection.data.id}"]`);
+      
+      // Should show response time
+      await expect(page.locator('[data-testid="response-time"]')).toBeVisible();
+      
+      // Response time should be reasonable (less than 5 seconds)
+      const responseTimeText = await page.locator('[data-testid="response-time"]').textContent();
+      const responseTime = parseInt(responseTimeText?.match(/\d+/)?.[0] || '0');
+      expect(responseTime).toBeLessThan(5000);
     });
   });
 }); 

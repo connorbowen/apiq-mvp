@@ -12,51 +12,25 @@ import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
 import { createTestSuite, createAuthenticatedRequest, createTestUser } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
+import { createConnectionTestData } from '../../helpers/createTestData';
 
 describe('Authentication Flow Testing - Phase 2.3', () => {
   const testSuite = createTestSuite('Authentication Flow Tests');
   let testUser: any;
+  let testConnection: any;
   let testConnectionId: string;
 
-  beforeAll(async () => {
-    await testSuite.beforeAll();
-    // Create test user once for the entire suite
-    testUser = await createTestUser(undefined, 'authflow123', Role.USER, 'Auth Flow User');
-  });
-
-  afterAll(async () => {
-    await testSuite.afterAll();
-  });
-
   beforeEach(async () => {
-    jest.clearAllMocks();
-    
-    // Use transaction for faster setup/teardown
-    await prisma.$transaction(async (tx) => {
-      // Create a reusable test connection
-      const connection = await tx.apiConnection.create({
-        data: {
-          userId: testUser.id,
-          name: `Test Connection ${Date.now()}`,
-          baseUrl: 'https://api.example.com',
-          authType: 'API_KEY',
-          status: 'ACTIVE',
-          ingestionStatus: 'PENDING',
-          authConfig: {}
-        }
-      });
-      testConnectionId = connection.id;
-    });
+    // Recreate test data after global setup truncates tables
+    const testData = await createConnectionTestData();
+    testUser = testData.user;
+    testConnection = testData.connection;
+    testConnectionId = testConnection.id;
   });
 
   afterEach(async () => {
-    // Cleanup using transaction for speed
+    // Clean up test data
     await prisma.$transaction(async (tx) => {
-      // Clean up any endpoints created during the test
-      await tx.endpoint.deleteMany({
-        where: { apiConnectionId: testConnectionId }
-      });
-      
       // Clean up any credentials created during the test
       await tx.apiCredential.deleteMany({
         where: { apiConnectionId: testConnectionId }
@@ -251,11 +225,9 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
             type: 'oauth2',
             accessToken: 'gho_test_access_token_12345',
             refreshToken: 'ghr_test_refresh_token_67890',
-            tokenType: 'bearer',
-            expiresIn: 3600,
-            scopes: ['repo', 'user']
+            expiresAt: new Date(Date.now() + 3600 * 1000) // 1 hour
           },
-          expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         }
       });
       storeReq.query = { id: testConnectionId };
@@ -264,7 +236,7 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
 
       expect(storeRes._getStatusCode()).toBe(201);
       
-      // Verify OAuth2 tokens are not exposed in response
+      // Verify tokens are not exposed in response
       const responseText = storeRes._getData();
       expect(responseText).not.toContain('gho_test_access_token_12345');
       expect(responseText).not.toContain('ghr_test_refresh_token_67890');

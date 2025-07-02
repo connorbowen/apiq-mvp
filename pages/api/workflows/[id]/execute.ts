@@ -67,8 +67,8 @@ async function executeWorkflow(req: NextApiRequest, res: NextApiResponse, userId
     });
 
     // Create dependencies
-    const queueService = new QueueService(prisma);
-    const stateManager = new ExecutionStateManager(prisma, queueService);
+    const queueService = new QueueService();
+    const stateManager = new ExecutionStateManager(queueService);
     
     // Create workflow executor with dependencies
     const workflowExecutor = createWorkflowExecutor(stateManager, queueService);

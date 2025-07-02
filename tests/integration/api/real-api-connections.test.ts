@@ -5,6 +5,7 @@ import { createTestSuite, createAuthenticatedRequest, createTestUser } from '../
 import { Role } from '../../../src/generated/prisma';
 import fs from 'fs';
 import path from 'path';
+import { createCommonTestData } from '../../helpers/createTestData';
 
 // Mock the OpenAPI service to avoid external network calls
 jest.mock('../../../src/services/openApiService', () => ({
@@ -44,12 +45,13 @@ describe('Real API Connections Integration Tests', () => {
     await testSuite.afterAll();
   });
 
-  beforeEach(async () => {
-    // Clear mocks but don't recreate them
-    jest.clearAllMocks();
+    beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createCommonTestData();
     
-    // Reset mock implementations for each test
-    openApiService.fetchSpec.mockReset();
+    
+    
+    testUser = testData.user;
   });
 
   describe('POST /api/connections - Real API Tests', () => {

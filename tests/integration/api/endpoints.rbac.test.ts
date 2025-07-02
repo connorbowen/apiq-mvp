@@ -3,6 +3,7 @@ import handler from '../../../pages/api/connections/[id]/endpoints/index';
 import { prisma } from '../../../lib/database/client';
 import { createTestSuite, createAuthenticatedRequest } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
+import { createConnectionTestData } from '../../helpers/createTestData';
 
 describe('RBAC Integration: Endpoint Deletion', () => {
   const testSuite = createTestSuite('RBAC Endpoint Tests');
@@ -15,34 +16,7 @@ describe('RBAC Integration: Endpoint Deletion', () => {
     await testSuite.beforeAll();
   });
 
-  afterAll(async () => {
-    await testSuite.afterAll();
-  });
-
   beforeEach(async () => {
-    jest.clearAllMocks();
-    await prisma.endpoint.deleteMany({
-      where: {
-        apiConnection: {
-          user: {
-            OR: [
-              { email: { contains: 'test-' } },
-              { email: { contains: '@example.com' } }
-            ]
-          }
-        }
-      }
-    });
-    await prisma.apiConnection.deleteMany({
-      where: {
-        user: {
-          OR: [
-            { email: { contains: 'test-' } },
-            { email: { contains: '@example.com' } }
-          ]
-        }
-      }
-    });
     await prisma.user.deleteMany({
       where: {
         OR: [

@@ -40,13 +40,16 @@ export class OAuth2Service {
   private providers: Map<string, OAuth2Provider>;
   private encryptionService: any;
   private generateSecureToken: (length?: number) => string;
+  private prismaClient: any;
 
   constructor({
     encryptionService = defaultEncryptionService,
-    generateSecureToken = defaultGenerateSecureToken
+    generateSecureToken = defaultGenerateSecureToken,
+    prismaClient = prisma
   } = {}) {
     this.encryptionService = encryptionService;
     this.generateSecureToken = generateSecureToken;
+    this.prismaClient = prismaClient;
     this.providers = new Map();
     this.initializeProviders();
   }
@@ -222,7 +225,7 @@ export class OAuth2Service {
       : null;
 
     // Store in ApiCredential table
-    await prisma.apiCredential.upsert({
+    await this.prismaClient.apiCredential.upsert({
       where: {
         userId_apiConnectionId: {
           userId,
@@ -257,7 +260,7 @@ export class OAuth2Service {
     });
 
     // Log the OAuth2 connection
-    await prisma.auditLog.create({
+    await this.prismaClient.auditLog.create({
       data: {
         userId,
         action: 'OAUTH2_CONNECT',
@@ -282,7 +285,7 @@ export class OAuth2Service {
   ): Promise<boolean> {
     try {
       // Get current credentials
-      const credential = await prisma.apiCredential.findUnique({
+      const credential = await this.prismaClient.apiCredential.findUnique({
         where: {
           userId_apiConnectionId: {
             userId,
@@ -364,7 +367,7 @@ export class OAuth2Service {
    */
   public async getAccessToken(userId: string, apiConnectionId: string): Promise<string | null> {
     try {
-      const credential = await prisma.apiCredential.findUnique({
+      const credential = await this.prismaClient.apiCredential.findUnique({
         where: {
           userId_apiConnectionId: {
             userId,
@@ -394,7 +397,7 @@ export class OAuth2Service {
         }
 
         // Get the refreshed credential
-        const refreshedCredential = await prisma.apiCredential.findUnique({
+        const refreshedCredential = await this.prismaClient.apiCredential.findUnique({
           where: {
             userId_apiConnectionId: {
               userId,
@@ -444,7 +447,7 @@ export class OAuth2Service {
    * Update API connection status
    */
   private async updateApiConnectionStatus(apiConnectionId: string, status: string): Promise<void> {
-    await prisma.apiConnection.update({
+    await this.prismaClient.apiConnection.update({
       where: { id: apiConnectionId },
       data: { 
         status: status as any,

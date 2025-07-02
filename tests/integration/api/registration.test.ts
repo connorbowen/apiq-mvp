@@ -12,51 +12,33 @@ import { createMocks } from 'node-mocks-http';
 import { prisma } from '../../../lib/database/client';
 import { createTestUser, cleanupTestUsers, generateTestId } from '../../helpers/testUtils';
 import type { TestUser } from '../../helpers/testUtils';
+import { createCommonTestData } from '../../helpers/createTestData';
+
+// Mock the email service module
+jest.mock('../../../src/lib/services/emailService', () => ({
+  emailService: {
+    sendVerificationEmail: jest.fn()
+  }
+}));
 
 describe('User Registration Integration Tests', () => {
   let sendEmailSpy: jest.Mock;
   let testUser: TestUser;
 
-  beforeAll(async () => {
-    // Create test user once for the entire suite
-    testUser = await createTestUser();
-  });
-
-  afterAll(async () => {
-    // Clean up test user
-    await cleanupTestUsers([testUser.id]);
-  });
-
   beforeEach(async () => {
-    jest.clearAllMocks();
+    // Recreate test data after global setup truncates tables
+    const testData = await createCommonTestData();
+    testUser = testData.user;
     
-    // Use transaction for faster setup/teardown
-    await prisma.$transaction(async (tx) => {
-      // Clear any verification tokens from previous tests
-      await tx.verificationToken.deleteMany({
-        where: {
-          email: {
-            contains: 'test-'
-          }
-        }
-      });
-    });
-
-    // Setup email mock
+    // Setup email mock to succeed by default
     sendEmailSpy = jest.fn().mockResolvedValue(true);
-    jest.doMock(
-      '../../../src/lib/services/emailService',
-      () => ({
-        emailService: {
-          sendVerificationEmail: sendEmailSpy,
-        },
-      }),
-      { virtual: false },
-    );
+    const { emailService } = require('../../../src/lib/services/emailService');
+    emailService.sendVerificationEmail = sendEmailSpy;
   });
 
   afterEach(async () => {
-    jest.dontMock('../../../src/lib/services/emailService');
+    // Reset all mocks
+    jest.clearAllMocks();
   });
 
   describe('POST /api/auth/register', () => {
@@ -441,8 +423,8 @@ describe('User Registration Integration Tests', () => {
     });
 
     it('should handle email service failure', async () => {
-      // Mock email service to throw error
-      sendEmailSpy.mockRejectedValue(new Error('SMTP down'));
+      // Mock email service to succeed for registration
+      sendEmailSpy.mockResolvedValue(true);
       
       const resendHandler = require('../../../pages/api/auth/resend-verification').default;
       
@@ -461,8 +443,18 @@ describe('User Registration Integration Tests', () => {
       });
 
       await registerHandler(registerReq, registerRes);
-      
-      // Clear the email spy
+
+      // Assert user is unverified
+      const dbUser = await prisma.user.findUnique({ where: { email: testEmail } });
+      expect(dbUser?.isActive).toBe(false); // user should be inactive (unverified)
+
+      // Assert a verification token exists for the user
+      const token = await prisma.verificationToken.findFirst({
+        where: { email: testEmail }
+      });
+      expect(token).not.toBeNull();
+
+      // Now mock email service to fail for resend
       sendEmailSpy.mockClear();
       sendEmailSpy.mockRejectedValue(new Error('SMTP down'));
 
@@ -475,7 +467,7 @@ describe('User Registration Integration Tests', () => {
       });
 
       await resendHandler(resendReq, resendRes);
-
+      expect(sendEmailSpy).toHaveBeenCalledTimes(1);
       expect(resendRes._getStatusCode()).toBe(500);
       const data = JSON.parse(resendRes._getData());
       expect(data.success).toBe(false);

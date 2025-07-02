@@ -1,5 +1,6 @@
 import { createTestUser } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
+import { createConnectionTestData } from '../../helpers/createTestData';
 
 // Import handlers
 const authorizeHandler = require('../../../pages/api/oauth/authorize').default;
@@ -11,34 +12,11 @@ describe('Slack OAuth2 Flow Integration Tests', () => {
   let testUser: any;
   let testApiConnection: any;
 
-  beforeAll(async () => {
-    testUser = await createTestUser(undefined, 'test-password-123');
-    
-    // Create a real API connection for Slack OAuth2
-    testApiConnection = await prisma.apiConnection.create({
-      data: {
-        userId: testUser.id,
-        name: 'Slack OAuth2 Test Connection',
-        baseUrl: 'https://slack.com/api',
-        authType: 'OAUTH2',
-        status: 'ACTIVE',
-        authConfig: {
-          clientId: process.env.SLACK_CLIENT_ID || 'test-slack-client-id',
-          clientSecret: process.env.SLACK_CLIENT_SECRET || 'test-slack-client-secret',
-          redirectUri: process.env.SLACK_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
-          scope: 'channels:read chat:write'
-        }
-      }
-    });
-  });
-
-  afterAll(async () => {
-    if (testApiConnection) {
-      await prisma.apiConnection.delete({ where: { id: testApiConnection.id } });
-    }
-    if (testUser) {
-      await prisma.user.delete({ where: { id: testUser.id } });
-    }
+  beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createConnectionTestData();
+    testUser = testData.user;
+    testApiConnection = testData.connection;
   });
 
   beforeEach(() => {

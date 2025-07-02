@@ -6,6 +6,7 @@ import { NextApiRequest } from 'next';
 import { prisma } from '../../../lib/database/client';
 import { createTestSuite, createTestUser, cleanupTestUsers, createAuthenticatedRequest, createUnauthenticatedRequest, generateTestId } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
+import { createCommonTestData } from '../../helpers/createTestData';
 
 describe('Authentication Integration Tests', () => {
   let createdUserIds: string[] = [];
@@ -17,25 +18,17 @@ describe('Authentication Integration Tests', () => {
     testUsers = [];
   });
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    // Create unique test users for this test
-    testUsers = [];
-    const users = [
-      { password: 'user123', role: Role.USER },
-      { password: 'admin123', role: Role.ADMIN },
-      { password: 'super123', role: Role.SUPER_ADMIN }
-    ];
-    for (const userData of users) {
-      const user = await createTestUser(
-        undefined, // Let createUser generate unique email
-        userData.password,
-        userData.role,
-        `Test ${userData.role}`
-      );
-      testUsers.push(user);
-      createdUserIds.push(user.id);
-    }
+    beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createCommonTestData();
+    // Create an admin user for testing
+    const adminUser = await createTestUser(
+      `admin-${generateTestId()}@example.com`,
+      'adminpass123',
+      Role.ADMIN,
+      'Test Admin'
+    );
+    testUsers = [testData.user, adminUser];
   });
 
   describe('POST /api/auth/login', () => {

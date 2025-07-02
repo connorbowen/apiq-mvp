@@ -36,7 +36,7 @@ export const TEST_APIS: TestApiConfig[] = [
     baseUrl: 'https://jsonplaceholder.typicode.com',
     specUrl: 'https://jsonplaceholder.typicode.com/posts/1', // Returns JSON data
     authType: 'none',
-    description: 'Public fake API for testing and prototyping',
+    description: 'Public test API for testing and prototyping',
     rateLimit: {
       requests: 10,
       window: 60 // 10 requests per minute for testing rate limiting

@@ -2,38 +2,30 @@ import { Role } from '../../src/generated/prisma';
 import bcrypt from 'bcryptjs';
 import { generateTestId } from '../helpers/testUtils';
 import { prisma } from '../../lib/database/client';
+import { createCommonTestData } from '../helpers/createTestData';
 
 describe('Debug Authentication Issue', () => {
-  beforeAll(async () => {
-    // Clean up any existing test users
-    await prisma.user.deleteMany({
-      where: {
-        email: { contains: 'test-debug' }
-      }
-    });
+  let testUser: any;
+
+  beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createCommonTestData();
+    testUser = testData.user;
   });
 
+  it('should create and verify a test user', async () => {
+    const testEmail = `debug-test-${generateTestId()}@example.com`;
+    const testPassword = 'debugpass123';
 
-
-  test('should create and authenticate a test user', async () => {
-    const testEmail = `test-debug-${generateTestId()}@example.com`;
-    const testPassword = 'testpass123';
-    const testName = 'Test Debug User';
-
-    // Hash password with bcrypt
-    const hashedPassword = await bcrypt.hash(testPassword, 10);
-
-    console.log('Creating test user...');
-    
-    // Create user
+    // Create a test user
     const user = await prisma.user.create({
       data: {
         email: testEmail,
-        password: hashedPassword,
-        name: testName,
+        name: 'Debug Test User',
+        password: await bcrypt.hash(testPassword, 10),
         role: Role.USER,
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     console.log('User created:', { id: user.id, email: user.email });

@@ -155,20 +155,6 @@ export default function DashboardPage() {
           </nav>
         </div>
         {errorMessage && <div className="mb-4 text-red-600">{errorMessage}</div>}
-        {successMessage && (
-          <div data-testid="success-message" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-green-800">{successMessage}</p>
-              </div>
-            </div>
-          </div>
-        )}
         {activeTab === 'chat' ? (
           <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
         ) : (
@@ -176,8 +162,6 @@ export default function DashboardPage() {
             connections={connections}
             onConnectionCreated={() => {
               loadConnections();
-              setSuccessMessage('Connection created successfully');
-              setTimeout(() => setSuccessMessage(null), 5000);
             }}
             showCreateForm={showCreateForm}
             setShowCreateForm={setShowCreateForm}
@@ -200,36 +184,49 @@ function ConnectionsTab({
   showCreateForm: boolean;
   setShowCreateForm: (show: boolean) => void;
 }) {
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return 'text-green-600 bg-green-100';
+        return 'bg-green-100 text-green-800';
       case 'INACTIVE':
-        return 'text-gray-600 bg-gray-100';
+        return 'bg-gray-100 text-gray-800';
       case 'ERROR':
-        return 'text-red-600 bg-red-100';
-      case 'PENDING':
-        return 'text-yellow-600 bg-yellow-100';
+        return 'bg-red-100 text-red-800';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getAuthTypeLabel = (authType: string) => {
     switch (authType) {
-      case 'OAUTH2':
-        return 'OAuth2';
       case 'API_KEY':
         return 'API Key';
       case 'BEARER_TOKEN':
         return 'Bearer Token';
       case 'BASIC_AUTH':
         return 'Basic Auth';
+      case 'OAUTH2':
+        return 'OAuth2';
       case 'NONE':
         return 'None';
       default:
         return authType;
     }
+  };
+
+  const handleConnectionSuccess = () => {
+    setSuccessMessage('Connection created successfully');
+    onConnectionCreated();
+    setShowCreateForm(false);
+    setTimeout(() => setSuccessMessage(''), 5000);
+  };
+
+  const handleConnectionError = (error: string) => {
+    setErrorMessage(error);
+    setTimeout(() => setErrorMessage(''), 5000);
   };
 
   return (
@@ -244,6 +241,38 @@ function ConnectionsTab({
           Add Connection
         </button>
       </div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div data-testid="success-message" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">{successMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div data-testid="error-message" className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-red-800">{errorMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {connections.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
@@ -262,70 +291,79 @@ function ConnectionsTab({
           </button>
         </div>
       ) : (
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
-            {connections.map((connection) => (
-              <li key={connection.id} data-testid="connection-card">
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                          <svg className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium text-gray-900">{connection.name}</p>
-                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(connection.status)}`}>
-                            {connection.status}
-                          </span>
-                        </div>
-                        <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <span>{connection.baseUrl}</span>
-                          <span className="mx-2">•</span>
-                          <span>{getAuthTypeLabel(connection.authType)}</span>
-                          {connection.endpointCount && (
-                            <>
-                              <span className="mx-2">•</span>
-                              <span>{connection.endpointCount} endpoints</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Link
-                        href={`/connections/${connection.id}`}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-                      >
-                        View
-                      </Link>
-                      <button
-                        data-testid={`test-connection-${connection.id}`}
-                        onClick={() => {/* Handle test */}}
-                        className="text-gray-600 hover:text-gray-900 text-sm font-medium"
-                      >
-                        Test
-                      </button>
-                    </div>
-                  </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {connections.map((connection) => (
+            <div
+              key={connection.id}
+              data-testid="connection-card"
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">{connection.name}</h3>
+                  <p className="text-sm text-gray-500">{connection.description}</p>
                 </div>
-              </li>
-            ))}
-          </ul>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(connection.status)}`}>
+                  {connection.status}
+                </span>
+              </div>
+              
+              <div className="space-y-2 mb-4">
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Base URL:</span> {connection.baseUrl}
+                </div>
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Auth:</span> {getAuthTypeLabel(connection.authType)}
+                </div>
+                {connection.endpointCount > 0 && (
+                  <div className="text-sm text-gray-600">
+                    <span className="font-medium">Endpoints:</span> {connection.endpointCount}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex space-x-2">
+                <button
+                  data-testid={`explore-api-${connection.id}`}
+                  onClick={() => {/* TODO: Navigate to API explorer */}}
+                  className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
+                >
+                  Explore API
+                </button>
+                <button
+                  data-testid={`connection-details-${connection.id}`}
+                  onClick={() => {/* TODO: Show connection details */}}
+                  className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-200"
+                >
+                  Details
+                </button>
+                <button
+                  data-testid={`test-connection-${connection.id}`}
+                  onClick={() => {/* TODO: Test connection */}}
+                  className="flex-1 bg-green-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700"
+                >
+                  Test
+                </button>
+                {connection.authType === 'OAUTH2' && (
+                  <button
+                    data-testid={`refresh-token-${connection.id}`}
+                    onClick={() => {/* TODO: Refresh OAuth2 token */}}
+                    className="flex-1 bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
+                  >
+                    Refresh
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {showCreateForm && (
         <CreateConnectionModal 
           onClose={() => setShowCreateForm(false)} 
-          onSuccess={() => {
-            setShowCreateForm(false);
-            onConnectionCreated();
-          }} 
+          onSuccess={handleConnectionSuccess} 
+          onError={handleConnectionError} 
         />
       )}
     </div>
@@ -333,7 +371,7 @@ function ConnectionsTab({
 }
 
 // Create Connection Modal Component
-function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+function CreateConnectionModal({ onClose, onSuccess, onError }: { onClose: () => void; onSuccess: () => void; onError: (error: string) => void }) {
   const [formData, setFormData] = useState<CreateConnectionRequest>({
     name: '',
     description: '',
@@ -342,6 +380,8 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
     authConfig: {}
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showOpenApiImport, setShowOpenApiImport] = useState(false);
+  const [showOAuth2Setup, setShowOAuth2Setup] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -353,19 +393,169 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
         onSuccess();
       } else {
         console.error('Failed to create connection:', response.error);
+        onError(response.error || 'Failed to create connection');
       }
     } catch (error) {
       console.error('Error creating connection:', error);
+      onError('Network error');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // If showing OpenAPI import, render that form
+  if (showOpenApiImport) {
+    return (
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="mt-3">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Import from OpenAPI</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">OpenAPI URL</label>
+                <input
+                  type="url"
+                  name="openApiUrl"
+                  data-testid="openapi-url-input"
+                  required
+                  placeholder="https://api.example.com/swagger.json"
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  data-testid="connection-name-input"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                {!formData.name && (
+                  <div data-testid="name-error" className="mt-1 text-sm text-red-600">
+                    Name is required
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <input
+                  type="text"
+                  name="description"
+                  data-testid="connection-description-input"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowOpenApiImport(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Importing...' : 'Import API'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If showing OAuth2 setup, render that form
+  if (showOAuth2Setup) {
+    return (
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="mt-3">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">OAuth2 Setup</h3>
+            <div className="space-y-4">
+              <div data-testid="oauth2-config">
+                <div className="grid grid-cols-1 gap-4">
+                  <button
+                    type="button"
+                    data-testid="github-provider-btn"
+                    onClick={() => setFormData({ ...formData, authType: 'OAUTH2', authConfig: { ...formData.authConfig, provider: 'github' } })}
+                    className="p-3 border border-gray-300 rounded-md text-left hover:bg-gray-50"
+                  >
+                    <div className="font-medium">GitHub</div>
+                    <div className="text-sm text-gray-500">Connect to GitHub API</div>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="google-provider-btn"
+                    onClick={() => setFormData({ ...formData, authType: 'OAUTH2', authConfig: { ...formData.authConfig, provider: 'google' } })}
+                    className="p-3 border border-gray-300 rounded-md text-left hover:bg-gray-50"
+                  >
+                    <div className="font-medium">Google</div>
+                    <div className="text-sm text-gray-500">Connect to Google APIs</div>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="slack-provider-btn"
+                    onClick={() => setFormData({ ...formData, authType: 'OAUTH2', authConfig: { ...formData.authConfig, provider: 'slack' } })}
+                    className="p-3 border border-gray-300 rounded-md text-left hover:bg-gray-50"
+                  >
+                    <div className="font-medium">Slack</div>
+                    <div className="text-sm text-gray-500">Connect to Slack API</div>
+                  </button>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowOAuth2Setup(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Add API Connection</h3>
+          
+          {/* Connection Type Selection */}
+          <div className="mb-4 space-y-2">
+            <button
+              type="button"
+              data-testid="import-openapi-btn"
+              onClick={() => setShowOpenApiImport(true)}
+              className="w-full p-3 border border-gray-300 rounded-md text-left hover:bg-gray-50"
+            >
+              <div className="font-medium">Import from OpenAPI/Swagger</div>
+              <div className="text-sm text-gray-500">Import API from OpenAPI specification</div>
+            </button>
+            <button
+              type="button"
+              data-testid="oauth2-auth-btn"
+              onClick={() => setShowOAuth2Setup(true)}
+              className="w-full p-3 border border-gray-300 rounded-md text-left hover:bg-gray-50"
+            >
+              <div className="font-medium">OAuth2 Authentication</div>
+              <div className="text-sm text-gray-500">Connect using OAuth2 providers</div>
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Name</label>
@@ -378,6 +568,11 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
+              {!formData.name && (
+                <div data-testid="name-error" className="mt-1 text-sm text-red-600">
+                  Name is required
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Description</label>
@@ -401,6 +596,16 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
                 onChange={(e) => setFormData({ ...formData, baseUrl: e.target.value })}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
+              {!formData.baseUrl && (
+                <div data-testid="baseUrl-error" className="mt-1 text-sm text-red-600">
+                  Base URL is required
+                </div>
+              )}
+              {formData.baseUrl && !formData.baseUrl.match(/^https?:\/\/.+/) && (
+                <div data-testid="baseUrl-error" className="mt-1 text-sm text-red-600">
+                  Invalid URL format
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Authentication Type</label>
@@ -525,6 +730,11 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
                     })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
+                  {formData.authType === 'OAUTH2' && !formData.authConfig?.clientId && (
+                    <div data-testid="clientId-error" className="mt-1 text-sm text-red-600">
+                      Client ID is required
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Client Secret</label>
@@ -540,6 +750,11 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
                     })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
+                  {formData.authType === 'OAUTH2' && !formData.authConfig?.clientSecret && (
+                    <div data-testid="clientSecret-error" className="mt-1 text-sm text-red-600">
+                      Client Secret is required
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Redirect URI</label>
@@ -554,7 +769,13 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
                       authConfig: { ...formData.authConfig, redirectUri: e.target.value }
                     })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="http://localhost:3000/api/oauth/callback"
                   />
+                  {formData.authType === 'OAUTH2' && !formData.authConfig?.redirectUri && (
+                    <div data-testid="redirectUri-error" className="mt-1 text-sm text-red-600">
+                      Redirect URI is required
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Scope</label>

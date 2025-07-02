@@ -4,6 +4,7 @@ import type { TestUser } from '../../helpers/testUtils';
 import workflowsHandler from '../../../pages/api/workflows';
 import workflowHandler from '../../../pages/api/workflows/[id]';
 import executeHandler from '../../../pages/api/workflows/[id]/execute';
+import { createWorkflowTestData } from '../../helpers/createTestData';
 
 describe('Workflow API Integration', () => {
   let createdUserIds: string[] = [];
@@ -11,6 +12,7 @@ describe('Workflow API Integration', () => {
   let createdStepIds: string[] = [];
   let createdExecutionIds: string[] = [];
   let testUser: TestUser;
+  let testWorkflow: any;
 
   afterEach(async () => {
     // Clean up in reverse dependency order
@@ -36,9 +38,10 @@ describe('Workflow API Integration', () => {
   });
 
   beforeEach(async () => {
-    // Create a fresh test user for each test
-    testUser = await createTestUser();
-    createdUserIds.push(testUser.id);
+    // Recreate test data after global setup truncates tables
+    const testData = await createWorkflowTestData();
+    testUser = testData.user;
+    testWorkflow = testData.workflow;
   });
 
   it('should create a workflow', async () => {

@@ -4,28 +4,20 @@ import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { createTestSuite } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 import { prisma } from '../../../lib/database/client';
+import { createOAuth2TestData } from '../../helpers/createTestData';
 
 describe('SAML/OIDC Authentication Integration Tests', () => {
-  const testSuite = createTestSuite('SAML/OIDC Tests');
   let testUser: any;
+  let testApiConnection: any;
 
-  beforeAll(async () => {
-    await testSuite.beforeAll();
-    
-    // Create test user
-    testUser = await testSuite.createUser(
-      'test@company.com',
-      'password123',
-      Role.USER,
-      'Test User'
-    );
+  beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createOAuth2TestData();
+    testUser = testData.user;
+    testApiConnection = testData.connection;
   });
 
-  afterAll(async () => {
-    await testSuite.afterAll();
-  });
-
-
+  const testSuite = createTestSuite('SAML/OIDC Tests');
 
   describe('GET /api/auth/saml/{provider}', () => {
     it('should initiate SAML SSO flow for Okta', async () => {

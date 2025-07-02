@@ -1,0 +1,1243 @@
+
+> apiq-mvp@1.0.0 test:integration
+> cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles
+
+watchman warning:  Recrawled this watch 3 times, most recently because:
+MustScanSubDirs UserDroppedTo resolve, please review the information on
+https://facebook.github.io/watchman/docs/troubleshooting.html#recrawl
+To clear this warning, run:
+`watchman watch-del '/Users/connorbowen/apiq-mvp' ; watchman watch-project '/Users/connorbowen/apiq-mvp'`
+
+FAIL tests/integration/queue/queueService.integration.test.ts (26.402 s)
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.log
+      [31merror[39m: Job failed {"duration":1,"error":"Attempt 1 failed","jobId":"3eda8b14-614e-450f-a817-eb6c92ece9ab","queueName":"test-retry-queue","service":"apiq-mvp","stack":"Error: Attempt 1 failed\n    at /Users/connorbowen/apiq-mvp/tests/integration/queue/queueService.integration.test.ts:234:17\n    at handler (/Users/connorbowen/apiq-mvp/src/lib/queue/queueService.ts:500:32)\n    at Worker.onFetch (/Users/connorbowen/apiq-mvp/node_modules/pg-boss/src/manager.js:216:51)\n    at Worker.start (/Users/connorbowen/apiq-mvp/node_modules/pg-boss/src/worker.js:58:22)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2025-07-02 13:25:51","workerId":"test-retry-queue-1751487949501"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+  ● QueueService Integration Tests (Optimized) › Basic Queue Operations › should handle job with custom options
+
+    expect(received).toBeTruthy()
+
+    Received: null
+
+      155 |         // Fall back to checking global variable
+      156 |         const processedJob = globalThis.processedJob_options;
+    > 157 |         expect(processedJob).toBeTruthy();
+          |                              ^
+      158 |         expect(processedJob).toEqual(jobData);
+      159 |       }
+      160 |       expect(result.queueName).toBe(queueName);
+
+      at Object.toBeTruthy (tests/integration/queue/queueService.integration.test.ts:157:30)
+
+FAIL tests/integration/lib/secrets/secretsVault.integration.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+  ● SecretsVault Integration Tests › deleteSecret › should soft delete secret
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:44:19)
+
+  ● SecretsVault Integration Tests › rate limiting › should allow requests within rate limit
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:83:21)
+
+  ● SecretsVault Integration Tests › rate limiting › should enforce rate limit for excessive requests
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:100:21)
+
+  ● SecretsVault Integration Tests › rate limiting › should reset rate limit after window expires
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:122:21)
+
+  ● SecretsVault Integration Tests › security and logging › should encrypt sensitive data properly
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:185:19)
+
+  ● SecretsVault Integration Tests › audit logging › should log secret access events
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:217:19)
+
+FAIL tests/integration/database.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.error
+      Database query failed: JestAssertionError: expect(received).toHaveLength(expected)
+      
+      Expected length: 2
+      Received length: 0
+      Received array:  []
+          at Object.toHaveLength (/Users/connorbowen/apiq-mvp/tests/integration/database.test.ts:46:21) {
+        matcherResult: {
+          message: 'expect(received).toHaveLength(expected)\n' +
+            '\n' +
+            'Expected length: 2\n' +
+            'Received length: 0\n' +
+            'Received array:  []',
+          pass: false
+        }
+      }
+
+      48 |       expect(users.map(u => u.email)).toContain(fixtures.users.testUser2.email);
+      49 |     } catch (error) {
+    > 50 |       console.error('Database query failed:', error);
+         |               ^
+      51 |       throw error;
+      52 |     }
+      53 |   });
+
+      at Object.error (tests/integration/database.test.ts:50:15)
+
+    console.error
+      Database query failed: JestAssertionError: expect(received).toHaveLength(expected)
+      
+      Expected length: 2
+      Received length: 0
+      Received array:  []
+          at Object.toHaveLength (/Users/connorbowen/apiq-mvp/tests/integration/database.test.ts:67:27) {
+        matcherResult: {
+          message: 'expect(received).toHaveLength(expected)\n' +
+            '\n' +
+            'Expected length: 2\n' +
+            'Received length: 0\n' +
+            'Received array:  []',
+          pass: false
+        }
+      }
+
+      69 |       expect(connections.map(c => c.name)).toContain('Test Slack Connection');
+      70 |     } catch (error) {
+    > 71 |       console.error('Database query failed:', error);
+         |               ^
+      72 |       throw error;
+      73 |     }
+      74 |   });
+
+      at Object.error (tests/integration/database.test.ts:71:15)
+
+  ● Database Integration Tests › should find fixture users
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 2
+    Received length: 0
+    Received array:  []
+
+      44 |       
+      45 |       console.log('Found fixture users:', users);
+    > 46 |       expect(users).toHaveLength(2);
+         |                     ^
+      47 |       expect(users.map(u => u.email)).toContain(fixtures.users.testUser1.email);
+      48 |       expect(users.map(u => u.email)).toContain(fixtures.users.testUser2.email);
+      49 |     } catch (error) {
+
+      at Object.toHaveLength (tests/integration/database.test.ts:46:21)
+
+  ● Database Integration Tests › should find fixture API connections
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 2
+    Received length: 0
+    Received array:  []
+
+      65 |       
+      66 |       console.log('Found fixture connections:', connections);
+    > 67 |       expect(connections).toHaveLength(2);
+         |                           ^
+      68 |       expect(connections.map(c => c.name)).toContain('Test GitHub Connection');
+      69 |       expect(connections.map(c => c.name)).toContain('Test Slack Connection');
+      70 |     } catch (error) {
+
+      at Object.toHaveLength (tests/integration/database.test.ts:67:27)
+
+PASS tests/integration/api/saml-oidc.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+PASS tests/integration/api/workflows.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+PASS tests/integration/api/connections.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.log
+      [31merror[39m: Failed to process OpenAPI spec {"connectionId":"cmcmepwmh004yvjmg0fojb9cf","documentationUrl":"https://httpbin.org/status/404","error":"HTTP 404: NOT FOUND","service":"apiq-mvp","stack":"Error: HTTP 404: NOT FOUND\n    at /Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:147:23\n    at Proxy._transactionWithCallback (/Users/connorbowen/apiq-mvp/src/generated/prisma/runtime/library.js:133:8139)\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:112:9)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/connections.test.ts:123:7)","timestamp":"2025-07-02 13:26:17"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: API Error {"error":"Authentication required","ip":"unknown","method":"POST","service":"apiq-mvp","stack":"ApplicationError: Authentication required\n    at requireAuth (/Users/connorbowen/apiq-mvp/src/lib/auth/session.ts:151:11)\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:19:35)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/connections.test.ts:204:20)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","statusCode":401,"timestamp":"2025-07-02 13:26:18","url":"unknown"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Error in API Request: Authentication required {"error":"Authentication required","service":"apiq-mvp","stack":"ApplicationError: Authentication required\n    at requireAuth (/Users/connorbowen/apiq-mvp/src/lib/auth/session.ts:151:11)\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:19:35)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/connections.test.ts:204:20)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","timestamp":"2025-07-02 13:26:18"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: API Error {"error":"Authentication required","ip":"unknown","method":"GET","service":"apiq-mvp","stack":"ApplicationError: Authentication required\n    at requireAuth (/Users/connorbowen/apiq-mvp/src/lib/auth/session.ts:151:11)\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:19:35)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/connections.test.ts:256:20)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","statusCode":401,"timestamp":"2025-07-02 13:26:18","url":"unknown"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Error in API Request: Authentication required {"error":"Authentication required","service":"apiq-mvp","stack":"ApplicationError: Authentication required\n    at requireAuth (/Users/connorbowen/apiq-mvp/src/lib/auth/session.ts:151:11)\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:19:35)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/connections.test.ts:256:20)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","timestamp":"2025-07-02 13:26:18"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+PASS tests/integration/api/registration.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.log
+      [31merror[39m: User registration failed {"email":"invalid-email","error":"Invalid email format","name":"Test User test-1751487979359-ye7bdmg8e","service":"apiq-mvp","stack":"ApplicationError: Invalid email format\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/register.ts:29:13)\n    at Object.registerHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:103:13)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","timestamp":"2025-07-02 13:26:19"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: User registration failed {"email":"test-weak-password-test-1751487979557-myz0q7dk3@example.com","error":"Password must be at least 8 characters long","name":"Test User test-1751487979557-9xc5lnfnr","service":"apiq-mvp","stack":"ApplicationError: Password must be at least 8 characters long\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/register.ts:34:13)\n    at Object.registerHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:125:13)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","timestamp":"2025-07-02 13:26:19"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: User registration failed {"email":"test-missing-fields-test-1751487979764-ujclpj9rg@example.com","error":"Email, name, and password are required","service":"apiq-mvp","stack":"ApplicationError: Email, name, and password are required\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/register.ts:23:13)\n    at Object.registerHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:145:13)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","timestamp":"2025-07-02 13:26:19"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: User registration failed {"email":"test-test-1751487979812-dsorlxy1x@example.com","error":"User with this email already exists","name":"New User","service":"apiq-mvp","stack":"ApplicationError: User with this email already exists\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/register.ts:43:13)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:166:7)","timestamp":"2025-07-02 13:26:19"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Email service failed during registration {"email":"test-email-failure-test-1751487980388-oexj3exck@example.com","error":"EMAIL_SEND_FAILED","service":"apiq-mvp","stack":"Error: EMAIL_SEND_FAILED\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:187:38)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","timestamp":"2025-07-02 13:26:20","userId":"cmcmepz7e005mvjmgm7hjxhcq"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: User registration failed {"email":"test-email-failure-test-1751487980388-oexj3exck@example.com","error":"Failed to send verification email","name":"Test User test-1751487980388-bvdtcavjm","service":"apiq-mvp","stack":"ApplicationError: Failed to send verification email\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/register.ts:94:13)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:202:7)","timestamp":"2025-07-02 13:26:20"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Email verification failed {"error":"Invalid verification token","service":"apiq-mvp","stack":"ApplicationError: Invalid verification token\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/verify.ts:30:13)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:269:7)","timestamp":"2025-07-02 13:26:21","token":"present"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Email verification failed {"error":"Verification token has expired","service":"apiq-mvp","stack":"ApplicationError: Verification token has expired\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/verify.ts:40:13)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:297:7)","timestamp":"2025-07-02 13:26:21","token":"present"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Email verification failed {"error":"Verification token is required","service":"apiq-mvp","stack":"ApplicationError: Verification token is required\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/verify.ts:21:13)\n    at Object.verifyHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:319:13)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","timestamp":"2025-07-02 13:26:21","token":"missing"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Resend verification failed {"email":"invalid-email","error":"Invalid email format","service":"apiq-mvp","stack":"ApplicationError: Invalid email format\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/resend-verification.ts:28:13)\n    at Object.resendHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:417:13)\n    at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)\n    at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)","timestamp":"2025-07-02 13:26:22"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Email service failed during resend verification {"email":"test-email-failure-test-1751487983058-kej4xwbez@example.com","error":"SMTP down","service":"apiq-mvp","stack":"Error: SMTP down\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:459:38)","timestamp":"2025-07-02 13:26:23","userId":"cmcmeq19p006bvjmg8tbmycof"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Resend verification failed {"email":"test-email-failure-test-1751487983058-kej4xwbez@example.com","error":"Failed to send verification email","service":"apiq-mvp","stack":"ApplicationError: Failed to send verification email\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/auth/resend-verification.ts:96:13)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/registration.test.ts:469:7)","timestamp":"2025-07-02 13:26:23"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+PASS tests/integration/api/auth.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.error
+      Login error: ApplicationError: Invalid credentials
+          at authenticateUser (/Users/connorbowen/apiq-mvp/src/lib/auth/session.ts:89:11)
+          at handleLogin (/Users/connorbowen/apiq-mvp/src/lib/auth/session.ts:229:18)
+          at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/auth.test.ts:63:7) {
+        statusCode: 401,
+        code: 'INVALID_CREDENTIALS',
+        details: undefined
+      }
+
+      248 |     });
+      249 |   } catch (error) {
+    > 250 |     console.error('Login error:', error);
+          |             ^
+      251 |     
+      252 |     if (error instanceof ApplicationError) {
+      253 |       return res.status(error.statusCode).json({
+
+      at error (src/lib/auth/session.ts:250:13)
+      at Object.<anonymous> (tests/integration/api/auth.test.ts:63:7)
+
+FAIL tests/integration/api/testApis.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.log
+      [31merror[39m: Failed to parse OpenAPI spec data {"error":"No endpoints found in OpenAPI specification","service":"apiq-mvp","timestamp":"2025-07-02 13:26:30","url":"https://httpbin.org/json"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Failed to fetch OpenAPI spec {"error":"No endpoints found in OpenAPI specification","service":"apiq-mvp","timestamp":"2025-07-02 13:26:30","url":"https://httpbin.org/json"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Failed to parse OpenAPI spec data {"error":"No endpoints found in OpenAPI specification","service":"apiq-mvp","timestamp":"2025-07-02 13:26:30","url":"https://jsonplaceholder.typicode.com/posts/1"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Failed to fetch OpenAPI spec {"error":"No endpoints found in OpenAPI specification","service":"apiq-mvp","timestamp":"2025-07-02 13:26:30","url":"https://jsonplaceholder.typicode.com/posts/1"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Failed to parse OpenAPI spec data {"error":"OpenAPI specification must be a JSON object","service":"apiq-mvp","timestamp":"2025-07-02 13:26:30","url":"https://api.github.com/zen"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Failed to fetch OpenAPI spec {"error":"OpenAPI specification must be a JSON object","service":"apiq-mvp","timestamp":"2025-07-02 13:26:30","url":"https://api.github.com/zen"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Failed to fetch OpenAPI spec {"error":"Request failed with status code 404","service":"apiq-mvp","stack":"AxiosError: Request failed with status code 404\n    at settle (/Users/connorbowen/apiq-mvp/node_modules/axios/lib/core/settle.js:19:12)\n    at IncomingMessage.handleStreamEnd (/Users/connorbowen/apiq-mvp/node_modules/axios/lib/adapters/http.js:599:11)\n    at IncomingMessage.emit (node:events:519:35)\n    at endReadableNT (node:internal/streams/readable:1696:12)\n    at processTicksAndRejections (node:internal/process/task_queues:90:21)\n    at Axios.request (/Users/connorbowen/apiq-mvp/node_modules/axios/lib/core/Axios.js:45:41)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at parseOpenApiSpec (/Users/connorbowen/apiq-mvp/src/lib/api/parser.ts:115:22)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/testApis.test.ts:102:9)","timestamp":"2025-07-02 13:26:31","url":"https://httpbin.org/status/404"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Failed to parse OpenAPI spec data {"error":"No endpoints found in OpenAPI specification","service":"apiq-mvp","timestamp":"2025-07-02 13:26:31","url":"https://httpbin.org/json"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Failed to fetch OpenAPI spec {"error":"No endpoints found in OpenAPI specification","service":"apiq-mvp","timestamp":"2025-07-02 13:26:31","url":"https://httpbin.org/json"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+  ● Test API Integration (Real) › API Health Checks › should reach base URL for HTTPBin
+
+    AxiosError: Request failed with status code 502
+
+      56 |     TEST_APIS.forEach((api: TestApiConfig) => {
+      57 |       it(`should reach base URL for ${api.name}`, async () => {
+    > 58 |         const response = await axios.get(api.baseUrl, {
+         |                          ^
+      59 |           timeout: 5000,
+      60 |           validateStatus: (status) => status < 500 // Accept any non-5xx response
+      61 |         });
+
+      at settle (node_modules/axios/lib/core/settle.js:19:12)
+      at IncomingMessage.handleStreamEnd (node_modules/axios/lib/adapters/http.js:599:11)
+      at Axios.request (node_modules/axios/lib/core/Axios.js:45:41)
+      at Object.<anonymous> (tests/integration/api/testApis.test.ts:58:26)
+
+PASS tests/integration/api/auth-flow.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+PASS tests/integration/api/oauth2-security.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.error
+      OAuth2 callback error: ApplicationError: State parameter is required
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/callback.ts:49:13)
+          at Object.callbackHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-security.test.ts:67:13)
+          at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34) {
+        statusCode: 400,
+        code: 'MISSING_STATE',
+        details: undefined
+      }
+
+      107 |
+      108 |   } catch (error) {
+    > 109 |     console.error('OAuth2 callback error:', error);
+          |             ^
+      110 |
+      111 |     if (error instanceof ApplicationError) {
+      112 |       // Try to mark connection as error if we have a state
+
+      at error (pages/api/oauth/callback.ts:109:13)
+      at Object.callbackHandler (tests/integration/api/oauth2-security.test.ts:67:13)
+
+    console.error
+      OAuth2 callback error: ApplicationError: Invalid OAuth state - connection not found
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/callback.ts:55:13)
+          at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-security.test.ts:82:7) {
+        statusCode: 400,
+        code: 'INVALID_STATE',
+        details: undefined
+      }
+
+      107 |
+      108 |   } catch (error) {
+    > 109 |     console.error('OAuth2 callback error:', error);
+          |             ^
+      110 |
+      111 |     if (error instanceof ApplicationError) {
+      112 |       // Try to mark connection as error if we have a state
+
+      at error (pages/api/oauth/callback.ts:109:13)
+      at Object.<anonymous> (tests/integration/api/oauth2-security.test.ts:82:7)
+
+    console.error
+      OAuth2 callback error: ApplicationError: Invalid OAuth state - connection not found
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/callback.ts:55:13)
+          at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-security.test.ts:97:7) {
+        statusCode: 400,
+        code: 'INVALID_STATE',
+        details: undefined
+      }
+
+      107 |
+      108 |   } catch (error) {
+    > 109 |     console.error('OAuth2 callback error:', error);
+          |             ^
+      110 |
+      111 |     if (error instanceof ApplicationError) {
+      112 |       // Try to mark connection as error if we have a state
+
+      at error (pages/api/oauth/callback.ts:109:13)
+      at Object.<anonymous> (tests/integration/api/oauth2-security.test.ts:97:7)
+
+    console.error
+      OAuth2 callback error: ApplicationError: Invalid OAuth state - connection not found
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/callback.ts:55:13)
+          at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-security.test.ts:110:7) {
+        statusCode: 400,
+        code: 'INVALID_STATE',
+        details: undefined
+      }
+
+      107 |
+      108 |   } catch (error) {
+    > 109 |     console.error('OAuth2 callback error:', error);
+          |             ^
+      110 |
+      111 |     if (error instanceof ApplicationError) {
+      112 |       // Try to mark connection as error if we have a state
+
+      at error (pages/api/oauth/callback.ts:109:13)
+      at Object.<anonymous> (tests/integration/api/oauth2-security.test.ts:110:7)
+
+    console.error
+      OAuth2 authorization error: ApplicationError: Authentication required
+          at requireAuth (/Users/connorbowen/apiq-mvp/src/lib/auth/session.ts:151:11)
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/authorize.ts:15:35)
+          at Object.authorizeHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-security.test.ts:128:13)
+          at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34) {
+        statusCode: 401,
+        code: 'UNAUTHORIZED',
+        details: undefined
+      }
+
+      134 |
+      135 |   } catch (error) {
+    > 136 |     console.error('OAuth2 authorization error:', error);
+          |             ^
+      137 |
+      138 |     if (error instanceof ApplicationError) {
+      139 |       return res.status(error.statusCode).json({
+
+      at error (pages/api/oauth/authorize.ts:136:13)
+      at Object.<anonymous> (tests/integration/api/oauth2-security.test.ts:128:7)
+
+    console.error
+      OAuth2 refresh error: ApplicationError: Authentication required
+          at requireAuth (/Users/connorbowen/apiq-mvp/src/lib/auth/session.ts:151:11)
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/refresh.ts:19:35)
+          at Object.refreshHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-security.test.ts:139:13)
+          at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34) {
+        statusCode: 401,
+        code: 'UNAUTHORIZED',
+        details: undefined
+      }
+
+      84 |
+      85 |   } catch (error) {
+    > 86 |     console.error('OAuth2 refresh error:', error);
+         |             ^
+      87 |
+      88 |     if (error instanceof ApplicationError) {
+      89 |       return res.status(error.statusCode).json({
+
+      at error (pages/api/oauth/refresh.ts:86:13)
+      at Object.<anonymous> (tests/integration/api/oauth2-security.test.ts:139:7)
+
+    console.error
+      OAuth2 token access error: ApplicationError: Authentication required
+          at requireAuth (/Users/connorbowen/apiq-mvp/src/lib/auth/session.ts:151:11)
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/token.ts:19:35)
+          at Object.tokenHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-security.test.ts:149:13)
+          at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34) {
+        statusCode: 401,
+        code: 'UNAUTHORIZED',
+        details: undefined
+      }
+
+      74 |
+      75 |   } catch (error) {
+    > 76 |     console.error('OAuth2 token access error:', error);
+         |             ^
+      77 |
+      78 |     if (error instanceof ApplicationError) {
+      79 |       return res.status(error.statusCode).json({
+
+      at error (pages/api/oauth/token.ts:76:13)
+      at Object.<anonymous> (tests/integration/api/oauth2-security.test.ts:149:7)
+
+    console.error
+      OAuth2 authorization error: ApplicationError: API connection not found
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/authorize.ts:60:13)
+          at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-security.test.ts:167:7) {
+        statusCode: 404,
+        code: 'NOT_FOUND',
+        details: undefined
+      }
+
+      134 |
+      135 |   } catch (error) {
+    > 136 |     console.error('OAuth2 authorization error:', error);
+          |             ^
+      137 |
+      138 |     if (error instanceof ApplicationError) {
+      139 |       return res.status(error.statusCode).json({
+
+      at error (pages/api/oauth/authorize.ts:136:13)
+      at Object.<anonymous> (tests/integration/api/oauth2-security.test.ts:167:7)
+
+    console.error
+      OAuth2 authorization error: ApplicationError: API connection not found
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/authorize.ts:60:13)
+          at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-security.test.ts:188:7) {
+        statusCode: 404,
+        code: 'NOT_FOUND',
+        details: undefined
+      }
+
+      134 |
+      135 |   } catch (error) {
+    > 136 |     console.error('OAuth2 authorization error:', error);
+          |             ^
+      137 |
+      138 |     if (error instanceof ApplicationError) {
+      139 |       return res.status(error.statusCode).json({
+
+      at error (pages/api/oauth/authorize.ts:136:13)
+      at Object.<anonymous> (tests/integration/api/oauth2-security.test.ts:188:7)
+
+PASS tests/integration/api/oauth2-github.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.error
+      OAuth2 authorization error: ApplicationError: clientId is required
+          at handler (/Users/connorbowen/apiq-mvp/pages/api/oauth/authorize.ts:37:13)
+          at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-github.test.ts:100:7) {
+        statusCode: 400,
+        code: 'MISSING_PARAMETER',
+        details: undefined
+      }
+
+      134 |
+      135 |   } catch (error) {
+    > 136 |     console.error('OAuth2 authorization error:', error);
+          |             ^
+      137 |
+      138 |     if (error instanceof ApplicationError) {
+      139 |       return res.status(error.statusCode).json({
+
+      at error (pages/api/oauth/authorize.ts:136:13)
+      at Object.<anonymous> (tests/integration/api/oauth2-github.test.ts:100:7)
+
+PASS tests/integration/api/sso-auth-flow.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+PASS tests/integration/lib/services/connectionService.integration.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+PASS tests/integration/api/real-api-connections.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.log
+      [31merror[39m: Failed to process OpenAPI spec {"connectionId":"cmcmeqgkg00cfvjmgo74pxyip","documentationUrl":"https://jsonplaceholder.typicode.com/openapi.json","error":"HTTP 404: Not Found","service":"apiq-mvp","stack":"Error: HTTP 404: Not Found\n    at /Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:147:23\n    at Proxy._transactionWithCallback (/Users/connorbowen/apiq-mvp/src/generated/prisma/runtime/library.js:133:8139)\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:112:9)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/real-api-connections.test.ts:109:7)","timestamp":"2025-07-02 13:26:43"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+    console.log
+      [31merror[39m: Failed to process OpenAPI spec {"connectionId":"cmcmeqgrh00civjmgxlyo04pw","documentationUrl":"https://invalid-api.com/swagger.json","error":"Network error - unable to reach the server","service":"apiq-mvp","stack":"Error: Network error - unable to reach the server\n    at /Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:147:23\n    at Proxy._transactionWithCallback (/Users/connorbowen/apiq-mvp/src/generated/prisma/runtime/library.js:133:8139)\n    at handler (/Users/connorbowen/apiq-mvp/pages/api/connections/index.ts:112:9)\n    at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/real-api-connections.test.ts:135:7)","timestamp":"2025-07-02 13:26:43"}
+
+      at Console.log (node_modules/winston/lib/winston/transports/console.js:87:23)
+
+PASS tests/integration/api/health.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+    console.error
+      Database health check failed: Error: Database connection failed
+          at Object.<anonymous> (/Users/connorbowen/apiq-mvp/tests/integration/api/health.test.ts:230:63)
+          at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)
+
+      33 |       console.log('Database health result:', databaseHealth);
+      34 |     } catch (error) {
+    > 35 |       console.error('Database health check failed:', error);
+         |               ^
+      36 |       databaseHealth = {
+      37 |         status: 'unhealthy',
+      38 |         details: {
+
+      at error (pages/api/health.ts:35:15)
+      at Object.<anonymous> (tests/integration/api/health.test.ts:247:7)
+
+    console.error
+      Database health check failed: Error: Unexpected error
+          at /Users/connorbowen/apiq-mvp/tests/integration/api/health.test.ts:267:15
+          at /Users/connorbowen/apiq-mvp/node_modules/jest-mock/build/index.js:397:39
+          at /Users/connorbowen/apiq-mvp/node_modules/jest-mock/build/index.js:404:13
+          at mockConstructor (/Users/connorbowen/apiq-mvp/node_modules/jest-mock/build/index.js:148:19)
+          at healthHandler (/Users/connorbowen/apiq-mvp/pages/api/health.ts:32:43)
+          at Object.mockedHandler (/Users/connorbowen/apiq-mvp/tests/integration/api/health.test.ts:285:13)
+          at Promise.then.completed (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:105:5)
+          at _runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/connorbowen/apiq-mvp/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/connorbowen/apiq-mvp/node_modules/jest-runner/build/runTest.js:444:34)
+
+      33 |       console.log('Database health result:', databaseHealth);
+      34 |     } catch (error) {
+    > 35 |       console.error('Database health check failed:', error);
+         |               ^
+      36 |       databaseHealth = {
+      37 |         status: 'unhealthy',
+      38 |         details: {
+
+      at error (pages/api/health.ts:35:15)
+      at Object.mockedHandler (tests/integration/api/health.test.ts:285:13)
+
+PASS tests/integration/api/endpoints.rbac.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+PASS tests/integration/debug-auth.test.ts
+  ● Console
+
+    console.log
+      Jest polyfill URL → postgresql://connorbowen@localhost:5432/apiq_mvp
+
+      at Object.<anonymous> (jest.polyfill.js:7:9)
+
+FAIL tests/integration/api/oauth2.test.ts
+  ● Test suite failed to run
+
+
+      [31mx[0m Expression expected
+         ,-[[36;1;4m/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2.test.ts[0m:337:1]
+     [2m337[0m |       expect(invalidErrors).toContain('clientId is required');
+     [2m338[0m |     });
+     [2m339[0m |   });
+     [2m340[0m | }); 
+         : [31;1m^[0m
+         `----
+
+
+    Caused by:
+        Syntax Error
+
+      at Object.transformSync (node_modules/next/src/build/swc/index.ts:1433:25)
+      at transformSync (node_modules/next/src/build/swc/index.ts:1550:19)
+      at Object.process (node_modules/next/src/build/swc/jest-transformer.ts:104:25)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/ScriptTransformer.js:545:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/ScriptTransformer.js:674:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/ScriptTransformer.js:726:19)
+
+FAIL tests/integration/api/oauth2-google.test.ts
+  ● Test suite failed to run
+
+
+      [31mx[0m Expression expected
+         ,-[[36;1;4m/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-google.test.ts[0m:433:1]
+     [2m433[0m |       await prisma.apiConnection.delete({ where: { id: gmailConnection.id } });
+     [2m434[0m |     });
+     [2m435[0m |   });
+     [2m436[0m | }); 
+         : [31;1m^[0m
+         `----
+
+
+    Caused by:
+        Syntax Error
+
+      at Object.transformSync (node_modules/next/src/build/swc/index.ts:1433:25)
+      at transformSync (node_modules/next/src/build/swc/index.ts:1550:19)
+      at Object.process (node_modules/next/src/build/swc/jest-transformer.ts:104:25)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/ScriptTransformer.js:545:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/ScriptTransformer.js:674:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/ScriptTransformer.js:726:19)
+
+FAIL tests/integration/api/oauth2-slack.test.ts
+  ● Test suite failed to run
+
+
+      [31mx[0m Expression expected
+         ,-[[36;1;4m/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-slack.test.ts[0m:432:1]
+     [2m432[0m |       await prisma.apiConnection.delete({ where: { id: chatConnection.id } });
+     [2m433[0m |     });
+     [2m434[0m |   });
+     [2m435[0m | }); 
+         : [31;1m^[0m
+         `----
+
+
+    Caused by:
+        Syntax Error
+
+      at Object.transformSync (node_modules/next/src/build/swc/index.ts:1433:25)
+      at transformSync (node_modules/next/src/build/swc/index.ts:1550:19)
+      at Object.process (node_modules/next/src/build/swc/jest-transformer.ts:104:25)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/ScriptTransformer.js:545:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/ScriptTransformer.js:674:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/ScriptTransformer.js:726:19)
+
+Summary of all failing tests
+FAIL tests/integration/queue/queueService.integration.test.ts (26.402 s)
+  ● QueueService Integration Tests (Optimized) › Basic Queue Operations › should handle job with custom options
+
+    expect(received).toBeTruthy()
+
+    Received: null
+
+      155 |         // Fall back to checking global variable
+      156 |         const processedJob = globalThis.processedJob_options;
+    > 157 |         expect(processedJob).toBeTruthy();
+          |                              ^
+      158 |         expect(processedJob).toEqual(jobData);
+      159 |       }
+      160 |       expect(result.queueName).toBe(queueName);
+
+      at Object.toBeTruthy (tests/integration/queue/queueService.integration.test.ts:157:30)
+
+FAIL tests/integration/lib/secrets/secretsVault.integration.test.ts
+  ● SecretsVault Integration Tests › deleteSecret › should soft delete secret
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:44:19)
+
+  ● SecretsVault Integration Tests › rate limiting › should allow requests within rate limit
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:83:21)
+
+  ● SecretsVault Integration Tests › rate limiting › should enforce rate limit for excessive requests
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:100:21)
+
+  ● SecretsVault Integration Tests › rate limiting › should reset rate limit after window expires
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:122:21)
+
+  ● SecretsVault Integration Tests › security and logging › should encrypt sensitive data properly
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:185:19)
+
+  ● SecretsVault Integration Tests › audit logging › should log secret access events
+
+    Failed to store secret: Cannot read properties of undefined (reading 'secret')
+
+      230 |         // Do not log secret value or metadata
+      231 |       });
+    > 232 |       throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          |             ^
+      233 |     }
+      234 |   }
+      235 |
+
+      at SecretsVault.storeSecret (src/lib/secrets/secretsVault.ts:232:13)
+      at Object.storeSecret (tests/integration/lib/secrets/secretsVault.integration.test.ts:217:19)
+
+FAIL tests/integration/database.test.ts
+  ● Database Integration Tests › should find fixture users
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 2
+    Received length: 0
+    Received array:  []
+
+      44 |       
+      45 |       console.log('Found fixture users:', users);
+    > 46 |       expect(users).toHaveLength(2);
+         |                     ^
+      47 |       expect(users.map(u => u.email)).toContain(fixtures.users.testUser1.email);
+      48 |       expect(users.map(u => u.email)).toContain(fixtures.users.testUser2.email);
+      49 |     } catch (error) {
+
+      at Object.toHaveLength (tests/integration/database.test.ts:46:21)
+
+  ● Database Integration Tests › should find fixture API connections
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 2
+    Received length: 0
+    Received array:  []
+
+      65 |       
+      66 |       console.log('Found fixture connections:', connections);
+    > 67 |       expect(connections).toHaveLength(2);
+         |                           ^
+      68 |       expect(connections.map(c => c.name)).toContain('Test GitHub Connection');
+      69 |       expect(connections.map(c => c.name)).toContain('Test Slack Connection');
+      70 |     } catch (error) {
+
+      at Object.toHaveLength (tests/integration/database.test.ts:67:27)
+
+FAIL tests/integration/api/testApis.test.ts
+  ● Test API Integration (Real) › API Health Checks › should reach base URL for HTTPBin
+
+    AxiosError: Request failed with status code 502
+
+      56 |     TEST_APIS.forEach((api: TestApiConfig) => {
+      57 |       it(`should reach base URL for ${api.name}`, async () => {
+    > 58 |         const response = await axios.get(api.baseUrl, {
+         |                          ^
+      59 |           timeout: 5000,
+      60 |           validateStatus: (status) => status < 500 // Accept any non-5xx response
+      61 |         });
+
+      at settle (node_modules/axios/lib/core/settle.js:19:12)
+      at IncomingMessage.handleStreamEnd (node_modules/axios/lib/adapters/http.js:599:11)
+      at Axios.request (node_modules/axios/lib/core/Axios.js:45:41)
+      at Object.<anonymous> (tests/integration/api/testApis.test.ts:58:26)
+
+FAIL tests/integration/api/oauth2.test.ts
+  ● Test suite failed to run
+
+
+      [31mx[0m Expression expected
+         ,-[[36;1;4m/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2.test.ts[0m:337:1]
+     [2m337[0m |       expect(invalidErrors).toContain('clientId is required');
+     [2m338[0m |     });
+     [2m339[0m |   });
+     [2m340[0m | }); 
+         : [31;1m^[0m
+         `----
+
+
+    Caused by:
+        Syntax Error
+
+      at Object.transformSync (node_modules/next/src/build/swc/index.ts:1433:25)
+      at transformSync (node_modules/next/src/build/swc/index.ts:1550:19)
+      at Object.process (node_modules/next/src/build/swc/jest-transformer.ts:104:25)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/ScriptTransformer.js:545:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/ScriptTransformer.js:674:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/ScriptTransformer.js:726:19)
+
+FAIL tests/integration/api/oauth2-google.test.ts
+  ● Test suite failed to run
+
+
+      [31mx[0m Expression expected
+         ,-[[36;1;4m/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-google.test.ts[0m:433:1]
+     [2m433[0m |       await prisma.apiConnection.delete({ where: { id: gmailConnection.id } });
+     [2m434[0m |     });
+     [2m435[0m |   });
+     [2m436[0m | }); 
+         : [31;1m^[0m
+         `----
+
+
+    Caused by:
+        Syntax Error
+
+      at Object.transformSync (node_modules/next/src/build/swc/index.ts:1433:25)
+      at transformSync (node_modules/next/src/build/swc/index.ts:1550:19)
+      at Object.process (node_modules/next/src/build/swc/jest-transformer.ts:104:25)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/ScriptTransformer.js:545:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/ScriptTransformer.js:674:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/ScriptTransformer.js:726:19)
+
+FAIL tests/integration/api/oauth2-slack.test.ts
+  ● Test suite failed to run
+
+
+      [31mx[0m Expression expected
+         ,-[[36;1;4m/Users/connorbowen/apiq-mvp/tests/integration/api/oauth2-slack.test.ts[0m:432:1]
+     [2m432[0m |       await prisma.apiConnection.delete({ where: { id: chatConnection.id } });
+     [2m433[0m |     });
+     [2m434[0m |   });
+     [2m435[0m | }); 
+         : [31;1m^[0m
+         `----
+
+
+    Caused by:
+        Syntax Error
+
+      at Object.transformSync (node_modules/next/src/build/swc/index.ts:1433:25)
+      at transformSync (node_modules/next/src/build/swc/index.ts:1550:19)
+      at Object.process (node_modules/next/src/build/swc/jest-transformer.ts:104:25)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/ScriptTransformer.js:545:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/ScriptTransformer.js:674:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/ScriptTransformer.js:726:19)
+
+
+Test Suites: 7 failed, 14 passed, 21 total
+Tests:       10 failed, 153 passed, 163 total
+Snapshots:   0 total
+Time:        64.106 s, estimated 107 s
+Ran all test suites.
+
+Jest has detected the following 3 open handles potentially keeping Jest from exiting:
+
+  ●  TLSWRAP
+
+      56 |     TEST_APIS.forEach((api: TestApiConfig) => {
+      57 |       it(`should reach base URL for ${api.name}`, async () => {
+    > 58 |         const response = await axios.get(api.baseUrl, {
+         |                                      ^
+      59 |           timeout: 5000,
+      60 |           validateStatus: (status) => status < 500 // Accept any non-5xx response
+      61 |         });
+
+      at RedirectableRequest.Object.<anonymous>.RedirectableRequest._performRequest (node_modules/follow-redirects/index.js:337:24)
+      at new RedirectableRequest (node_modules/follow-redirects/index.js:111:8)
+      at Object.request (node_modules/follow-redirects/index.js:543:14)
+      at dispatchHttpRequest (node_modules/axios/lib/adapters/http.js:464:21)
+      at node_modules/axios/lib/adapters/http.js:152:5
+      at wrapAsync (node_modules/axios/lib/adapters/http.js:132:10)
+      at http (node_modules/axios/lib/adapters/http.js:170:10)
+      at Axios.dispatchRequest (node_modules/axios/lib/core/dispatchRequest.js:51:10)
+      at Axios._request (node_modules/axios/lib/core/Axios.js:187:33)
+      at Axios.request (node_modules/axios/lib/core/Axios.js:40:25)
+      at Axios.<computed> [as get] (node_modules/axios/lib/core/Axios.js:213:17)
+      at Function.wrap [as get] (node_modules/axios/lib/helpers/bind.js:5:15)
+      at Object.get (tests/integration/api/testApis.test.ts:58:38)
+
+
+  ●  TLSWRAP
+
+      79 |       for (let i = 0; i < maxRequests; i++) {
+      80 |         requests.push(
+    > 81 |           axios.get(api.specUrl, {
+         |                 ^
+      82 |             timeout: 5000,
+      83 |             headers: {
+      84 |               'Accept': 'application/json',
+
+      at RedirectableRequest.Object.<anonymous>.RedirectableRequest._performRequest (node_modules/follow-redirects/index.js:337:24)
+      at new RedirectableRequest (node_modules/follow-redirects/index.js:111:8)
+      at Object.request (node_modules/follow-redirects/index.js:543:14)
+      at dispatchHttpRequest (node_modules/axios/lib/adapters/http.js:464:21)
+      at node_modules/axios/lib/adapters/http.js:152:5
+      at wrapAsync (node_modules/axios/lib/adapters/http.js:132:10)
+      at http (node_modules/axios/lib/adapters/http.js:170:10)
+      at Axios.dispatchRequest (node_modules/axios/lib/core/dispatchRequest.js:51:10)
+      at Axios._request (node_modules/axios/lib/core/Axios.js:187:33)
+      at Axios.request (node_modules/axios/lib/core/Axios.js:40:25)
+      at Axios.<computed> [as get] (node_modules/axios/lib/core/Axios.js:213:17)
+      at Function.wrap [as get] (node_modules/axios/lib/helpers/bind.js:5:15)
+      at Object.get (tests/integration/api/testApis.test.ts:81:17)
+
+
+  ●  TLSWRAP
+
+      113 |
+      114 |     // First fetch the spec with axios
+    > 115 |     const response = await axios.get(url, {
+          |                                  ^
+      116 |       timeout: 10000,
+      117 |       headers: {
+      118 |         'Accept': 'application/json',
+
+      at RedirectableRequest.Object.<anonymous>.RedirectableRequest._performRequest (node_modules/follow-redirects/index.js:337:24)
+      at new RedirectableRequest (node_modules/follow-redirects/index.js:111:8)
+      at Object.request (node_modules/follow-redirects/index.js:543:14)
+      at dispatchHttpRequest (node_modules/axios/lib/adapters/http.js:464:21)
+      at node_modules/axios/lib/adapters/http.js:152:5
+      at wrapAsync (node_modules/axios/lib/adapters/http.js:132:10)
+      at http (node_modules/axios/lib/adapters/http.js:170:10)
+      at Axios.dispatchRequest (node_modules/axios/lib/core/dispatchRequest.js:51:10)
+      at Axios._request (node_modules/axios/lib/core/Axios.js:187:33)
+      at Axios.request (node_modules/axios/lib/core/Axios.js:40:25)
+      at Axios.<computed> [as get] (node_modules/axios/lib/core/Axios.js:213:17)
+      at Function.wrap [as get] (node_modules/axios/lib/helpers/bind.js:5:15)
+      at get (src/lib/api/parser.ts:115:34)
+      at Object.<anonymous> (tests/integration/api/testApis.test.ts:112:31)
+

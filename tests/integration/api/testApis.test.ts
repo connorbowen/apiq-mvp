@@ -1,6 +1,7 @@
 import { TEST_APIS, TestApiConfig } from '../../../src/lib/testApis';
 import { parseOpenApiSpec } from '../../../src/lib/api/parser';
 import axios from 'axios';
+import { createCommonTestData } from '../../helpers/createTestData';
 
 describe('Test API Integration (Real)', () => {
   beforeEach(() => {

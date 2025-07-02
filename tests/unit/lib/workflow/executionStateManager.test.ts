@@ -1,22 +1,26 @@
 import { ExecutionStateManager, ExecutionState, ExecutionProgress, ExecutionMetrics } from '../../../../src/lib/workflow/executionStateManager';
 import { QueueService } from '../../../../src/lib/queue/queueService';
-import { prisma } from '../../../../lib/database/client';
 
 // Mock dependencies
-jest.mock('../../../../src/generated/prisma');
+jest.mock('../../../../src/lib/singletons/prisma', () => ({
+  prisma: {
+    workflowExecution: {
+      create: jest.fn(),
+      update: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      deleteMany: jest.fn(),
+      count: jest.fn()
+    }
+  }
+}));
 jest.mock('../../../../src/lib/queue/queueService');
 jest.mock('../../../../src/utils/logger');
 
-const mockPrisma = {
-  workflowExecution: {
-    create: jest.fn(),
-    update: jest.fn(),
-    findUnique: jest.fn(),
-    findMany: jest.fn(),
-    deleteMany: jest.fn(),
-    count: jest.fn()
-  }
-} as unknown as typeof prisma;
+// Import the mocked prisma
+import { prisma } from '../../../../src/lib/singletons/prisma';
+
+const mockPrisma = prisma;
 
 const mockQueueService = {
   cancelJob: jest.fn(),
@@ -28,7 +32,7 @@ describe('ExecutionStateManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    stateManager = new ExecutionStateManager(mockPrisma, mockQueueService);
+    stateManager = new ExecutionStateManager(mockQueueService);
   });
 
   describe('createExecution', () => {

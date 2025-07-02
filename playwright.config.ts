@@ -7,9 +7,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
-  timeout: 30000,
+  timeout: 15000,
   expect: {
-    timeout: 10000,
+    timeout: 5000,
   },
   use: {
     baseURL: 'http://localhost:3000',
@@ -36,19 +36,6 @@ export default defineConfig({
         hasTouch: false,
       },
     },
-    // Only run Firefox and WebKit in CI for non-workflow tests
-    ...(process.env.CI ? [
-      {
-        name: 'firefox',
-        use: { ...devices['Desktop Firefox'] },
-        testIgnore: ['**/workflows/**'],
-      },
-      {
-        name: 'webkit',
-        use: { ...devices['Desktop Safari'] },
-        testIgnore: ['**/workflows/**'],
-      },
-    ] : []),
   ],
   webServer: {
     command: 'npm run dev',

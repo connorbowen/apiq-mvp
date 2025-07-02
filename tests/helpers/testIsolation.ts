@@ -22,10 +22,10 @@ export async function withCleanDb<T>(fn: () => Promise<T>): Promise<T> {
  */
 export async function truncateTestTables(): Promise<void> {
   // Truncate tables that tests modify, restarting identity sequences
-  await prisma.$executeRaw`TRUNCATE TABLE "WorkflowExecution" RESTART IDENTITY CASCADE`;
-  await prisma.$executeRaw`TRUNCATE TABLE "ApiConnection" RESTART IDENTITY CASCADE`;
-  await prisma.$executeRaw`TRUNCATE TABLE "User" RESTART IDENTITY CASCADE`;
-  await prisma.$executeRaw`TRUNCATE TABLE "AuditLog" RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE TABLE workflow_executions RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE TABLE api_connections RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE TABLE users RESTART IDENTITY CASCADE`;
+  await prisma.$executeRaw`TRUNCATE TABLE audit_logs RESTART IDENTITY CASCADE`;
   
   // Note: We don't truncate pgboss tables here as they're managed by PgBoss itself
 }
@@ -35,7 +35,9 @@ export async function truncateTestTables(): Promise<void> {
  * Call this in afterEach if your test enqueues jobs.
  */
 export async function clearPgBossJobs(): Promise<void> {
-  await boss.purge();
+  // Stop and restart boss to clear job state
+  await boss.stop();
+  await boss.start();
 }
 
 /**

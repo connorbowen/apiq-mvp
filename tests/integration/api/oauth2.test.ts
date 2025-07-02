@@ -10,60 +10,18 @@ import { createTestUser, createAuthenticatedRequest, createUnauthenticatedReques
 import { Role } from '../../../src/generated/prisma';
 import { oauth2Service } from '../../../src/lib/auth/oauth2';
 import jwt from 'jsonwebtoken';
+import { createConnectionTestData } from '../../helpers/createTestData';
 
 describe('OAuth2 Flow Integration Tests (Real Integrations)', () => {
   let testUser: any;
   let testApiConnection: any;
   let authToken: string;
 
-  beforeAll(async () => {
-    // Create test user and API connection once for the suite
-    testUser = await createTestUser(undefined, 'password123');
-    
-    // Generate real JWT token for authentication
-    const jwtSecret = process.env.JWT_SECRET || 'test-secret';
-    authToken = jwt.sign(
-      { userId: testUser.id, email: testUser.email, role: testUser.role },
-      jwtSecret,
-      { expiresIn: '1h' }
-    );
-
-    // Use real GitHub OAuth2 credentials from environment
-    const githubClientId = process.env.GITHUB_CLIENT_ID;
-    const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
-    
-    if (!githubClientId || !githubClientSecret) {
-      console.warn('⚠️  GitHub OAuth2 credentials not configured - some tests will be skipped');
-      console.warn('   Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET environment variables to run all tests');
-    }
-
-    testApiConnection = await prisma.apiConnection.create({
-      data: {
-        userId: testUser.id,
-        name: 'Test OAuth2 API',
-        description: 'Test OAuth2 API connection',
-        baseUrl: 'https://api.github.com',
-        authType: 'OAUTH2',
-        authConfig: {
-          provider: 'github',
-          clientId: githubClientId || 'test-client-id',
-          clientSecret: githubClientSecret || 'test-client-secret',
-          redirectUri: 'http://localhost:3000/api/oauth/callback'
-        },
-        status: 'ACTIVE',
-        ingestionStatus: 'SUCCEEDED'
-      }
-    });
-  });
-
-  afterAll(async () => {
-    // Clean up test user and API connection
-    await prisma.apiConnection.deleteMany({ where: { userId: testUser.id } });
-    await prisma.user.delete({ where: { id: testUser.id } });
-  });
-
-  beforeEach(() => {
-    // No heavy cleanup needed; reuse main test user and API connection for all tests
+  beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createConnectionTestData();
+    testUser = testData.user;
+    testApiConnection = testData.connection;
   });
 
   describe('GET /api/oauth/providers', () => {
@@ -317,10 +275,10 @@ describe('OAuth2 Flow Integration Tests (Real Integrations)', () => {
 
       await tokenHandler(req as any, res as any);
 
-      expect(res._getStatusCode()).toBe(404);
+      expect(res._getStatusCode()).toBe(400);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(false);
-      expect(data.error).toBe('API connection not found');
+      expect(data.error).toBe('API connection does not use OAuth2 authentication');
 
       // Clean up the test connection
       await prisma.apiConnection.delete({ where: { id: nonOAuthConnection.id } });

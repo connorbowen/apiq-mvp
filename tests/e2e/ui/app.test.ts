@@ -565,20 +565,7 @@ test.describe('APIQ Application E2E Tests', () => {
       expect(data2.error).toMatch(/already exists/i);
     })
 
-    test.skip('Non-admin user cannot delete endpoints (RBAC)', async ({ request }) => {
-      // This test is a placeholder for when real authentication is implemented.
-      // It should simulate a non-admin user and expect a 403 Forbidden response.
-      // For now, RBAC is hardcoded to treat test-user-123 as ADMIN.
-      // When auth is ready, set the user context to a non-admin and run this test.
 
-      // 1. Create a connection as a non-admin (simulate via auth header or session)
-      // 2. Attempt to delete endpoints for that connection
-      // 3. Expect 403 Forbidden
-
-      // Example:
-      // const res = await request.delete(`/api/connections/${connectionId}/endpoints`, { headers: { Authorization: 'Bearer non-admin-token' } });
-      // expect(res.status()).toBe(403);
-    })
 
     test('Create connection with invalid OpenAPI spec should set ingestionStatus: FAILED', async ({ request }) => {
       const res = await request.post('/api/connections', {

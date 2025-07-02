@@ -22,6 +22,10 @@ process.env.DATABASE_URL = `postgresql://${process.env.TEST_DB_USER}:${process.e
 process.env.OPENAI_API_KEY = 'test-openai-api-key';
 process.env.OPENAI_MODEL = 'gpt-4-turbo-preview';
 
+// Set encryption keys for tests (mock values)
+process.env.ENCRYPTION_MASTER_KEY = 'test-32-character-master-key-123';
+process.env.ENCRYPTION_KEY = 'test-32-character-encryption-key-123';
+
 // Increase timeout for integration tests
 jest.setTimeout(30000);
 

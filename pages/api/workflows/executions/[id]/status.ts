@@ -49,8 +49,8 @@ async function getExecutionStatus(req: NextApiRequest, res: NextApiResponse, use
     }
 
     // Create dependencies
-    const queueService = new QueueService(prisma);
-    const stateManager = new ExecutionStateManager(prisma, queueService);
+    const queueService = new QueueService();
+    const stateManager = new ExecutionStateManager(queueService);
     const workflowExecutor = createWorkflowExecutor(stateManager, queueService);
 
     // Get execution progress

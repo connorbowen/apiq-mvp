@@ -36,7 +36,7 @@ describe('OAuth2Service', () => {
     mockPrisma = createMockPrisma();
     mockEncryptionService = createMockEncryptionService();
     oauth2Service = new OAuth2Service({
-      prisma: mockPrisma,
+      prismaClient: mockPrisma,
       encryptionService: mockEncryptionService,
       generateSecureToken: mockGenerateSecureToken
     });

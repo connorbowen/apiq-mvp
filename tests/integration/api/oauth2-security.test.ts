@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createTestUser } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
+import { createConnectionTestData } from '../../helpers/createTestData';
 
 // Import handlers
 const authorizeHandler = require('../../../pages/api/oauth/authorize').default;
@@ -12,37 +13,11 @@ describe('OAuth2 Security Integration Tests (Real)', () => {
   let testUser: any;
   let testApiConnection: any;
 
-  beforeAll(async () => {
-    // Create test user and API connection once for the suite
-    testUser = await createTestUser(undefined, 'test-password-123');
-    testApiConnection = await prisma.apiConnection.create({
-      data: {
-        userId: testUser.id,
-        name: 'OAuth2 Security Test API',
-        description: 'Test API for OAuth2 security',
-        baseUrl: 'https://api.example.com',
-        authType: 'OAUTH2',
-        authConfig: {
-          provider: 'github',
-          clientId: process.env.GITHUB_CLIENT_ID || 'test-security-client-id',
-          clientSecret: process.env.GITHUB_CLIENT_SECRET || 'test-security-client-secret',
-          redirectUri: 'http://localhost:3000/api/oauth/callback',
-          scope: 'repo user'
-        },
-        status: 'ACTIVE',
-        ingestionStatus: 'SUCCEEDED'
-      }
-    });
-  });
-
-  afterAll(async () => {
-    // Clean up test user and API connection
-    await prisma.apiConnection.deleteMany({ where: { userId: testUser.id } });
-    await prisma.user.delete({ where: { id: testUser.id } });
-  });
-
-  beforeEach(() => {
-    // No mocks needed for real integration tests
+  beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createConnectionTestData();
+    testUser = testData.user;
+    testApiConnection = testData.connection;
   });
 
   const createAuthenticatedRequest = (method: string, user: any, options: any = {}) => {
@@ -96,6 +71,7 @@ describe('OAuth2 Security Integration Tests (Real)', () => {
       expect(data.error).toBe('State parameter is required');
       expect(data.code).toBe('MISSING_STATE');
     });
+
     it('should reject malicious state parameter', async () => {
       const { req, res } = createUnauthenticatedRequest('GET', {
         query: {
@@ -108,6 +84,7 @@ describe('OAuth2 Security Integration Tests (Real)', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(false);
     });
+
     it('should reject expired state parameter', async () => {
       // Simulate expired state (older than 5 minutes)
       const expiredState = 'expired_state_parameter';
@@ -122,6 +99,7 @@ describe('OAuth2 Security Integration Tests (Real)', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(false);
     });
+
     it('should reject tampered state parameter', async () => {
       const { req, res } = createUnauthenticatedRequest('GET', {
         query: {
@@ -150,6 +128,7 @@ describe('OAuth2 Security Integration Tests (Real)', () => {
       await authorizeHandler(req, res);
       expect(res._getStatusCode()).toBe(401);
     });
+
     it('should require authentication for token refresh', async () => {
       const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
@@ -160,6 +139,7 @@ describe('OAuth2 Security Integration Tests (Real)', () => {
       await refreshHandler(req, res);
       expect(res._getStatusCode()).toBe(401);
     });
+
     it('should require authentication for token retrieval', async () => {
       const { req, res } = createUnauthenticatedRequest('GET', {
         query: {
@@ -194,6 +174,7 @@ describe('OAuth2 Security Integration Tests (Real)', () => {
         where: { id: otherUser.id }
       });
     });
+
     it('should reject invalid API connection ID', async () => {
       const { req, res } = createAuthenticatedRequest('GET', testUser, {
         query: {

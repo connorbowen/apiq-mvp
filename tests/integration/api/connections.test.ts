@@ -10,6 +10,7 @@ import type { TestUser } from '../../helpers/testUtils';
 // Import the real modules (no mocking)
 import { parseOpenApiSpec } from '../../../src/lib/api/parser';
 import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
+import { createCommonTestData } from '../../helpers/createTestData';
 
 // Mock the OpenAPI service to avoid external network calls
 jest.mock('../../../src/services/openApiService', () => ({
@@ -36,27 +37,15 @@ describe('API Connections Integration Tests', () => {
     await testSuite.beforeAll();
   });
 
-  afterAll(async () => {
-    await testSuite.afterAll();
-  });
+  
 
-  afterEach(async () => {
-    // Clean up in reverse dependency order
-    await cleanupTestConnections(createdConnectionIds);
-    await cleanupTestUsers(createdUserIds);
+    beforeEach(async () => {
+    // Recreate test data after global setup truncates tables
+    const testData = await createCommonTestData();
     
-    // Reset tracking arrays
-    createdUserIds = [];
-    createdConnectionIds = [];
-  });
-
-  beforeEach(async () => {
-    // Create a fresh test user for each test
-    testUser = await createTestUser();
-    createdUserIds.push(testUser.id);
     
-    // Clear mocks before each test
-    jest.clearAllMocks();
+    
+    testUser = testData.user;
   });
 
   describe('POST /api/connections', () => {

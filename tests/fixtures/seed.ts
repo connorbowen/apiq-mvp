@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../src/generated/prisma';
 
 export interface TestFixtures {
   users: {
@@ -6,8 +6,8 @@ export interface TestFixtures {
     testUser2: { id: string; email: string; name: string };
   };
   apiConnections: {
-    githubConnection: { id: string; userId: string; provider: string };
-    slackConnection: { id: string; userId: string; provider: string };
+    githubConnection: { id: string; userId: string; name: string };
+    slackConnection: { id: string; userId: string; name: string };
   };
 }
 
@@ -20,8 +20,8 @@ export async function loadFixtures(tx: PrismaClient): Promise<TestFixtures> {
       id: 'test-user-1-id',
       email: 'test-user-1@example.com',
       name: 'Test User 1',
+      password: 'hashed-test-password-1',
       role: 'USER',
-      emailVerified: new Date(),
     },
   });
 
@@ -32,8 +32,8 @@ export async function loadFixtures(tx: PrismaClient): Promise<TestFixtures> {
       id: 'test-user-2-id',
       email: 'test-user-2@example.com',
       name: 'Test User 2',
+      password: 'hashed-test-password-2',
       role: 'USER',
-      emailVerified: new Date(),
     },
   });
 
@@ -44,11 +44,12 @@ export async function loadFixtures(tx: PrismaClient): Promise<TestFixtures> {
     create: {
       id: 'test-github-connection-id',
       userId: testUser1.id,
-      provider: 'github',
       name: 'Test GitHub Connection',
-      status: 'CONNECTED',
-      credentials: 'encrypted-test-credentials',
-      metadata: { scope: 'repo,user' },
+      baseUrl: 'https://api.github.com',
+      authType: 'OAUTH2',
+      authConfig: { scope: 'repo,user' },
+      status: 'ACTIVE',
+      connectionStatus: 'connected',
     },
   });
 
@@ -58,11 +59,12 @@ export async function loadFixtures(tx: PrismaClient): Promise<TestFixtures> {
     create: {
       id: 'test-slack-connection-id',
       userId: testUser1.id,
-      provider: 'slack',
       name: 'Test Slack Connection',
-      status: 'CONNECTED',
-      credentials: 'encrypted-test-credentials',
-      metadata: { scope: 'chat:write,channels:read' },
+      baseUrl: 'https://slack.com/api',
+      authType: 'OAUTH2',
+      authConfig: { scope: 'chat:write,channels:read' },
+      status: 'ACTIVE',
+      connectionStatus: 'connected',
     },
   });
 
@@ -72,8 +74,8 @@ export async function loadFixtures(tx: PrismaClient): Promise<TestFixtures> {
       testUser2: { id: testUser2.id, email: testUser2.email, name: testUser2.name },
     },
     apiConnections: {
-      githubConnection: { id: githubConnection.id, userId: githubConnection.userId, provider: githubConnection.provider },
-      slackConnection: { id: slackConnection.id, userId: slackConnection.userId, provider: slackConnection.provider },
+      githubConnection: { id: githubConnection.id, userId: githubConnection.userId, name: githubConnection.name },
+      slackConnection: { id: slackConnection.id, userId: slackConnection.userId, name: slackConnection.name },
     },
   };
 } 

@@ -16,6 +16,7 @@
     "test:unit": "jest tests/unit --detectOpenHandles",
     "test:dashboard": "jest tests/unit/app/dashboard/page.test.tsx --runInBand --max-old-space-size=4096 --detectOpenHandles --logHeapUsage",
     "test:integration": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles",
+    "test:integration:debug": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles --runInBand --verbose",
     "test:integration:dotenv": "dotenv -e .env.test -- jest --config=jest.integration.config.js",
     "test:oauth2": "dotenv -e .env.test -- jest tests/integration/api/oauth2.test.ts --detectOpenHandles",
     "test:e2e": "playwright test",
@@ -40,7 +41,27 @@
     "db:reset": "prisma migrate reset",
     "db:setup": "npm run db:migrate && npm run db:generate",
     "rotate-secrets": "node scripts/rotate-secrets.js",
-    "check:no-mock-data": "grep -r -E 'test-user-123|test-user-456|demo-key|demo-token|fake API|mock.*api|create-test-user' . --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=.git --exclude=package-lock.json --exclude=package.json --exclude=.husky || exit 0"
+    "check:no-mock-data": "grep -r -E 'test-user-123|test-user-456|demo-key|demo-token|fake API|mock.*api|create-test-user' . --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=.git --exclude=package-lock.json --exclude=package.json --exclude=.husky || exit 0",
+    
+    "test:e2e:current": "playwright test tests/e2e/auth/ tests/e2e/ui/critical-ui.test.ts tests/e2e/ui/basic-navigation.test.ts tests/e2e/ui/dashboard-navigation.test.ts tests/e2e/security/ tests/e2e/workflow-engine/workflow-management.test.ts --grep-invert='oauth2|advanced|complex'",
+    
+    "test:e2e:p0": "playwright test tests/e2e/auth/ tests/e2e/connections/ tests/e2e/workflow-engine/workflow-management.test.ts tests/e2e/security/",
+    "test:e2e:p1": "playwright test tests/e2e/ui/ tests/e2e/workflow-engine/step-runner-engine.test.ts",
+    "test:e2e:p2": "playwright test tests/e2e/security/",
+    "test:e2e:p3": "echo 'P3 features not yet implemented - no E2E tests to run'",
+    
+    "test:e2e:auth-area": "playwright test tests/e2e/auth/",
+    "test:e2e:connections-area": "playwright test tests/e2e/connections/ --grep-invert='oauth2'",
+    "test:e2e:workflow-area": "playwright test tests/e2e/workflow-engine/workflow-management.test.ts tests/e2e/workflow-engine/step-runner-engine.test.ts --grep-invert='advanced|complex|data-flow|conditional'",
+    "test:e2e:ui-area": "playwright test tests/e2e/ui/",
+    "test:e2e:security-area": "playwright test tests/e2e/security/",
+    
+    "test:e2e:fast": "playwright test tests/e2e/ui/critical-ui.test.ts tests/e2e/auth/authentication-session.test.ts --timeout=10000",
+    "test:e2e:smoke": "playwright test tests/e2e/ui/critical-ui.test.ts tests/e2e/auth/authentication-session.test.ts tests/e2e/security/secrets-vault.test.ts",
+    "test:e2e:core": "playwright test tests/e2e/auth/ tests/e2e/ui/critical-ui.test.ts tests/e2e/ui/basic-navigation.test.ts tests/e2e/security/secrets-vault.test.ts tests/e2e/workflow-engine/workflow-management.test.ts",
+    
+    "test:e2e:debug": "playwright test --headed --debug",
+    "test:e2e:report": "playwright show-report"
   },
   "keywords": [
     "api",
