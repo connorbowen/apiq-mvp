@@ -2611,3 +2611,9 @@ JEST_TIMEOUT=30000
 - Add missing test scenarios
 - Improve test readability
 - Enhance test automation
+
+### Canonical Prisma Client for Tests
+
+All test code (unit, integration, E2E) must import the Prisma client from `lib/database/client.ts`. Do not use custom test clients or instantiate new PrismaClient instances. The test runner sets `DATABASE_URL` for test isolation, and all code uses the same client instance.
+
+This ensures that tests, API routes, and helpers all operate on the same database connection, preventing subtle bugs and improving reliability.

@@ -52,8 +52,8 @@ describe('RBAC Integration: Endpoint Deletion', () => {
       }
     });
     // Always create test users and data after cleanup
-    adminUser = await testSuite.createUser('admin@example.com', 'admin123', Role.ADMIN, 'Admin User');
-    regularUser = await testSuite.createUser('user@example.com', 'user123', Role.USER, 'Regular User');
+    adminUser = await testSuite.createUser(undefined, 'admin123', Role.ADMIN, 'Admin User');
+    regularUser = await testSuite.createUser(undefined, 'user123', Role.USER, 'Regular User');
     testConnection = await testSuite.createConnection(adminUser, 'RBAC Test API', 'https://rbac-test.com', 'NONE');
     testEndpoint = await testSuite.createEndpoint(testConnection, '/test', 'GET');
   });

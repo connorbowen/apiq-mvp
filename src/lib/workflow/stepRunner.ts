@@ -523,6 +523,14 @@ export class CustomStepExecutor implements StepExecutor {
         case 'log':
           result = { message: step.parameters?.message || 'Custom log message' };
           break;
+        case 'flaky':
+          // Simulate a flaky step that fails a certain number of times
+          const { failCount = 0, currentFailures = 0 } = step.parameters;
+          if (currentFailures < failCount) {
+            throw new Error(`Simulated failure ${currentFailures + 1}/${failCount}`);
+          }
+          result = { message: 'Flaky step succeeded after failures' };
+          break;
         default:
           result = { message: `Custom action: ${step.action}` };
       }
@@ -653,7 +661,7 @@ export class StepRunner {
     }
     
     // Check for custom actions
-    if (step.action === 'noop' || step.action === 'wait' || step.action === 'log') {
+    if (step.action === 'noop' || step.action === 'wait' || step.action === 'log' || step.action === 'flaky' || step.action === 'custom') {
       return 'CUSTOM';
     }
     

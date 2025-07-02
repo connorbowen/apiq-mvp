@@ -1,7 +1,8 @@
 import { createMocks } from 'node-mocks-http'
 import { NextApiRequest } from 'next'
-import healthHandler from '../../../pages/api/health'
 import { prisma } from '../../../lib/database/client'
+
+import { healthHandler } from '../../../pages/api/health'
 
 // Remove database health check mock
 // jest.mock('../../../src/database/init', ... )
@@ -224,7 +225,9 @@ describe('/api/health', () => {
         method: 'GET',
       })
 
-      await healthHandler(req, res)
+      // Call the full handler with middleware instead of just healthHandler
+      const fullHandler = require('../../../pages/api/health').default;
+      await fullHandler(req, res)
 
       const headers = res._getHeaders()
       expect(headers).toHaveProperty('access-control-allow-credentials')

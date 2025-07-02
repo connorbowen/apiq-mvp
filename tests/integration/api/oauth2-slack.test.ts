@@ -28,7 +28,7 @@ describe('Slack OAuth2 Flow Integration Tests', () => {
 
   beforeAll(async () => {
     prisma = new PrismaClient();
-    testUser = await createTestUser('slack-oauth2-test@example.com', 'test-password-123');
+    testUser = await createTestUser(undefined, 'test-password-123');
     testApiConnection = await createTestOAuth2Connection(prisma, testUser.id, 'slack');
   });
 

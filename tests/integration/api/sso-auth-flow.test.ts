@@ -57,7 +57,7 @@ describe('SSO Authentication Flow Testing - Phase 2.3', () => {
       }
     });
     // Always create testUser after cleanup
-    testUser = await createTestUser('ssoauth@example.com', 'ssoauth123', Role.USER, 'SSO Auth User');
+    testUser = await createTestUser(undefined, 'ssoauth123', Role.USER, 'SSO Auth User');
   });
 
   describe('SSO Provider Configuration', () => {

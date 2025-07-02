@@ -759,9 +759,100 @@ export class QueueService {
     }, (this.config as any).metricsInterval || 30000);
   }
 
-  private getQueueStatistics(queueName: string): Promise<QueueStatistics> {
-    // Implementation of getQueueStatistics method
-    throw new Error('Method not implemented');
+  private async getQueueStatistics(queueName: string): Promise<QueueStatistics> {
+    if (!this.isInitialized) {
+      throw new Error('Queue service not initialized');
+    }
+
+    try {
+      // Get basic queue metrics from PgBoss
+      const schema = this.config.schema || 'pgboss';
+      const table = `"${schema}"."job"`;
+
+      // Get job counts by state
+      const jobCounts = await this.prisma.$queryRawUnsafe(`
+        SELECT 
+          state,
+          COUNT(*) as count
+        FROM ${table}
+        WHERE name = $1
+        GROUP BY state
+      `, queueName);
+
+      // Get worker count for this queue
+      const workerCount = this.workers.has(queueName) ? 1 : 0;
+
+      // Calculate metrics
+      const metrics: QueueMetrics = {
+        jobsTotal: 0,
+        jobsCompleted: 0,
+        jobsFailed: 0,
+        jobsRetry: 0,
+        jobsActive: 0,
+        jobsDelayed: 0,
+        jobsCancelled: 0,
+        jobsExpired: 0,
+        queueSize: 0,
+        workerCount,
+        avgProcessingTime: 0,
+        avgWaitTime: 0,
+        throughputPerMinute: 0,
+        errorRate: 0
+      };
+
+      // Parse job counts
+      for (const row of jobCounts as any[]) {
+        const count = parseInt(row.count);
+        metrics.jobsTotal += count;
+        
+        switch (row.state) {
+          case 'completed':
+            metrics.jobsCompleted = count;
+            break;
+          case 'failed':
+            metrics.jobsFailed = count;
+            break;
+          case 'retry':
+            metrics.jobsRetry = count;
+            break;
+          case 'active':
+            metrics.jobsActive = count;
+            break;
+          case 'created':
+            metrics.queueSize = count;
+            break;
+          case 'cancelled':
+            metrics.jobsCancelled = count;
+            break;
+          case 'expired':
+            metrics.jobsExpired = count;
+            break;
+        }
+      }
+
+      // Calculate error rate
+      if (metrics.jobsTotal > 0) {
+        metrics.errorRate = (metrics.jobsFailed / metrics.jobsTotal) * 100;
+      }
+
+      // Determine health status
+      let health: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+      if (metrics.errorRate > 10) {
+        health = 'unhealthy';
+      } else if (metrics.errorRate > 5 || metrics.jobsActive > 100) {
+        health = 'degraded';
+      }
+
+      return {
+        queueName,
+        metrics,
+        lastUpdated: new Date(),
+        health
+      };
+    } catch (error) {
+      logError('Failed to get queue statistics', error as Error, { queueName });
+      throw error;
+    }
   }
 
   async shutdown(): Promise<void> {

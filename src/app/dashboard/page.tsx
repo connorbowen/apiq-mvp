@@ -122,12 +122,14 @@ export default function DashboardPage() {
         <div className="mb-6">
           <nav className="flex space-x-4" aria-label="Tabs">
             <button
+              data-testid="tab-chat"
               className={`px-3 py-2 font-medium text-sm rounded-md ${activeTab === 'chat' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
               onClick={() => setActiveTab('chat')}
             >
               Chat
             </button>
             <button
+              data-testid="tab-connections"
               className={`px-3 py-2 font-medium text-sm rounded-md ${activeTab === 'connections' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
               onClick={() => setActiveTab('connections')}
             >
@@ -200,6 +202,7 @@ function ConnectionsTab({
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-medium text-gray-900">API Connections</h2>
         <button
+          data-testid="create-connection-btn"
           onClick={() => setShowCreateForm(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
         >
@@ -227,7 +230,7 @@ function ConnectionsTab({
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
             {connections.map((connection) => (
-              <li key={connection.id}>
+              <li key={connection.id} data-testid="connection-card">
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -266,6 +269,7 @@ function ConnectionsTab({
                         View
                       </Link>
                       <button
+                        data-testid={`test-connection-${connection.id}`}
                         onClick={() => {/* Handle test */}}
                         className="text-gray-600 hover:text-gray-900 text-sm font-medium"
                       >
@@ -332,6 +336,8 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
               <label className="block text-sm font-medium text-gray-700">Name</label>
               <input
                 type="text"
+                name="name"
+                data-testid="connection-name-input"
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -342,6 +348,8 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
               <label className="block text-sm font-medium text-gray-700">Description</label>
               <input
                 type="text"
+                name="description"
+                data-testid="connection-description-input"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -351,6 +359,8 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
               <label className="block text-sm font-medium text-gray-700">Base URL</label>
               <input
                 type="url"
+                name="baseUrl"
+                data-testid="connection-baseurl-input"
                 required
                 value={formData.baseUrl}
                 onChange={(e) => setFormData({ ...formData, baseUrl: e.target.value })}
@@ -360,6 +370,8 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
             <div>
               <label className="block text-sm font-medium text-gray-700">Authentication Type</label>
               <select
+                name="authType"
+                data-testid="connection-authtype-select"
                 value={formData.authType}
                 onChange={(e) => setFormData({ ...formData, authType: e.target.value as any })}
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -374,6 +386,7 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
+                data-testid="cancel-connection-btn"
                 onClick={onClose}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
@@ -381,6 +394,7 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
               </button>
               <button
                 type="submit"
+                data-testid="submit-connection-btn"
                 disabled={isSubmitting}
                 className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
               >

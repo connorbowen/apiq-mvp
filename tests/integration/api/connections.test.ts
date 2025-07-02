@@ -1,10 +1,11 @@
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';
-import { createTestSuite, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
+import { createTestUser, cleanupTestUsers, createAuthenticatedRequest, createUnauthenticatedRequest, cleanupTestConnections } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 import fs from 'fs';
 import path from 'path';
+import type { TestUser } from '../../helpers/testUtils';
 
 // Import the real modules (no mocking)
 import { parseOpenApiSpec } from '../../../src/lib/api/parser';
@@ -26,26 +27,25 @@ const petstoreFixture = JSON.parse(
 );
 
 describe('API Connections Integration Tests', () => {
-  const testSuite = createTestSuite('Connections Tests');
-  let testUser: any;
+  let createdUserIds: string[] = [];
+  let createdConnectionIds: string[] = [];
+  let testUser: TestUser;
 
-  beforeAll(async () => {
-    await testSuite.beforeAll();
+  afterEach(async () => {
+    // Clean up in reverse dependency order
+    await cleanupTestConnections(createdConnectionIds);
+    await cleanupTestUsers(createdUserIds);
     
-    // Create test user
-    testUser = await testSuite.createUser(
-      'admin@example.com',
-      'admin123',
-      Role.ADMIN,
-      'Test Admin User'
-    );
+    // Reset tracking arrays
+    createdUserIds = [];
+    createdConnectionIds = [];
   });
 
-  afterAll(async () => {
-    await testSuite.afterAll();
-  });
-
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Create a fresh test user for each test
+    testUser = await createTestUser();
+    createdUserIds.push(testUser.id);
+    
     // Clear mocks before each test
     jest.clearAllMocks();
   });
@@ -68,6 +68,9 @@ describe('API Connections Integration Tests', () => {
       expect(data.data.name).toBe('Basic Test API');
       expect(data.data.baseUrl).toBe('https://api.example.com');
       expect(data.data.authType).toBe('NONE');
+      
+      // Track the created connection
+      createdConnectionIds.push(data.data.id);
     });
 
     it('should create API connection with OpenAPI spec and extract endpoints', async () => {
@@ -96,6 +99,9 @@ describe('API Connections Integration Tests', () => {
       expect(data.success).toBe(true);
       expect(data.data.name).toBe('Petstore API');
       expect(data.data.ingestionStatus).toBe('SUCCEEDED');
+      
+      // Track the created connection
+      createdConnectionIds.push(data.data.id);
     });
 
     it('should handle OpenAPI parsing errors gracefully', async () => {
@@ -123,16 +129,24 @@ describe('API Connections Integration Tests', () => {
       expect(data.success).toBe(true);
       expect(data.data.ingestionStatus).toBe('FAILED');
       expect(data.warning).toBeDefined();
+      
+      // Track the created connection
+      createdConnectionIds.push(data.data.id);
     });
 
     it('should prevent duplicate connection names for the same user', async () => {
       // Create first connection
-      const connection1 = await testSuite.createConnection(
-        testUser,
-        'Duplicate API',
-        'https://api.example.com',
-        'NONE'
-      );
+      const connection1 = await prisma.apiConnection.create({
+        data: {
+          userId: testUser.id,
+          name: 'Duplicate API',
+          baseUrl: 'https://api.example.com',
+          authType: 'NONE',
+          authConfig: {},
+          status: 'ACTIVE'
+        }
+      });
+      createdConnectionIds.push(connection1.id);
 
       // Try to create second connection with same name
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
@@ -205,19 +219,29 @@ describe('API Connections Integration Tests', () => {
   describe('GET /api/connections', () => {
     it('should retrieve all connections for a user', async () => {
       // Create test connections
-      const connection1 = await testSuite.createConnection(
-        testUser,
-        'Conn1',
-        'https://api1.example.com',
-        'NONE'
-      );
+      const connection1 = await prisma.apiConnection.create({
+        data: {
+          userId: testUser.id,
+          name: 'Conn1',
+          baseUrl: 'https://api1.example.com',
+          authType: 'NONE',
+          authConfig: {},
+          status: 'ACTIVE'
+        }
+      });
+      createdConnectionIds.push(connection1.id);
 
-      const connection2 = await testSuite.createConnection(
-        testUser,
-        'Conn2',
-        'https://api2.example.com',
-        'NONE'
-      );
+      const connection2 = await prisma.apiConnection.create({
+        data: {
+          userId: testUser.id,
+          name: 'Conn2',
+          baseUrl: 'https://api2.example.com',
+          authType: 'NONE',
+          authConfig: {},
+          status: 'ACTIVE'
+        }
+      });
+      createdConnectionIds.push(connection2.id);
 
       const { req, res } = createAuthenticatedRequest('GET', testUser);
 

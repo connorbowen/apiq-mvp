@@ -21,7 +21,7 @@ describe('OAuth2 Security Integration Tests', () => {
     prisma = new PrismaClient();
     
     // Create test user using helper function
-    testUser = await createTestUser('oauth2-security-test@example.com', 'test-password-123');
+    testUser = await createTestUser(undefined, 'test-password-123');
 
     // Create test API connection
     testApiConnection = await prisma.apiConnection.create({
@@ -175,7 +175,7 @@ describe('OAuth2 Security Integration Tests', () => {
   describe('Authorization Validation', () => {
     it('should validate API connection ownership', async () => {
       // Create another user using helper function
-      const otherUser = await createTestUser('other-user@example.com', 'test-password-123');
+      const otherUser = await createTestUser(undefined, 'test-password-123');
 
       const { req, res } = createAuthenticatedRequest('GET', otherUser, {
         query: {

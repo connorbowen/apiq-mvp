@@ -73,16 +73,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Send verification email
-    const emailSent = await emailService.sendVerificationEmail(
-      email.toLowerCase(),
-      verificationToken,
-      name
-    );
+    try {
+      const emailSent = await emailService.sendVerificationEmail(
+        email.toLowerCase(),
+        verificationToken,
+        name
+      );
 
-    if (!emailSent) {
+      if (!emailSent) {
+        throw new Error('EMAIL_SEND_FAILED');
+      }
+    } catch (emailError) {
       // If email fails, clean up the user and token
       await prisma.user.delete({ where: { id: user.id } });
       await prisma.verificationToken.delete({ where: { token: verificationToken } });
+      
+      logError('Email service failed during registration', emailError as Error, {
+        userId: user.id,
+        email: email.toLowerCase()
+      });
       
       throw new ApplicationError('Failed to send verification email', 500, 'EMAIL_SEND_FAILED');
     }

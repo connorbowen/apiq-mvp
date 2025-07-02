@@ -58,7 +58,7 @@ describe('OAuth2 Flow Integration Tests', () => {
 
     // Create test user
     testUser = await testSuite.createUser(
-      'test-oauth2@example.com',
+      undefined, // Let createTestUser generate unique email
       'password123',
       Role.USER,
       'Test OAuth2 User'

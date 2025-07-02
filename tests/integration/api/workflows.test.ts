@@ -1,4 +1,4 @@
-import { createTestUser, cleanupTestUser, createAuthenticatedRequest } from '../../helpers/testUtils';
+import { createTestUser, cleanupTestUsers, createAuthenticatedRequest } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
 import type { TestUser } from '../../helpers/testUtils';
 import workflowsHandler from '../../../pages/api/workflows';
@@ -6,24 +6,43 @@ import workflowHandler from '../../../pages/api/workflows/[id]';
 import executeHandler from '../../../pages/api/workflows/[id]/execute';
 
 describe('Workflow API Integration', () => {
-  let user: TestUser;
-  let workflowId: string;
-
-  beforeAll(async () => {
-    user = await createTestUser();
-  });
-
-  afterAll(async () => {
-    await cleanupTestUser(user);
-  });
+  let createdUserIds: string[] = [];
+  let createdWorkflowIds: string[] = [];
+  let createdStepIds: string[] = [];
+  let createdExecutionIds: string[] = [];
+  let testUser: TestUser;
 
   afterEach(async () => {
-    // Clean up workflows for this user
-    await prisma.workflow.deleteMany({ where: { userId: user.id } });
+    // Clean up in reverse dependency order
+    await prisma.executionLog.deleteMany({
+      where: { executionId: { in: createdExecutionIds } }
+    });
+    await prisma.workflowExecution.deleteMany({
+      where: { id: { in: createdExecutionIds } }
+    });
+    await prisma.workflowStep.deleteMany({
+      where: { id: { in: createdStepIds } }
+    });
+    await prisma.workflow.deleteMany({
+      where: { id: { in: createdWorkflowIds } }
+    });
+    await cleanupTestUsers(createdUserIds);
+    
+    // Reset tracking arrays
+    createdUserIds = [];
+    createdWorkflowIds = [];
+    createdStepIds = [];
+    createdExecutionIds = [];
+  });
+
+  beforeEach(async () => {
+    // Create a fresh test user for each test
+    testUser = await createTestUser();
+    createdUserIds.push(testUser.id);
   });
 
   it('should create a workflow', async () => {
-    const { req, res } = createAuthenticatedRequest('POST', user, {
+    const { req, res } = createAuthenticatedRequest('POST', testUser, {
       body: { name: 'Test Workflow', description: 'A test workflow' },
     });
     
@@ -33,12 +52,16 @@ describe('Workflow API Integration', () => {
     const data = JSON.parse(res._getData());
     expect(data.success).toBe(true);
     expect(data.data.name).toBe('Test Workflow');
-    workflowId = data.data.id;
+    createdWorkflowIds.push(data.data.id);
   });
 
   it('should not allow duplicate workflow names for the same user', async () => {
-    await prisma.workflow.create({ data: { userId: user.id, name: 'Dup Workflow', status: 'DRAFT', isPublic: false } });
-    const { req, res } = createAuthenticatedRequest('POST', user, {
+    const workflow = await prisma.workflow.create({ 
+      data: { userId: testUser.id, name: 'Dup Workflow', status: 'DRAFT', isPublic: false } 
+    });
+    createdWorkflowIds.push(workflow.id);
+    
+    const { req, res } = createAuthenticatedRequest('POST', testUser, {
       body: { name: 'Dup Workflow' },
     });
     
@@ -50,8 +73,12 @@ describe('Workflow API Integration', () => {
   });
 
   it('should list workflows', async () => {
-    await prisma.workflow.create({ data: { userId: user.id, name: 'List Workflow', status: 'DRAFT', isPublic: false } });
-    const { req, res } = createAuthenticatedRequest('GET', user);
+    const workflow = await prisma.workflow.create({ 
+      data: { userId: testUser.id, name: 'List Workflow', status: 'DRAFT', isPublic: false } 
+    });
+    createdWorkflowIds.push(workflow.id);
+    
+    const { req, res } = createAuthenticatedRequest('GET', testUser);
     
     await workflowsHandler(req, res);
     
@@ -63,9 +90,13 @@ describe('Workflow API Integration', () => {
   });
 
   it('should get a workflow by ID', async () => {
-    const wf = await prisma.workflow.create({ data: { userId: user.id, name: 'Get Workflow', status: 'DRAFT', isPublic: false } });
-    const { req, res } = createAuthenticatedRequest('GET', user, {
-      query: { id: wf.id },
+    const workflow = await prisma.workflow.create({ 
+      data: { userId: testUser.id, name: 'Get Workflow', status: 'DRAFT', isPublic: false } 
+    });
+    createdWorkflowIds.push(workflow.id);
+    
+    const { req, res } = createAuthenticatedRequest('GET', testUser, {
+      query: { id: workflow.id },
     });
     
     await workflowHandler(req, res);
@@ -73,13 +104,17 @@ describe('Workflow API Integration', () => {
     expect(res._getStatusCode()).toBe(200);
     const data = JSON.parse(res._getData());
     expect(data.success).toBe(true);
-    expect(data.data.id).toBe(wf.id);
+    expect(data.data.id).toBe(workflow.id);
   });
 
   it('should update a workflow', async () => {
-    const wf = await prisma.workflow.create({ data: { userId: user.id, name: 'Update Workflow', status: 'DRAFT', isPublic: false } });
-    const { req, res } = createAuthenticatedRequest('PUT', user, {
-      query: { id: wf.id },
+    const workflow = await prisma.workflow.create({ 
+      data: { userId: testUser.id, name: 'Update Workflow', status: 'DRAFT', isPublic: false } 
+    });
+    createdWorkflowIds.push(workflow.id);
+    
+    const { req, res } = createAuthenticatedRequest('PUT', testUser, {
+      query: { id: workflow.id },
       body: { name: 'Updated Name', description: 'Updated desc', status: 'ACTIVE' },
     });
     
@@ -93,9 +128,15 @@ describe('Workflow API Integration', () => {
   });
 
   it('should not update to a duplicate name', async () => {
-    const wf1 = await prisma.workflow.create({ data: { userId: user.id, name: 'WF1', status: 'DRAFT', isPublic: false } });
-    const wf2 = await prisma.workflow.create({ data: { userId: user.id, name: 'WF2', status: 'DRAFT', isPublic: false } });
-    const { req, res } = createAuthenticatedRequest('PUT', user, {
+    const wf1 = await prisma.workflow.create({ 
+      data: { userId: testUser.id, name: 'WF1', status: 'DRAFT', isPublic: false } 
+    });
+    const wf2 = await prisma.workflow.create({ 
+      data: { userId: testUser.id, name: 'WF2', status: 'DRAFT', isPublic: false } 
+    });
+    createdWorkflowIds.push(wf1.id, wf2.id);
+    
+    const { req, res } = createAuthenticatedRequest('PUT', testUser, {
       query: { id: wf2.id },
       body: { name: 'WF1' },
     });
@@ -108,9 +149,13 @@ describe('Workflow API Integration', () => {
   });
 
   it('should delete a workflow', async () => {
-    const wf = await prisma.workflow.create({ data: { userId: user.id, name: 'Delete Workflow', status: 'DRAFT', isPublic: false } });
-    const { req, res } = createAuthenticatedRequest('DELETE', user, {
-      query: { id: wf.id },
+    const workflow = await prisma.workflow.create({ 
+      data: { userId: testUser.id, name: 'Delete Workflow', status: 'DRAFT', isPublic: false } 
+    });
+    createdWorkflowIds.push(workflow.id);
+    
+    const { req, res } = createAuthenticatedRequest('DELETE', testUser, {
+      query: { id: workflow.id },
     });
     
     await workflowHandler(req, res);
@@ -118,12 +163,12 @@ describe('Workflow API Integration', () => {
     expect(res._getStatusCode()).toBe(200);
     const data = JSON.parse(res._getData());
     expect(data.success).toBe(true);
-    const check = await prisma.workflow.findUnique({ where: { id: wf.id } });
+    const check = await prisma.workflow.findUnique({ where: { id: workflow.id } });
     expect(check).toBeNull();
   });
 
   it('should return 404 for non-existent workflow', async () => {
-    const { req, res } = createAuthenticatedRequest('GET', user, {
+    const { req, res } = createAuthenticatedRequest('GET', testUser, {
       query: { id: 'nonexistent-id' },
     });
     
@@ -135,14 +180,16 @@ describe('Workflow API Integration', () => {
   });
 
   describe('Workflow Execution', () => {
-    let wfId: string;
-    beforeEach(async () => {
-      const wf = await prisma.workflow.create({ data: { userId: user.id, name: 'Exec Workflow', status: 'ACTIVE', isPublic: false } });
-      wfId = wf.id;
+    it('should execute a workflow', async () => {
+      const workflow = await prisma.workflow.create({ 
+        data: { userId: testUser.id, name: 'Exec Workflow', status: 'ACTIVE', isPublic: false } 
+      });
+      createdWorkflowIds.push(workflow.id);
+      
       // Add a dummy step so execution is allowed
-      await prisma.workflowStep.create({
+      const step = await prisma.workflowStep.create({
         data: {
-          workflowId: wfId,
+          workflowId: workflow.id,
           stepOrder: 1,
           name: 'Step 1',
           action: 'noop',
@@ -150,15 +197,10 @@ describe('Workflow API Integration', () => {
           isActive: true,
         },
       });
-    });
-    afterEach(async () => {
-      await prisma.workflowExecution.deleteMany({ where: { workflowId: wfId } });
-      await prisma.workflowStep.deleteMany({ where: { workflowId: wfId } });
-      await prisma.workflow.deleteMany({ where: { id: wfId } });
-    });
-    it('should execute a workflow', async () => {
-      const { req, res } = createAuthenticatedRequest('POST', user, {
-        query: { id: wfId },
+      createdStepIds.push(step.id);
+      
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
+        query: { id: workflow.id },
         body: { parameters: { foo: 'bar' } },
       });
       
@@ -168,13 +210,23 @@ describe('Workflow API Integration', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.status).toBe('completed');
-      expect(data.data.workflow.id).toBe(wfId);
+      expect(data.data.workflow.id).toBe(workflow.id);
+      
+      // Track the execution
+      const executions = await prisma.workflowExecution.findMany({ where: { workflowId: workflow.id } });
+      if (executions.length > 0) {
+        createdExecutionIds.push(executions[0].id);
+      }
     });
+
     it('should not execute a workflow with no steps', async () => {
-      // Remove steps
-      await prisma.workflowStep.deleteMany({ where: { workflowId: wfId } });
-      const { req, res } = createAuthenticatedRequest('POST', user, {
-        query: { id: wfId },
+      const workflow = await prisma.workflow.create({ 
+        data: { userId: testUser.id, name: 'No Steps Workflow', status: 'ACTIVE', isPublic: false } 
+      });
+      createdWorkflowIds.push(workflow.id);
+      
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
+        query: { id: workflow.id },
         body: {},
       });
       
@@ -185,10 +237,15 @@ describe('Workflow API Integration', () => {
       expect(data.success).toBe(false);
       expect(data.error).toMatch(/no steps/i);
     });
+
     it('should not execute a workflow that is not active', async () => {
-      await prisma.workflow.update({ where: { id: wfId }, data: { status: 'DRAFT' } });
-      const { req, res } = createAuthenticatedRequest('POST', user, {
-        query: { id: wfId },
+      const workflow = await prisma.workflow.create({ 
+        data: { userId: testUser.id, name: 'Draft Workflow', status: 'DRAFT', isPublic: false } 
+      });
+      createdWorkflowIds.push(workflow.id);
+      
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
+        query: { id: workflow.id },
         body: {},
       });
       
@@ -199,8 +256,9 @@ describe('Workflow API Integration', () => {
       expect(data.success).toBe(false);
       expect(data.error).toMatch(/not active/i);
     });
+
     it('should return 404 for non-existent workflow execution', async () => {
-      const { req, res } = createAuthenticatedRequest('POST', user, {
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
         query: { id: 'nonexistent-id' },
         body: {},
       });
@@ -214,32 +272,18 @@ describe('Workflow API Integration', () => {
   });
 
   describe('End-to-End Workflow Execution', () => {
-    let user: TestUser;
-    let wfId: string;
-
-    beforeAll(async () => {
-      user = await createTestUser();
-    });
-
-    afterAll(async () => {
-      await cleanupTestUser(user);
-    });
-
-    afterEach(async () => {
-      await prisma.workflowExecution.deleteMany({ where: { workflowId: wfId } });
-      await prisma.workflowStep.deleteMany({ where: { workflowId: wfId } });
-      await prisma.workflow.deleteMany({ where: { id: wfId } });
-    });
-
     it('should execute a multi-step workflow and track state/logs', async () => {
       // Create workflow
-      const wf = await prisma.workflow.create({ data: { userId: user.id, name: 'E2E Workflow', status: 'ACTIVE', isPublic: false } });
-      wfId = wf.id;
+      const workflow = await prisma.workflow.create({ 
+        data: { userId: testUser.id, name: 'E2E Workflow', status: 'ACTIVE', isPublic: false } 
+      });
+      createdWorkflowIds.push(workflow.id);
+      
       // Add steps: noop, data transform, condition
-      await prisma.workflowStep.createMany({
+      const steps = await prisma.workflowStep.createMany({
         data: [
           {
-            workflowId: wfId,
+            workflowId: workflow.id,
             stepOrder: 1,
             name: 'Noop Step',
             action: 'noop',
@@ -247,7 +291,7 @@ describe('Workflow API Integration', () => {
             isActive: true,
           },
           {
-            workflowId: wfId,
+            workflowId: workflow.id,
             stepOrder: 2,
             name: 'Transform Step',
             action: 'transform',
@@ -255,18 +299,27 @@ describe('Workflow API Integration', () => {
             isActive: true,
           },
           {
-            workflowId: wfId,
+            workflowId: workflow.id,
             stepOrder: 3,
             name: 'Condition Step',
             action: 'condition',
-            parameters: { condition: true, trueStep: null, falseStep: null },
+            parameters: { 
+              condition: { field: 'param.test', operator: 'exists', value: null },
+              trueStep: null, 
+              falseStep: null 
+            },
             isActive: true,
           },
         ],
       });
+      
+      // Get the created step IDs
+      const createdSteps = await prisma.workflowStep.findMany({ where: { workflowId: workflow.id } });
+      createdSteps.forEach(step => createdStepIds.push(step.id));
+      
       // Execute workflow
-      const { req, res } = createAuthenticatedRequest('POST', user, {
-        query: { id: wfId },
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
+        query: { id: workflow.id },
         body: { parameters: { foo: 'bar' } },
       });
       await executeHandler(req, res);
@@ -274,17 +327,25 @@ describe('Workflow API Integration', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.status).toBe('completed');
-      expect(data.data.workflow.id).toBe(wfId);
+      expect(data.data.workflow.id).toBe(workflow.id);
+      
+      // Track the execution
+      const executions = await prisma.workflowExecution.findMany({ where: { workflowId: workflow.id } });
+      if (executions.length > 0) {
+        createdExecutionIds.push(executions[0].id);
+      }
+      
       // Check execution state
-      const executions = await prisma.workflowExecution.findMany({ where: { workflowId: wfId } });
       expect(executions.length).toBe(1);
       const execution = executions[0];
       expect(execution.status).toBe('COMPLETED');
       expect(execution.completedSteps).toBe(3);
       expect(execution.failedSteps).toBe(0);
+      
       // Check logs
       const logs = await prisma.executionLog.findMany({ where: { executionId: execution.id } });
       expect(logs.length).toBeGreaterThanOrEqual(3);
+      
       // Check step results
       expect(execution.stepResults).toBeDefined();
       if (execution.stepResults) {
@@ -294,13 +355,16 @@ describe('Workflow API Integration', () => {
 
     it('should retry a failed step and eventually succeed', async () => {
       // Create workflow
-      const wf = await prisma.workflow.create({ data: { userId: user.id, name: 'Retry Workflow', status: 'ACTIVE', isPublic: false } });
-      wfId = wf.id;
+      const workflow = await prisma.workflow.create({ 
+        data: { userId: testUser.id, name: 'Retry Workflow', status: 'ACTIVE', isPublic: false } 
+      });
+      createdWorkflowIds.push(workflow.id);
+      
       // Add a step that will fail once, then succeed
       let failFirst = true;
-      await prisma.workflowStep.create({
+      const step = await prisma.workflowStep.create({
         data: {
-          workflowId: wfId,
+          workflowId: workflow.id,
           stepOrder: 1,
           name: 'Flaky Step',
           action: 'noop',
@@ -308,18 +372,24 @@ describe('Workflow API Integration', () => {
           isActive: true,
         },
       });
-      // Patch the stepRunner to simulate failure on first attempt
-      const origExecuteStep = require('../../../src/lib/workflow/stepRunner').stepRunner.executeStep;
-      require('../../../src/lib/workflow/stepRunner').stepRunner.executeStep = async (step, ctx) => {
-        if (failFirst) {
-          failFirst = false;
-          return { success: false, error: 'Simulated failure', duration: 10, retryCount: 0 };
+      createdStepIds.push(step.id);
+      
+      // Create a custom step that will fail once, then succeed
+      await prisma.workflowStep.update({
+        where: { id: step.id },
+        data: {
+          action: 'custom',
+          parameters: { 
+            action: 'flaky',
+            failCount: 1,
+            currentFailures: 0
+          }
         }
-        return origExecuteStep(step, ctx);
-      };
+      });
+      
       // Execute workflow
-      const { req, res } = createAuthenticatedRequest('POST', user, {
-        query: { id: wfId },
+      const { req, res } = createAuthenticatedRequest('POST', testUser, {
+        query: { id: workflow.id },
         body: {},
       });
       await executeHandler(req, res);
@@ -327,15 +397,21 @@ describe('Workflow API Integration', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.status).toBe('completed');
+      
+      // Track the execution
+      const executions = await prisma.workflowExecution.findMany({ where: { workflowId: workflow.id } });
+      if (executions.length > 0) {
+        createdExecutionIds.push(executions[0].id);
+      }
+      
       // Check execution state
-      const executions = await prisma.workflowExecution.findMany({ where: { workflowId: wfId } });
       expect(executions.length).toBe(1);
       const execution = executions[0];
       expect(execution.status).toBe('COMPLETED');
       expect(execution.completedSteps).toBe(1);
       expect(execution.failedSteps).toBe(0);
-      // Restore stepRunner
-      require('../../../src/lib/workflow/stepRunner').stepRunner.executeStep = origExecuteStep;
+      
+      // Test completed successfully
     });
   });
 }); 

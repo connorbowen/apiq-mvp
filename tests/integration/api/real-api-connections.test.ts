@@ -32,7 +32,7 @@ describe('Real API Connections Integration Tests', () => {
     
     // Create test user with unique email to avoid conflicts with other test files
     testUser = await testSuite.createUser(
-      'real-api-test@example.com',
+      undefined, // Let createTestUser generate unique email
       'admin123',
       Role.ADMIN,
       'Real API Test Admin User'
@@ -77,7 +77,7 @@ describe('Real API Connections Integration Tests', () => {
     });
     // Recreate test users as needed for each test
     if (typeof testUser !== 'undefined') {
-      testUser = await createTestUser('realapi@example.com', 'realapi123', Role.USER, 'Real API User');
+      testUser = await createTestUser(undefined, 'realapi123', Role.USER, 'Real API User');
     }
   });
 

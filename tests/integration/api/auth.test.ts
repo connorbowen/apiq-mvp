@@ -4,69 +4,37 @@ import refreshHandler from '../../../pages/api/auth/refresh';
 import meHandler from '../../../pages/api/auth/me';
 import { NextApiRequest } from 'next';
 import { prisma } from '../../../lib/database/client';
-import { createTestSuite, createTestUser, cleanupTestUser, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';
+import { createTestSuite, createTestUser, cleanupTestUsers, createAuthenticatedRequest, createUnauthenticatedRequest, generateTestId } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 
 describe('Authentication Integration Tests', () => {
-  const testSuite = createTestSuite('Authentication Tests');
+  let createdUserIds: string[] = [];
   let testUsers: any[] = [];
 
-  beforeAll(async () => {
-    await testSuite.beforeAll();
-    // testUsers creation moved to beforeEach
-  });
-
-  afterAll(async () => {
-    await testSuite.afterAll();
+  afterEach(async () => {
+    await cleanupTestUsers(createdUserIds);
+    createdUserIds = [];
+    testUsers = [];
   });
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    await prisma.endpoint.deleteMany({
-      where: {
-        apiConnection: {
-          user: {
-            OR: [
-              { email: { contains: 'test-' } },
-              { email: { contains: '@example.com' } }
-            ]
-          }
-        }
-      }
-    });
-    await prisma.apiConnection.deleteMany({
-      where: {
-        user: {
-          OR: [
-            { email: { contains: 'test-' } },
-            { email: { contains: '@example.com' } }
-          ]
-        }
-      }
-    });
-    await prisma.user.deleteMany({
-      where: {
-        OR: [
-          { email: { contains: 'test-' } },
-          { email: { contains: '@example.com' } }
-        ]
-      }
-    });
-    // Always create testUsers after cleanup
+    // Create unique test users for this test
     testUsers = [];
     const users = [
-      { email: 'testuser@example.com', password: 'user123', role: Role.USER },
-      { email: 'testadmin@example.com', password: 'admin123', role: Role.ADMIN },
-      { email: 'testsuper@example.com', password: 'super123', role: Role.SUPER_ADMIN }
+      { password: 'user123', role: Role.USER },
+      { password: 'admin123', role: Role.ADMIN },
+      { password: 'super123', role: Role.SUPER_ADMIN }
     ];
     for (const userData of users) {
-      const user = await testSuite.createUser(
-        userData.email,
+      const user = await createTestUser(
+        undefined, // Let createUser generate unique email
         userData.password,
         userData.role,
         `Test ${userData.role}`
       );
       testUsers.push(user);
+      createdUserIds.push(user.id);
     }
   });
 
@@ -94,7 +62,7 @@ describe('Authentication Integration Tests', () => {
     it('should reject invalid credentials', async () => {
       const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
-          email: 'invalid@example.com',
+          email: `invalid-${generateTestId()}@example.com`,
           password: 'wrongpassword'
         }
       });
@@ -111,7 +79,7 @@ describe('Authentication Integration Tests', () => {
     it('should reject missing credentials', async () => {
       const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
-          email: 'testadmin@example.com'
+          email: `testadmin-${generateTestId()}@example.com`
           // missing password
         }
       });

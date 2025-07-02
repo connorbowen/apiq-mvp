@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/database/client';
-import { createTestSuite } from '../helpers/testUtils';
+import { createTestSuite, generateTestId } from '../helpers/testUtils';
 
 describe('Database Integration Tests', () => {
   const testSuite = createTestSuite('Database Tests');
@@ -45,8 +45,9 @@ describe('Database Integration Tests', () => {
 
   it('should create and delete test data', async () => {
     // Create a test user
+    const testEmail = `test-db-user-${generateTestId()}@example.com`;
     const testUser = await testSuite.createUser(
-      'test-db-user@example.com',
+      testEmail,
       'testpass123',
       'USER' as any,
       'Test DB User'
@@ -58,7 +59,7 @@ describe('Database Integration Tests', () => {
     });
 
     expect(foundUser).toBeDefined();
-    expect(foundUser?.email).toBe('test-db-user@example.com');
+    expect(foundUser?.email).toBe(testEmail);
 
     // The cleanup will be handled by the test suite
   });

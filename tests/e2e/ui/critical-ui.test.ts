@@ -14,27 +14,31 @@ test.describe('Critical UI Tests - Chromium Only', () => {
     
     // Check for the main heading
     await expect(page.locator('h1')).toContainText('APIQ');
-    await expect(page.locator('h2')).toContainText('AI-Powered API Orchestration');
+    await expect(page.locator('h2')).toContainText('Just Ask, We\'ll Connect');
     
-    // Check for the main call-to-action buttons
-    await expect(page.locator('a[href="#features"]')).toContainText('Get Started');
-    await expect(page.locator('a[href="#demo"]')).toContainText('View Demo');
+    // Check for the main call-to-action buttons (handle multiple dashboard links)
+    const dashboardLinks = page.locator('a[href="/dashboard"]');
+    await expect(dashboardLinks.first()).toBeVisible();
+    await expect(dashboardLinks.nth(1)).toBeVisible();
+    
+    // Check for examples link
+    await expect(page.locator('a[href="#examples"]')).toContainText('See Examples');
   });
 
-  test('should have working health check functionality', async ({ page }) => {
-    // Click the health check button
-    await page.click('button:has-text("Health Check")');
+  test('should have working API health endpoint', async ({ page }) => {
+    // Test the health check API endpoint
+    const response = await page.request.get('/api/health');
+    expect(response.status()).toBe(200);
     
-    // Wait for the health status to appear with shorter timeout
-    await page.waitForSelector('text=System Health:', { timeout: 5000 });
-    
-    // Check that health status is displayed
-    await expect(page.locator('text=System Health:')).toBeVisible();
+    const data = await response.json();
+    expect(data).toHaveProperty('success', true);
+    expect(data).toHaveProperty('status', 'healthy');
+    expect(data).toHaveProperty('timestamp');
   });
 
   test('should navigate to login page', async ({ page }) => {
     // Click on login link or button
-    await page.click('a[href="/login"], button:has-text("Sign In"), a:has-text("Login")');
+    await page.click('a[href="/login"], button:has-text("Sign In"), a:has-text("Sign In")');
     
     // Should be on login page
     await expect(page).toHaveURL(/.*login/);
@@ -54,14 +58,11 @@ test.describe('Critical UI Tests - Chromium Only', () => {
     await expect(page.locator('h2')).toContainText('This page could not be found.');
   });
 
-  test('should have working API health endpoint', async ({ page }) => {
-    // Test the health check API endpoint
-    const response = await page.request.get('/api/health');
-    expect(response.status()).toBe(200);
+  test('should have working navigation to dashboard', async ({ page }) => {
+    // Click on the first dashboard link
+    await page.locator('a[href="/dashboard"]').first().click();
     
-    const data = await response.json();
-    expect(data).toHaveProperty('success', true);
-    expect(data).toHaveProperty('status', 'healthy');
-    expect(data).toHaveProperty('timestamp');
+    // Should navigate to dashboard
+    await expect(page).toHaveURL(/.*dashboard/);
   });
 }); 

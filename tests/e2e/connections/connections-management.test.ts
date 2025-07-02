@@ -6,8 +6,8 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 // Configure tests to run only in Chromium
 test.use({ browserName: 'chromium' });
 
-let testUser;
-let jwt;
+let testUser: any;
+let jwt: string;
 let createdConnectionIds: string[] = [];
 
 test.describe('Connections Management E2E Tests', () => {
@@ -48,7 +48,7 @@ test.describe('Connections Management E2E Tests', () => {
     await expect(page).toHaveURL(/.*dashboard/);
     // Take a screenshot after login
     await page.screenshot({ path: 'debug-after-login.png', fullPage: true });
-    // Navigate to connections tab
+    // Navigate to connections tab - use the data-testid
     await page.click('[data-testid="tab-connections"]');
   });
 
@@ -458,7 +458,7 @@ test.describe('Connections Management E2E Tests', () => {
   test.describe('Connection Search and Filter', () => {
     test('should search connections by name', async ({ page }) => {
       // Create multiple connections
-      const connections = [];
+      const testConnections = [];
       for (let i = 0; i < 3; i++) {
         const response = await page.request.post('/api/connections', {
           data: {
@@ -473,7 +473,7 @@ test.describe('Connections Management E2E Tests', () => {
           }
         });
         const connection = await response.json();
-        connections.push(connection.data);
+        testConnections.push(connection.data);
         createdConnectionIds.push(connection.data.id);
       }
       
@@ -490,7 +490,7 @@ test.describe('Connections Management E2E Tests', () => {
 
     test('should filter connections by auth type', async ({ page }) => {
       // Create connections with different auth types
-      const connections = [];
+      const testConnections = [];
       const authTypes = ['API_KEY', 'BEARER_TOKEN', 'BASIC'];
       
       for (const authType of authTypes) {
@@ -507,7 +507,7 @@ test.describe('Connections Management E2E Tests', () => {
           }
         });
         const connection = await response.json();
-        connections.push(connection.data);
+        testConnections.push(connection.data);
         createdConnectionIds.push(connection.data.id);
       }
       

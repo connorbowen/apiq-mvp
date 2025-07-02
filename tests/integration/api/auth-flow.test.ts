@@ -57,7 +57,7 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
       }
     });
     // Always create testUser after cleanup
-    testUser = await createTestUser('authflow@example.com', 'authflow123', Role.USER, 'Auth Flow User');
+    testUser = await createTestUser(undefined, 'authflow123', Role.USER, 'Auth Flow User');
   });
 
   describe('API Key Authentication', () => {
@@ -412,7 +412,7 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
       const connectionId = connectionData.data.id;
 
       // Create another user
-      const otherUser = await testSuite.createUser('other-user@example.com', 'testpass123', Role.USER);
+      const otherUser = await testSuite.createUser(undefined, 'testpass123', Role.USER);
 
       // Try to access credentials with different user
       const { req: unauthorizedReq, res: unauthorizedRes } = createAuthenticatedRequest('GET', otherUser);

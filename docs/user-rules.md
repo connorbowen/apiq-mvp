@@ -507,6 +507,11 @@ export const deleteUserWithData = async (userId: string) => {
 };
 ```
 
+### Canonical Prisma Client Rule
+- All code (API, helpers, tests) must import Prisma from `lib/database/client.ts`.
+- Do not instantiate new PrismaClient instances or use custom test helpers (such as `getTestPrismaClient`).
+- The test runner sets `DATABASE_URL` for test isolation; all code uses the same client instance.
+
 ## API Development Rules
 
 ### API Route Structure
@@ -712,6 +717,49 @@ describe('/api/users', () => {
 2. **Fixtures**: Use consistent test data fixtures
 3. **Cleanup**: Clean up test data after each test
 4. **Isolation**: Ensure tests are isolated and independent
+
+### E2E Test Guardrails for AI Development
+1. **Primary Quality Gate**: E2E tests serve as primary guardrails during AI development
+2. **Fast Feedback Loop**: Run critical e2e tests before every commit
+3. **User Experience Protection**: Validate that AI changes don't break core user journeys
+4. **Regression Detection**: Catch unexpected changes from AI agents across multiple files
+
+#### **Daily Development Guardrails:**
+```bash
+# Before every commit
+npm run test:unit && \
+npm run test:integration && \
+npm run test:e2e:ui-critical && \
+npx playwright test tests/e2e/ui/basic-navigation.test.ts
+```
+
+#### **Critical E2E Test Coverage:**
+- **Homepage functionality** - Validates app loads correctly
+- **Navigation flows** - Ensures links and buttons work
+- **API health** - Confirms backend responsiveness
+- **Login flow** - Protects authentication functionality
+- **Protected routes** - Maintains security boundaries
+- **Error handling** - Validates graceful failure modes
+
+#### **Guardrail Workflow:**
+1. **Before AI Changes**: Run critical e2e tests to establish baseline
+2. **After AI Changes**: Run critical e2e tests to validate no regressions
+3. **If Tests Fail**: 
+   - Quick fix: Update tests to match new UI (if intentional change)
+   - Investigate: Did AI break something important?
+   - Rollback: If critical functionality is broken
+
+#### **Test-Code Synchronization Strategy:**
+- **Update tests for code** (not code for tests) - Your code is the source of truth
+- **Focus on user journeys** - Test user behavior, not implementation details
+- **Keep tests fast and reliable** - Avoid flaky tests, use stable selectors
+- **Expand coverage as features grow** - Add tests for new critical paths
+
+#### **AI Development Best Practices:**
+- **Consistent execution** - Run guardrails before every commit
+- **Fail fast** - Use failures as signals to investigate, not just fix tests
+- **User-centric validation** - Ensure AI changes don't break user experience
+- **Integration protection** - Catch issues that unit tests miss
 
 ```typescript
 // ✅ Good

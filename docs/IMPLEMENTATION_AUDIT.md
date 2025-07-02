@@ -229,3 +229,9 @@ The project is **well-positioned** for successful completion with strong technic
 **Audit Status**: ✅ APPROVED  
 **Next Review**: After Phase 2 completion  
 **Confidence Level**: HIGH 
+
+## 2025-07-01: Prisma Client Unification
+
+- All code (API, helpers, tests) now imports Prisma from `lib/database/client.ts`.
+- Removed `getTestPrismaClient` and `tests/helpers/test-db.ts`.
+- All test and app code now use the same database connection, as required by project rules. 

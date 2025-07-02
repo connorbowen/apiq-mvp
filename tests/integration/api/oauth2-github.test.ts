@@ -32,7 +32,7 @@ describe('GitHub OAuth2 Flow Integration Tests', () => {
     prisma = new PrismaClient();
     
     // Create test user using helper function
-    testUser = await createTestUser('github-oauth2-test@example.com', 'test-password-123');
+    testUser = await createTestUser(undefined, 'test-password-123');
 
     // Create test API connection using helper function
     testApiConnection = await createTestOAuth2Connection(prisma, testUser.id, 'github');

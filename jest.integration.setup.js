@@ -12,8 +12,15 @@ process.env.NODE_ENV = 'test';
 process.env.TEST_DB_HOST = process.env.TEST_DB_HOST || 'localhost';
 process.env.TEST_DB_PORT = process.env.TEST_DB_PORT || '5432';
 process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || 'apiq_test';
-process.env.TEST_DB_USER = process.env.TEST_DB_USER || 'postgres';
-process.env.TEST_DB_PASSWORD = process.env.TEST_DB_PASSWORD || 'postgres';
+process.env.TEST_DB_USER = process.env.TEST_DB_USER || 'connorbowen';
+process.env.TEST_DB_PASSWORD = process.env.TEST_DB_PASSWORD || '';
+
+// Set DATABASE_URL for test environment
+process.env.DATABASE_URL = `postgresql://${process.env.TEST_DB_USER}:${process.env.TEST_DB_PASSWORD}@${process.env.TEST_DB_HOST}:${process.env.TEST_DB_PORT}/${process.env.TEST_DB_NAME}`;
+
+// Set OpenAI API key for tests (mock value)
+process.env.OPENAI_API_KEY = 'test-openai-api-key';
+process.env.OPENAI_MODEL = 'gpt-4-turbo-preview';
 
 // Increase timeout for integration tests
 jest.setTimeout(30000);

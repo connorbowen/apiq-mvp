@@ -6,11 +6,11 @@
 // Priority: Low - utilities are working well, refactoring for organization only.
 
 import { createMocks } from 'node-mocks-http';
-import { prisma } from '../../lib/database/client';
 import bcrypt from 'bcryptjs';
 import loginHandler from '../../pages/api/auth/login';
 import { Role } from '../../src/generated/prisma';
 import { AuthType } from '../../src/types';
+import { prisma } from '../../lib/database/client';
 
 export interface TestUser {
   id: string;
@@ -60,16 +60,9 @@ export const createTestUser = async (
   // Hash password with bcrypt
   const hashedPassword = await bcrypt.hash(testPassword, 10);
 
-  // Use upsert to handle race conditions - create if doesn't exist, update if it does
-  const user = await prisma.user.upsert({
-    where: { email: testEmail },
-    update: {
-      password: hashedPassword,
-      name: testName,
-      role: role,
-      isActive: true
-    },
-    create: {
+  // Create user with unique email (no race condition since emails are unique)
+  const user = await prisma.user.create({
+    data: {
       email: testEmail,
       password: hashedPassword,
       name: testName,
@@ -77,6 +70,23 @@ export const createTestUser = async (
       isActive: true
     }
   });
+
+  console.log(`Created test user: ${testEmail} with ID: ${user.id}`);
+
+  // Verify the user was created correctly
+  const createdUser = await prisma.user.findUnique({
+    where: { email: testEmail }
+  });
+
+  if (!createdUser) {
+    throw new Error(`Failed to create test user: ${testEmail}`);
+  }
+
+  console.log(`Verified user exists: ${createdUser.email}, isActive: ${createdUser.isActive}`);
+  
+  // Test password comparison directly
+  const passwordMatch = await bcrypt.compare(testPassword, createdUser.password);
+  console.log(`Password comparison test: ${passwordMatch} (plain: ${testPassword}, hashed: ${createdUser.password.substring(0, 20)}...)`);
 
   // Login to get real JWT tokens
   const { req, res } = createMocks({
@@ -93,8 +103,11 @@ export const createTestUser = async (
   const loginData = JSON.parse(res._getData());
   
   if (!loginData.success) {
+    console.error(`Login failed for ${testEmail}:`, loginData);
     throw new Error(`Failed to login test user: ${JSON.stringify(loginData)}`);
   }
+
+  console.log(`Successfully logged in test user: ${testEmail}`);
 
   return {
     id: user.id,
@@ -188,6 +201,16 @@ export const cleanupTestEndpoint = async (endpoint: TestEndpoint): Promise<void>
 };
 
 /**
+ * Clean up test endpoints by ID
+ */
+export const cleanupTestEndpoints = async (endpointIds: string[]): Promise<void> => {
+  if (!endpointIds.length) return;
+  await prisma.endpoint.deleteMany({
+    where: { id: { in: endpointIds } }
+  });
+};
+
+/**
  * Clean up test connection and all associated endpoints
  */
 export const cleanupTestConnection = async (connection: TestConnection): Promise<void> => {
@@ -207,74 +230,51 @@ export const cleanupTestConnection = async (connection: TestConnection): Promise
 };
 
 /**
- * Clean up test user and all associated data
+ * Clean up test connections by ID (and all associated endpoints)
  */
-export const cleanupTestUser = async (user: TestUser): Promise<void> => {
-  // Delete all endpoints for connections owned by this user
+export const cleanupTestConnections = async (connectionIds: string[]): Promise<void> => {
+  if (!connectionIds.length) return;
+  // Delete all endpoints for these connections, then the connections
   await prisma.endpoint.deleteMany({
     where: {
-      apiConnection: {
-        userId: user.id
-      }
+      apiConnectionId: { in: connectionIds }
     }
   });
-
-  // Delete all connections owned by this user
   await prisma.apiConnection.deleteMany({
     where: {
-      userId: user.id
-    }
-  });
-
-  // Delete the user
-  await prisma.user.deleteMany({
-    where: {
-      id: user.id
+      id: { in: connectionIds }
     }
   });
 };
 
 /**
- * Clean up existing test users before running tests
+ * Clean up test user (and all associated data)
  */
-export const cleanupExistingTestUsers = async (): Promise<void> => {
-  // Delete users that match test patterns
-  await prisma.user.deleteMany({
-    where: {
-      OR: [
-        { email: { contains: 'test-' } },
-        { email: { contains: '@example.com' } },
-        { name: { contains: 'Test ' } },
-        { name: { contains: 'RBAC ' } },
-        { name: { contains: 'Authentication' } },
-        { name: { contains: 'Connections' } },
-        { name: { contains: 'Real API' } }
-      ]
-    }
-  });
-  
-  // Also clean up any orphaned connections and endpoints
+export const cleanupTestUser = async (user: TestUser): Promise<void> => {
+  await cleanupTestUsers([user.id]);
+};
+
+/**
+ * Clean up test users by ID (and all associated data)
+ */
+export const cleanupTestUsers = async (userIds: string[]): Promise<void> => {
+  if (!userIds.length) return;
+  // Delete all endpoints and connections for these users, then the users
   await prisma.endpoint.deleteMany({
     where: {
       apiConnection: {
-        user: {
-          OR: [
-            { email: { contains: 'test-' } },
-            { email: { contains: '@example.com' } }
-          ]
-        }
+        userId: { in: userIds }
       }
     }
   });
-  
   await prisma.apiConnection.deleteMany({
     where: {
-      user: {
-        OR: [
-          { email: { contains: 'test-' } },
-          { email: { contains: '@example.com' } }
-        ]
-      }
+      userId: { in: userIds }
+    }
+  });
+  await prisma.user.deleteMany({
+    where: {
+      id: { in: userIds }
     }
   });
 };
@@ -290,20 +290,31 @@ export const createTestSuite = (suiteName: string) => {
   // Generate a unique suite identifier to prevent conflicts
   const suiteId = generateTestId(suiteName.toLowerCase().replace(/\s+/g, '-'));
   
-  // Create a unique email prefix for this test suite
-  const emailPrefix = `${suiteId}-${Date.now()}`;
+  // Helper to generate a unique email prefix for each test
+  function getEmailPrefix(testName?: string) {
+    const testId = generateTestId(testName || 'test');
+    const processId = process.pid;
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 100000);
+    return `${suiteId}-${testId}-${processId}-${timestamp}-${random}`;
+  }
 
   return {
-    /**
-     * Setup function to run before all tests in the suite
-     */
-    beforeAll: async () => {
-      // Ensure database connection
-      await prisma.$connect();
-      
-      // Clean up any existing test data from this specific suite
-      await cleanupExistingTestUsers();
-    },
+      /**
+   * Setup function to run before all tests in the suite
+   */
+  beforeAll: async () => {
+    // Ensure database connection
+    await prisma.$connect();
+  },
+
+  /**
+   * Setup function to run before each test
+   */
+  beforeEach: async () => {
+    // Ensure database connection
+    await prisma.$connect();
+  },
 
     /**
      * Teardown function to run after all tests in the suite
@@ -319,7 +330,7 @@ export const createTestSuite = (suiteName: string) => {
       }
       
       for (const user of testUsers) {
-        await cleanupTestUser(user);
+        await cleanupTestUsers([user.id]);
       }
 
       await prisma.$disconnect();
@@ -334,8 +345,9 @@ export const createTestSuite = (suiteName: string) => {
       role: Role = Role.USER,
       name?: string
     ): Promise<TestUser> => {
-      // Use unique email prefix for this test suite to prevent conflicts
-      const uniqueEmail = email || `${emailPrefix}-${generateTestId('user')}@example.com`;
+      // Use Jest's current test name if available
+      const testName = (global as any).expect?.getState?.().currentTestName || 'test';
+      const uniqueEmail = email || `${getEmailPrefix(testName)}@example.com`;
       const user = await createTestUser(uniqueEmail, password, role, name);
       testUsers.push(user);
       return user;
