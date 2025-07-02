@@ -1,4 +1,4 @@
-import PgBoss from 'pg-boss';
+import { boss } from './singletons/boss';
 
 export interface QueueConfig {
   connectionString: string;
@@ -29,12 +29,6 @@ export const getQueueClient = (config: QueueConfig): QueueClient => {
   if (!config.connectionString) {
     throw new Error('Database connection string is required for queue client');
   }
-
-  // Create the pg-boss instance with basic options
-  const boss = new PgBoss({
-    connectionString: config.connectionString,
-    schema: config.schema || 'pgboss',
-  });
 
   // Return a typed interface
   return {
