@@ -28,7 +28,9 @@ All API responses follow a consistent format:
 ```json
 {
   "success": true,
-  "data": { /* response data */ },
+  "data": {
+    /* response data */
+  },
   "message": "Optional success message",
   "timestamp": "2024-01-01T00:00:00.000Z"
 }
@@ -65,6 +67,7 @@ Error responses:
 The Secrets Vault provides secure storage and management of sensitive data such as API keys, OAuth2 tokens, and custom secrets. All secrets are encrypted with AES-256 and include comprehensive input validation, rate limiting, and audit logging.
 
 #### Security Features
+
 - **AES-256 Encryption**: All secret values encrypted at rest
 - **Input Validation**: Comprehensive validation for all inputs with character restrictions
 - **Rate Limiting**: 100 requests per minute per user
@@ -76,6 +79,7 @@ The Secrets Vault provides secure storage and management of sensitive data such 
 Store a new secret.
 
 **Request Body:**
+
 ```json
 {
   "name": "my-api-key",
@@ -90,6 +94,7 @@ Store a new secret.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -107,6 +112,7 @@ Store a new secret.
 ```
 
 **Error Response (Rate Limited):**
+
 ```json
 {
   "success": false,
@@ -117,6 +123,7 @@ Store a new secret.
 ```
 
 **Error Response (Validation Error):**
+
 ```json
 {
   "success": false,
@@ -130,6 +137,7 @@ Store a new secret.
 List all secrets for the authenticated user.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -155,6 +163,7 @@ List all secrets for the authenticated user.
 Retrieve a specific secret (metadata only, value not returned).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -175,6 +184,7 @@ Retrieve a specific secret (metadata only, value not returned).
 Update an existing secret.
 
 **Request Body:**
+
 ```json
 {
   "value": "sk_test_new_key_...",
@@ -186,6 +196,7 @@ Update an existing secret.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -207,6 +218,7 @@ Update an existing secret.
 Delete a secret (soft delete).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -219,6 +231,7 @@ Delete a secret (soft delete).
 Rotate the master encryption key for all secrets.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -235,6 +248,7 @@ Rotate the master encryption key for all secrets.
 The Queue Management API provides robust job queue management using PgBoss 10.3.2 for workflow execution, ensuring reliable, scalable, and fault-tolerant job processing.
 
 #### Security Features
+
 - **Job Data Sanitization**: Sensitive data removed from logs
 - **Input Validation**: Zod schema validation for job payloads
 - **Error Handling**: Secure error messages without data exposure
@@ -245,6 +259,7 @@ The Queue Management API provides robust job queue management using PgBoss 10.3.
 Submit a new job to the queue.
 
 **Request Body:**
+
 ```json
 {
   "queueName": "workflow-execution",
@@ -268,6 +283,7 @@ Submit a new job to the queue.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -281,6 +297,7 @@ Submit a new job to the queue.
 ```
 
 **Error Response (Validation Error):**
+
 ```json
 {
   "success": false,
@@ -294,6 +311,7 @@ Submit a new job to the queue.
 Get the status of a specific job.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -322,6 +340,7 @@ Get the status of a specific job.
 Cancel a running or queued job.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -338,6 +357,7 @@ Cancel a running or queued job.
 Get the health status of the queue system.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -359,6 +379,7 @@ Get the health status of the queue system.
 Get statistics for all workers.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -385,6 +406,7 @@ Get statistics for all workers.
 Register a new worker for a queue.
 
 **Request Body:**
+
 ```json
 {
   "queueName": "workflow-execution",
@@ -398,6 +420,7 @@ Register a new worker for a queue.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -415,6 +438,7 @@ Register a new worker for a queue.
 Clear all failed jobs from the queue.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -432,6 +456,7 @@ Clear all failed jobs from the queue.
 Get the current user session.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -452,6 +477,7 @@ Get the current user session.
 Sign out the current user.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -460,9 +486,11 @@ Sign out the current user.
 ```
 
 #### `POST /api/auth/register`
+
 Register a new user account.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -472,6 +500,7 @@ Register a new user account.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -483,7 +512,8 @@ Register a new user account.
 }
 ```
 
-**Error Response:**
+**Error Response (Email Already Exists):**
+
 ```json
 {
   "success": false,
@@ -492,10 +522,22 @@ Register a new user account.
 }
 ```
 
+**Error Response (Email Service Failure):**
+
+```json
+{
+  "success": false,
+  "error": "Failed to send verification email",
+  "code": "EMAIL_SEND_FAILED"
+}
+```
+
 #### `POST /api/auth/verify`
+
 Verify user email address using verification token.
 
 **Request Body:**
+
 ```json
 {
   "token": "verification_token_from_email"
@@ -503,6 +545,7 @@ Verify user email address using verification token.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -523,6 +566,7 @@ Verify user email address using verification token.
 ```
 
 **Error Response:**
+
 ```json
 {
   "success": false,
@@ -532,9 +576,11 @@ Verify user email address using verification token.
 ```
 
 #### `POST /api/auth/resend-verification`
+
 Resend verification email to user.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -542,6 +588,7 @@ Resend verification email to user.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -552,10 +599,22 @@ Resend verification email to user.
 }
 ```
 
+**Error Response (Email Service Failure):**
+
+```json
+{
+  "success": false,
+  "error": "Failed to send verification email",
+  "code": "EMAIL_SEND_FAILED"
+}
+```
+
 #### `POST /api/auth/request-password-reset`
+
 Request a password reset email.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -563,6 +622,7 @@ Request a password reset email.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -574,9 +634,11 @@ Request a password reset email.
 ```
 
 #### `POST /api/auth/reset-password`
+
 Reset password using reset token.
 
 **Request Body:**
+
 ```json
 {
   "token": "reset_token_from_email",
@@ -585,6 +647,7 @@ Reset password using reset token.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -596,6 +659,7 @@ Reset password using reset token.
 ```
 
 **Error Response:**
+
 ```json
 {
   "success": false,
@@ -605,9 +669,11 @@ Reset password using reset token.
 ```
 
 #### `POST /api/auth/login`
+
 Authenticate user with email and password.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -616,6 +682,7 @@ Authenticate user with email and password.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -635,9 +702,11 @@ Authenticate user with email and password.
 ```
 
 #### `POST /api/auth/refresh`
+
 Refresh access token using refresh token.
 
 **Request Body:**
+
 ```json
 {
   "refreshToken": "refresh_token"
@@ -645,6 +714,7 @@ Refresh access token using refresh token.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -657,14 +727,17 @@ Refresh access token using refresh token.
 ```
 
 #### `GET /api/auth/me`
+
 Get current authenticated user information.
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -680,28 +753,34 @@ Authorization: Bearer <access_token>
 ```
 
 #### `GET /api/auth/oauth2`
+
 Initiate OAuth2 login flow for user authentication.
 
 **Query Parameters:**
+
 - `provider` (required) - OAuth2 provider name (google, github, slack)
 - `redirectUri` (optional) - Custom redirect URI (defaults to `/dashboard`)
 
 **Response:** Redirects to OAuth2 provider authorization URL
 
 **Example:**
+
 ```
 GET /api/auth/oauth2?provider=google&redirectUri=/dashboard
 ```
 
 #### `GET /api/auth/oauth2/callback`
+
 Process OAuth2 callback for user authentication.
 
 **Query Parameters:**
+
 - `code` (required) - Authorization code from OAuth2 provider
 - `state` (required) - State parameter for CSRF protection
 - `error` (optional) - Error from OAuth2 provider
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -720,6 +799,7 @@ Process OAuth2 callback for user authentication.
 ```
 
 **Error Response:**
+
 ```json
 {
   "success": false,
@@ -731,25 +811,31 @@ Process OAuth2 callback for user authentication.
 ### Enterprise SSO (SAML/OIDC)
 
 #### `GET /api/auth/saml/{provider}`
+
 Initiate SAML SSO flow for enterprise authentication.
 
 **Path Parameters:**
+
 - `provider` (required) - SSO provider name (okta, azure, google-workspace)
 
 **Query Parameters:**
+
 - `redirectUri` (optional) - Custom redirect URI (defaults to `/dashboard`)
 
 **Response:** Redirects to SAML identity provider
 
 **Example:**
+
 ```
 GET /api/auth/saml/okta?redirectUri=/dashboard
 ```
 
 #### `POST /api/auth/saml/callback`
+
 Process SAML assertion for user authentication.
 
 **Request Body:**
+
 ```json
 {
   "SAMLResponse": "base64_encoded_saml_response",
@@ -758,6 +844,7 @@ Process SAML assertion for user authentication.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -777,30 +864,37 @@ Process SAML assertion for user authentication.
 ```
 
 #### `GET /api/auth/oidc/{provider}`
+
 Initiate OpenID Connect flow for enterprise authentication.
 
 **Path Parameters:**
+
 - `provider` (required) - OIDC provider name (okta, azure, google-workspace)
 
 **Query Parameters:**
+
 - `redirectUri` (optional) - Custom redirect URI (defaults to `/dashboard`)
 
 **Response:** Redirects to OIDC identity provider
 
 **Example:**
+
 ```
 GET /api/auth/oidc/azure?redirectUri=/dashboard
 ```
 
 #### `GET /api/auth/oidc/callback`
+
 Process OIDC callback for user authentication.
 
 **Query Parameters:**
+
 - `code` (required) - Authorization code from OIDC provider
 - `state` (required) - State parameter for CSRF protection
 - `error` (optional) - Error from OIDC provider
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -826,12 +920,14 @@ Process OIDC callback for user authentication.
 Get all API connections for the current user.
 
 **Query Parameters:**
+
 - `status` (optional): Filter by status (`active`, `inactive`)
 - `type` (optional): Filter by authentication type
 - `page` (optional): Page number for pagination
 - `limit` (optional): Number of items per page (default: 20)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -866,11 +962,13 @@ Get all API connections for the current user.
 Get all endpoints for a specific API connection.
 
 **Query Parameters:**
+
 - `method` (optional): Filter by HTTP method
 - `tag` (optional): Filter by OpenAPI tag
 - `search` (optional): Search in endpoint descriptions
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -893,7 +991,9 @@ Get all endpoints for a specific API connection.
         "responses": {
           "200": {
             "description": "Successful response",
-            "schema": { /* JSON schema */ }
+            "schema": {
+              /* JSON schema */
+            }
           }
         }
       }
@@ -907,6 +1007,7 @@ Get all endpoints for a specific API connection.
 Create a new API connection.
 
 **Request Body:**
+
 ```json
 {
   "name": "Customer CRM",
@@ -922,6 +1023,7 @@ Create a new API connection.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -947,6 +1049,7 @@ Create a new API connection.
 Update an existing API connection.
 
 **Request Body:**
+
 ```json
 {
   "name": "Updated CRM",
@@ -958,6 +1061,7 @@ Update an existing API connection.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -979,6 +1083,7 @@ Update an existing API connection.
 Delete an API connection.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -991,6 +1096,7 @@ Delete an API connection.
 Test an API connection.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1009,6 +1115,7 @@ Test an API connection.
 Refresh the OpenAPI specification for an API connection.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1030,12 +1137,14 @@ Refresh the OpenAPI specification for an API connection.
 Get all workflows for the current user.
 
 **Query Parameters:**
+
 - `status` (optional): Filter by status (`draft`, `active`, `paused`)
 - `search` (optional): Search in workflow names and descriptions
 - `page` (optional): Page number for pagination
 - `limit` (optional): Number of items per page
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1066,6 +1175,7 @@ Get all workflows for the current user.
 Get a specific workflow by ID.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1099,6 +1209,7 @@ Get a specific workflow by ID.
 Create a new workflow.
 
 **Request Body:**
+
 ```json
 {
   "name": "New Workflow",
@@ -1116,6 +1227,7 @@ Create a new workflow.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1134,15 +1246,19 @@ Create a new workflow.
 Update an existing workflow.
 
 **Request Body:**
+
 ```json
 {
   "name": "Updated Workflow",
   "description": "Updated description",
-  "steps": [ /* updated steps */ ]
+  "steps": [
+    /* updated steps */
+  ]
 }
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1160,6 +1276,7 @@ Update an existing workflow.
 Delete a workflow.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1172,6 +1289,7 @@ Delete a workflow.
 Execute a workflow.
 
 **Request Body:**
+
 ```json
 {
   "input": {
@@ -1182,6 +1300,7 @@ Execute a workflow.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1201,11 +1320,13 @@ Execute a workflow.
 Get execution history for a workflow.
 
 **Query Parameters:**
+
 - `status` (optional): Filter by execution status
 - `page` (optional): Page number for pagination
 - `limit` (optional): Number of items per page
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1236,6 +1357,7 @@ Get execution history for a workflow.
 Get detailed information about a specific execution.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1258,8 +1380,12 @@ Get detailed information about a specific execution.
         "startedAt": "2024-01-01T00:00:00.000Z",
         "completedAt": "2024-01-01T00:00:00.500Z",
         "duration": 500,
-        "input": { /* step input */ },
-        "output": { /* step output */ }
+        "input": {
+          /* step input */
+        },
+        "output": {
+          /* step output */
+        }
       }
     ],
     "startedAt": "2024-01-01T00:00:00.000Z",
@@ -1273,6 +1399,7 @@ Get detailed information about a specific execution.
 Cancel a running workflow execution.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1286,6 +1413,7 @@ Cancel a running workflow execution.
 ```
 
 **Error Response (Execution not found):**
+
 ```json
 {
   "success": false,
@@ -1295,6 +1423,7 @@ Cancel a running workflow execution.
 ```
 
 **Error Response (Execution already completed):**
+
 ```json
 {
   "success": false,
@@ -1308,6 +1437,7 @@ Cancel a running workflow execution.
 Pause a running workflow execution.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1321,6 +1451,7 @@ Pause a running workflow execution.
 ```
 
 **Error Response (Execution not found):**
+
 ```json
 {
   "success": false,
@@ -1330,6 +1461,7 @@ Pause a running workflow execution.
 ```
 
 **Error Response (Execution not running):**
+
 ```json
 {
   "success": false,
@@ -1343,6 +1475,7 @@ Pause a running workflow execution.
 Resume a paused workflow execution.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1356,6 +1489,7 @@ Resume a paused workflow execution.
 ```
 
 **Error Response (Execution not found):**
+
 ```json
 {
   "success": false,
@@ -1365,6 +1499,7 @@ Resume a paused workflow execution.
 ```
 
 **Error Response (Execution not paused):**
+
 ```json
 {
   "success": false,
@@ -1378,6 +1513,7 @@ Resume a paused workflow execution.
 Get the current status of a workflow execution.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1395,6 +1531,7 @@ Get the current status of a workflow execution.
 ```
 
 **Error Response (Execution not found):**
+
 ```json
 {
   "success": false,
@@ -1410,6 +1547,7 @@ Get the current status of a workflow execution.
 Send a natural language request to generate a workflow.
 
 **Request Body:**
+
 ```json
 {
   "message": "Get customer data from CRM and send a welcome email",
@@ -1421,6 +1559,7 @@ Send a natural language request to generate a workflow.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1456,6 +1595,7 @@ Send a natural language request to generate a workflow.
 Execute a workflow from a natural language request.
 
 **Request Body:**
+
 ```json
 {
   "message": "Get customer data from CRM and send a welcome email",
@@ -1466,12 +1606,15 @@ Execute a workflow from a natural language request.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
   "data": {
     "executionId": "execution_id",
-    "workflow": { /* generated workflow */ },
+    "workflow": {
+      /* generated workflow */
+    },
     "status": "running",
     "startedAt": "2024-01-01T00:00:00.000Z"
   }
@@ -1485,6 +1628,7 @@ Execute a workflow from a natural language request.
 Get audit logs (admin only).
 
 **Query Parameters:**
+
 - `userId` (optional): Filter by user ID
 - `action` (optional): Filter by action type
 - `startDate` (optional): Filter by start date
@@ -1493,6 +1637,7 @@ Get audit logs (admin only).
 - `limit` (optional): Number of items per page
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1527,6 +1672,7 @@ Get audit logs (admin only).
 Get detailed information about a specific audit log entry.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1540,8 +1686,12 @@ Get detailed information about a specific audit log entry.
       "workflowName": "Customer Onboarding",
       "executionId": "execution_id",
       "status": "completed",
-      "input": { /* execution input */ },
-      "output": { /* execution output */ },
+      "input": {
+        /* execution input */
+      },
+      "output": {
+        /* execution output */
+      },
       "duration": 1500
     },
     "timestamp": "2024-01-01T00:00:00.000Z",
@@ -1558,19 +1708,67 @@ Get detailed information about a specific audit log entry.
 
 Get system health status.
 
-**Response:**
+**Response (Healthy):**
+
 ```json
 {
   "success": true,
-  "data": {
-    "status": "healthy",
-    "timestamp": "2024-01-01T00:00:00.000Z",
-    "version": "1.0.0",
-    "environment": "production",
-    "services": {
-      "database": "healthy",
-      "openai": "healthy",
-      "external_apis": "healthy"
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "responseTime": "45ms",
+  "checks": {
+    "database": {
+      "status": "healthy",
+      "details": {
+        "connected": true,
+        "version": "PostgreSQL 14.0"
+      }
+    },
+    "openai": {
+      "status": "healthy",
+      "details": {
+        "configured": true,
+        "model": "gpt-4-turbo-preview"
+      }
+    },
+    "encryption": {
+      "status": "healthy",
+      "details": {
+        "algorithm": "AES-256-GCM"
+      }
+    }
+  }
+}
+```
+
+**Response (Unhealthy):**
+
+```json
+{
+  "success": false,
+  "status": "unhealthy",
+  "error": "Health check failed",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "responseTime": "45ms",
+  "checks": {
+    "database": {
+      "status": "healthy",
+      "details": {
+        "connected": true,
+        "version": "PostgreSQL 14.0"
+      }
+    },
+    "openai": {
+      "status": "unhealthy",
+      "details": {
+        "error": "API key not configured"
+      }
+    },
+    "encryption": {
+      "status": "healthy",
+      "details": {
+        "algorithm": "AES-256-GCM"
+      }
     }
   }
 }
@@ -1581,6 +1779,7 @@ Get system health status.
 Get system statistics (admin only).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1612,17 +1811,17 @@ Get system statistics (admin only).
 
 ## Error Codes
 
-| Code | Description |
-|------|-------------|
-| `UNAUTHORIZED` | User not authenticated |
-| `FORBIDDEN` | User lacks required permissions |
-| `VALIDATION_ERROR` | Request validation failed |
-| `API_CONNECTION_FAILED` | Failed to connect to external API |
-| `WORKFLOW_EXECUTION_FAILED` | Workflow execution failed |
-| `AI_SERVICE_ERROR` | OpenAI service error |
-| `RATE_LIMIT_EXCEEDED` | Rate limit exceeded |
-| `RESOURCE_NOT_FOUND` | Requested resource not found |
-| `INTERNAL_ERROR` | Internal server error |
+| Code                        | Description                       |
+| --------------------------- | --------------------------------- |
+| `UNAUTHORIZED`              | User not authenticated            |
+| `FORBIDDEN`                 | User lacks required permissions   |
+| `VALIDATION_ERROR`          | Request validation failed         |
+| `API_CONNECTION_FAILED`     | Failed to connect to external API |
+| `WORKFLOW_EXECUTION_FAILED` | Workflow execution failed         |
+| `AI_SERVICE_ERROR`          | OpenAI service error              |
+| `RATE_LIMIT_EXCEEDED`       | Rate limit exceeded               |
+| `RESOURCE_NOT_FOUND`        | Requested resource not found      |
+| `INTERNAL_ERROR`            | Internal server error             |
 
 ## Rate Limiting
 
@@ -1671,6 +1870,7 @@ Pagination information is included in responses:
 Receive webhook events from external systems.
 
 **Request Body:**
+
 ```json
 {
   "event": "customer.created",
@@ -1684,6 +1884,7 @@ Receive webhook events from external systems.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1701,6 +1902,7 @@ Receive webhook events from external systems.
 Configure outgoing webhooks for workflow events.
 
 **Request Body:**
+
 ```json
 {
   "name": "Slack Notifications",
@@ -1721,12 +1923,14 @@ Configure outgoing webhooks for workflow events.
 Get OpenAPI cache statistics and status.
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 X-Admin-Token: <admin_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1753,12 +1957,14 @@ X-Admin-Token: <admin_token>
 Clear the OpenAPI cache.
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 X-Admin-Token: <admin_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1775,24 +1981,24 @@ npm install @apiq/sdk
 ```
 
 ```typescript
-import { ApiQClient } from '@apiq/sdk';
+import { ApiQClient } from "@apiq/sdk";
 
 const client = new ApiQClient({
-  baseUrl: 'https://api.your-domain.com',
-  token: 'your-jwt-token'
+  baseUrl: "https://api.your-domain.com",
+  token: "your-jwt-token",
 });
 
 // Create API connection
 const api = await client.apis.create({
-  name: 'My API',
-  baseUrl: 'https://api.example.com',
-  authType: 'api_key',
-  authConfig: { apiKey: 'key' }
+  name: "My API",
+  baseUrl: "https://api.example.com",
+  authType: "api_key",
+  authConfig: { apiKey: "key" },
 });
 
 // Execute workflow
-const execution = await client.workflows.execute('workflow_id', {
-  input: { customerId: '123' }
+const execution = await client.workflows.execute("workflow_id", {
+  input: { customerId: "123" },
 });
 ```
 
@@ -1836,14 +2042,17 @@ For API support and questions:
 ## API Credential Management
 
 ### GET /api/connections/{id}/credentials
+
 Retrieve stored credentials for an API connection.
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1861,14 +2070,17 @@ Authorization: Bearer <access_token>
 ```
 
 ### POST /api/connections/{id}/credentials
+
 Store new credentials for an API connection.
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "credentials": {
@@ -1880,6 +2092,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1898,14 +2111,17 @@ Authorization: Bearer <access_token>
 ```
 
 ### PUT /api/connections/{id}/credentials
+
 Update existing credentials for an API connection.
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
   "credentials": {
@@ -1917,6 +2133,7 @@ Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1935,14 +2152,17 @@ Authorization: Bearer <access_token>
 ```
 
 ### DELETE /api/connections/{id}/credentials
+
 Delete credentials for an API connection (soft delete).
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1961,9 +2181,11 @@ APIQ supports OAuth2 authentication for connecting to third-party APIs that requ
 The OAuth2 system includes complete frontend integration with the following components:
 
 #### API Client (`src/lib/api/client.ts`)
+
 Centralized TypeScript client for OAuth2 operations with full type safety.
 
 **Key Methods:**
+
 ```typescript
 // Get supported OAuth2 providers
 async getOAuth2Providers(): Promise<ApiResponse<{ providers: OAuth2Provider[]; count: number }>>
@@ -1986,9 +2208,11 @@ async getOAuth2Token(apiConnectionId: string): Promise<ApiResponse<{ accessToken
 ```
 
 #### OAuth2 Manager Component (`src/components/OAuth2Manager.tsx`)
+
 Reusable React component for OAuth2 connection management.
 
 **Features:**
+
 - Provider-specific icons and configuration display
 - Token refresh and access token retrieval
 - Connection status and expiration monitoring
@@ -1996,6 +2220,7 @@ Reusable React component for OAuth2 connection management.
 - Support for GitHub, Google, and Slack providers
 
 #### OAuth2 Pages
+
 - **Login Page** (`src/app/login/page.tsx`) - OAuth2 provider buttons and validation
 - **Dashboard** (`src/app/dashboard/page.tsx`) - OAuth2 configuration in connection creation
 - **OAuth2 Setup** (`src/app/connections/[id]/oauth2/page.tsx`) - Dedicated OAuth2 management
@@ -2024,9 +2249,11 @@ Reusable React component for OAuth2 connection management.
 Get list of supported OAuth2 providers and their configuration.
 
 **Authentication:**
+
 > No authentication required. This endpoint is public and can be called without a JWT token.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -2051,11 +2278,13 @@ Get list of supported OAuth2 providers and their configuration.
 Generate OAuth2 authorization URL and redirect user to OAuth2 provider.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Query Parameters:**
+
 - `apiConnectionId` (required) - ID of the API connection
 - `provider` (required) - OAuth2 provider name (github, google, slack)
 - `clientId` (required) - OAuth2 client ID
@@ -2066,6 +2295,7 @@ Authorization: Bearer <jwt_token>
 **Response:** Redirects to OAuth2 provider authorization URL
 
 **Example:**
+
 ```
 GET /api/oauth/authorize?apiConnectionId=conn_123&provider=github&clientId=your_client_id&clientSecret=your_client_secret&redirectUri=https://your-app.com/api/oauth/callback&scope=repo user
 ```
@@ -2075,10 +2305,12 @@ GET /api/oauth/authorize?apiConnectionId=conn_123&provider=github&clientId=your_
 Process OAuth2 callback from provider and exchange authorization code for tokens.
 
 **Query Parameters:**
+
 - `code` (required) - Authorization code from OAuth2 provider
 - `state` (required) - State parameter for CSRF protection
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -2087,6 +2319,7 @@ Process OAuth2 callback from provider and exchange authorization code for tokens
 ```
 
 **Error Response:**
+
 ```json
 {
   "error": "OAuth2 authorization failed",
@@ -2100,12 +2333,14 @@ Process OAuth2 callback from provider and exchange authorization code for tokens
 Refresh an expired OAuth2 access token using the refresh token.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 Content-Type: application/json
 ```
 
 **Request Body:**
+
 ```json
 {
   "apiConnectionId": "conn_123",
@@ -2114,6 +2349,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -2126,14 +2362,17 @@ Content-Type: application/json
 Retrieve OAuth2 access token for making API calls to OAuth2-protected services.
 
 **Headers:**
+
 ```
 Authorization: Bearer <jwt_token>
 ```
 
 **Query Parameters:**
+
 - `apiConnectionId` (required) - ID of the API connection
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -2188,6 +2427,7 @@ To use OAuth2 with an API connection:
 5. **Use Tokens** - Retrieve tokens via `/api/oauth/token` for API calls
 
 **Example API Connection with OAuth2:**
+
 ```json
 {
   "name": "GitHub API",
@@ -2212,9 +2452,11 @@ Network errors (e.g., loss of connectivity, server unreachable) are now tested i
 ### Password Reset & Verification
 
 #### `POST /api/auth/reset-password`
+
 Request a password reset email or set a new password using a reset token.
 
 **Request Body (request reset email):**
+
 ```json
 {
   "email": "user@example.com"
@@ -2222,6 +2464,7 @@ Request a password reset email or set a new password using a reset token.
 ```
 
 **Request Body (reset password):**
+
 ```json
 {
   "token": "reset_token_from_email",
@@ -2230,6 +2473,7 @@ Request a password reset email or set a new password using a reset token.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -2238,6 +2482,7 @@ Request a password reset email or set a new password using a reset token.
 ```
 
 **Error Response:**
+
 ```json
 {
   "success": false,
@@ -2246,9 +2491,11 @@ Request a password reset email or set a new password using a reset token.
 ```
 
 #### `POST /api/auth/resend-verification`
+
 Request a new email verification link for an unverified account.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com"
@@ -2256,6 +2503,7 @@ Request a new email verification link for an unverified account.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -2264,9 +2512,10 @@ Request a new email verification link for an unverified account.
 ```
 
 **Error Response:**
+
 ```json
 {
   "success": false,
   "error": "Email is already verified or does not exist"
 }
-``` 
+```
