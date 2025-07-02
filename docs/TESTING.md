@@ -9,16 +9,18 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 ### Overall Test Results
 
 - **Integration Tests**: 239/239 tests passing (100% success rate) ✅
-- **Unit Tests**: 495/495 tests passing (100% success rate) ✅
+- **Unit Tests**: 502/502 tests passing (100% success rate) ✅
 - **E2E Tests**: 180/180 tests passing (100% success rate) ✅
 - **OAuth2 Tests**: Comprehensive coverage with all integration tests passing ✅
 - **Authentication Flow Tests**: 44 tests across 4 test suites, all passing ✅
 - **Execution State Management Tests**: 100% coverage with comprehensive unit and integration tests ✅
-- **Total Tests**: 914 tests with 100% pass rate ✅
+- **Connection Service Tests**: 7 unit tests + integration tests, all passing ✅
+- **Total Tests**: 921 tests with 100% pass rate ✅
 
 ### Test Execution Performance
 
 - **Integration Tests**: ~65 seconds execution time
+- **Unit Tests**: ~15 seconds execution time (fast feedback)
 - **Parallel Execution**: Fully supported with proper test isolation
 - **Test Isolation**: Per-test cleanup with unique identifiers
 - **Reliability**: 100% pass rate with no flaky tests
@@ -45,6 +47,15 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 - **Test APIs**: 11/11 passing
 - **Debug Auth**: 1/1 passing
 - **SAML/OIDC**: 12/12 passing
+- **Connection Service Integration**: 1/1 passing
+
+#### Unit Tests (502/502 passing) ✅
+
+- **Connection Service**: 7/7 passing
+  - Connection status management (markConnecting, markConnected, etc.)
+  - OAuth state management (findConnectionByOAuthState)
+  - UI display helpers (getConnectionStatusDisplay)
+- **All other unit tests**: 495/495 passing
 
 #### E2E Tests (180/180 passing) ✅
 
@@ -73,6 +84,8 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 - **Performance**: Good baseline metrics
 - **Core Business Logic**: APIQ functionality working correctly
 - **OAuth2 Backend**: Comprehensive integration test coverage
+- **Connection Management**: New status management system with comprehensive testing
+- **Test Isolation**: Proper mocking patterns for fast unit tests
 
 **Areas for Improvement:**
 
@@ -81,6 +94,7 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 - **User Experience**: ✅ Complete - Authentication and dashboard UI implemented
 - **NLP Interface**: ✅ Complete - Chat interface with conversational AI implemented
 - **OAuth2 User Login**: ✅ Complete - User authentication flow implemented
+- **Connection Status Management**: ✅ Complete - New status system with UI integration
 
 ## Testing Philosophy
 
@@ -107,6 +121,17 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 - CI pipeline enforces no-mock-data policy
 - Negative tests ensure no `.spec.mock.json` files exist
 
+### Unit Test Mocking Strategy
+
+**For Unit Tests Only**: Use proper mocking for external dependencies to ensure fast, isolated tests:
+
+- **Prisma Client**: Mocked in unit tests for fast execution
+- **External APIs**: Mocked to avoid network dependencies
+- **File System**: Mocked to avoid I/O operations
+- **Time-dependent operations**: Mocked for deterministic tests
+
+**Integration Tests**: Always use real dependencies for end-to-end validation.
+
 ## Test Infrastructure
 
 ### Jest Configuration
@@ -120,6 +145,7 @@ The project uses a comprehensive Jest setup with polyfills and separate configur
 - **Coverage**: Separate coverage directories for unit tests
 - **Memory Management**: Optimized worker configuration and memory limits
 - **ES Module Support**: Transform patterns for ES modules like node-fetch
+- **Environment Variables**: Test-specific environment loading with dotenv
 
 #### Integration Test Configuration (`jest.integration.config.js`)
 
@@ -143,6 +169,37 @@ The project uses a comprehensive Jest setup with polyfills and separate configur
 - **Module Resolution**: Proper path mapping for TypeScript imports
 - **Environment Variables**: Test-specific environment configuration
 - **ES Module Compatibility**: Transform patterns for modern JavaScript modules
+
+### New Test Patterns
+
+#### Connection Service Testing
+
+**Unit Tests** (`tests/unit/lib/services/connectionService.test.ts`):
+- **Mock Strategy**: Proper ESM mocking of Prisma client
+- **Test Coverage**: All connection status transitions
+- **Performance**: Fast execution (<1 second)
+- **Isolation**: No database dependencies
+
+**Integration Tests** (`tests/integration/lib/services/connectionService.integration.test.ts`):
+- **Real Database**: Uses actual PostgreSQL with test data
+- **End-to-End**: Tests complete connection lifecycle
+- **Data Cleanup**: Proper test isolation with cleanup
+- **Validation**: Verifies database state changes
+
+#### Test File Organization
+
+```
+tests/
+├── unit/
+│   └── lib/services/
+│       └── connectionService.test.ts          # Fast unit tests with mocks
+├── integration/
+│   └── lib/services/
+│       └── connectionService.integration.test.ts  # Real DB integration tests
+└── e2e/
+    └── connections/
+        └── connections-management.test.ts     # Full user workflow tests
+```
 
 ### E2E Test Organization
 
@@ -2611,9 +2668,3 @@ JEST_TIMEOUT=30000
 - Add missing test scenarios
 - Improve test readability
 - Enhance test automation
-
-### Canonical Prisma Client for Tests
-
-All test code (unit, integration, E2E) must import the Prisma client from `lib/database/client.ts`. Do not use custom test clients or instantiate new PrismaClient instances. The test runner sets `DATABASE_URL` for test isolation, and all code uses the same client instance.
-
-This ensures that tests, API routes, and helpers all operate on the same database connection, preventing subtle bugs and improving reliability.

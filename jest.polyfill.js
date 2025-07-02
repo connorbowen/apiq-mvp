@@ -1,3 +1,6 @@
+// eslint-disable-next-line no-console
+console.log('Jest polyfill URL →', process.env.DATABASE_URL);
+
 // Jest polyfill for Node.js environment
 import { TextEncoder, TextDecoder } from 'util';
 

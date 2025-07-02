@@ -8,7 +8,7 @@ const createJestConfig = nextJest({
 // Add any custom config to be passed to Jest
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  setupFiles: ['<rootDir>/jest.polyfill.js'],
+  setupFiles: ['dotenv/config', '<rootDir>/jest.polyfill.js'],
   testEnvironment: 'jsdom',
   testMatch: [
     '<rootDir>/tests/unit/**/*.test.ts',

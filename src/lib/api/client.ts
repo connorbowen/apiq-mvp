@@ -42,6 +42,7 @@ export interface CreateConnectionRequest {
     provider?: string;
     apiKey?: string;
     secretKey?: string;
+    bearerToken?: string;
     username?: string;
     password?: string;
   };

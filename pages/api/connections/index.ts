@@ -11,6 +11,7 @@ import { parseOpenApiSpecData, ParseError } from '../../../src/lib/api/parser';
 import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { openApiService } from '../../../src/services/openApiService';
+import { ConnectionStatus } from '../../../src/generated/prisma';
 
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
@@ -109,6 +110,11 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       try {
         // Use a transaction to ensure atomicity
         await prisma.$transaction(async (tx) => {
+          // Determine initial connection status based on auth type
+          const initialConnectionStatus = connectionData.authType === 'OAUTH2' 
+            ? ConnectionStatus.disconnected 
+            : ConnectionStatus.connected;
+
           // Create the API connection
           newConnection = await tx.apiConnection.create({
             data: {
@@ -120,6 +126,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               authConfig: connectionData.authConfig || {},
               documentationUrl: connectionData.documentationUrl,
               status: 'ACTIVE',
+              connectionStatus: initialConnectionStatus,
               ingestionStatus: 'PENDING'
             }
           });

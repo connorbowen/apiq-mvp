@@ -16,25 +16,42 @@ interface User {
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [connections, setConnections] = useState<ApiConnection[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [workflows, setWorkflows] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'chat' | 'connections'>('chat');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const userData = localStorage.getItem('user');
+    
     if (!token || !userData) {
       router.push('/login');
       return;
     }
-    try {
-      setUser(JSON.parse(userData));
-    } catch (error) {
-      router.push('/login');
-    }
-  }, []);
+    
+    const loadUser = async () => {
+      try {
+        const userResponse = await apiClient.getCurrentUser();
+        if (userResponse.success) {
+          setUser(userResponse.data);
+        } else {
+          setErrorMessage('Failed to load user data');
+          router.push('/login');
+        }
+      } catch (error) {
+        setErrorMessage('Failed to load user data');
+        router.push('/login');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadUser();
+  }, [router]);
 
   const loadConnections = useCallback(async () => {
     try {
@@ -42,10 +59,10 @@ export default function DashboardPage() {
       if (response.success && response.data) {
         setConnections(response.data.connections || []);
       } else {
-        setError(response.error || 'Failed to load connections');
+        setErrorMessage(response.error || 'Failed to load connections');
       }
     } catch (error) {
-      setError('Network error');
+      setErrorMessage('Network error');
     } finally {
       setIsLoading(false);
     }
@@ -137,13 +154,31 @@ export default function DashboardPage() {
             </button>
           </nav>
         </div>
-        {error && <div className="mb-4 text-red-600">{error}</div>}
+        {errorMessage && <div className="mb-4 text-red-600">{errorMessage}</div>}
+        {successMessage && (
+          <div data-testid="success-message" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-800">{successMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
         {activeTab === 'chat' ? (
           <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
         ) : (
           <ConnectionsTab
             connections={connections}
-            onConnectionCreated={loadConnections}
+            onConnectionCreated={() => {
+              loadConnections();
+              setSuccessMessage('Connection created successfully');
+              setTimeout(() => setSuccessMessage(null), 5000);
+            }}
             showCreateForm={showCreateForm}
             setShowCreateForm={setShowCreateForm}
           />
@@ -383,6 +418,162 @@ function CreateConnectionModal({ onClose, onSuccess }: { onClose: () => void; on
                 <option value="NONE">None</option>
               </select>
             </div>
+
+            {/* Conditional fields based on auth type */}
+            {formData.authType === 'API_KEY' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">API Key</label>
+                <input
+                  type="password"
+                  name="apiKey"
+                  data-testid="connection-apikey-input"
+                  required
+                  value={formData.authConfig?.apiKey || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    authConfig: { ...formData.authConfig, apiKey: e.target.value }
+                  })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+            )}
+
+            {formData.authType === 'BEARER_TOKEN' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Bearer Token</label>
+                <input
+                  type="password"
+                  name="bearerToken"
+                  data-testid="connection-bearertoken-input"
+                  required
+                  value={formData.authConfig?.bearerToken || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    authConfig: { ...formData.authConfig, bearerToken: e.target.value }
+                  })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+            )}
+
+            {formData.authType === 'BASIC_AUTH' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Username</label>
+                  <input
+                    type="text"
+                    name="username"
+                    data-testid="connection-username-input"
+                    required
+                    value={formData.authConfig?.username || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      authConfig: { ...formData.authConfig, username: e.target.value }
+                    })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Password</label>
+                  <input
+                    type="password"
+                    name="password"
+                    data-testid="connection-password-input"
+                    required
+                    value={formData.authConfig?.password || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      authConfig: { ...formData.authConfig, password: e.target.value }
+                    })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {formData.authType === 'OAUTH2' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Provider</label>
+                  <select
+                    name="provider"
+                    data-testid="connection-provider-select"
+                    value={formData.authConfig?.provider || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      authConfig: { ...formData.authConfig, provider: e.target.value }
+                    })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">Select Provider</option>
+                    <option value="github">GitHub</option>
+                    <option value="google">Google</option>
+                    <option value="slack">Slack</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Client ID</label>
+                  <input
+                    type="text"
+                    name="clientId"
+                    data-testid="connection-clientid-input"
+                    required
+                    value={formData.authConfig?.clientId || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      authConfig: { ...formData.authConfig, clientId: e.target.value }
+                    })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Client Secret</label>
+                  <input
+                    type="password"
+                    name="clientSecret"
+                    data-testid="connection-clientsecret-input"
+                    required
+                    value={formData.authConfig?.clientSecret || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      authConfig: { ...formData.authConfig, clientSecret: e.target.value }
+                    })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Redirect URI</label>
+                  <input
+                    type="url"
+                    name="redirectUri"
+                    data-testid="connection-redirecturi-input"
+                    required
+                    value={formData.authConfig?.redirectUri || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      authConfig: { ...formData.authConfig, redirectUri: e.target.value }
+                    })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Scope</label>
+                  <input
+                    type="text"
+                    name="scope"
+                    data-testid="connection-scope-input"
+                    value={formData.authConfig?.scope || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      authConfig: { ...formData.authConfig, scope: e.target.value }
+                    })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="repo user"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"

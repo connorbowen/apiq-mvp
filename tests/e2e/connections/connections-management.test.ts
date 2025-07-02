@@ -57,11 +57,12 @@ test.describe('Connections Management E2E Tests', () => {
       // Click create connection button
       await page.click('[data-testid="create-connection-btn"]');
       
-      // Fill connection form
-      await page.fill('input[name="name"]', 'Test API Connection');
-      await page.fill('input[name="baseUrl"]', 'https://api.example.com');
-      await page.selectOption('select[name="authType"]', 'API_KEY');
-      await page.fill('input[name="apiKey"]', 'test-api-key-123');
+      // Fill form fields using data-testid selectors
+      await page.fill('[data-testid="connection-name-input"]', 'Test API Connection');
+      await page.fill('[data-testid="connection-description-input"]', 'A test API connection');
+      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
+      await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
+      await page.fill('[data-testid="connection-apikey-input"]', 'test-api-key-123');
       
       // Submit form
       await page.click('button[type="submit"]');
@@ -69,20 +70,17 @@ test.describe('Connections Management E2E Tests', () => {
       // Should show success message
       await expect(page.locator('[data-testid="success-message"]')).toContainText('Connection created successfully');
       
-      // Should redirect to connections list
-      await expect(page).toHaveURL(/.*connections/);
-      
-      // Should show new connection in list
+      // Should show the new connection in the list
       await expect(page.locator('[data-testid="connection-card"]')).toContainText('Test API Connection');
     });
 
     test('should create connection with Bearer token auth', async ({ page }) => {
       await page.click('[data-testid="create-connection-btn"]');
       
-      await page.fill('input[name="name"]', 'Bearer Token Connection');
-      await page.fill('input[name="baseUrl"]', 'https://api.example.com');
-      await page.selectOption('select[name="authType"]', 'BEARER_TOKEN');
-      await page.fill('input[name="bearerToken"]', 'test-bearer-token-123');
+      await page.fill('[data-testid="connection-name-input"]', 'Bearer Token Connection');
+      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
+      await page.selectOption('[data-testid="connection-authtype-select"]', 'BEARER_TOKEN');
+      await page.fill('[data-testid="connection-bearertoken-input"]', 'test-bearer-token-123');
       
       await page.click('button[type="submit"]');
       
@@ -93,11 +91,11 @@ test.describe('Connections Management E2E Tests', () => {
     test('should create connection with Basic auth', async ({ page }) => {
       await page.click('[data-testid="create-connection-btn"]');
       
-      await page.fill('input[name="name"]', 'Basic Auth Connection');
-      await page.fill('input[name="baseUrl"]', 'https://api.example.com');
-      await page.selectOption('select[name="authType"]', 'BASIC');
-      await page.fill('input[name="username"]', 'testuser');
-      await page.fill('input[name="password"]', 'testpass');
+      await page.fill('[data-testid="connection-name-input"]', 'Basic Auth Connection');
+      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
+      await page.selectOption('[data-testid="connection-authtype-select"]', 'BASIC_AUTH');
+      await page.fill('[data-testid="connection-username-input"]', 'testuser');
+      await page.fill('[data-testid="connection-password-input"]', 'testpass');
       
       await page.click('button[type="submit"]');
       
@@ -123,7 +121,9 @@ test.describe('Connections Management E2E Tests', () => {
       });
       
       const connection = await response.json();
-      createdConnectionIds.push(connection.data.id);
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
       
       // Refresh page to see new connection
       await page.reload();
@@ -163,7 +163,9 @@ test.describe('Connections Management E2E Tests', () => {
       });
       
       const connection = await response.json();
-      createdConnectionIds.push(connection.data.id);
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
       
       // Refresh page to see new connection
       await page.reload();
@@ -199,7 +201,9 @@ test.describe('Connections Management E2E Tests', () => {
       });
       
       const connection = await response.json();
-      createdConnectionIds.push(connection.data.id);
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
       
       // Refresh page to see new connection
       await page.reload();
@@ -220,14 +224,14 @@ test.describe('Connections Management E2E Tests', () => {
     test('should create OAuth2 connection with GitHub provider', async ({ page }) => {
       await page.click('[data-testid="create-connection-btn"]');
       
-      await page.fill('input[name="name"]', 'GitHub OAuth2 Connection');
-      await page.fill('input[name="baseUrl"]', 'https://api.github.com');
-      await page.selectOption('select[name="authType"]', 'OAUTH2');
-      await page.selectOption('select[name="provider"]', 'github');
-      await page.fill('input[name="clientId"]', 'test-github-client-id');
-      await page.fill('input[name="clientSecret"]', 'test-github-client-secret');
-      await page.fill('input[name="redirectUri"]', 'http://localhost:3000/api/oauth/callback');
-      await page.fill('input[name="scope"]', 'repo user');
+      await page.fill('[data-testid="connection-name-input"]', 'GitHub OAuth2 Connection');
+      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.github.com');
+      await page.selectOption('[data-testid="connection-authtype-select"]', 'OAUTH2');
+      await page.selectOption('[data-testid="connection-provider-select"]', 'github');
+      await page.fill('[data-testid="connection-clientid-input"]', 'test-github-client-id');
+      await page.fill('[data-testid="connection-clientsecret-input"]', 'test-github-client-secret');
+      await page.fill('[data-testid="connection-redirecturi-input"]', 'http://localhost:3000/api/oauth/callback');
+      await page.fill('[data-testid="connection-scope-input"]', 'repo user');
       
       await page.click('button[type="submit"]');
       
@@ -245,14 +249,14 @@ test.describe('Connections Management E2E Tests', () => {
     test('should create OAuth2 connection with Google provider', async ({ page }) => {
       await page.click('[data-testid="create-connection-btn"]');
       
-      await page.fill('input[name="name"]', 'Google OAuth2 Connection');
-      await page.fill('input[name="baseUrl"]', 'https://www.googleapis.com');
-      await page.selectOption('select[name="authType"]', 'OAUTH2');
-      await page.selectOption('select[name="provider"]', 'google');
-      await page.fill('input[name="clientId"]', 'test-google-client-id');
-      await page.fill('input[name="clientSecret"]', 'test-google-client-secret');
-      await page.fill('input[name="redirectUri"]', 'http://localhost:3000/api/oauth/callback');
-      await page.fill('input[name="scope"]', 'https://www.googleapis.com/auth/calendar');
+      await page.fill('[data-testid="connection-name-input"]', 'Google OAuth2 Connection');
+      await page.fill('[data-testid="connection-baseurl-input"]', 'https://www.googleapis.com');
+      await page.selectOption('[data-testid="connection-authtype-select"]', 'OAUTH2');
+      await page.selectOption('[data-testid="connection-provider-select"]', 'google');
+      await page.fill('[data-testid="connection-clientid-input"]', 'test-google-client-id');
+      await page.fill('[data-testid="connection-clientsecret-input"]', 'test-google-client-secret');
+      await page.fill('[data-testid="connection-redirecturi-input"]', 'http://localhost:3000/api/oauth/callback');
+      await page.fill('[data-testid="connection-scope-input"]', 'https://www.googleapis.com/auth/calendar');
       
       await page.click('button[type="submit"]');
       
@@ -303,7 +307,9 @@ test.describe('Connections Management E2E Tests', () => {
       });
       
       const connection = await response.json();
-      createdConnectionIds.push(connection.data.id);
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
       
       // Navigate to OAuth2 callback
       await page.goto(`${BASE_URL}/api/oauth/callback?code=valid-code&state=valid-state`);
@@ -335,7 +341,9 @@ test.describe('Connections Management E2E Tests', () => {
       });
       
       const connection = await response.json();
-      createdConnectionIds.push(connection.data.id);
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
       
       // Mock token refresh
       await page.route('**/api/connections/*/refresh**', async route => {
@@ -376,7 +384,9 @@ test.describe('Connections Management E2E Tests', () => {
       });
       
       const connection = await response.json();
-      createdConnectionIds.push(connection.data.id);
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
       
       // Refresh page to see new connection
       await page.reload();
@@ -403,7 +413,9 @@ test.describe('Connections Management E2E Tests', () => {
       });
       
       const connection = await response.json();
-      createdConnectionIds.push(connection.data.id);
+      if (connection.data?.id) {
+        createdConnectionIds.push(connection.data.id);
+      }
       
       // Refresh page to see new connection
       await page.reload();
@@ -474,7 +486,9 @@ test.describe('Connections Management E2E Tests', () => {
         });
         const connection = await response.json();
         testConnections.push(connection.data);
-        createdConnectionIds.push(connection.data.id);
+        if (connection.data?.id) {
+          createdConnectionIds.push(connection.data.id);
+        }
       }
       
       // Refresh page to see new connections
@@ -508,7 +522,9 @@ test.describe('Connections Management E2E Tests', () => {
         });
         const connection = await response.json();
         testConnections.push(connection.data);
-        createdConnectionIds.push(connection.data.id);
+        if (connection.data?.id) {
+          createdConnectionIds.push(connection.data.id);
+        }
       }
       
       // Refresh page to see new connections

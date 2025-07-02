@@ -20,6 +20,7 @@ jest.mock('next/link', () => {
 jest.mock('../../../../src/lib/api/client', () => ({
   apiClient: {
     getConnections: jest.fn(),
+    getCurrentUser: jest.fn(),
     generateWorkflow: jest.fn(),
   },
 }));
@@ -73,7 +74,17 @@ describe('Dashboard Page', () => {
       role: 'USER',
     }));
     
-    // Mock API response
+    // Mock API responses
+    apiClient.getCurrentUser.mockResolvedValue({
+      success: true,
+      data: {
+        id: 'user-1',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'USER',
+      }
+    });
+    
     apiClient.getConnections.mockResolvedValue({
       success: true,
       data: {
@@ -188,14 +199,25 @@ describe('Dashboard Page', () => {
   });
 
   it('shows loading state initially', async () => {
-    apiClient.getConnections.mockImplementation(() => 
-      new Promise(resolve => setTimeout(() => resolve({ success: true, data: { connections: [] } }), 100))
+    // Mock getCurrentUser to delay response to show loading state
+    apiClient.getCurrentUser.mockImplementation(() => 
+      new Promise(resolve => setTimeout(() => resolve({ 
+        success: true, 
+        data: {
+          id: 'user-1',
+          name: 'Test User',
+          email: 'test@example.com',
+          role: 'USER',
+        }
+      }), 100))
     );
     
     const { unmount } = render(<DashboardPage />);
     
+    // Should show loading spinner initially
     expect(document.querySelector('.animate-spin')).toBeInTheDocument();
     
+    // Wait for loading to complete
     await waitFor(() => {
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
     });
@@ -204,6 +226,18 @@ describe('Dashboard Page', () => {
   });
 
   it('handles API errors gracefully', async () => {
+    // Mock getCurrentUser to succeed first
+    apiClient.getCurrentUser.mockResolvedValue({
+      success: true,
+      data: {
+        id: 'user-1',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'USER',
+      }
+    });
+    
+    // Mock getConnections to fail
     apiClient.getConnections.mockResolvedValue({ success: false, error: 'Failed to load connections' });
     
     const { unmount } = render(<DashboardPage />);

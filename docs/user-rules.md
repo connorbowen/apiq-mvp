@@ -507,11 +507,6 @@ export const deleteUserWithData = async (userId: string) => {
 };
 ```
 
-### Canonical Prisma Client Rule
-- All code (API, helpers, tests) must import Prisma from `lib/database/client.ts`.
-- Do not instantiate new PrismaClient instances or use custom test helpers (such as `getTestPrismaClient`).
-- The test runner sets `DATABASE_URL` for test isolation; all code uses the same client instance.
-
 ## API Development Rules
 
 ### API Route Structure

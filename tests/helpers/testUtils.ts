@@ -71,23 +71,6 @@ export const createTestUser = async (
     }
   });
 
-  console.log(`Created test user: ${testEmail} with ID: ${user.id}`);
-
-  // Verify the user was created correctly
-  const createdUser = await prisma.user.findUnique({
-    where: { email: testEmail }
-  });
-
-  if (!createdUser) {
-    throw new Error(`Failed to create test user: ${testEmail}`);
-  }
-
-  console.log(`Verified user exists: ${createdUser.email}, isActive: ${createdUser.isActive}`);
-  
-  // Test password comparison directly
-  const passwordMatch = await bcrypt.compare(testPassword, createdUser.password);
-  console.log(`Password comparison test: ${passwordMatch} (plain: ${testPassword}, hashed: ${createdUser.password.substring(0, 20)}...)`);
-
   // Login to get real JWT tokens
   const { req, res } = createMocks({
     method: 'POST',
@@ -103,11 +86,8 @@ export const createTestUser = async (
   const loginData = JSON.parse(res._getData());
   
   if (!loginData.success) {
-    console.error(`Login failed for ${testEmail}:`, loginData);
     throw new Error(`Failed to login test user: ${JSON.stringify(loginData)}`);
   }
-
-  console.log(`Successfully logged in test user: ${testEmail}`);
 
   return {
     id: user.id,
@@ -248,13 +228,6 @@ export const cleanupTestConnections = async (connectionIds: string[]): Promise<v
 };
 
 /**
- * Clean up test user (and all associated data)
- */
-export const cleanupTestUser = async (user: TestUser): Promise<void> => {
-  await cleanupTestUsers([user.id]);
-};
-
-/**
  * Clean up test users by ID (and all associated data)
  */
 export const cleanupTestUsers = async (userIds: string[]): Promise<void> => {
@@ -277,6 +250,13 @@ export const cleanupTestUsers = async (userIds: string[]): Promise<void> => {
       id: { in: userIds }
     }
   });
+};
+
+/**
+ * Clean up test user (and all associated data)
+ */
+export const cleanupTestUser = async (user: TestUser): Promise<void> => {
+  await cleanupTestUsers([user.id]);
 };
 
 /**
