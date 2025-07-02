@@ -250,6 +250,18 @@ describe('Dashboard Page', () => {
   });
 
   it('handles network errors', async () => {
+    // Mock getCurrentUser to succeed first
+    apiClient.getCurrentUser.mockResolvedValue({
+      success: true,
+      data: {
+        id: 'user-1',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'USER',
+      }
+    });
+    
+    // Mock getConnections to throw network error
     apiClient.getConnections.mockRejectedValue(new Error('Network error'));
     
     const { unmount } = render(<DashboardPage />);

@@ -64,14 +64,19 @@ describe('OAuth2 Flow Integration Tests', () => {
       'Test OAuth2 User'
     );
 
-    // Create test API connection
-    testApiConnection = await prisma.apiConnection.create({
+    // Create test API connection using test suite
+    testApiConnection = await testSuite.createConnection(
+      testUser,
+      'Test OAuth2 API',
+      'https://api.example.com',
+      'OAUTH2'
+    );
+
+    // Update the connection with OAuth2-specific config
+    await prisma.apiConnection.update({
+      where: { id: testApiConnection.id },
       data: {
-        userId: testUser.id,
-        name: 'Test OAuth2 API',
         description: 'Test OAuth2 API connection',
-        baseUrl: 'https://api.example.com',
-        authType: 'OAUTH2',
         authConfig: {
           provider: 'github',
           clientId: 'test-client-id',
