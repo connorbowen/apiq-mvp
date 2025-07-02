@@ -1,5 +1,5 @@
 import { getQueueClient, QueueClient } from '../queueWrapper';
-import { PrismaClient } from '../../generated/prisma';
+import { prisma } from '../singletons/prisma';
 import { logError, logInfo } from '../../utils/logger';
 // @ts-ignore
 import { z } from 'zod'; // Use zod for runtime validation if available
@@ -309,7 +309,6 @@ class PrometheusMetricsCollector {
 
 export class QueueService {
   private boss: QueueClient;
-  private prisma: PrismaClient;
   private config: QueueServiceConfig;
   private isInitialized: boolean = false;
   private healthCheckTimer?: NodeJS.Timeout;
@@ -319,8 +318,7 @@ export class QueueService {
   private metricsCollector: PrometheusMetricsCollector;
   private metricsInterval?: NodeJS.Timeout;
 
-  constructor(prisma: PrismaClient, config: Partial<QueueConfig> = {}) {
-    this.prisma = prisma;
+  constructor(config: Partial<QueueConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     
     const connectionString = this.config.connectionString || process.env.DATABASE_URL;
@@ -770,7 +768,7 @@ export class QueueService {
       const table = `"${schema}"."job"`;
 
       // Get job counts by state
-      const jobCounts = await this.prisma.$queryRawUnsafe(`
+      const jobCounts = await prisma.$queryRawUnsafe(`
         SELECT 
           state,
           COUNT(*) as count
@@ -893,7 +891,7 @@ export class QueueService {
       await this.boss.stop();
 
       // 2) Truncate parent + all partitions, reset IDs
-      await this.prisma.$executeRawUnsafe(`
+      await prisma.$executeRawUnsafe(`
         TRUNCATE TABLE ${table} RESTART IDENTITY CASCADE
       `);
 

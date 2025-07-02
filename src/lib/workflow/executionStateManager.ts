@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma';
+import { prisma } from '../singletons/prisma';
 import { logError, logInfo, logDebug } from '../../utils/logger';
 import { QueueService } from '../queue/queueService';
 
@@ -55,7 +55,6 @@ export interface ExecutionMetrics {
 }
 
 export class ExecutionStateManager {
-  private prisma: PrismaClient;
   private queueService: QueueService;
   private defaultRetryConfig: RetryConfig = {
     maxAttempts: 3,
@@ -64,8 +63,7 @@ export class ExecutionStateManager {
     maxRetryDelay: 300000 // 5 minutes
   };
 
-  constructor(prisma: PrismaClient, queueService: QueueService) {
-    this.prisma = prisma;
+  constructor(queueService: QueueService) {
     this.queueService = queueService;
   }
 
@@ -79,7 +77,7 @@ export class ExecutionStateManager {
     maxAttempts: number = 3,
     metadata?: any
   ): Promise<ExecutionState> {
-    const execution = await this.prisma.workflowExecution.create({
+    const execution = await prisma.workflowExecution.create({
       data: {
         workflowId,
         userId,
@@ -145,7 +143,7 @@ export class ExecutionStateManager {
       Object.assign(updateData, additionalData);
     }
 
-    const execution = await this.prisma.workflowExecution.update({
+    const execution = await prisma.workflowExecution.update({
       where: { id: executionId },
       data: updateData
     });
@@ -165,7 +163,7 @@ export class ExecutionStateManager {
    * Pause execution
    */
   async pauseExecution(executionId: string, pausedBy: string): Promise<ExecutionState> {
-    const execution = await this.prisma.workflowExecution.update({
+    const execution = await prisma.workflowExecution.update({
       where: { id: executionId },
       data: {
         status: 'PAUSED',
@@ -196,7 +194,7 @@ export class ExecutionStateManager {
    * Resume execution
    */
   async resumeExecution(executionId: string, resumedBy: string): Promise<ExecutionState> {
-    const execution = await this.prisma.workflowExecution.update({
+    const execution = await prisma.workflowExecution.update({
       where: { id: executionId },
       data: {
         status: 'PENDING', // Reset to pending to requeue
@@ -213,7 +211,7 @@ export class ExecutionStateManager {
    * Cancel execution
    */
   async cancelExecution(executionId: string, cancelledBy: string): Promise<ExecutionState> {
-    const execution = await this.prisma.workflowExecution.update({
+    const execution = await prisma.workflowExecution.update({
       where: { id: executionId },
       data: {
         status: 'CANCELLED',
@@ -252,7 +250,7 @@ export class ExecutionStateManager {
       stepResults?: Record<string, any>;
     }
   ): Promise<ExecutionState> {
-    const execution = await this.prisma.workflowExecution.update({
+    const execution = await prisma.workflowExecution.update({
       where: { id: executionId },
       data: progress
     });
@@ -273,7 +271,7 @@ export class ExecutionStateManager {
     queueJobId: string,
     queueName: string
   ): Promise<ExecutionState> {
-    const execution = await this.prisma.workflowExecution.update({
+    const execution = await prisma.workflowExecution.update({
       where: { id: executionId },
       data: {
         queueJobId,
@@ -294,7 +292,7 @@ export class ExecutionStateManager {
    * Get execution state
    */
   async getExecutionState(executionId: string): Promise<ExecutionState | null> {
-    const execution = await this.prisma.workflowExecution.findUnique({
+    const execution = await prisma.workflowExecution.findUnique({
       where: { id: executionId }
     });
 
@@ -305,7 +303,7 @@ export class ExecutionStateManager {
    * Get execution progress
    */
   async getExecutionProgress(executionId: string): Promise<ExecutionProgress | null> {
-    const execution = await this.prisma.workflowExecution.findUnique({
+    const execution = await prisma.workflowExecution.findUnique({
       where: { id: executionId },
       select: {
         currentStep: true,
@@ -344,7 +342,7 @@ export class ExecutionStateManager {
    * Check if execution should be retried with enhanced logic
    */
   async shouldRetry(executionId: string): Promise<boolean> {
-    const execution = await this.prisma.workflowExecution.findUnique({
+    const execution = await prisma.workflowExecution.findUnique({
       where: { id: executionId },
       select: {
         attemptCount: true,
@@ -398,7 +396,7 @@ export class ExecutionStateManager {
    * Get executions that need to be retried
    */
   async getRetryableExecutions(): Promise<ExecutionState[]> {
-    const executions = await this.prisma.workflowExecution.findMany({
+    const executions = await prisma.workflowExecution.findMany({
       where: {
         status: 'FAILED',
         retryAfter: { lte: new Date() }
@@ -425,7 +423,7 @@ export class ExecutionStateManager {
    * Get executions that are paused
    */
   async getPausedExecutions(): Promise<ExecutionState[]> {
-    const executions = await this.prisma.workflowExecution.findMany({
+    const executions = await prisma.workflowExecution.findMany({
       where: {
         status: 'PAUSED'
       }
@@ -441,7 +439,7 @@ export class ExecutionStateManager {
     const timeoutDate = new Date();
     timeoutDate.setMinutes(timeoutDate.getMinutes() - timeoutMinutes);
 
-    const executions = await this.prisma.workflowExecution.findMany({
+    const executions = await prisma.workflowExecution.findMany({
       where: {
         status: 'RUNNING',
         startedAt: { lt: timeoutDate }
@@ -471,14 +469,14 @@ export class ExecutionStateManager {
     }
 
     const [totalExecutions, successfulExecutions, failedExecutions, recentExecutions] = await Promise.all([
-      this.prisma.workflowExecution.count({ where: whereClause }),
-      this.prisma.workflowExecution.count({ 
+      prisma.workflowExecution.count({ where: whereClause }),
+      prisma.workflowExecution.count({ 
         where: { ...whereClause, status: 'COMPLETED' } 
       }),
-      this.prisma.workflowExecution.count({ 
+      prisma.workflowExecution.count({ 
         where: { ...whereClause, status: 'FAILED' } 
       }),
-      this.prisma.workflowExecution.findMany({
+      prisma.workflowExecution.findMany({
         where: whereClause,
         orderBy: { createdAt: 'desc' },
         take: 10
@@ -486,7 +484,7 @@ export class ExecutionStateManager {
     ]);
 
     // Calculate average execution time
-    const completedExecutions = await this.prisma.workflowExecution.findMany({
+    const completedExecutions = await prisma.workflowExecution.findMany({
       where: { ...whereClause, status: 'COMPLETED', executionTime: { not: null } },
       select: { executionTime: true }
     });
@@ -513,7 +511,7 @@ export class ExecutionStateManager {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-    const result = await this.prisma.workflowExecution.deleteMany({
+    const result = await prisma.workflowExecution.deleteMany({
       where: {
         createdAt: { lt: cutoffDate },
         status: { in: ['COMPLETED', 'FAILED', 'CANCELLED'] }
@@ -533,7 +531,7 @@ export class ExecutionStateManager {
    * Reset execution for retry
    */
   async resetExecutionForRetry(executionId: string): Promise<ExecutionState> {
-    const execution = await this.prisma.workflowExecution.update({
+    const execution = await prisma.workflowExecution.update({
       where: { id: executionId },
       data: {
         status: 'PENDING',
@@ -557,7 +555,7 @@ export class ExecutionStateManager {
    * Private helper methods
    */
   private async getExecutionStartTime(executionId: string): Promise<number> {
-    const execution = await this.prisma.workflowExecution.findUnique({
+    const execution = await prisma.workflowExecution.findUnique({
       where: { id: executionId },
       select: { startedAt: true }
     });
@@ -566,7 +564,7 @@ export class ExecutionStateManager {
   }
 
   private async calculateRetryTime(executionId: string): Promise<Date> {
-    const execution = await this.prisma.workflowExecution.findUnique({
+    const execution = await prisma.workflowExecution.findUnique({
       where: { id: executionId },
       select: { attemptCount: true, maxAttempts: true }
     });
