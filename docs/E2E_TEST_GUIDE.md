@@ -8,6 +8,25 @@ npm run test:e2e:current
 
 **This is your go-to command** - it runs all E2E tests for features that are actually implemented and working, based on your current implementation status.
 
+## 🔧 **Port Cleanup System**
+
+All E2E test commands now include automatic port cleanup to prevent conflicts:
+
+- **Automatic Port Management**: Tests automatically kill any process running on port 3000 before starting
+- **Reliable Test Execution**: No more port conflicts or tests falling back to different ports
+- **Consistent Environment**: Tests always run on the expected port 3000
+
+**How it works**:
+- Each test command runs `./scripts/kill-port-3000.sh` before executing tests
+- The script finds and kills any process using port 3000
+- Tests then start reliably on port 3000
+- No manual intervention required
+
+**Manual port cleanup** (if needed):
+```bash
+./scripts/kill-port-3000.sh
+```
+
 ## 📋 **Test Commands by Implementation Priority**
 
 ### **P0: Core Value Proposition** (Must Have for MVP)
@@ -44,7 +63,7 @@ npm run test:e2e:p3
 ```bash
 npm run test:e2e:auth-area
 ```
-**Tests**: All authentication and SSO flows
+**Tests**: All authentication and SSO flows (including Google OAuth2)
 **When to use**: When working on auth, login, registration, OAuth2, SSO
 
 ### **API Connections Area**
@@ -117,7 +136,7 @@ npm run test:e2e:report
 ## 📊 **Test Coverage by Implementation Status**
 
 ### **✅ COMPLETED Features** (Always Run)
-- **Authentication System**: JWT, OAuth2, SSO
+- **Authentication System**: JWT, OAuth2 (including Google), SSO
 - **API Connection Management**: OpenAPI parsing, credential storage
 - **Basic Workflow Engine**: Step runner, queue system, state management
 - **Core UI**: Navigation, basic components
@@ -220,4 +239,9 @@ npm run test:e2e:p1 -- tests/e2e/ui/chat-interface.test.ts
 
 **Always use `npm run test:e2e:current` as your main command** - it's designed to run only the tests for features that are actually implemented and working, based on your current implementation status.
 
-This ensures you get fast, reliable feedback without the noise from tests for features that aren't built yet. 
+This ensures you get fast, reliable feedback without the noise from tests for features that aren't built yet.
+
+## 🛠️ Troubleshooting Google OAuth2
+- Ensure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set in your environment
+- Make sure your Google Cloud Console OAuth2 credentials have the correct redirect URIs
+- Restart the dev server after changing environment variables 

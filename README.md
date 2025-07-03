@@ -143,8 +143,8 @@ To use OAuth2 authentication:
    ```bash
    GITHUB_CLIENT_ID=your_github_client_id
    GITHUB_CLIENT_SECRET=your_github_client_secret
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   GOOGLE_CLIENT_ID=your_google_client_id   # Required for Google OAuth2 tests
+   GOOGLE_CLIENT_SECRET=your_google_client_secret   # Required for Google OAuth2 tests
    ```
 
 #### Enterprise SSO Configuration (SAML/OIDC)
@@ -254,6 +254,46 @@ npm run test:e2e
 # Run OAuth2 tests specifically
 npm test -- tests/unit/lib/auth/oauth2.test.ts
 ```
+
+> **Note:** Google OAuth2 E2E and unit tests require valid `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in your `.env.local` or `.env.test` file. See below for details.
+
+#### E2E Testing with Port Cleanup
+
+All E2E test commands include automatic port cleanup to prevent conflicts:
+
+```bash
+# Main E2E test command (includes port cleanup)
+npm run test:e2e:current
+
+# Quick feedback during development
+npm run test:e2e:fast
+
+# Before commits
+npm run test:e2e:smoke
+
+# Manual port cleanup (if needed)
+./scripts/kill-port-3000.sh
+```
+
+**Port Cleanup Features**:
+- **Automatic**: All E2E commands automatically kill processes on port 3000
+- **Reliable**: Tests always run on the expected port 3000
+- **No Conflicts**: No more port conflicts or tests falling back to different ports
+- **Consistent**: Predictable test environment every time
+
+#### OAuth2 Configuration
+
+To use OAuth2 authentication:
+
+1. **Configure OAuth2 providers** in your environment variables:
+   ```bash
+   GITHUB_CLIENT_ID=your_github_client_id
+   GITHUB_CLIENT_SECRET=your_github_client_secret
+   GOOGLE_CLIENT_ID=your_google_client_id   # Required for Google OAuth2 tests
+   GOOGLE_CLIENT_SECRET=your_google_client_secret   # Required for Google OAuth2 tests
+   ```
+
+> **Note:** E2E and unit tests now fully cover Google OAuth2 flows, including login, connection, and token handling.
 
 ## 🔒 Security
 

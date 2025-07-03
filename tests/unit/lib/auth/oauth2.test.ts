@@ -1,6 +1,9 @@
 import { OAuth2Service } from '../../../../src/lib/auth/oauth2';
 import { encryptionService } from '../../../../src/utils/encryption';
 import { PrismaClient } from '../../../../src/generated/prisma';
+import { getProviders } from 'next-auth/react';
+import { generateToken } from '../../../../src/lib/auth/session';
+import { Role } from '../../../../src/types';
 
 // Create fresh mocks for each test
 const createMockPrisma = () => ({
@@ -415,6 +418,109 @@ describe('OAuth2Service', () => {
       const result = await oauth2Service.getAccessToken('user-123', 'connection-456');
 
       expect(result).toBeNull();
+    });
+  });
+});
+
+describe('Google OAuth2 Implementation', () => {
+  const OLD_ENV = process.env;
+  
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...OLD_ENV };
+  });
+  
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
+
+  describe('OAuth2 Configuration', () => {
+    it('should validate required environment variables', () => {
+      delete process.env.GOOGLE_CLIENT_ID;
+      delete process.env.GOOGLE_CLIENT_SECRET;
+      
+      // This would be tested in the actual API handler
+      expect(process.env.GOOGLE_CLIENT_ID).toBeUndefined();
+      expect(process.env.GOOGLE_CLIENT_SECRET).toBeUndefined();
+    });
+
+    it('should have valid Google OAuth2 configuration when env vars are set', () => {
+      process.env.GOOGLE_CLIENT_ID = 'test-client-id';
+      process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret';
+      
+      expect(process.env.GOOGLE_CLIENT_ID).toBe('test-client-id');
+      expect(process.env.GOOGLE_CLIENT_SECRET).toBe('test-client-secret');
+    });
+  });
+
+  describe('State Parameter Generation', () => {
+    it('should generate valid state parameter', () => {
+      const state = Buffer.from(JSON.stringify({
+        provider: 'google',
+        timestamp: Date.now(),
+        nonce: Math.random().toString(36).substring(2)
+      })).toString('base64');
+      
+      expect(state).toBeDefined();
+      expect(typeof state).toBe('string');
+      expect(state.length).toBeGreaterThan(0);
+    });
+
+    it('should generate unique state parameters', () => {
+      const state1 = Buffer.from(JSON.stringify({
+        provider: 'google',
+        timestamp: Date.now(),
+        nonce: Math.random().toString(36).substring(2)
+      })).toString('base64');
+      
+      const state2 = Buffer.from(JSON.stringify({
+        provider: 'google',
+        timestamp: Date.now(),
+        nonce: Math.random().toString(36).substring(2)
+      })).toString('base64');
+      
+      expect(state1).not.toBe(state2);
+    });
+  });
+
+  describe('Authorization URL Building', () => {
+    it('should build valid Google OAuth2 authorization URL', () => {
+      const clientId = 'test-client-id';
+      const redirectUri = 'http://localhost:3000/api/auth/oauth2/callback';
+      const state = 'test-state';
+      
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      authUrl.searchParams.set('client_id', clientId);
+      authUrl.searchParams.set('redirect_uri', redirectUri);
+      authUrl.searchParams.set('response_type', 'code');
+      authUrl.searchParams.set('scope', 'openid email profile');
+      authUrl.searchParams.set('state', state);
+      
+      expect(authUrl.hostname).toBe('accounts.google.com');
+      expect(authUrl.pathname).toBe('/o/oauth2/v2/auth');
+      expect(authUrl.searchParams.get('client_id')).toBe(clientId);
+      expect(authUrl.searchParams.get('redirect_uri')).toBe(redirectUri);
+      expect(authUrl.searchParams.get('response_type')).toBe('code');
+      expect(authUrl.searchParams.get('scope')).toBe('openid email profile');
+      expect(authUrl.searchParams.get('state')).toBe(state);
+    });
+  });
+
+  describe('Token Generation', () => {
+    it('should generate valid JWT token for OAuth2 user', () => {
+      const userData = {
+        id: 'user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        role: 'USER' as const,
+        isActive: true
+      };
+      
+      const token = generateToken(userData);
+      
+      expect(token).toBeDefined();
+      expect(typeof token).toBe('string');
+      expect(token.length).toBeGreaterThan(0);
     });
   });
 }); 

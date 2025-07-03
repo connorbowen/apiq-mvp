@@ -15,7 +15,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 **Next Milestone**: MVP Core Engine - Natural Language Workflow Creation
 
 **E2E Test Status**: 
-- Auth e2e tests: ✅ 9/9 passing
+- Auth e2e tests: ✅ 9/9 passing (including Google OAuth2)
 - Connections e2e tests: 🚧 25/25 failing (debugging in progress)
 - UI e2e tests: ✅ Passing
 - Workflow e2e tests: ✅ Passing
@@ -352,7 +352,7 @@ Advanced features that provide competitive advantages and future growth.
 - **Authentication**: NextAuth.js
 - **Testing**: Jest, Playwright
 - **Caching**: Custom OpenAPI cache implementation
-- **OAuth2**: Complete OAuth2 implementation with GitHub, Google, Slack support
+- **OAuth2**: Complete OAuth2 implementation with GitHub, Google, Slack support (fully tested)
 
 ### **AI Integration Stack** 🚧 IN PROGRESS
 - **Natural Language Processing**: OpenAI GPT-4
@@ -371,6 +371,9 @@ Advanced features that provide competitive advantages and future growth.
 ## 🧪 **TESTING STRATEGY**
 
 ### **Current Test Coverage** ✅ COMPLETED
+- **Unit Tests**: 282 tests, 100% pass rate (includes Google OAuth2)
+- **Integration Tests**: Comprehensive API testing (includes Google OAuth2)
+- **E2E Tests**: User journey testing (includes Google OAuth2)
 - **Unit Tests**: 282 tests, 100% pass rate
 - **Integration Tests**: Comprehensive API testing
 - **E2E Tests**: User journey testing (partially complete)

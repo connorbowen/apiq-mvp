@@ -48,9 +48,9 @@ test.describe('Basic Navigation E2E Tests', () => {
       await page.click('a[href="#examples"]');
       await expect(page.locator('#examples')).toBeVisible();
       
-      // Test dashboard navigation
+      // Test dashboard navigation - should redirect to login for unauthenticated users
       await page.locator('a[href="/dashboard"]').first().click();
-      await expect(page).toHaveURL(/.*dashboard/);
+      await expect(page).toHaveURL(/.*login/);
     });
   });
 
@@ -178,12 +178,22 @@ test.describe('Basic Navigation E2E Tests', () => {
   test.describe('Dashboard Access', () => {
     test('should show login page when accessing protected routes', async ({ page }) => {
       // Try to access various protected routes
-      const protectedRoutes = ['/dashboard', '/connections', '/workflows'];
+      const protectedRoutes = ['/dashboard'];
       
       for (const route of protectedRoutes) {
         await page.goto(`${BASE_URL}${route}`);
         await expect(page).toHaveURL(/.*login/);
       }
+      
+      // /connections should return 404 since there's no main connections page
+      await page.goto(`${BASE_URL}/connections`);
+      // Next.js should show 404 page for non-existent routes
+      await expect(page.locator('h1')).toContainText('404');
+      
+      // /workflows should return 404 since there's no main workflows page
+      await page.goto(`${BASE_URL}/workflows`);
+      // Next.js should show 404 page for non-existent routes
+      await expect(page.locator('h1')).toContainText('404');
     });
   });
 }); 

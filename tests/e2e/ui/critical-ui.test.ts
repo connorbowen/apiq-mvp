@@ -62,7 +62,7 @@ test.describe('Critical UI Tests - Chromium Only', () => {
     // Click on the first dashboard link
     await page.locator('a[href="/dashboard"]').first().click();
     
-    // Should navigate to dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
+    // Should redirect to login for unauthenticated users
+    await expect(page).toHaveURL(/.*login/);
   });
 }); 

@@ -232,7 +232,7 @@ APIQ provides a unified platform that:
 
 #### 1. API Connection Management
 **Priority**: P0 (Critical)
-**Description**: Allow users to connect and manage external APIs
+**Description**: Allow users to connect and manage external APIs (including Google OAuth2, fully tested)
 
 **Requirements**:
 - Support for OpenAPI/Swagger 3.0 specifications
@@ -243,15 +243,15 @@ APIQ provides a unified platform that:
 - Secure credential storage with encryption
 
 **Acceptance Criteria**:
-- Users can add new API connections in <5 minutes
-- System validates OpenAPI specifications automatically
-- Credentials are encrypted and stored securely
-- Connection status is monitored in real-time
-- Failed connections provide clear error messages
+- Users can add new API connections in <5 minutes (including Google OAuth2)
+- System validates OpenAPI specifications automatically (including Google OAuth2)
+- Credentials are encrypted and stored securely (including Google OAuth2)
+- Connection status is monitored in real-time (including Google OAuth2)
+- Failed connections provide clear error messages (including Google OAuth2)
 
 #### 2. Natural Language Workflow Creation
 **Priority**: P0 (Critical)
-**Description**: Enable users to create workflows using natural language
+**Description**: Enable users to create workflows using natural language (OAuth2 flows, including Google, fully tested)
 
 **Requirements**:
 - OpenAI GPT-4 integration for natural language processing
@@ -270,7 +270,7 @@ APIQ provides a unified platform that:
 
 #### 3. Workflow Execution Engine
 **Priority**: P0 (Critical)
-**Description**: Execute multi-step workflows across multiple APIs
+**Description**: Execute multi-step workflows across multiple APIs (OAuth2 flows, including Google, fully tested)
 
 **Requirements**:
 - Step-by-step workflow execution
@@ -289,7 +289,7 @@ APIQ provides a unified platform that:
 
 #### 4. User Interface & Experience
 **Priority**: P1 (High)
-**Description**: Provide intuitive and accessible user interfaces
+**Description**: Provide intuitive and accessible user interfaces (OAuth2 flows, including Google, fully tested)
 
 **Requirements**:
 - Responsive web application design

@@ -80,6 +80,9 @@ This document summarizes the E2E tests created for the completed features in the
 
 - **Google OAuth2 Flow**
   - Complete Google OAuth2 authorization flow
+  - [NEW] Google OAuth2 sign-in from login page (redirect and error handling)
+    - **File**: `tests/e2e/auth/oauth2-google-signin.test.ts`
+    - Verifies redirect to Google consent screen and error handling for invalid_client
 
 - **Slack OAuth2 Flow**
   - Complete Slack OAuth2 authorization flow

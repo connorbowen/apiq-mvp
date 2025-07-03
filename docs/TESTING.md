@@ -61,7 +61,7 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 
 - **Authentication & SSO Tests**: 123 tests passing ✅
   - Login, session management, SSO flows
-  - OAuth2 provider integration tests
+  - OAuth2 provider integration tests (including Google OAuth2)
   - SAML/OIDC enterprise SSO tests
 - **Workflow Orchestration Tests**: 57 tests passing ✅
   - Workflow execution and monitoring
@@ -235,19 +235,30 @@ tests/e2e/
 
 #### Running Test Groups
 
+All E2E test commands include automatic port cleanup to prevent conflicts:
+
 ```bash
-# Run specific test groups
+# Run specific test groups (includes port cleanup)
 npm run test:e2e:auth        # Authentication & SSO (123 tests)
 npm run test:e2e:workflows   # Workflow orchestration (57 tests)
 npm run test:e2e:connections # API connections
 npm run test:e2e:ui          # UI & navigation
 
-# Run all E2E tests
+# Run all E2E tests (includes port cleanup)
 npm run test:e2e
 
-# Run with interactive UI
+# Run with interactive UI (includes port cleanup)
 npm run test:e2e:ui-interactive
+
+# Manual port cleanup (if needed)
+./scripts/kill-port-3000.sh
 ```
+
+**Port Cleanup Features**:
+- **Automatic**: All E2E commands automatically kill processes on port 3000
+- **Reliable**: Tests always run on the expected port 3000
+- **No Conflicts**: No more port conflicts or tests falling back to different ports
+- **Consistent**: Predictable test environment every time
 
 ### Test Helper Scripts
 
@@ -2668,3 +2679,7 @@ JEST_TIMEOUT=30000
 - Add missing test scenarios
 - Improve test readability
 - Enhance test automation
+
+#### Environment Setup for OAuth2/Google Tests
+
+> **Note:** Google OAuth2 E2E and unit tests require valid `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in your `.env.local` or `.env.test` file.

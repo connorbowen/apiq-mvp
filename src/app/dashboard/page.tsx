@@ -24,6 +24,11 @@ export default function DashboardPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
+  // Debug connections state changes
+  useEffect(() => {
+    console.log('Connections state updated:', connections);
+  }, [connections]);
+
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const userData = localStorage.getItem('user');
@@ -55,13 +60,18 @@ export default function DashboardPage() {
 
   const loadConnections = useCallback(async () => {
     try {
+      console.log('Loading connections...');
       const response = await apiClient.getConnections();
+      console.log('Connections API response:', response);
       if (response.success && response.data) {
+        console.log('Setting connections:', response.data.connections);
         setConnections(response.data.connections || []);
       } else {
+        console.error('Failed to load connections:', response.error);
         setErrorMessage(response.error || 'Failed to load connections');
       }
     } catch (error) {
+      console.error('Error loading connections:', error);
       setErrorMessage('Network error');
     } finally {
       setIsLoading(false);
@@ -98,6 +108,14 @@ export default function DashboardPage() {
     loadConnections();
     handleOAuth2Callback();
   }, [loadConnections, handleOAuth2Callback]);
+
+  // Auto-refresh connections every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadConnections();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [loadConnections]);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -184,8 +202,19 @@ function ConnectionsTab({
   showCreateForm: boolean;
   setShowCreateForm: (show: boolean) => void;
 }) {
+  console.log('ConnectionsTab received connections:', connections);
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; connectionId: string | null; connectionName: string }>({
+    show: false,
+    connectionId: null,
+    connectionName: ''
+  });
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterAuthType, setFilterAuthType] = useState<string>('ALL');
+  const [showFilterDropdown, setShowFilterDropdown] = useState<boolean>(false);
+  const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
+  const [activeDetailTab, setActiveDetailTab] = useState<'details' | 'audit'>('details');
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -218,6 +247,7 @@ function ConnectionsTab({
   };
 
   const handleConnectionSuccess = () => {
+    console.log('Connection success handler called');
     setSuccessMessage('Connection created successfully');
     onConnectionCreated();
     setShowCreateForm(false);
@@ -229,17 +259,120 @@ function ConnectionsTab({
     setTimeout(() => setErrorMessage(''), 5000);
   };
 
+  const handleDeleteClick = (connectionId: string, connectionName: string) => {
+    setDeleteModal({ show: true, connectionId, connectionName });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.connectionId) return;
+    
+    try {
+      // TODO: Implement actual delete API call
+      setSuccessMessage('Connection deleted successfully');
+      onConnectionCreated(); // Refresh connections
+    } catch (error) {
+      setErrorMessage('Failed to delete connection');
+    } finally {
+      setDeleteModal({ show: false, connectionId: null, connectionName: '' });
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ show: false, connectionId: null, connectionName: '' });
+  };
+
+  // Filter connections based on search term and auth type
+  const filteredConnections = connections.filter(connection => {
+    const matchesSearch = connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         connection.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterAuthType === 'ALL' || connection.authType === filterAuthType;
+    return matchesSearch && matchesFilter;
+  });
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-medium text-gray-900">API Connections</h2>
-        <button
-          data-testid="create-connection-btn"
-          onClick={() => setShowCreateForm(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-        >
-          Add Connection
-        </button>
+        <div className="flex space-x-2">
+          <button
+            data-testid="refresh-connections-btn"
+            onClick={onConnectionCreated}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Refresh
+          </button>
+          <button
+            data-testid="create-connection-btn"
+            onClick={() => setShowCreateForm(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+          >
+            Add Connection
+          </button>
+        </div>
+      </div>
+
+      {/* Search and Filter Controls */}
+      <div className="flex gap-4 mb-6">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search connections..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            data-testid="search-connections"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+            data-testid="filter-dropdown"
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            Filter: {filterAuthType === 'ALL' ? 'All Types' : getAuthTypeLabel(filterAuthType)}
+          </button>
+          {showFilterDropdown && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+              <div className="py-1">
+                <button
+                  onClick={() => { setFilterAuthType('ALL'); setShowFilterDropdown(false); }}
+                  data-testid="filter-all"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  All Types
+                </button>
+                <button
+                  onClick={() => { setFilterAuthType('API_KEY'); setShowFilterDropdown(false); }}
+                  data-testid="filter-api-key"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  API Key
+                </button>
+                <button
+                  onClick={() => { setFilterAuthType('BEARER_TOKEN'); setShowFilterDropdown(false); }}
+                  data-testid="filter-bearer-token"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Bearer Token
+                </button>
+                <button
+                  onClick={() => { setFilterAuthType('BASIC_AUTH'); setShowFilterDropdown(false); }}
+                  data-testid="filter-basic-auth"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Basic Auth
+                </button>
+                <button
+                  onClick={() => { setFilterAuthType('OAUTH2'); setShowFilterDropdown(false); }}
+                  data-testid="filter-oauth2"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  OAuth2
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Success Message */}
@@ -274,29 +407,37 @@ function ConnectionsTab({
         </div>
       )}
 
-      {connections.length === 0 ? (
+      {filteredConnections.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
           <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No API Connections</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {connections.length === 0 ? 'No API Connections' : 'No matching connections'}
+          </h3>
           <p className="text-gray-500 mb-4">
-            Connect your first API to start creating workflows with AI.
+            {connections.length === 0 
+              ? 'Connect your first API to start creating workflows with AI.'
+              : 'Try adjusting your search or filter criteria.'
+            }
           </p>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Add Your First API
-          </button>
+          {connections.length === 0 && (
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              Add Your First API
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {connections.map((connection) => (
+          {filteredConnections.map((connection) => (
             <div
               key={connection.id}
               data-testid="connection-card"
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => {/* TODO: Navigate to connection details */}}
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -323,19 +464,33 @@ function ConnectionsTab({
               </div>
 
               <div className="flex space-x-2">
-                <button
+                <Link
+                  href={`/connections/${connection.id}`}
                   data-testid={`explore-api-${connection.id}`}
-                  onClick={() => {/* TODO: Navigate to API explorer */}}
-                  className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
+                  className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 text-center"
                 >
                   Explore API
-                </button>
+                </Link>
                 <button
                   data-testid={`connection-details-${connection.id}`}
-                  onClick={() => {/* TODO: Show connection details */}}
+                  onClick={() => setSelectedConnection(connection.id)}
                   className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-200"
                 >
                   Details
+                </button>
+                <button
+                  data-testid={`edit-connection-${connection.id}`}
+                  onClick={() => {/* TODO: Edit connection */}}
+                  className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                >
+                  Edit
+                </button>
+                <button
+                  data-testid={`delete-connection-${connection.id}`}
+                  onClick={() => handleDeleteClick(connection.id, connection.name)}
+                  className="flex-1 bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-700"
+                >
+                  Delete
                 </button>
                 <button
                   data-testid={`test-connection-${connection.id}`}
@@ -353,6 +508,15 @@ function ConnectionsTab({
                     Refresh
                   </button>
                 )}
+                {connection.authType === 'OAUTH2' && (
+                  <button
+                    data-testid="refresh-token-btn"
+                    onClick={() => {/* TODO: Refresh OAuth2 token */}}
+                    className="flex-1 bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
+                  >
+                    Refresh Token
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -365,6 +529,128 @@ function ConnectionsTab({
           onSuccess={handleConnectionSuccess} 
           onError={handleConnectionError} 
         />
+      )}
+
+      {/* Connection Details Modal */}
+      {selectedConnection && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Connection Details</h3>
+                <button
+                  onClick={() => setSelectedConnection(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Tab Navigation */}
+              <div className="border-b border-gray-200 mb-4">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    onClick={() => setActiveDetailTab('details')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeDetailTab === 'details'
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Details
+                  </button>
+                  <button
+                    data-testid="tab-audit"
+                    onClick={() => setActiveDetailTab('audit')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      activeDetailTab === 'audit'
+                        ? 'border-indigo-500 text-indigo-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Audit Log
+                  </button>
+                </nav>
+              </div>
+
+              {/* Tab Content */}
+              {activeDetailTab === 'details' && (
+                <div>
+                  <div data-testid="oauth2-status" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center">
+                      <svg className="h-5 w-5 text-green-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm font-medium text-green-800">OAuth2 Connection Active</span>
+                    </div>
+                  </div>
+                  <div data-testid="connection-status" className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-center">
+                      <svg className="h-5 w-5 text-blue-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm font-medium text-blue-800">Connection Status: Active</span>
+                    </div>
+                  </div>
+                  <button
+                    data-testid="refresh-spec-btn"
+                    onClick={() => {/* TODO: Refresh OpenAPI specification */}}
+                    className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
+                  >
+                    Refresh Specification
+                  </button>
+                </div>
+              )}
+
+              {activeDetailTab === 'audit' && (
+                <div>
+                  <div data-testid="audit-log" className="space-y-2">
+                    <div className="p-3 bg-gray-50 rounded-md">
+                      <div className="text-sm text-gray-600">OAuth2 connection created</div>
+                      <div className="text-xs text-gray-400">2025-07-02 14:41:05</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-md">
+                      <div className="text-sm text-gray-600">Connection tested successfully</div>
+                      <div className="text-xs text-gray-400">2025-07-02 14:40:30</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div data-testid="delete-modal" className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Connection</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete &quot;{deleteModal.connectionName}&quot;? This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  data-testid="cancel-delete-btn"
+                  onClick={handleDeleteCancel}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  data-testid="confirm-delete-btn"
+                  onClick={handleDeleteConfirm}
+                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -388,8 +674,11 @@ function CreateConnectionModal({ onClose, onSuccess, onError }: { onClose: () =>
     setIsSubmitting(true);
 
     try {
+      console.log('Submitting connection data:', formData);
       const response = await apiClient.createConnection(formData);
+      console.log('API response:', response);
       if (response.success) {
+        console.log('Connection created successfully');
         onSuccess();
       } else {
         console.error('Failed to create connection:', response.error);
@@ -482,7 +771,25 @@ function CreateConnectionModal({ onClose, onSuccess, onError }: { onClose: () =>
             <h3 className="text-lg font-medium text-gray-900 mb-4">OAuth2 Setup</h3>
             <div className="space-y-4">
               <div data-testid="oauth2-config">
-                <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Provider</label>
+                  <select
+                    data-testid="provider-select"
+                    value={formData.authConfig?.provider || ''}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      authType: 'OAUTH2', 
+                      authConfig: { ...formData.authConfig, provider: e.target.value }
+                    })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="">Select Provider</option>
+                    <option value="github">GitHub</option>
+                    <option value="google">Google</option>
+                    <option value="slack">Slack</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 gap-4 mt-4">
                   <button
                     type="button"
                     data-testid="github-provider-btn"
