@@ -1,3 +1,5 @@
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.test' });
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -42,5 +44,10 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    env: {
+      ENCRYPTION_MASTER_KEY: 'test-master-key-32-chars-long-for-secrets',
+      NODE_ENV: 'test',
+      JWT_SECRET: 'test-jwt-secret-key-for-testing-only',
+    }
   },
 }); 

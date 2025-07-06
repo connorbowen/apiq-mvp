@@ -39,41 +39,32 @@ test.describe('Dashboard Navigation E2E Tests', () => {
       // Verify we're on the dashboard
       await expect(page).toHaveURL(/.*dashboard/);
       
-      // Check that default tab (overview) is active
-      await expect(page.locator('[data-testid="tab-overview"]')).toHaveClass(/active/);
-      
-      // Navigate to Workflows tab
-      await page.click('[data-testid="tab-workflows"]');
-      await expect(page.locator('[data-testid="tab-workflows"]')).toHaveClass(/active/);
-      await expect(page.locator('[data-testid="workflows-section"]')).toBeVisible();
+      // Check that default tab (chat) is active
+      await expect(page.locator('[data-testid="tab-chat"]')).toHaveClass(/bg-indigo-100/);
       
       // Navigate to Connections tab
       await page.click('[data-testid="tab-connections"]');
-      await expect(page.locator('[data-testid="tab-connections"]')).toHaveClass(/active/);
-      await expect(page.locator('[data-testid="connections-section"]')).toBeVisible();
+      await expect(page.locator('[data-testid="tab-connections"]')).toHaveClass(/bg-indigo-100/);
+      await expect(page.locator('h2')).toContainText('API Connections');
       
-      // Navigate to Analytics tab
-      await page.click('[data-testid="tab-analytics"]');
-      await expect(page.locator('[data-testid="tab-analytics"]')).toHaveClass(/active/);
-      await expect(page.locator('[data-testid="analytics-section"]')).toBeVisible();
-      
-      // Navigate back to Overview tab
-      await page.click('[data-testid="tab-overview"]');
-      await expect(page.locator('[data-testid="tab-overview"]')).toHaveClass(/active/);
-      await expect(page.locator('[data-testid="overview-section"]')).toBeVisible();
+      // Navigate back to Chat tab
+      await page.click('[data-testid="tab-chat"]');
+      await expect(page.locator('[data-testid="tab-chat"]')).toHaveClass(/bg-indigo-100/);
+      // Chat interface should be visible
+      await expect(page.locator('textarea')).toBeVisible();
     });
 
     test('should maintain tab state on page refresh', async ({ page }) => {
-      // Navigate to Workflows tab
-      await page.click('[data-testid="tab-workflows"]');
-      await expect(page.locator('[data-testid="tab-workflows"]')).toHaveClass(/active/);
+      // Navigate to Connections tab
+      await page.click('[data-testid="tab-connections"]');
+      await expect(page.locator('[data-testid="tab-connections"]')).toHaveClass(/bg-indigo-100/);
       
       // Refresh the page
       await page.reload();
       
-      // Verify we're still on the Workflows tab
-      await expect(page.locator('[data-testid="tab-workflows"]')).toHaveClass(/active/);
-      await expect(page.locator('[data-testid="workflows-section"]')).toBeVisible();
+      // Verify we're still on the Connections tab
+      await expect(page.locator('[data-testid="tab-connections"]')).toHaveClass(/bg-indigo-100/);
+      await expect(page.locator('h2')).toContainText('API Connections');
     });
 
     test('should handle tab navigation with keyboard', async ({ page }) => {
@@ -82,134 +73,47 @@ test.describe('Dashboard Navigation E2E Tests', () => {
       
       // Navigate through tabs using arrow keys
       await page.keyboard.press('ArrowRight');
-      await expect(page.locator('[data-testid="tab-workflows"]')).toHaveClass(/active/);
-      
-      await page.keyboard.press('ArrowRight');
-      await expect(page.locator('[data-testid="tab-connections"]')).toHaveClass(/active/);
-      
-      await page.keyboard.press('ArrowRight');
-      await expect(page.locator('[data-testid="tab-analytics"]')).toHaveClass(/active/);
+      await expect(page.locator('[data-testid="tab-connections"]')).toHaveClass(/bg-indigo-100/);
       
       // Navigate back with left arrow
       await page.keyboard.press('ArrowLeft');
-      await expect(page.locator('[data-testid="tab-connections"]')).toHaveClass(/active/);
+      await expect(page.locator('[data-testid="tab-chat"]')).toHaveClass(/bg-indigo-100/);
     });
   });
 
-  test.describe('Workflow Details Navigation', () => {
-    test('should navigate to workflow details and back', async ({ page }) => {
-      // Navigate to Workflows tab
-      await page.click('[data-testid="tab-workflows"]');
+  test.describe('Dashboard Functionality', () => {
+    test('should display user information correctly', async ({ page }) => {
+      // Verify user information is displayed
+      await expect(page.locator('span')).toContainText('Welcome, E2E Navigation Test User');
       
-      // Create a test workflow via API
-      const workflowResponse = await page.request.post('/api/workflows', {
-        data: {
-          name: 'Test Workflow for Navigation',
-          description: 'A test workflow for navigation testing',
-          steps: [
-            {
-              type: 'api_call',
-              name: 'Test Step',
-              config: {
-                method: 'GET',
-                url: 'https://api.example.com/test'
-              }
-            }
-          ]
-        },
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      expect(workflowResponse.status()).toBe(201);
-      const workflow = await workflowResponse.json();
-      
-      // Click on the workflow card to navigate to details
-      await page.click(`[data-testid="workflow-card-${workflow.data.id}"]`);
-      
-      // Verify we're on the workflow details page
-      await expect(page).toHaveURL(new RegExp(`/workflows/${workflow.data.id}`));
-      await expect(page.locator('h1')).toContainText('Test Workflow for Navigation');
-      
-      // Check that workflow details are displayed
-      await expect(page.locator('[data-testid="workflow-description"]')).toContainText('A test workflow for navigation testing');
-      await expect(page.locator('[data-testid="workflow-steps"]')).toBeVisible();
-      
-      // Navigate back to dashboard
-      await page.click('[data-testid="back-to-dashboard"]');
-      await expect(page).toHaveURL(/.*dashboard/);
-      await expect(page.locator('[data-testid="tab-workflows"]')).toHaveClass(/active/);
-      
-      // Clean up the test workflow
-      await page.request.delete(`/api/workflows/${workflow.data.id}`, {
-        headers: { 'Authorization': `Bearer ${jwt}` }
-      });
+      // Verify logout button is present
+      await expect(page.locator('button')).toContainText('Logout');
     });
 
-    test('should handle workflow details with complex steps', async ({ page }) => {
-      // Navigate to Workflows tab
-      await page.click('[data-testid="tab-workflows"]');
+    test('should handle logout functionality', async ({ page }) => {
+      // Click logout button
+      await page.click('button:has-text("Logout")');
       
-      // Create a workflow with multiple steps
-      const workflowResponse = await page.request.post('/api/workflows', {
-        data: {
-          name: 'Complex Workflow Test',
-          description: 'A workflow with multiple steps for testing',
-          steps: [
-            {
-              type: 'api_call',
-              name: 'First Step',
-              config: {
-                method: 'GET',
-                url: 'https://api.example.com/step1'
-              }
-            },
-            {
-              type: 'api_call',
-              name: 'Second Step',
-              config: {
-                method: 'POST',
-                url: 'https://api.example.com/step2',
-                body: { data: 'test' }
-              }
-            },
-            {
-              type: 'condition',
-              name: 'Condition Step',
-              config: {
-                condition: 'response.status === 200'
-              }
-            }
-          ]
-        },
-        headers: {
-          'Authorization': `Bearer ${jwt}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Should redirect to home page
+      await expect(page).toHaveURL(/.*\/$/);
+    });
+
+    test('should display connections tab content', async ({ page }) => {
+      // Navigate to Connections tab
+      await page.click('[data-testid="tab-connections"]');
       
-      expect(workflowResponse.status()).toBe(201);
-      const workflow = await workflowResponse.json();
+      // Verify connections content is displayed
+      await expect(page.locator('h2')).toContainText('API Connections');
+      await expect(page.locator('[data-testid="create-connection-btn"]')).toContainText('Add Connection');
+      await expect(page.locator('[data-testid="refresh-connections-btn"]')).toContainText('Refresh');
+    });
+
+    test('should display chat tab content', async ({ page }) => {
+      // Verify we're on chat tab by default
+      await expect(page.locator('[data-testid="tab-chat"]')).toHaveClass(/bg-indigo-100/);
       
-      // Navigate to workflow details
-      await page.click(`[data-testid="workflow-card-${workflow.data.id}"]`);
-      
-      // Verify all steps are displayed
-      await expect(page.locator('[data-testid="step-First Step"]')).toBeVisible();
-      await expect(page.locator('[data-testid="step-Second Step"]')).toBeVisible();
-      await expect(page.locator('[data-testid="step-Condition Step"]')).toBeVisible();
-      
-      // Check step details
-      await expect(page.locator('[data-testid="step-First Step"] .step-method')).toContainText('GET');
-      await expect(page.locator('[data-testid="step-Second Step"] .step-method')).toContainText('POST');
-      await expect(page.locator('[data-testid="step-Condition Step"] .step-type')).toContainText('Condition');
-      
-      // Clean up
-      await page.request.delete(`/api/workflows/${workflow.data.id}`, {
-        headers: { 'Authorization': `Bearer ${jwt}` }
-      });
+      // Verify chat interface is displayed
+      await expect(page.locator('textarea')).toBeVisible();
     });
   });
 

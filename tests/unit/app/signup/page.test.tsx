@@ -28,10 +28,10 @@ describe('SignupPage', () => {
   it('should render signup form with all required fields', () => {
     render(<SignupPage />);
     
-    expect(screen.getByText('Create your account')).toBeInTheDocument();
+    expect(screen.getByText('Create your APIQ account')).toBeInTheDocument();
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password\s*\*/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument();
   });
@@ -70,7 +70,7 @@ describe('SignupPage', () => {
     
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
-    const passwordInput = screen.getByLabelText(/^password$/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
     const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
@@ -81,7 +81,9 @@ describe('SignupPage', () => {
     fireEvent.click(submitButton);
     
     await waitFor(() => {
-      expect(screen.getByText(/password must be at least 8 characters long/i)).toBeInTheDocument();
+      // Look for the error message in the error container specifically
+      const errorContainer = screen.getByRole('alert');
+      expect(errorContainer).toHaveTextContent(/password must be at least 8 characters/i);
     });
   });
 
@@ -93,7 +95,7 @@ describe('SignupPage', () => {
     
     // Wait for the error message to appear
     await waitFor(() => {
-      expect(screen.getByText('Name is required')).toBeInTheDocument();
+      expect(screen.getByText('name is required')).toBeInTheDocument();
     });
   });
 
@@ -108,21 +110,21 @@ describe('SignupPage', () => {
     
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
-    const passwordInput = screen.getByLabelText(/^password$/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
     const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
     
     await waitFor(() => {
       expect(apiClient.register).toHaveBeenCalledWith(
         'test@example.com',
         'Test User',
-        'password123'
+        'Password123'
       );
     });
     
@@ -142,18 +144,18 @@ describe('SignupPage', () => {
     
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
-    const passwordInput = screen.getByLabelText(/^password$/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
     const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
     
     await waitFor(() => {
-      expect(screen.getByText(/user with this email already exists/i)).toBeInTheDocument();
+      expect(screen.getByText(/a user with this email already exists/i)).toBeInTheDocument();
     });
   });
 
@@ -165,18 +167,18 @@ describe('SignupPage', () => {
     
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
-    const passwordInput = screen.getByLabelText(/^password$/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
     const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
     
     await waitFor(() => {
-      expect(screen.getByText(/network error. please try again/i)).toBeInTheDocument();
+      expect(screen.getByText(/network error. please check your connection/i)).toBeInTheDocument();
     });
   });
 
@@ -188,14 +190,14 @@ describe('SignupPage', () => {
     
     const nameInput = screen.getByLabelText(/full name/i);
     const emailInput = screen.getByLabelText(/email address/i);
-    const passwordInput = screen.getByLabelText(/^password$/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
     const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
     
     expect(screen.getByText(/creating account/i)).toBeInTheDocument();
@@ -205,13 +207,13 @@ describe('SignupPage', () => {
   it('should show login link', () => {
     render(<SignupPage />);
     
-    expect(screen.getByText(/sign in to your existing account/i)).toBeInTheDocument();
+    expect(screen.getByText(/already have an account/i)).toBeInTheDocument();
+    expect(screen.getByText(/sign in/i)).toBeInTheDocument();
   });
 
-  it('should show terms and privacy links', () => {
+  it('should show back to home link', () => {
     render(<SignupPage />);
     
-    expect(screen.getByText(/terms of service/i)).toBeInTheDocument();
-    expect(screen.getByText(/privacy policy/i)).toBeInTheDocument();
+    expect(screen.getByText(/back to home/i)).toBeInTheDocument();
   });
 }); 

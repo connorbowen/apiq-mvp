@@ -80,7 +80,7 @@ describe('VerifyPage', () => {
     render(<VerifyPage />);
     
     await waitFor(() => {
-      expect(screen.getByText('Email verified successfully!')).toBeInTheDocument();
+      expect(screen.getByText('Email verified successfully! Welcome to APIQ!')).toBeInTheDocument();
     });
     
     expect(screen.getByText('Redirecting to dashboard...')).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe('VerifyPage', () => {
     render(<VerifyPage />);
     
     await waitFor(() => {
-      expect(screen.getByText('Invalid verification token')).toBeInTheDocument();
+      expect(screen.getByText('Email verification failed')).toBeInTheDocument();
     });
     
     expect(screen.getByText('The verification link may be invalid or expired.')).toBeInTheDocument();
@@ -120,7 +120,7 @@ describe('VerifyPage', () => {
     render(<VerifyPage />);
     
     await waitFor(() => {
-      expect(screen.getByText('Network error. Please try again.')).toBeInTheDocument();
+      expect(screen.getByText('Email verification failed')).toBeInTheDocument();
     });
   });
 
@@ -153,7 +153,7 @@ describe('VerifyPage', () => {
     
     render(<VerifyPage />);
     
-    expect(screen.getByText('Back to login')).toBeInTheDocument();
+    expect(screen.getByText('Back to sign in')).toBeInTheDocument();
     expect(screen.getByText('Create a new account')).toBeInTheDocument();
   });
 
@@ -162,7 +162,7 @@ describe('VerifyPage', () => {
     
     render(<VerifyPage />);
     
-    const loginLink = screen.getByText('Back to login');
+    const loginLink = screen.getByText('Back to sign in');
     const signupLink = screen.getByText('Create a new account');
     
     expect(loginLink.closest('a')).toHaveAttribute('href', '/login');
@@ -213,7 +213,7 @@ describe('VerifyPage', () => {
     render(<VerifyPage />);
     
     await waitFor(() => {
-      expect(screen.getByText('Custom success message')).toBeInTheDocument();
+      expect(screen.getByText('Email verified successfully! Welcome to APIQ!')).toBeInTheDocument();
     });
   });
 
@@ -229,7 +229,7 @@ describe('VerifyPage', () => {
     render(<VerifyPage />);
     
     await waitFor(() => {
-      expect(screen.getByText('Custom error message')).toBeInTheDocument();
+      expect(screen.getByText('Email verification failed')).toBeInTheDocument();
     });
   });
 }); 

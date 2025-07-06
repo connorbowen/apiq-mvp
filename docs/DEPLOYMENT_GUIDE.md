@@ -38,7 +38,7 @@ This deployment guide covers all aspects of deploying APIQ in various environmen
 
 ### Required Accounts & Services
 
-- **OpenAI API**: For AI-powered workflow orchestration
+- **OpenAI API**: For natural language workflow generation
 - **Email Service**: For user notifications (SendGrid, AWS SES, etc.)
 - **Monitoring Service**: For application monitoring (DataDog, New Relic, etc.)
 - **Domain & SSL**: For production deployments
@@ -72,8 +72,20 @@ This deployment guide covers all aspects of deploying APIQ in various environmen
    NEXTAUTH_SECRET="your-development-secret-key"
    NEXTAUTH_URL="http://localhost:3000"
    
-   # OpenAI
+   # OpenAI (Required for natural language workflow generation)
    OPENAI_API_KEY="sk-your-openai-api-key"
+   
+   # Security (Required for secrets vault)
+   ENCRYPTION_MASTER_KEY="your-32-character-master-key-here"
+   JWT_SECRET="your-super-secret-jwt-key"
+   
+   # Email Service (Optional - for password reset and verification)
+   SMTP_HOST="smtp.gmail.com"
+   SMTP_PORT="587"
+   SMTP_SECURE="false"
+   SMTP_USER="your-email@gmail.com"
+   SMTP_PASS="your-app-password"
+   SMTP_FROM="your-email@gmail.com"
    
    # Development
    NODE_ENV="development"
@@ -124,6 +136,15 @@ npx prisma migrate status
 npx prisma migrate dev --name migration_name
 ```
 
+**Secrets Management**
+```bash
+# Generate new master key for secrets vault
+openssl rand -hex 16
+
+# Rotate secrets vault master key (production only)
+npm run rotate-secrets
+```
+
 **Testing**
 ```bash
 # Run tests
@@ -168,8 +189,20 @@ npm test -- --testPathPattern="e2e"
    NEXTAUTH_SECRET="your-staging-secret-key"
    NEXTAUTH_URL="https://staging.apiq.com"
    
-   # OpenAI
+   # OpenAI (Required for natural language workflow generation)
    OPENAI_API_KEY="sk-your-openai-api-key"
+   
+   # Security (Required for secrets vault)
+   ENCRYPTION_MASTER_KEY="your-32-character-master-key-here"
+   JWT_SECRET="your-staging-jwt-secret"
+   
+   # Email Service
+   SMTP_HOST="smtp.gmail.com"
+   SMTP_PORT="587"
+   SMTP_SECURE="false"
+   SMTP_USER="your-staging-email@gmail.com"
+   SMTP_PASS="your-staging-app-password"
+   SMTP_FROM="your-staging-email@gmail.com"
    
    # Staging
    NODE_ENV="staging"

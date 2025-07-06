@@ -12,13 +12,18 @@ export interface SecretMetadata {
   id: string;
   userId: string;
   name: string;
-  type: 'api_key' | 'oauth2_token' | 'webhook_secret' | 'custom';
+  type: 'api_key' | 'oauth2_token' | 'webhook_secret' | 'database_password' | 'password' | 'ssh_key' | 'certificate' | 'custom';
   keyId: string;
   isActive: boolean;
   expiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   version: number;
+  rotationEnabled?: boolean;
+  rotationInterval?: number;
+  lastRotatedAt?: Date;
+  nextRotationAt?: Date;
+  rotationHistory?: any[];
 }
 
 export interface SecretData {
@@ -90,10 +95,10 @@ export class SecretsVault {
       throw new Error('Invalid secret name: must be a non-empty string');
     }
 
-    // Sanitize name (alphanumeric, hyphens, underscores only)
-    const sanitizedName = name.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+    // Sanitize name (alphanumeric, hyphens, underscores, spaces only)
+    const sanitizedName = name.trim().replace(/[^a-zA-Z0-9_\-\s]/g, '');
     if (sanitizedName !== name.trim()) {
-      throw new Error('Invalid secret name: contains invalid characters. Use only letters, numbers, hyphens, and underscores');
+      throw new Error('Invalid secret name: contains invalid characters. Use only letters, numbers, hyphens, underscores, and spaces');
     }
 
     // Validate name length
@@ -149,7 +154,14 @@ export class SecretsVault {
     name: string,
     secretData: SecretData,
     type: SecretMetadata['type'] = 'custom',
-    expiresAt?: Date
+    expiresAt?: Date,
+    rotationConfig?: {
+      rotationEnabled?: boolean;
+      rotationInterval?: number;
+      lastRotatedAt?: Date;
+      nextRotationAt?: Date;
+      rotationHistory?: any[];
+    }
   ): Promise<SecretMetadata> {
     try {
       // Validate and sanitize inputs
@@ -159,7 +171,7 @@ export class SecretsVault {
       this.checkRateLimit(userId);
 
       // Validate type
-      const validTypes = ['api_key', 'oauth2_token', 'webhook_secret', 'custom'];
+      const validTypes = ['api_key', 'oauth2_token', 'webhook_secret', 'database_password', 'password', 'ssh_key', 'certificate', 'custom'];
       if (!validTypes.includes(type)) {
         throw new Error(`Invalid secret type: must be one of ${validTypes.join(', ')}`);
       }
@@ -194,12 +206,16 @@ export class SecretsVault {
             keyId: encryptedData.keyId,
             version: existingSecret.version + 1,
             expiresAt,
+            rotationEnabled: rotationConfig?.rotationEnabled ?? existingSecret.rotationEnabled,
+            rotationInterval: rotationConfig?.rotationInterval ?? existingSecret.rotationInterval,
+            lastRotatedAt: rotationConfig?.lastRotatedAt ?? existingSecret.lastRotatedAt,
+            nextRotationAt: rotationConfig?.nextRotationAt ?? existingSecret.nextRotationAt,
+            rotationHistory: rotationConfig?.rotationHistory ? JSON.parse(JSON.stringify(rotationConfig.rotationHistory)) : existingSecret.rotationHistory,
             updatedAt: new Date()
           }
         });
 
-        await this.logSecretAccess(userId, 'SECRET_UPDATED', name);
-
+        logInfo('Secret updated', { userId, secretId: updatedSecret.id, name });
         return this.mapToSecretMetadata(updatedSecret, type);
       } else {
         // Create new secret
@@ -210,26 +226,25 @@ export class SecretsVault {
             type,
             encryptedData: encryptedData.encryptedData,
             keyId: encryptedData.keyId,
-            version: 1,
-            isActive: true,
             expiresAt,
-            metadata: secretData.metadata
+            rotationEnabled: rotationConfig?.rotationEnabled ?? false,
+            rotationInterval: rotationConfig?.rotationInterval ?? null,
+            lastRotatedAt: rotationConfig?.lastRotatedAt ?? new Date(),
+            nextRotationAt: rotationConfig?.nextRotationAt ?? null,
+            rotationHistory: rotationConfig?.rotationHistory ? JSON.parse(JSON.stringify(rotationConfig.rotationHistory)) : []
           }
         });
 
+        logInfo('Secret created', { userId, secretId: newSecret.id, name });
+        
+        // Log the secret creation
         await this.logSecretAccess(userId, 'SECRET_CREATED', name);
-
+        
         return this.mapToSecretMetadata(newSecret, type);
       }
     } catch (error) {
-      // Never log sensitive information
-      logError('Failed to store secret', error instanceof Error ? error : new Error(String(error)), {
-        userId,
-        secretName: name,
-        type,
-        // Do not log secret value or metadata
-      });
-      throw new Error(`Failed to store secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logError('Failed to store secret', error as Error);
+      throw error;
     }
   }
 
@@ -238,6 +253,7 @@ export class SecretsVault {
    */
   async getSecret(userId: string, name: string): Promise<SecretData> {
     try {
+      console.log('[SecretsVault.getSecret] called with:', { userId, name });
       // Validate and sanitize inputs
       this.validateInput(userId, name);
       
@@ -253,11 +269,13 @@ export class SecretsVault {
       });
 
       if (!secret) {
+        console.log('[SecretsVault.getSecret] Secret not found:', { userId, name });
         throw new Error(`Secret '${name}' not found`);
       }
 
       // Check if secret is expired
       if (secret.expiresAt && secret.expiresAt < new Date()) {
+        console.log('[SecretsVault.getSecret] Secret expired:', { userId, name });
         throw new Error(`Secret '${name}' has expired`);
       }
 
@@ -267,8 +285,10 @@ export class SecretsVault {
 
       await this.logSecretAccess(userId, 'SECRET_ACCESSED', name);
 
+      console.log('[SecretsVault.getSecret] Returning secretData:', { hasValue: !!secretData.value });
       return secretData;
     } catch (error) {
+      console.error('[SecretsVault.getSecret] Error:', error);
       // Never log sensitive information
       logError('Failed to retrieve secret', error instanceof Error ? error : new Error(String(error)), {
         userId,
@@ -348,6 +368,83 @@ export class SecretsVault {
         secretName: name
       });
       throw new Error(`Failed to delete secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Rotate a specific secret (generate new value and update)
+   */
+  async rotateSecret(userId: string, name: string): Promise<SecretMetadata> {
+    try {
+      // Validate and sanitize inputs
+      this.validateInput(userId, name);
+      
+      // Check rate limiting
+      this.checkRateLimit(userId);
+
+      const secret = await this.prisma.secret.findFirst({
+        where: {
+          userId,
+          name,
+          isActive: true
+        }
+      });
+
+      if (!secret) {
+        throw new Error(`Secret '${name}' not found`);
+      }
+
+      // Generate new secret value (this would typically call an external API)
+      const newValue = this.generateSecureKey();
+      
+      // Get current secret data
+      const currentData = await this.getSecret(userId, name);
+      
+      // Create new secret data with rotated value
+      const newSecretData: SecretData = {
+        value: newValue,
+        metadata: {
+          ...currentData.metadata,
+          rotatedAt: new Date().toISOString(),
+          previousValue: currentData.value.substring(0, 8) + '...' // Only store partial for audit
+        }
+      };
+
+      // Update rotation history
+      const rotationHistory = secret.rotationHistory ? JSON.parse(JSON.stringify(secret.rotationHistory)) : [];
+      rotationHistory.push({
+        rotatedAt: new Date().toISOString(),
+        previousVersion: secret.version,
+        newVersion: secret.version + 1
+      });
+
+      // Calculate next rotation date if rotation is enabled
+      let nextRotationAt = null;
+      if (secret.rotationEnabled && secret.rotationInterval) {
+        nextRotationAt = new Date(Date.now() + secret.rotationInterval * 24 * 60 * 60 * 1000);
+      }
+
+      // Update the secret with new encrypted data
+      const updatedSecret = await this.prisma.secret.update({
+        where: { id: secret.id },
+        data: {
+          encryptedData: this.encrypt(JSON.stringify(newSecretData)).encryptedData,
+          keyId: this.currentKey.id,
+          version: secret.version + 1,
+          lastRotatedAt: new Date(),
+          nextRotationAt,
+          rotationHistory,
+          updatedAt: new Date()
+        }
+      });
+
+      await this.logSecretAccess(userId, 'SECRET_ROTATED', name);
+      
+      logInfo('Secret rotated', { userId, secretId: updatedSecret.id, name });
+      return this.mapToSecretMetadata(updatedSecret, secret.type as SecretMetadata['type']);
+    } catch (error) {
+      logError('Failed to rotate secret', error as Error);
+      throw error;
     }
   }
 
@@ -478,7 +575,19 @@ export class SecretsVault {
   /**
    * Map database record to SecretMetadata
    */
-  private mapToSecretMetadata(secret: any, type: SecretMetadata['type']): SecretMetadata {
+  private mapToSecretMetadata(secret: any, type: SecretMetadata['type']): SecretMetadata & { description?: string } {
+    let description: string | undefined = undefined;
+    try {
+      if (secret.encryptedData && secret.keyId) {
+        const decrypted = this.decrypt(secret.encryptedData, secret.keyId);
+        const parsed = JSON.parse(decrypted);
+        if (parsed && typeof parsed === 'object' && parsed.metadata && parsed.metadata.description) {
+          description = parsed.metadata.description;
+        }
+      }
+    } catch (e) {
+      // Ignore decryption/parse errors for description
+    }
     return {
       id: secret.id,
       userId: secret.userId,
@@ -489,7 +598,13 @@ export class SecretsVault {
       expiresAt: secret.expiresAt,
       createdAt: secret.createdAt,
       updatedAt: secret.updatedAt,
-      version: secret.version
+      version: secret.version,
+      rotationEnabled: secret.rotationEnabled,
+      rotationInterval: secret.rotationInterval,
+      lastRotatedAt: secret.lastRotatedAt,
+      nextRotationAt: secret.nextRotationAt,
+      rotationHistory: secret.rotationHistory,
+      ...(description ? { description } : {})
     };
   }
 
@@ -498,20 +613,38 @@ export class SecretsVault {
    */
   private async logSecretAccess(userId: string, action: string, secretName: string): Promise<void> {
     try {
-      await this.prisma.auditLog.create({
+      // Map action to user-friendly text
+      let actionText = action;
+      if (action === 'SECRET_CREATED') {
+        actionText = 'SECRET_CREATED';
+      } else if (action === 'SECRET_ACCESSED') {
+        actionText = 'SECRET_ACCESSED';
+      } else if (action === 'SECRET_DELETED') {
+        actionText = 'SECRET_DELETED';
+      } else if (action === 'SECRET_ROTATED') {
+        actionText = 'SECRET_ROTATED';
+      }
+
+      console.log('Creating audit log entry:', { userId, action: actionText, resource: secretName });
+
+      const auditLog = await this.prisma.auditLog.create({
         data: {
           userId,
-          action,
-          resource: 'SECRET',
+          action: actionText,
+          resource: secretName,
           resourceId: secretName,
           details: {
             secretName,
-            action,
+            action: actionText,
             timestamp: new Date().toISOString()
           }
         }
       });
+
+      console.log('Audit log entry created successfully:', auditLog.id);
+      logInfo('Audit log entry created', { auditLogId: auditLog.id, userId, action: actionText, resource: secretName });
     } catch (error) {
+      console.error('Failed to create audit log entry:', error);
       logError('Failed to log secret access', error instanceof Error ? error : new Error(String(error)));
     }
   }

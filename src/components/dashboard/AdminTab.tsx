@@ -1,0 +1,157 @@
+'use client';
+
+import { useState } from 'react';
+
+interface AdminTabProps {
+  user: any;
+}
+
+export default function AdminTab({ user }: AdminTabProps) {
+  const [isRotating, setIsRotating] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const handleMasterKeyRotation = async () => {
+    setIsRotating(true);
+    try {
+      // TODO: Implement actual master key rotation API call
+      console.log('Rotating master key...');
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Master key rotated successfully');
+    } catch (error) {
+      console.error('Failed to rotate master key:', error);
+    } finally {
+      setIsRotating(false);
+      setShowConfirmation(false);
+    }
+  };
+
+  return (
+    <div data-testid="admin-management" role="region" aria-labelledby="admin-heading">
+      {/* Header */}
+      <div className="mb-6">
+        <h2 id="admin-heading" className="text-2xl font-bold text-gray-900">Admin Settings</h2>
+        <p className="text-gray-600 mt-1">Manage system security and administrative functions</p>
+      </div>
+
+      {/* Security Settings Section */}
+      <div className="mb-8">
+        <div 
+          data-testid="security-settings"
+          className="bg-white shadow overflow-hidden sm:rounded-lg"
+        >
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Security Settings</h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              Configure system security and encryption settings
+            </p>
+          </div>
+          <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+              <div className="sm:col-span-1">
+                <dt className="text-sm font-medium text-gray-500">Current Master Key</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <span className="font-mono bg-gray-100 px-2 py-1 rounded">master_key_v1</span>
+                </dd>
+              </div>
+              <div className="sm:col-span-1">
+                <dt className="text-sm font-medium text-gray-500">Last Rotation</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {new Date().toLocaleDateString()}
+                </dd>
+              </div>
+              <div className="sm:col-span-2" data-testid="master-key-section">
+                <dt className="text-sm font-medium text-gray-500">Master Key Rotation</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <div className="space-y-4">
+                    <p>
+                      Current Master Key: <span className="font-mono bg-gray-100 px-2 py-1 rounded">master_key_v1</span>
+                    </p>
+                    <p>
+                      Rotating the master key will re-encrypt all secrets with a new encryption key. 
+                      This process is irreversible and may take several minutes.
+                    </p>
+                    <button
+                      data-testid="rotate-master-key-btn"
+                      onClick={() => setShowConfirmation(true)}
+                      disabled={isRotating}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                      aria-label="Rotate master key"
+                    >
+                      {isRotating ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Rotating...
+                        </>
+                      ) : (
+                        'Rotate Master Key'
+                      )}
+                    </button>
+                  </div>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmation && (
+        <div data-testid="rotation-confirmation" className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" aria-labelledby="confirmation-title">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 id="confirmation-title" className="text-lg font-medium text-gray-900 mb-4">Confirm Master Key Rotation</h3>
+              <div className="mb-4">
+                <p className="text-sm text-gray-600">
+                  <strong>This will re-encrypt all secrets with a new master key.</strong>
+                </p>
+                <ul className="mt-2 text-sm text-gray-600 list-disc list-inside">
+                  <li>Generate a new master encryption key</li>
+                  <li>Re-encrypt all existing secrets</li>
+                  <li>Take several minutes to complete</li>
+                  <li>Be irreversible</li>
+                </ul>
+                <p className="mt-4 text-sm text-red-600 font-medium">
+                  Are you sure you want to proceed?
+                </p>
+              </div>
+              {/* Rotation Progress Indicator */}
+              {isRotating && (
+                <div data-testid="rotation-progress" className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-blue-800">Rotating master key and re-encrypting all secrets...</span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowConfirmation(false)}
+                  disabled={isRotating}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  data-testid="confirm-rotation-btn"
+                  onClick={handleMasterKeyRotation}
+                  disabled={isRotating}
+                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                >
+                  {isRotating ? 'Rotating...' : 'Confirm Rotation - This will re-encrypt all secrets'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+} 

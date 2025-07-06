@@ -15,9 +15,10 @@ This document defines the specific development rules, constraints, and guideline
 7. [Database Rules](#database-rules)
 8. [API Development Rules](#api-development-rules)
 9. [Testing Rules](#testing-rules)
-10. [Documentation Rules](#documentation-rules)
-11. [Deployment Rules](#deployment-rules)
-12. [Compliance Rules](#compliance-rules)
+10. [UX Compliance Rules](#ux-compliance-rules)
+11. [Documentation Rules](#documentation-rules)
+12. [Deployment Rules](#deployment-rules)
+13. [Compliance Rules](#compliance-rules)
 
 ## 🚨 Mock/Test Data Policy & Automated Checks
 
@@ -25,6 +26,13 @@ This document defines the specific development rules, constraints, and guideline
 - All test users, demo keys, and mock data must only exist in test scripts or test databases.
 - A pre-commit hook and CI check will block any commit/PR that introduces forbidden patterns (e.g., `test-user-123`, `demo-key`, `fake API`, etc.) in non-test code or docs.
 - See `package.json` and `.github/workflows/no-mock-data.yml` for details.
+
+## 🎨 UX Compliance Policy & Automated Checks
+
+- **All user-facing features must comply with UX spec requirements in `docs/UX_SPEC.md`.**
+- All tests must validate UX compliance (headings, labels, accessibility, navigation).
+- A pre-commit hook and CI check will block any commit/PR that violates UX standards.
+- UX compliance is enforced for activation, adoption, and accessibility requirements.
 
 ## Project Structure Rules
 
@@ -720,6 +728,7 @@ describe('/api/users', () => {
 2. **Fast Feedback Loop**: Run critical e2e tests before every commit
 3. **User Experience Protection**: Validate that AI changes don't break core user journeys
 4. **Regression Detection**: Catch unexpected changes from AI agents across multiple files
+5. **UX Compliance Validation**: Ensure AI changes maintain UX spec compliance
 
 #### **Daily Development Guardrails:**
 ```bash
@@ -731,12 +740,13 @@ npx playwright test tests/e2e/ui/basic-navigation.test.ts
 ```
 
 #### **Critical E2E Test Coverage:**
-- **Homepage functionality** - Validates app loads correctly
-- **Navigation flows** - Ensures links and buttons work
+- **Homepage functionality** - Validates app loads correctly with UX compliance
+- **Navigation flows** - Ensures links and buttons work with clear UX patterns
 - **API health** - Confirms backend responsiveness
-- **Login flow** - Protects authentication functionality
+- **Login flow** - Protects authentication functionality with activation optimization
 - **Protected routes** - Maintains security boundaries
-- **Error handling** - Validates graceful failure modes
+- **Error handling** - Validates graceful failure modes with clear messaging
+- **UX compliance** - Validates headings, labels, accessibility, and navigation
 
 #### **Guardrail Workflow:**
 1. **Before AI Changes**: Run critical e2e tests to establish baseline
@@ -747,16 +757,18 @@ npx playwright test tests/e2e/ui/basic-navigation.test.ts
    - Rollback: If critical functionality is broken
 
 #### **Test-Code Synchronization Strategy:**
-- **Update tests for code** (not code for tests) - Your code is the source of truth
+- **Update code for tests** (not e2e tests for code) - Your e2e tests are the source of truth
 - **Focus on user journeys** - Test user behavior, not implementation details
 - **Keep tests fast and reliable** - Avoid flaky tests, use stable selectors
 - **Expand coverage as features grow** - Add tests for new critical paths
+- **Maintain UX compliance** - Ensure tests validate UX spec requirements
 
 #### **AI Development Best Practices:**
 - **Consistent execution** - Run guardrails before every commit
 - **Fail fast** - Use failures as signals to investigate, not just fix tests
 - **User-centric validation** - Ensure AI changes don't break user experience
 - **Integration protection** - Catch issues that unit tests miss
+- **UX compliance protection** - Ensure AI changes maintain accessibility and usability
 
 ```typescript
 // ✅ Good
@@ -787,6 +799,72 @@ describe('User Management', () => {
   });
 });
 ```
+
+## UX Compliance Rules
+
+### UX Spec Compliance
+- All user-facing features must comply with `docs/UX_SPEC.md`
+- Follow global UX principles (clarity, activation-first, accessibility)
+- Implement core UX patterns consistently
+- Validate UX requirements in all tests
+
+### Headings & Hierarchy
+- Each page must have clear, descriptive `<h1>` or `<h2>` tags
+- Subheadings must clarify next steps or benefits
+- Heading text must be self-explanatory
+- Test for correct heading hierarchy and content
+
+### Form Fields
+- All fields must have visible `<label>` elements
+- Required fields must have clear indicators
+- Use proper ARIA attributes for accessibility
+- Input types must match their purpose
+- Validation errors must be clear and actionable
+
+### Buttons & Actions
+- Button text must be descriptive and action-oriented
+- Loading states must show both spinner and text change
+- Disabled states must be visually distinct
+- Primary actions must be clearly identified
+
+### Error & Success Messaging
+- Errors must be shown in accessible containers
+- Success messages must use appropriate styling
+- Messages must be actionable and helpful
+- Error/success states must be clearly distinguishable
+
+### Navigation & Links
+- All pages must have clear navigation
+- Links must be visually distinct with hover states
+- Next-step guidance must be provided
+- Back navigation must be available where appropriate
+
+### Accessibility Requirements
+- WCAG 2.1 AA compliance required
+- Keyboard navigation support
+- Screen reader compatibility
+- Color contrast meets AA standards
+- ARIA roles and labels for dynamic content
+
+### Mobile Responsiveness
+- All features must work on mobile devices
+- Touch targets must be appropriately sized
+- Layout must adapt to different screen sizes
+- Mobile navigation must be intuitive
+
+### Activation & Adoption
+- Onboarding flows must be optimized for conversion
+- Clear path from signup to first successful action
+- Helpful guidance and progress indicators
+- Error recovery must be straightforward
+
+### Testing UX Compliance
+- All tests must validate UX spec requirements
+- Test headings, labels, accessibility, and navigation
+- Validate clear messaging and intuitive flows
+- Test activation and conversion paths
+- Ensure mobile responsiveness and accessibility
+- UX compliance is enforced in CI/CD pipeline
 
 ## Documentation Rules
 

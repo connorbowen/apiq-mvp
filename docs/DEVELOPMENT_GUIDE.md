@@ -9,9 +9,10 @@
 5. [API Development](#api-development)
 6. [Frontend Development](#frontend-development)
 7. [Testing Strategy](#testing-strategy)
-8. [Security Guidelines](#security-guidelines)
-9. [Performance Guidelines](#performance-guidelines)
-10. [Deployment](#deployment)
+8. [Development Tools & Scripts](#development-tools--scripts)
+9. [Security Guidelines](#security-guidelines)
+10. [Performance Guidelines](#performance-guidelines)
+11. [Deployment](#deployment)
 
 ## Development Environment Setup
 
@@ -21,6 +22,7 @@
 - **npm**: Version 8.0.0 or higher
 - **PostgreSQL**: Version 14.0 or higher
 - **Git**: Latest version
+- **OpenAI API Key**: For natural language workflow generation
 - **VS Code** (recommended) with extensions:
   - TypeScript and JavaScript Language Features
   - Prisma
@@ -65,15 +67,15 @@
    NEXTAUTH_URL="http://localhost:3000"
    CORS_ORIGIN=http://localhost:3000
 
-   # OpenAI
+   # OpenAI (Required for natural language workflow generation)
    OPENAI_API_KEY="sk-your-openai-api-key"
 
    # Google OAuth2 (required for Google OAuth2 E2E and unit tests)
    GOOGLE_CLIENT_ID="your-google-client-id"
    GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
-   # Security
-   ENCRYPTION_KEY="your-32-character-encryption-key-here"
+   # Security (Required for secrets vault)
+   ENCRYPTION_MASTER_KEY="your-32-character-master-key-here"
    JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
 
    # Email Service (for password reset and verification)
@@ -90,6 +92,16 @@
    - Enable 2-Factor Authentication on your Google account
    - Generate an App Password: Google Account → Security → 2-Step Verification → App passwords
    - For development, you can use services like Mailtrap for testing
+
+   **OpenAI Setup Notes:**
+   - Required for natural language workflow generation
+   - Get your API key from https://platform.openai.com/api-keys
+   - Ensure you have sufficient credits for development and testing
+
+   **Secrets Vault Setup Notes:**
+   - Generate a secure 32-character master key for encryption
+   - Use: `openssl rand -hex 16` to generate a secure key
+   - Never commit the master key to version control
 
 4. **Database setup**
 
@@ -123,29 +135,39 @@
 ├── /pages                    # Next.js pages and API routes
 │   ├── /api                 # Serverless API endpoints
 │   │   ├── auth/            # Authentication endpoints
-│   │   ├── apis/            # API management endpoints
+│   │   ├── connections/     # API connection management
 │   │   ├── workflows/       # Workflow endpoints
-│   │   ├── chat/            # AI chat endpoints
-│   │   └── logs/            # Audit log endpoints
+│   │   │   ├── generate     # Natural language workflow generation
+│   │   │   └── executions   # Workflow execution control
+│   │   ├── secrets/         # Secrets vault management
+│   │   └── audit-logs/      # Audit log endpoints
 │   ├── _app.tsx            # App wrapper
 │   ├── _document.tsx       # Document wrapper
 │   ├── index.tsx           # Landing page
-│   ├── dashboard.tsx       # Main dashboard
+│   ├── dashboard/          # Main dashboard with tabbed navigation
 │   ├── auth/               # Authentication pages
-│   ├── apis/               # API management pages
+│   ├── connections/        # API connection management pages
 │   ├── workflows/          # Workflow pages
+│   ├── secrets/            # Secrets management pages
 │   └── admin/              # Admin pages
 ├── /components             # Reusable React components
 │   ├── /ui                 # Base UI components
 │   ├── /auth               # Authentication components
-│   ├── /api                # API-related components
+│   ├── /dashboard          # Dashboard components
 │   ├── /workflow           # Workflow components
-│   ├── /chat               # Chat interface components
+│   ├── /chat               # Natural language chat interface
+│   ├── /secrets            # Secrets management components
 │   └── /layout             # Layout components
 ├── /lib                    # Utility functions and services
 │   ├── /auth               # Authentication utilities
 │   ├── /api                # API utilities
-│   ├── /openai             # OpenAI integration
+│   ├── /openai             # OpenAI integration for workflow generation
+│   ├── /secrets            # Secrets vault management
+│   ├── /workflow           # Workflow execution engine
+│   │   ├── executor        # Workflow execution logic
+│   │   ├── stepRunner      # Step execution engine
+│   │   └── executionStateManager # Execution state management
+│   ├── /queue              # Job queue management (PgBoss)
 │   ├── /database           # Database utilities
 │   ├── /validation         # Input validation
 │   └── /utils              # General utilities
@@ -162,9 +184,260 @@
 ├── /scripts                # Utility and devops scripts
 │   ├── init-db.js          # Database initialization
 │   ├── startup.sh          # Application startup script
+│   ├── rotate-secrets.js   # Secrets vault key rotation
+│   ├── apply-test-pattern.js # Test pattern codemod
+│   ├── check-server-health.js # Server health monitoring
+│   ├── identify-slow-tests.sh # Test performance analysis
+│   ├── run-performance-test.sh # Performance testing
+│   ├── test-health-performance.sh # Health and performance testing
 │   └── run-tests.sh        # Test orchestration script
 └── /docs                   # Documentation
 ```
+
+## Development Tools & Scripts
+
+### Test Analysis & Optimization Tools
+
+#### 1. Test Failure Analysis
+```bash
+# Analyze test failures and identify patterns
+node analyze-test-failures.js
+```
+**Purpose**: Analyzes Jest test results to identify failing test suites and their failure patterns.
+
+**Features**:
+- Ranks failing test suites by failure count
+- Shows failure rates and error messages
+- Provides optimization recommendations
+- Color-coded output for easy reading
+
+**Output Example**:
+```
+Test Failure Analysis
+Found 3 failing test suites
+
+Rank │ Suite Name                    │ Failed │ Passed │ Total │ Failure % │ First Error
+─────┼───────────────────────────────┼────────┼────────┼───────┼───────────┼─────────────────────
+1    │ auth-flow.test.ts             │ 5      │ 15     │ 20    │ 25.0%     │ Database connection failed
+2    │ oauth2.test.ts                │ 3      │ 12     │ 15    │ 20.0%     │ OAuth2 provider not configured
+3    │ secrets.test.ts               │ 2      │ 8      │ 10    │ 20.0%     │ Encryption key missing
+```
+
+#### 2. Test Pattern Application
+```bash
+# Apply consistent test patterns to integration tests
+node scripts/apply-test-pattern.js
+```
+**Purpose**: Codemod script that applies consistent test data patterns to integration tests.
+
+**Features**:
+- Automatically adds `createTestData` imports
+- Converts `beforeAll` to `beforeEach` for test isolation
+- Removes redundant `afterAll` cleanup blocks
+- Detects test data types based on file content
+- Ensures proper test isolation and cleanup
+
+**Usage**:
+```bash
+# Apply to all integration tests
+node scripts/apply-test-pattern.js
+
+# Apply to specific test file
+node scripts/apply-test-pattern.js tests/integration/api/auth.test.ts
+```
+
+#### 3. Slow Test Identification
+```bash
+# Identify and analyze slow-running tests
+./scripts/identify-slow-tests.sh
+```
+**Purpose**: Identifies tests that are taking too long to run and need optimization.
+
+**Features**:
+- Measures execution time for each test
+- Identifies tests taking >5 seconds
+- Detects tests that timeout
+- Provides optimization recommendations
+- Generates performance report
+
+**Output Example**:
+```
+🔍 Identifying Slow Integration Tests
+=====================================
+
+📊 Performance Summary
+=====================
+Test File | Duration | Status
+---------|----------|--------
+auth-flow.test.ts    | 8.5s     | ✅ PASS
+oauth2.test.ts       | 6.2s     | ✅ PASS
+secrets.test.ts      | 4.1s     | ✅ PASS
+
+🎯 Optimization Recommendations:
+
+🚨 Tests taking >5 seconds (need optimization):
+   - auth-flow.test.ts
+   - oauth2.test.ts
+
+⏰ Tests that timed out (critical optimization needed):
+   - workflow.test.ts
+```
+
+#### 4. Server Health Monitoring
+```bash
+# Check if development server is running and healthy
+node scripts/check-server-health.js
+```
+**Purpose**: Verifies that the development server is running and responding correctly.
+
+**Features**:
+- Checks server health endpoint
+- Provides helpful error messages
+- Suggests next steps if server is down
+- Used by E2E tests to ensure server is ready
+
+**Usage**:
+```bash
+# Check default server (localhost:3000)
+node scripts/check-server-health.js
+
+# Check custom server
+BASE_URL=http://localhost:3001 node scripts/check-server-health.js
+```
+
+#### 5. Performance Testing
+```bash
+# Run performance tests for health endpoints
+./scripts/run-performance-test.sh
+```
+**Purpose**: Tests the performance and reliability of health endpoints under load.
+
+**Features**:
+- Load tests health endpoints
+- Measures response times
+- Identifies performance bottlenecks
+- Generates performance reports
+
+### Database & Infrastructure Tools
+
+#### 1. Secrets Vault Key Rotation
+```bash
+# Rotate secrets vault master key
+npm run rotate-secrets
+```
+**Purpose**: Securely rotates the master encryption key for the secrets vault.
+
+**Features**:
+- Re-encrypts all secrets with new master key
+- Maintains data integrity during rotation
+- Updates environment configuration
+- Provides rollback capabilities
+
+**Security Notes**:
+- Only run in production environments
+- Ensure backup of old master key
+- Test in staging environment first
+- Coordinate with team for deployment
+
+#### 2. Database Health Check
+```bash
+# Test database connection and health
+npm run db:health
+```
+**Purpose**: Verifies database connectivity and health status.
+
+**Features**:
+- Tests database connection
+- Validates schema integrity
+- Checks migration status
+- Reports database health metrics
+
+### Development Workflow Tools
+
+#### 1. Smart Development Server
+```bash
+# Start development server with automatic setup
+npm run smart-dev
+```
+**Purpose**: Intelligent development server that handles setup automatically.
+
+**Features**:
+- Automatically runs database migrations
+- Generates Prisma client if needed
+- Checks environment configuration
+- Provides helpful error messages
+- Optimized for development workflow
+
+#### 2. Test Orchestration
+```bash
+# Run comprehensive test suite with proper setup
+./scripts/run-tests.sh
+```
+**Purpose**: Orchestrates the complete testing workflow.
+
+**Features**:
+- Runs all test types in proper order
+- Handles test environment setup
+- Provides detailed test reports
+- Optimizes test execution
+- Generates coverage reports
+
+### Debugging & Troubleshooting Tools
+
+#### 1. Test Isolation Helper
+```bash
+# Generate unique test identifiers
+node tests/helpers/testIsolation.js
+```
+**Purpose**: Helps create unique test data to prevent test conflicts.
+
+**Features**:
+- Generates unique emails and identifiers
+- Ensures test isolation
+- Prevents test data conflicts
+- Improves test reliability
+
+#### 2. Server Health Performance Test
+```bash
+# Test server health under load
+./scripts/test-health-performance.sh
+```
+**Purpose**: Tests server health endpoints under various load conditions.
+
+**Features**:
+- Load tests health endpoints
+- Measures response times
+- Identifies performance issues
+- Generates performance metrics
+
+### Environment Management Tools
+
+#### 1. Environment Validation
+```bash
+# Validate environment configuration
+npm run validate-env
+```
+**Purpose**: Validates that all required environment variables are set correctly.
+
+**Features**:
+- Checks required environment variables
+- Validates variable formats
+- Provides helpful error messages
+- Ensures proper configuration
+
+#### 2. Development Environment Setup
+```bash
+# Complete development environment setup
+npm run setup-dev
+```
+**Purpose**: Automates the complete development environment setup process.
+
+**Features**:
+- Installs dependencies
+- Sets up database
+- Configures environment
+- Runs initial migrations
+- Validates setup
 
 ## Coding Standards
 
@@ -210,6 +483,30 @@
      createdAt: Date;
      updatedAt: Date;
    }
+
+   export interface Workflow {
+     id: string;
+     name: string;
+     description: string;
+     steps: WorkflowStep[];
+     userId: string;
+     createdAt: Date;
+     updatedAt: Date;
+   }
+
+   export interface Secret {
+     id: string;
+     name: string;
+     type: SecretType;
+     userId: string;
+     version: number;
+     isActive: boolean;
+     expiresAt?: Date;
+     createdAt: Date;
+     updatedAt: Date;
+   }
+
+   export type SecretType = 'api_key' | 'oauth2_token' | 'webhook_secret' | 'custom';
    ```
 
 ### React Guidelines
@@ -258,12 +555,13 @@
 1. **API Route Structure**
 
    ```typescript
-   // pages/api/apis/index.ts
+   // pages/api/workflows/generate.ts
    import { NextApiRequest, NextApiResponse } from "next";
    import { getServerSession } from "next-auth/next";
    import { authOptions } from "../auth/[...nextauth]";
    import { validateRequest } from "@/lib/validation";
    import { ApiResponse } from "@/types/api";
+   import { naturalLanguageWorkflowService } from "@/lib/services/naturalLanguageWorkflowService";
 
    export default async function handler(
      req: NextApiRequest,
@@ -281,10 +579,8 @@
        }
 
        // 2. Method validation
-       if (req.method === "GET") {
-         return await handleGet(req, res, session);
-       } else if (req.method === "POST") {
-         return await handlePost(req, res, session);
+       if (req.method === "POST") {
+         return await handleGenerateWorkflow(req, res, session);
        }
 
        // 3. Method not allowed
@@ -303,29 +599,57 @@
        });
      }
    }
+
+   async function handleGenerateWorkflow(
+     req: NextApiRequest,
+     res: NextApiResponse<ApiResponse>,
+     session: any
+   ) {
+     const { message } = req.body;
+     
+     // Validate input
+     if (!message || typeof message !== 'string') {
+       return res.status(400).json({
+         success: false,
+         error: "Message is required",
+         timestamp: new Date(),
+       });
+     }
+
+     // Generate workflow using AI
+     const workflow = await naturalLanguageWorkflowService.generateWorkflow(
+       message,
+       session.user.id
+     );
+
+     return res.status(200).json({
+       success: true,
+       data: workflow,
+       timestamp: new Date(),
+     });
+   }
    ```
 
 2. **Input Validation**
 
    ```typescript
-   // lib/validation/apiConnection.ts
+   // lib/validation/workflow.ts
    import { z } from "zod";
 
-   export const createApiConnectionSchema = z.object({
-     name: z.string().min(1).max(100),
-     baseUrl: z.string().url(),
-     authType: z.enum(["api_key", "oauth", "bearer"]),
-     authConfig: z.object({
-       apiKey: z.string().optional(),
-       bearerToken: z.string().optional(),
-       // ... other auth config fields
-     }),
-     documentationUrl: z.string().url().optional(),
+   export const generateWorkflowSchema = z.object({
+     message: z.string().min(1).max(1000),
+     context: z.string().optional(),
    });
 
-   export type CreateApiConnectionInput = z.infer<
-     typeof createApiConnectionSchema
-   >;
+   export const createSecretSchema = z.object({
+     name: z.string().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/),
+     type: z.enum(['api_key', 'oauth2_token', 'webhook_secret', 'custom']),
+     value: z.string().min(1).max(10000),
+     expiresAt: z.string().datetime().optional(),
+   });
+
+   export type GenerateWorkflowInput = z.infer<typeof generateWorkflowSchema>;
+   export type CreateSecretInput = z.infer<typeof createSecretSchema>;
    ```
 
 3. **Error Handling**
@@ -373,14 +697,90 @@
      // Relations
      apiConnections ApiConnection[]
      workflows      Workflow[]
+     workflowExecutions WorkflowExecution[]
+     secrets        Secret[]
      auditLogs      AuditLog[]
 
      @@map("users")
    }
 
+   model Workflow {
+     id          String   @id @default(cuid())
+     name        String
+     description String?
+     userId      String
+     isActive    Boolean  @default(true)
+     createdAt   DateTime @default(now())
+     updatedAt   DateTime @updatedAt
+
+     // Relations
+     user        User     @relation(fields: [userId], references: [id])
+     steps       WorkflowStep[]
+     executions  WorkflowExecution[]
+
+     @@map("workflows")
+   }
+
+   model WorkflowExecution {
+     id          String   @id @default(cuid())
+     workflowId  String
+     userId      String
+     status      ExecutionStatus @default(PENDING)
+     progress    Int      @default(0)
+     attemptCount Int     @default(0)
+     startedAt   DateTime?
+     completedAt DateTime?
+     createdAt   DateTime @default(now())
+     updatedAt   DateTime @updatedAt
+
+     // Relations
+     workflow    Workflow @relation(fields: [workflowId], references: [id])
+     user        User     @relation(fields: [userId], references: [id])
+     logs        ExecutionLog[]
+
+     @@map("workflow_executions")
+   }
+
+   model Secret {
+     id            String      @id @default(cuid())
+     name          String
+     type          SecretType
+     encryptedData String
+     keyId         String
+     version       Int         @default(1)
+     userId        String
+     isActive      Boolean     @default(true)
+     expiresAt     DateTime?
+     createdAt     DateTime    @default(now())
+     updatedAt     DateTime    @updatedAt
+
+     // Relations
+     user          User        @relation(fields: [userId], references: [id])
+
+     @@map("secrets")
+   }
+
    enum Role {
-     ADMIN
      USER
+     ADMIN
+     SUPER_ADMIN
+   }
+
+   enum ExecutionStatus {
+     PENDING
+     RUNNING
+     PAUSED
+     COMPLETED
+     FAILED
+     CANCELLED
+     RETRYING
+   }
+
+   enum SecretType {
+     api_key
+     oauth2_token
+     webhook_secret
+     custom
    }
    ```
 
@@ -400,62 +800,24 @@
      return await prisma.user.findUnique({
        where: { id: userId },
        include: {
-         apiConnections: {
+         apiConnections: true,
+         workflows: {
            include: {
-             endpoints: true,
+             steps: true,
+           },
+         },
+         secrets: {
+           where: { isActive: true },
+           select: {
+             id: true,
+             name: true,
+             type: true,
+             version: true,
+             expiresAt: true,
+             createdAt: true,
            },
          },
        },
-     });
-   };
-   ```
-
-### Database Utilities
-
-1. **Connection Management**
-
-   ```typescript
-   // lib/database/client.ts
-   import { PrismaClient } from "@prisma/client";
-
-   const globalForPrisma = globalThis as unknown as {
-     prisma: PrismaClient | undefined;
-   };
-
-   export const prisma = globalForPrisma.prisma ?? new PrismaClient();
-
-   if (process.env.NODE_ENV !== "production") {
-     globalForPrisma.prisma = prisma;
-   }
-   ```
-
-2. **Transaction Handling**
-
-   ```typescript
-   // lib/database/transactions.ts
-   import { prisma } from "./client";
-
-   export const createApiConnectionWithEndpoints = async (
-     connectionData: CreateApiConnectionInput,
-     endpoints: CreateEndpointInput[],
-   ) => {
-     return await prisma.$transaction(async (tx) => {
-       const connection = await tx.apiConnection.create({
-         data: connectionData,
-       });
-
-       const createdEndpoints = await Promise.all(
-         endpoints.map((endpoint) =>
-           tx.endpoint.create({
-             data: {
-               ...endpoint,
-               apiConnectionId: connection.id,
-             },
-           }),
-         ),
-       );
-
-       return { connection, endpoints: createdEndpoints };
      });
    };
    ```

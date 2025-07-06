@@ -7,6 +7,7 @@ import { prisma } from '../../../lib/database/client';
 import { createTestSuite, createTestUser, cleanupTestUsers, createAuthenticatedRequest, createUnauthenticatedRequest, generateTestId } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
 import { createCommonTestData } from '../../helpers/createTestData';
+import { IntegrationComplianceHelper } from '../../helpers/integrationCompliance';
 
 describe('Authentication Integration Tests', () => {
   let createdUserIds: string[] = [];
@@ -32,7 +33,7 @@ describe('Authentication Integration Tests', () => {
   });
 
   describe('POST /api/auth/login', () => {
-    it('should login with valid credentials', async () => {
+    it('should login with valid credentials and provide UX-compliant response', async () => {
       const adminUser = testUsers.find(u => u.role === Role.ADMIN);
       const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
@@ -45,14 +46,12 @@ describe('Authentication Integration Tests', () => {
 
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
-      expect(data.success).toBe(true);
-      expect(data.data.user.email).toBe(adminUser.email);
-      expect(data.data.user.role).toBe(Role.ADMIN);
-      expect(data.data.accessToken).toBeDefined();
-      expect(data.data.refreshToken).toBeDefined();
+      
+      // Validate UX-compliant response structure
+      IntegrationComplianceHelper.validateAuthResponse(data, adminUser);
     });
 
-    it('should reject invalid credentials', async () => {
+    it('should reject invalid credentials with clear UX-compliant error messaging', async () => {
       const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
           email: `invalid-${generateTestId()}@example.com`,
@@ -64,9 +63,9 @@ describe('Authentication Integration Tests', () => {
 
       expect(res._getStatusCode()).toBe(401);
       const data = JSON.parse(res._getData());
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('Invalid credentials');
-      expect(data.code).toBe('INVALID_CREDENTIALS');
+      
+      // Validate UX-compliant error response
+      IntegrationComplianceHelper.validateErrorResponse(data, 'INVALID_CREDENTIALS');
     });
 
     it('should reject missing credentials', async () => {

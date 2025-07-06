@@ -81,7 +81,7 @@ class ApiClient {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          window.location.href = '/login?reason=auth';
           return { success: false, error: 'Authentication required' };
         }
         return { success: false, error: data.error || 'Request failed', code: data.code };
@@ -360,6 +360,31 @@ class ApiClient {
     return this.request('/api/chat', {
       method: 'POST',
       body: JSON.stringify({ message, context }),
+    });
+  }
+
+  // Secrets Methods
+  async getSecrets(): Promise<ApiResponse<{ secrets: any[] }>> {
+    return this.request('/api/secrets');
+  }
+
+  async createSecret(data: { name: string; value: string; description?: string; type?: string }): Promise<ApiResponse<any>> {
+    return this.request('/api/secrets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateSecret(name: string, data: { value: string; description?: string }): Promise<ApiResponse<any>> {
+    return this.request(`/api/secrets/${name}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteSecret(name: string): Promise<ApiResponse> {
+    return this.request(`/api/secrets/${name}`, {
+      method: 'DELETE',
     });
   }
 }

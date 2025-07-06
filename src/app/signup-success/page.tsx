@@ -52,11 +52,12 @@ export default function SignupSuccessPage() {
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
             Account Created Successfully!
           </h2>
-          
-          <p className="mt-2 text-sm text-gray-600">
-            Welcome to APIQ! We&apos;ve sent a verification email to:
+          <p data-testid="welcome-message" className="mt-2 text-sm text-gray-600">
+            Welcome to APIQ!
           </p>
-          
+          <p className="mt-1 text-sm text-gray-900">
+            We&apos;ve sent a verification email to:
+          </p>
           <p className="mt-1 text-sm font-medium text-gray-900">
             {email}
           </p>

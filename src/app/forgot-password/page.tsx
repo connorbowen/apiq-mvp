@@ -7,12 +7,62 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [validationError, setValidationError] = useState("");
   const router = useRouter();
+
+  const validateEmail = (email: string) => {
+    if (!email || email.trim() === "") {
+      return "Email is required";
+    }
+    // More comprehensive email validation regex
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return "Please enter a valid email address";
+    }
+    return "";
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    // Clear validation error when user starts typing
+    if (validationError) {
+      setValidationError("");
+    }
+  };
+
+  const handleEmailBlur = () => {
+    // Validate on blur for immediate feedback
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setValidationError(emailError);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Trigger validation on Enter key press for empty field
+    if (e.key === 'Enter' && (!email || email.trim() === "")) {
+      e.preventDefault();
+      const emailError = validateEmail(email);
+      if (emailError) {
+        setValidationError(emailError);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
+    setValidationError("");
+    
+    // Client-side validation
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setValidationError(emailError);
+      return;
+    }
+
+    setIsLoading(true);
     try {
       const response = await apiClient.requestPasswordReset(email);
       if (response.success) {
@@ -22,7 +72,7 @@ export default function ForgotPasswordPage() {
         setError(response.error || "Failed to send reset email");
         setIsLoading(false);
       }
-    } catch {
+    } catch (error) {
       setError("Network error. Please try again.");
       setIsLoading(false);
     }
@@ -35,8 +85,17 @@ export default function ForgotPasswordPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Forgot your password?</h2>
           <p className="mt-2 text-center text-sm text-gray-600">Enter your email to receive a password reset link.</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && <div className="rounded-md bg-red-50 p-4 text-red-800">{error}</div>}
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} role="form">
+          {error && (
+            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert">
+              {error}
+            </div>
+          )}
+          {validationError && (
+            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert">
+              {validationError}
+            </div>
+          )}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
             <input
@@ -45,8 +104,11 @@ export default function ForgotPasswordPage() {
               type="email"
               autoComplete="email"
               required
+              aria-required="true"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={handleEmailChange}
+              onBlur={handleEmailBlur}
+              onKeyDown={handleKeyDown}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Enter your email"
             />

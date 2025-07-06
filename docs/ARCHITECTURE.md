@@ -33,6 +33,14 @@ APIQ is a semi-agentic, low-code web application designed to orchestrate complex
 │   Database      │    │   AI Service    │    │   Audit Logs    │
 │   (PostgreSQL)  │    │   (OpenAI)      │    │   (Persistent)  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Secrets       │    │   Queue         │    │   Execution     │
+│   Vault         │    │   System        │    │   Engine        │
+│   (Encrypted)   │    │   (PgBoss)      │    │   (State Mgmt)  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ## Core Components
@@ -47,10 +55,11 @@ APIQ is a semi-agentic, low-code web application designed to orchestrate complex
 - **Authentication**: NextAuth.js client integration
 
 **Key Components:**
-- **Dashboard**: Main application interface
+- **Dashboard**: Main application interface with tabbed navigation
+- **Natural Language Chat**: AI-powered workflow creation interface
+- **Workflow Management**: Visual workflow builder and execution monitoring
+- **Secrets Management**: Secure secrets vault interface
 - **API Explorer**: Browse and test connected APIs
-- **Chat Interface**: Natural language workflow creation
-- **Workflow Builder**: Visual workflow construction
 - **Audit Viewer**: Review execution logs and history
 
 ### 2. Backend Layer (Next.js API Routes)
@@ -65,11 +74,12 @@ APIQ is a semi-agentic, low-code web application designed to orchestrate complex
 **API Endpoints:**
 ```
 /api/auth/[...nextauth]     # Authentication (NextAuth.js)
-/api/apis                   # API connection management
+/api/connections            # API connection management
 /api/workflows              # Workflow CRUD operations
-/api/chat                   # AI chat and workflow generation
-/api/execute                # Workflow execution engine
-/api/logs                   # Audit log retrieval
+/api/workflows/generate     # Natural language workflow generation
+/api/workflows/executions   # Workflow execution control
+/api/secrets               # Secrets vault management
+/api/audit-logs            # Audit log retrieval
 ```
 
 ### 3. Database Layer (PostgreSQL + Prisma)
@@ -86,7 +96,8 @@ APIQ is a semi-agentic, low-code web application designed to orchestrate complex
 - **ApiSpec**: Parsed OpenAPI specifications
 - **Endpoint**: Individual API endpoints
 - **Workflow**: Workflow definitions
-- **WorkflowExecution**: Execution history
+- **WorkflowExecution**: Execution history and state management
+- **Secret**: Encrypted secrets storage with versioning
 - **AuditLog**: Comprehensive audit trail
 
 ### 4. AI Integration Layer (OpenAI)
@@ -101,9 +112,41 @@ APIQ is a semi-agentic, low-code web application designed to orchestrate complex
 - Natural language to workflow translation
 - Dynamic function generation from OpenAPI specs
 - Multi-step workflow planning
-- Error handling and retry logic
+- Context-aware conversation support
+- Alternative workflow suggestions
+- Workflow validation and optimization
 
-### 5. External API Integration
+### 5. Secrets Management Layer
+
+**Technology Stack:**
+- **Encryption**: AES-256-GCM for authenticated encryption
+- **Key Management**: Secure key generation and rotation
+- **Storage**: Encrypted database storage with versioning
+- **Access Control**: User-specific secret isolation
+
+**Key Features:**
+- Multiple secret types (API keys, OAuth2 tokens, webhook secrets, custom)
+- Automatic secret rotation with configurable intervals
+- Version history and expiration management
+- Rate limiting and comprehensive audit logging
+- No sensitive data logging for security compliance
+
+### 6. Execution Engine Layer
+
+**Technology Stack:**
+- **Queue System**: PgBoss 10.3.2 for job management
+- **State Management**: Durable execution state tracking
+- **Step Runner**: Custom step execution engine
+- **Monitoring**: Real-time execution monitoring
+
+**Key Features:**
+- Complete workflow lifecycle management
+- Real-time execution monitoring with progress tracking
+- Execution control (pause, resume, cancel)
+- Comprehensive error handling and retry logic
+- Data flow between workflow steps
+
+### 7. External API Integration
 
 **Technology Stack:**
 - **HTTP Client**: Axios with interceptors
@@ -119,68 +162,7 @@ APIQ is a semi-agentic, low-code web application designed to orchestrate complex
 
 ## Data Flow Architecture
 
-### 1. User Authentication Flow
-
-```
-User Login Request
-       │
-       ▼
-┌─────────────────┐
-│  NextAuth.js    │
-│  Credentials    │
-│  Provider       │
-└─────────────────┘
-       │
-       ▼
-┌─────────────────┐
-│  Prisma Client  │
-│  User Lookup    │
-└─────────────────┘
-       │
-       ▼
-┌─────────────────┐
-│  JWT Token      │
-│  Generation     │
-└─────────────────┘
-       │
-       ▼
-┌─────────────────┐
-│  Session        │
-│  Establishment  │
-└─────────────────┘
-```
-
-### 2. API Connection Flow
-
-```
-User Adds API
-       │
-       ▼
-┌─────────────────┐
-│  OpenAPI Spec   │
-│  URL/File       │
-└─────────────────┘
-       │
-       ▼
-┌─────────────────┐
-│  Swagger Parser │
-│  Validation     │
-└─────────────────┘
-       │
-       ▼
-┌─────────────────┐
-│  Endpoint       │
-│  Extraction     │
-└─────────────────┘
-       │
-       ▼
-┌─────────────────┐
-│  Database       │
-│  Storage        │
-└─────────────────┘
-```
-
-### 3. Workflow Execution Flow
+### 1. Natural Language Workflow Generation Flow
 
 ```
 User Natural Language Query
@@ -206,14 +188,81 @@ User Natural Language Query
        │
        ▼
 ┌─────────────────┐
-│  Step-by-Step   │
+│  Workflow       │
+│  Storage        │
+└─────────────────┘
+```
+
+### 2. Workflow Execution Flow
+
+```
+Workflow Execution Request
+       │
+       ▼
+┌─────────────────┐
+│  Execution      │
+│  StateManager   │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│  QueueService   │
+│  Job Creation   │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│  Step Runner    │
+│  Execution      │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│  Secrets Vault  │
+│  Credential     │
+│  Retrieval      │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│  API Call       │
 │  Execution      │
 └─────────────────┘
        │
        ▼
 ┌─────────────────┐
 │  Result         │
-│  Compilation    │
+│  Storage        │
+└─────────────────┘
+```
+
+### 3. Secrets Management Flow
+
+```
+Secret Creation Request
+       │
+       ▼
+┌─────────────────┐
+│  Input          │
+│  Validation     │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│  AES-256        │
+│  Encryption     │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│  Database       │
+│  Storage        │
+└─────────────────┘
+       │
+       ▼
+┌─────────────────┐
+│  Audit Log      │
+│  Creation       │
 └─────────────────┘
 ```
 
@@ -273,45 +322,6 @@ RETRYING   PAUSED      FAILED
 RUNNING   RESUMED    CANCELLED
 ```
 
-#### Data Flow
-
-```
-Workflow Execution Request
-         │
-         ▼
-┌─────────────────┐
-│  Execution      │
-│  Creation       │
-│  (StateManager) │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  State          │
-│  Transition     │
-│  (PENDING)      │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Queue Job      │
-│  Creation       │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Execution      │
-│  Processing     │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  State          │
-│  Update         │
-│  (COMPLETED)    │
-└─────────────────┘
-```
-
 ### 5. Queue Management Architecture
 
 The QueueService provides robust job queue management using PgBoss 10.3.2 for workflow execution, ensuring reliable, scalable, and fault-tolerant job processing.
@@ -352,255 +362,47 @@ The QueueService provides robust job queue management using PgBoss 10.3.2 for wo
 - **Queue Statistics**: Worker performance and job counts
 - **Queue Configuration**: Configurable timeouts, retries, and limits
 
-#### Data Flow
+### 6. Secrets Vault Architecture
 
-```
-Workflow Step Execution
-         │
-         ▼
-┌─────────────────┐
-│  Job Creation   │
-│  (QueueService) │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Job Queue      │
-│  (PgBoss)       │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Worker         │
-│  Processing     │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Result         │
-│  Storage        │
-└─────────────────┘
-```
+The Secrets Vault provides enterprise-grade secure storage for sensitive data with comprehensive encryption, rotation, and audit capabilities.
 
-#### Configuration Options
-
-**Queue Configuration:**
-```typescript
-interface QueueConfig {
-  maxConcurrency: number;      // Default: 10
-  retryLimit: number;          // Default: 3
-  retryDelay: number;          // Default: 5000ms
-  timeout: number;             // Default: 300000ms
-  healthCheckInterval: number; // Default: 30000ms
-  connectionString?: string;   // Optional: custom DB connection
-}
-```
-
-**Job Options:**
-```typescript
-interface QueueJob {
-  queueName: string;           // Required: queue identifier
-  name: string;                // Required: job name
-  data: any;                   // Required: job payload
-  retryLimit?: number;         // Optional: retry attempts
-  retryDelay?: number;         // Optional: retry delay
-  timeout?: number;            // Optional: job timeout
-  priority?: number;           // Optional: job priority
-  delay?: number;              // Optional: execution delay
-  expireIn?: number;           // Optional: job expiration
-  jobKey?: string;             // Optional: deduplication key
-}
-```
-
-#### Security & Reliability
-
-**Security Features:**
-- **Job Data Sanitization**: Sensitive data removed from logs
-- **Input Validation**: Zod schema validation for job payloads
-- **Error Handling**: Secure error messages without data exposure
-- **Access Control**: Queue operations require proper authentication
-
-**Reliability Features:**
-- **Fault Tolerance**: Automatic retry with exponential backoff
-- **Health Monitoring**: Real-time queue and worker health status
-- **Graceful Degradation**: Service continues operating during partial failures
-- **Data Consistency**: ACID transactions for job operations
-
-**Monitoring & Observability:**
-- **Health Checks**: Regular health status monitoring
-- **Worker Statistics**: Active, completed, and failed job counts
-- **Performance Metrics**: Job duration and throughput tracking
-- **Error Tracking**: Comprehensive error logging and alerting
-
-### 5. Encrypted Secrets Vault Architecture
-
-The Encrypted Secrets Vault provides secure storage and management of sensitive data such as API keys, OAuth2 tokens, and custom secrets. All secrets are encrypted with AES-256 and include comprehensive input validation, rate limiting, and audit logging.
-
-#### Vault Architecture Overview
+#### Secrets Vault Components
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   API Client    │    │   SecretsVault  │    │   Database      │
-│   (Frontend)    │───►│   (Encryption)  │───►│   (PostgreSQL)  │
+│   API Layer     │    │   Encryption    │    │   Database      │
+│   (Validation)  │───►│   (AES-256)     │───►│   (PostgreSQL)  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Rate Limiter  │    │   Master Key    │    │   Audit Logs    │
-│   (Per User)    │    │   Management    │    │   (Immutable)   │
+│   Rate          │    │   Audit         │    │   Version       │
+│   Limiting      │    │   Logging       │    │   Management    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-#### Security Features
+#### Key Features
 
-**Encryption:**
+**Security:**
 - **AES-256 Encryption**: All secret values encrypted at rest
-- **Master Key Rotation**: Support for key rotation without data loss
-- **Encrypted Metadata**: Sensitive metadata also encrypted
-- **Key Management**: Environment-based master key with CLI rotation tools
+- **Input Validation**: Comprehensive validation with character restrictions
+- **Rate Limiting**: 100 requests per minute per user
+- **No Sensitive Logging**: Never logs secret values or tokens
+- **Master Key Rotation**: Environment-based master key management
 
-**Input Validation & Sanitization:**
-- **Character Restrictions**: Names limited to alphanumeric, hyphens, underscores
-- **Length Validation**: Names ≤ 100 chars, values ≤ 10,000 chars
-- **Type Validation**: Support for api_key, oauth2_token, webhook_secret, custom
-- **Expiration Validation**: Future date validation for expiration timestamps
+**Management:**
+- **Multiple Secret Types**: API keys, OAuth2 tokens, webhook secrets, custom
+- **Automatic Rotation**: Configurable rotation intervals
+- **Version History**: Complete version tracking
+- **Expiration Management**: Optional expiration dates
+- **Soft Delete**: Audit trail preservation
 
-**Rate Limiting:**
-- **Per-User Limits**: 100 requests per minute per user
-- **Configurable Windows**: Adjustable rate limiting windows
-- **Graceful Degradation**: Rate limit exceeded responses with retry information
-
-**Audit & Compliance:**
-- **Complete Audit Trail**: All operations logged (create, read, update, delete)
-- **No Sensitive Logging**: Never logs secret values, tokens, or PII
-- **Operation Tracking**: User, action, timestamp, and metadata for all operations
-- **Compliance Ready**: Audit logs support compliance reporting
-
-#### Data Models
-
-**Secret Model:**
-```typescript
-interface Secret {
-  id: string;                    // Unique identifier
-  userId: string;                // Owner user ID
-  name: string;                  // Secret name (sanitized)
-  type: SecretType;              // Secret type
-  encryptedData: string;         // AES-256 encrypted value
-  keyId: string;                 // Encryption key identifier
-  version: number;               // Version for rotation
-  isActive: boolean;             // Soft delete flag
-  expiresAt?: Date;              // Optional expiration
-  createdAt: Date;               // Creation timestamp
-  updatedAt: Date;               // Last update timestamp
-}
-
-type SecretType = 'api_key' | 'oauth2_token' | 'webhook_secret' | 'custom';
-```
-
-**Encryption Key Model:**
-```typescript
-interface EncryptionKey {
-  id: string;                    // Key identifier
-  key: string;                   // Master encryption key
-  version: number;               // Key version
-  isActive: boolean;             // Active status
-  createdAt: Date;               // Creation timestamp
-  expiresAt?: Date;              // Optional expiration
-}
-```
-
-#### API Operations
-
-**Secret Management:**
-- **Store Secret**: Encrypt and store new secret with validation
-- **Retrieve Secret**: Decrypt and return secret value (metadata only for listing)
-- **Update Secret**: Re-encrypt and update existing secret
-- **Delete Secret**: Soft delete with audit trail preservation
-- **List Secrets**: Return metadata for all user secrets
-- **Rotate Keys**: Re-encrypt all secrets with new master key
-
-**Health & Monitoring:**
-- **Health Status**: Vault health with key count and active secrets
-- **Key Management**: Master key status and rotation capabilities
-- **Usage Metrics**: Rate limiting statistics and operation counts
-
-#### Data Flow
-
-```
-Secret Storage Request
-         │
-         ▼
-┌─────────────────┐
-│  Input          │
-│  Validation     │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Rate Limit     │
-│  Check          │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  AES-256        │
-│  Encryption     │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Database       │
-│  Storage        │
-└─────────────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Audit Log      │
-│  Recording      │
-└─────────────────┘
-```
-
-#### Configuration
-
-**Environment Variables:**
-```bash
-# Required: Master encryption key (32+ characters)
-ENCRYPTION_MASTER_KEY=your-secure-master-key-here
-
-# Optional: Rate limiting configuration
-SECRETS_RATE_LIMIT_WINDOW=60000    # 1 minute in milliseconds
-SECRETS_RATE_LIMIT_MAX_REQUESTS=100 # Max requests per window
-```
-
-**CLI Tools:**
-```bash
-# Key rotation script
-npm run rotate-secrets
-
-# Generate new master key
-npm run generate-master-key
-```
-
-#### Security Compliance
-
-**Data Protection:**
-- **Encryption at Rest**: All secret data encrypted with AES-256
-- **No Plaintext Storage**: Never store unencrypted secret values
-- **Secure Key Management**: Master keys managed via environment variables
-- **Access Control**: User-based access with proper authentication
-
-**Audit & Monitoring:**
-- **Complete Audit Trail**: All operations logged with user context
-- **No Sensitive Logging**: Zero sensitive data in logs
-- **Rate Limiting**: Prevents abuse and DoS attacks
-- **Health Monitoring**: Real-time vault health status
-
-**Compliance Features:**
-- **Input Validation**: Comprehensive validation prevents injection attacks
-- **Error Handling**: Secure error messages without data exposure
-- **Soft Delete**: Audit trail preservation for compliance
-- **Version Control**: Secret versioning for change tracking
+**Compliance:**
+- **Complete Audit Trail**: All operations logged
+- **Access Control**: User-specific secret isolation
+- **Security Validation**: Comprehensive security testing
+- **Enterprise Ready**: Meets enterprise security standards
 
 ## Security Architecture
 

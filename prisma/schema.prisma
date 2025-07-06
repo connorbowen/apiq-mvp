@@ -78,22 +78,22 @@ enum ConnectionStatus {
 
 // User Management
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String    @id @default(cuid())
+  email     String    @unique
   name      String
   password  String
-  role      Role     @default(USER)
-  isActive  Boolean  @default(true)
+  role      Role      @default(USER)
+  isActive  Boolean   @default(true)
   lastLogin DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   // SSO Provider Integration
-  provider        String?  // "okta" | "google" | "azure" | "generic" | "credentials"
-  providerUserId  String?  // External user ID from provider
-  refreshToken    String?  // Encrypted refresh token for OAuth2
-  tokenExpiresAt  DateTime? // When the access token expires
-  accessToken     String?  // Encrypted access token (temporary)
+  provider       String? // "okta" | "google" | "azure" | "generic" | "credentials"
+  providerUserId String? // External user ID from provider
+  refreshToken   String? // Encrypted refresh token for OAuth2
+  tokenExpiresAt DateTime? // When the access token expires
+  accessToken    String? // Encrypted access token (temporary)
 
   // Relations
   apiConnections ApiConnection[]
@@ -108,29 +108,29 @@ model User {
 
 // API Connection Management
 model ApiConnection {
-  id              String           @id @default(cuid())
-  userId          String
-  name            String
-  description     String?
-  baseUrl         String
-  authType        AuthType
-  authConfig      Json             // Encrypted authentication configuration
+  id               String           @id @default(cuid())
+  userId           String
+  name             String
+  description      String?
+  baseUrl          String
+  authType         AuthType
+  authConfig       Json // Encrypted authentication configuration
   documentationUrl String?
-  status          Status           @default(ACTIVE)
+  status           Status           @default(ACTIVE)
   connectionStatus ConnectionStatus @default(disconnected)
-  oauthState      String?           @unique
-  ingestionStatus IngestionStatus  @default(PENDING)
-  rawSpec         String?          // Raw OpenAPI specification content
-  specHash        String?          // SHA-256 hash for change detection
-  lastTested      DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  oauthState       String?          @unique
+  ingestionStatus  IngestionStatus  @default(PENDING)
+  rawSpec          String? // Raw OpenAPI specification content
+  specHash         String? // SHA-256 hash for change detection
+  lastTested       DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   // Relations
-  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoints    Endpoint[]
-  workflows    WorkflowStep[]
-  credentials  ApiCredential[]
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoints   Endpoint[]
+  workflows   WorkflowStep[]
+  credentials ApiCredential[]
 
   @@unique([userId, name])
   @@map("api_connections")
@@ -141,12 +141,12 @@ model Endpoint {
   id              String   @id @default(cuid())
   apiConnectionId String
   path            String
-  method          String   // GET, POST, PUT, DELETE, PATCH
+  method          String // GET, POST, PUT, DELETE, PATCH
   summary         String?
   description     String?
-  parameters      Json     // OpenAPI parameters
-  requestBody     Json?    // OpenAPI request body
-  responses       Json     // OpenAPI responses
+  parameters      Json // OpenAPI parameters
+  requestBody     Json? // OpenAPI request body
+  responses       Json // OpenAPI responses
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -160,17 +160,17 @@ model Endpoint {
 
 // Workflow Management
 model Workflow {
-  id          String        @id @default(cuid())
+  id          String         @id @default(cuid())
   userId      String
   name        String
   description String?
   status      WorkflowStatus @default(DRAFT)
-  isPublic    Boolean       @default(false)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  isPublic    Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   // Relations
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   steps      WorkflowStep[]
   executions WorkflowExecution[]
 
@@ -180,23 +180,23 @@ model Workflow {
 
 // Workflow Steps
 model WorkflowStep {
-  id           String   @id @default(cuid())
-  workflowId   String
+  id              String   @id @default(cuid())
+  workflowId      String
   apiConnectionId String?
-  stepOrder    Int
-  name         String
-  description  String?
-  action       String   // The action to perform (e.g., "GET /users", "POST /data")
-  parameters   Json     // Step-specific parameters
-  conditions   Json?    // Conditional logic for step execution
-  retryConfig  Json?    // Retry configuration
-  timeout      Int?     // Timeout in seconds
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  stepOrder       Int
+  name            String
+  description     String?
+  action          String // The action to perform (e.g., "GET /users", "POST /data")
+  parameters      Json // Step-specific parameters
+  conditions      Json? // Conditional logic for step execution
+  retryConfig     Json? // Retry configuration
+  timeout         Int? // Timeout in seconds
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
-  workflow     Workflow      @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflow      Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   apiConnection ApiConnection? @relation(fields: [apiConnectionId], references: [id])
 
   @@unique([workflowId, stepOrder])
@@ -212,36 +212,36 @@ model WorkflowExecution {
   startedAt   DateTime        @default(now())
   completedAt DateTime?
   error       String?
-  result      Json?           // Final execution result
-  metadata    Json?           // Additional execution metadata
-  
+  result      Json? // Final execution result
+  metadata    Json? // Additional execution metadata
+
   // Enhanced execution state management
-  attemptCount    Int      @default(0) // Number of execution attempts
-  maxAttempts     Int      @default(3) // Maximum number of retry attempts
-  retryAfter      DateTime? // When to retry if failed
-  queueJobId      String?  // PgBoss job ID for queue integration
-  queueName       String?  // Queue name for job tracking
-  pausedAt        DateTime? // When execution was paused
-  pausedBy        String?  // User ID who paused the execution
-  resumedAt       DateTime? // When execution was resumed
-  resumedBy       String?  // User ID who resumed the execution
-  
+  attemptCount Int       @default(0) // Number of execution attempts
+  maxAttempts  Int       @default(3) // Maximum number of retry attempts
+  retryAfter   DateTime? // When to retry if failed
+  queueJobId   String? // PgBoss job ID for queue integration
+  queueName    String? // Queue name for job tracking
+  pausedAt     DateTime? // When execution was paused
+  pausedBy     String? // User ID who paused the execution
+  resumedAt    DateTime? // When execution was resumed
+  resumedBy    String? // User ID who resumed the execution
+
   // Execution progress tracking
-  currentStep     Int?     // Current step being executed (0-based)
-  totalSteps      Int      @default(0) // Total number of steps in workflow
-  completedSteps  Int      @default(0) // Number of completed steps
-  failedSteps     Int      @default(0) // Number of failed steps
-  
+  currentStep    Int? // Current step being executed (0-based)
+  totalSteps     Int  @default(0) // Total number of steps in workflow
+  completedSteps Int  @default(0) // Number of completed steps
+  failedSteps    Int  @default(0) // Number of failed steps
+
   // Performance metrics
-  executionTime   Int?     // Total execution time in milliseconds
-  stepResults     Json?    // Results from individual steps
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  executionTime Int? // Total execution time in milliseconds
+  stepResults   Json? // Results from individual steps
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workflow Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   logs     ExecutionLog[]
 
   @@map("workflow_executions")
@@ -249,14 +249,14 @@ model WorkflowExecution {
 
 // Execution Logs
 model ExecutionLog {
-  id                String   @id @default(cuid())
-  executionId       String
-  stepOrder         Int?
-  stepName          String?
-  level             LogLevel @default(INFO)
-  message           String
-  data              Json?    // Additional log data
-  timestamp         DateTime @default(now())
+  id          String   @id @default(cuid())
+  executionId String
+  stepOrder   Int?
+  stepName    String?
+  level       LogLevel @default(INFO)
+  message     String
+  data        Json? // Additional log data
+  timestamp   DateTime @default(now())
 
   // Relations
   execution WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
@@ -266,15 +266,15 @@ model ExecutionLog {
 
 // Audit Logging
 model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String
-  action    String   // CREATE, UPDATE, DELETE, EXECUTE, etc.
-  resource  String   // The resource being acted upon
+  id         String   @id @default(cuid())
+  userId     String
+  action     String // CREATE, UPDATE, DELETE, EXECUTE, etc.
+  resource   String // The resource being acted upon
   resourceId String? // ID of the resource
-  details   Json?    // Additional details about the action
-  ipAddress String?
-  userAgent String?
-  createdAt DateTime @default(now())
+  details    Json? // Additional details about the action
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -284,18 +284,18 @@ model AuditLog {
 
 // API Credentials (Encrypted)
 model ApiCredential {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   userId          String
   apiConnectionId String
-  encryptedData   String   // Encrypted credential data
-  keyId           String   // Encryption key identifier
-  isActive        Boolean  @default(true)
+  encryptedData   String // Encrypted credential data
+  keyId           String // Encryption key identifier
+  isActive        Boolean   @default(true)
   expiresAt       DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   apiConnection ApiConnection @relation(fields: [apiConnectionId], references: [id], onDelete: Cascade)
 
   @@unique([userId, apiConnectionId])
@@ -304,18 +304,26 @@ model ApiCredential {
 
 // Secrets Vault (Encrypted)
 model Secret {
-  id              String   @id @default(cuid())
-  userId          String
-  name            String
-  type            String   // api_key, oauth2_token, webhook_secret, custom
-  encryptedData   String   // Encrypted secret data
-  keyId           String   // Encryption key identifier
-  version         Int      @default(1) // Secret version for rotation tracking
-  isActive        Boolean  @default(true)
-  expiresAt       DateTime?
-  metadata        Json?    // Additional metadata about the secret
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String    @id @default(cuid())
+  userId        String
+  name          String
+  type          String // api_key, oauth2_token, webhook_secret, custom
+  encryptedData String // Encrypted secret data
+  keyId         String // Encryption key identifier
+  version       Int       @default(1) // Secret version for rotation tracking
+  isActive      Boolean   @default(true)
+  expiresAt     DateTime?
+  metadata      Json? // Additional metadata about the secret
+
+  // API Key Rotation Fields
+  rotationEnabled  Boolean   @default(false) // Whether automatic rotation is enabled
+  rotationInterval Int? // Rotation interval in days
+  lastRotatedAt    DateTime? // When the secret was last rotated
+  nextRotationAt   DateTime? // When the secret should be rotated next
+  rotationHistory  Json? // History of previous rotations
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

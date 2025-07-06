@@ -56,8 +56,11 @@ test.describe('Basic Navigation E2E Tests', () => {
 
   test.describe('Navigation', () => {
     test('should navigate to login page', async ({ page }) => {
-      // Click on login link or button
-      await page.click('a[href="/login"], button:has-text("Sign In"), a:has-text("Sign In")');
+      // Navigate to home page first
+      await page.goto(BASE_URL);
+      
+      // Click on the "Sign In" button in the header
+      await page.click('a[href="/login"]');
       
       // Should be on login page
       await expect(page).toHaveURL(/.*login/);
@@ -130,19 +133,35 @@ test.describe('Basic Navigation E2E Tests', () => {
     });
   });
 
-  test.describe('Login Page', () => {
-    test('should load login page with all elements', async ({ page }) => {
+  test.describe('Login Page - UX Compliance', () => {
+    test('should load login page with UX compliance', async ({ page }) => {
       await page.goto(`${BASE_URL}/login`);
       
       // Check page title (global title from layout)
       await expect(page).toHaveTitle(/APIQ/);
       
-      // Check for login form elements
-      await expect(page.locator('input[name="email"]')).toBeVisible();
-      await expect(page.locator('input[name="password"]')).toBeVisible();
-      await expect(page.locator('button[type="submit"]')).toBeVisible();
+      // Validate UX compliance - heading hierarchy
+      await expect(page.locator('h1, h2')).toHaveText(/Sign in|Login/);
       
-      // Check for OAuth2 buttons
+      // Validate UX compliance - accessible form fields
+      const emailInput = page.locator('input[name="email"]');
+      const passwordInput = page.locator('input[name="password"]');
+      const submitButton = page.locator('button[type="submit"]');
+      
+      await expect(emailInput).toBeVisible();
+      await expect(passwordInput).toBeVisible();
+      await expect(submitButton).toBeVisible();
+      
+      // Validate UX compliance - form field accessibility
+      await expect(emailInput).toHaveAttribute('required');
+      await expect(passwordInput).toHaveAttribute('required');
+      await expect(emailInput).toHaveAttribute('type', 'email');
+      await expect(passwordInput).toHaveAttribute('type', 'password');
+      
+      // Validate UX compliance - descriptive button text
+      await expect(submitButton).toHaveText(/Sign in|Login/);
+      
+      // Validate UX compliance - OAuth2 provider labels
       await expect(page.locator('button:has-text("Continue with GitHub")')).toBeVisible();
       await expect(page.locator('button:has-text("Continue with Google")')).toBeVisible();
       await expect(page.locator('button:has-text("Continue with Slack")')).toBeVisible();
@@ -159,7 +178,7 @@ test.describe('Basic Navigation E2E Tests', () => {
       await expect(passwordInput).toHaveAttribute('required');
     });
 
-    test('should handle invalid login attempt', async ({ page }) => {
+    test('should handle invalid login attempt with UX compliance', async ({ page }) => {
       await page.goto(`${BASE_URL}/login`);
       
       // Fill form with invalid credentials
@@ -167,18 +186,74 @@ test.describe('Basic Navigation E2E Tests', () => {
       await page.fill('input[name="password"]', 'wrongpassword');
       await page.click('button[type="submit"]');
       
-      // Should show error message
+      // Validate UX compliance - loading state
+      await expect(page.locator('button[type="submit"]')).toBeDisabled();
+      await expect(page.locator('button[type="submit"]')).toHaveText(/Signing in/);
+      
+      // Wait for error to appear
       await page.waitForTimeout(1000);
+      
+      // Validate UX compliance - accessible error containers
+      await expect(page.locator('.bg-red-50')).toBeVisible();
+      await expect(page.locator('.text-red-800')).toContainText(/Invalid|Failed/);
+      await expect(page.locator('[role="alert"]')).toBeVisible();
       
       // Check if we're still on login page (shouldn't redirect on invalid login)
       await expect(page).toHaveURL(/.*login/);
+    });
+
+    test('should have accessible keyboard navigation', async ({ page }) => {
+      await page.goto(`${BASE_URL}/login`);
+      
+      // Wait for page to load completely
+      await page.waitForLoadState('networkidle');
+      
+      // Click on the email input directly to ensure it's focusable
+      const emailInput = page.locator('input[name="email"]');
+      await emailInput.click();
+      
+      // Verify it's focused
+      await expect(emailInput).toBeFocused();
+      
+      // Test form field accessibility
+      await expect(emailInput).toHaveAttribute('required');
+      await expect(emailInput).toHaveAttribute('type', 'email');
+      
+      // Test tab order - tab to password field
+      await page.keyboard.press('Tab');
+      const passwordInput = page.locator('input[name="password"]');
+      await expect(passwordInput).toBeFocused();
+      
+      // Test that password field has correct attributes
+      await expect(passwordInput).toHaveAttribute('required');
+      await expect(passwordInput).toHaveAttribute('type', 'password');
+      
+      // Test that submit button exists and is accessible
+      const submitButton = page.locator('button[type="submit"]');
+      await expect(submitButton).toBeVisible();
+      await expect(submitButton).toHaveText(/Sign in/);
+    });
+
+    test('should have mobile responsive design', async ({ page }) => {
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.goto(`${BASE_URL}/login`);
+      
+      // Validate mobile layout
+      await expect(page.locator('input[name="email"]')).toBeVisible();
+      await expect(page.locator('input[name="password"]')).toBeVisible();
+      await expect(page.locator('button[type="submit"]')).toBeVisible();
+      
+      // Test mobile form interaction
+      await page.locator('input[name="email"]').fill('mobile@test.com');
+      await expect(page.locator('input[name="email"]')).toHaveValue('mobile@test.com');
     });
   });
 
   test.describe('Dashboard Access', () => {
     test('should show login page when accessing protected routes', async ({ page }) => {
       // Try to access various protected routes
-      const protectedRoutes = ['/dashboard'];
+      const protectedRoutes = ['/dashboard', '/workflows'];
       
       for (const route of protectedRoutes) {
         await page.goto(`${BASE_URL}${route}`);
@@ -187,11 +262,6 @@ test.describe('Basic Navigation E2E Tests', () => {
       
       // /connections should return 404 since there's no main connections page
       await page.goto(`${BASE_URL}/connections`);
-      // Next.js should show 404 page for non-existent routes
-      await expect(page.locator('h1')).toContainText('404');
-      
-      // /workflows should return 404 since there's no main workflows page
-      await page.goto(`${BASE_URL}/workflows`);
       // Next.js should show 404 page for non-existent routes
       await expect(page.locator('h1')).toContainText('404');
     });

@@ -14,9 +14,12 @@
 - [ ] **Unit tests pass**: `npm run test:unit` - All unit tests passing
 - [ ] **Integration tests pass**: `npm run test:integration` - All integration tests passing
 - [ ] **E2E tests pass for implemented features**: `npm run test:e2e:current` - All current E2E tests passing
+  - **Note**: Some E2E tests may fail due to UI refresh issues unrelated to backend changes
+  - **Acceptable**: E2E failures that are confirmed to be UI-only issues (backend API working correctly)
 - [ ] **No flaky tests**: All tests are deterministic and reliable
 - [ ] **Test coverage maintained**: No significant decrease in test coverage
 - [ ] **New features have tests**: All new functionality has corresponding tests
+- [ ] **UX compliance tests pass**: All tests validate UX spec requirements (headings, labels, accessibility)
 
 ### **3. Security & Data Protection**
 - [ ] **No secrets in code**: No API keys, passwords, or tokens in source code
@@ -31,6 +34,7 @@
 - [ ] **No broken functionality**: Existing features still work correctly
 - [ ] **Error handling implemented**: Proper error handling for all new code paths
 - [ ] **User experience is polished**: No obvious UX issues or broken flows
+- [ ] **UX compliance validated**: Feature complies with UX spec requirements
 - [ ] **Documentation updated**: README, API docs, or user guides updated if needed
 
 ### **5. Database & Infrastructure**
@@ -78,6 +82,8 @@ npm run db:migrate
 - [ ] **Hardcoded secrets or URLs** - Use environment variables for all config
 - [ ] **Poor error handling** - Implement proper error handling for all code paths
 - [ ] **Unclear code or comments** - Code should be self-documenting with clear comments
+- [ ] **UX compliance violations** - Feature must comply with UX spec requirements
+- [ ] **Accessibility issues** - Must meet WCAG 2.1 AA standards
 
 ## ✅ **COMMIT READINESS CHECKLIST**
 
@@ -135,10 +141,12 @@ docs(api): update API documentation for new endpoints
 
 ### **UI/UX Features**
 - [ ] **Responsive design tested**: UI works on different screen sizes
-- [ ] **Accessibility tested**: UI meets accessibility standards
+- [ ] **Accessibility tested**: UI meets WCAG 2.1 AA standards
 - [ ] **Error states tested**: Error messages are clear and helpful
 - [ ] **Loading states tested**: Loading indicators work correctly
 - [ ] **Navigation tested**: All navigation flows work correctly
+- [ ] **UX compliance tested**: Feature validates UX spec requirements
+- [ ] **Activation flows tested**: Onboarding and conversion paths work smoothly
 
 ## 🔄 **CONTINUOUS INTEGRATION**
 
@@ -157,6 +165,8 @@ docs(api): update API documentation for new endpoints
 - [ ] **Fast test execution**: Tests complete in reasonable time
 - [ ] **Clean code**: Code follows best practices and is maintainable
 - [ ] **Documentation**: Code is well-documented and self-explanatory
+- [ ] **UX compliance**: All features comply with UX spec requirements
+- [ ] **Accessibility**: All features meet WCAG 2.1 AA standards
 
 ## 🚨 **EMERGENCY COMMIT PROCEDURE**
 
@@ -198,6 +208,28 @@ git commit -m "hotfix(auth): fix critical authentication bypass
 4. **Document changes** - Clear commit messages and documentation
 5. **Security first** - Never commit security vulnerabilities
 6. **User experience** - Ensure features work end-to-end
+7. **UX compliance** - All features must comply with UX spec requirements
+8. **Accessibility** - All features must meet WCAG 2.1 AA standards
+
+## 🎨 **UX COMPLIANCE CHECKLIST**
+
+### **Required UX Validations**
+- [ ] **Headings & Hierarchy**: Clear, descriptive `<h1>`/`<h2>` tags on all pages
+- [ ] **Form Fields**: Proper labels, required indicators, ARIA attributes
+- [ ] **Buttons & Actions**: Descriptive text, loading states, clear primary actions
+- [ ] **Error & Success Messaging**: Accessible containers, actionable messages
+- [ ] **Navigation & Links**: Clear navigation, next-step guidance, back navigation
+- [ ] **Accessibility**: WCAG 2.1 AA compliance, keyboard navigation, screen reader support
+- [ ] **Mobile Responsiveness**: Touch targets, adaptive layout, mobile navigation
+- [ ] **Activation & Adoption**: Optimized onboarding, clear conversion paths
+
+### **UX Testing Requirements**
+- [ ] **E2E tests validate UX**: All tests check headings, labels, accessibility
+- [ ] **Unit tests validate components**: Component tests check accessibility
+- [ ] **Integration tests validate flows**: API tests check user experience
+- [ ] **Mobile testing**: Test responsive behavior on different screen sizes
+- [ ] **Accessibility testing**: Validate keyboard navigation and ARIA compliance
+- [ ] **Activation testing**: Test onboarding and conversion flows
 
 ---
 

@@ -46,28 +46,56 @@ test.describe('Connections Management E2E Tests', () => {
     
     // Navigate to connections tab
     await page.click('[data-testid="tab-connections"]');
+    
+    // Validate UX compliance - heading hierarchy
+    await expect(page.locator('h1')).toHaveText('Dashboard');
+    await expect(page.locator('h2')).toHaveText('API Connections');
   });
 
   test.describe('Connection CRUD Operations', () => {
-    test('should create a new API connection', async ({ page }) => {
+    test('should create a new API connection with UX compliance', async ({ page }) => {
       // Click create connection button
       await page.click('[data-testid="create-connection-btn"]');
       
+      // Validate UX compliance - heading hierarchy for create form
+      await expect(page.locator('h3:has-text("Add API Connection")')).toBeVisible();
+      
+      // Validate UX compliance - accessible form fields
+      const nameInput = page.locator('[data-testid="connection-name-input"]');
+      const descriptionInput = page.locator('[data-testid="connection-description-input"]');
+      const baseUrlInput = page.locator('[data-testid="connection-baseurl-input"]');
+      
+      await expect(nameInput).toBeVisible();
+      await expect(descriptionInput).toBeVisible();
+      await expect(baseUrlInput).toBeVisible();
+      
+      // Validate UX compliance - required field indicators
+      await expect(nameInput).toHaveAttribute('required');
+      await expect(baseUrlInput).toHaveAttribute('required');
+      
       // Fill form fields using data-testid selectors
-      await page.fill('[data-testid="connection-name-input"]', 'Test API Connection');
-      await page.fill('[data-testid="connection-description-input"]', 'A test API connection');
-      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
+      await nameInput.fill('Test API Connection');
+      await descriptionInput.fill('A test API connection');
+      await baseUrlInput.fill('https://api.example.com');
       await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
       await page.fill('[data-testid="connection-apikey-input"]', 'test-api-key-123');
+      
+      // Validate UX compliance - descriptive button text
+      await expect(page.locator('[data-testid="submit-connection-btn"]')).toHaveText(/Create|Add|Save/);
       
       // Submit form
       await page.click('[data-testid="submit-connection-btn"]');
       
+      // Validate UX compliance - loading state
+      await expect(page.locator('[data-testid="submit-connection-btn"]')).toBeDisabled();
+      await expect(page.locator('[data-testid="submit-connection-btn"]')).toHaveText(/Creating|Saving/);
+      
       // Wait for form processing
       await page.waitForTimeout(2000);
       
-      // Should show success message
+      // Validate UX compliance - success message in accessible container
       await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
+      await expect(page.locator('.bg-green-50')).toBeVisible();
       
       // Should show the new connection in the list
       await expect(page.locator('[data-testid="connection-card"]')).toContainText('Test API Connection');
@@ -124,6 +152,66 @@ test.describe('Connections Management E2E Tests', () => {
     // test('should cancel connection deletion', async ({ page }) => {
     //   // This test will be implemented when delete functionality is added
     // });
+  });
+
+  test.describe('UX Compliance & Accessibility', () => {
+    test('should have accessible form fields and keyboard navigation', async ({ page }) => {
+      // Click create connection button
+      await page.click('[data-testid="create-connection-btn"]');
+      
+      // Validate UX compliance - heading hierarchy
+      await expect(page.locator('h3:has-text("Add API Connection")')).toBeVisible();
+      
+      // Test keyboard navigation
+      await page.keyboard.press('Tab');
+      const nameInput = page.locator('[data-testid="connection-name-input"]');
+      await expect(nameInput).toBeFocused();
+      
+      // Test form field accessibility
+      await expect(nameInput).toHaveAttribute('aria-required', 'true');
+      await expect(nameInput).toHaveAttribute('type', 'text');
+      
+      // Test ARIA labels
+      const descriptionInput = page.locator('[data-testid="connection-description-input"]');
+      await expect(descriptionInput).toHaveAttribute('aria-label');
+      
+      // Test form validation accessibility
+      await nameInput.fill('');
+      await page.keyboard.press('Tab');
+      await expect(page.locator('[role="alert"]')).toBeVisible();
+    });
+
+    test('should handle form validation errors with accessible messaging', async ({ page }) => {
+      // Click create connection button
+      await page.click('[data-testid="create-connection-btn"]');
+      
+      // Try to submit empty form
+      await page.click('[data-testid="submit-connection-btn"]');
+      
+      // Validate UX compliance - accessible error containers
+      await expect(page.locator('.bg-red-50')).toBeVisible();
+      await expect(page.locator('.text-red-800')).toContainText(/required|fill in/i);
+      await expect(page.locator('[role="alert"]')).toBeVisible();
+      
+      // Test error message clarity
+      await expect(page.locator('.text-red-800')).toContainText(/name.*required|connection name/i);
+    });
+
+    test('should have mobile responsive design', async ({ page }) => {
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 });
+      
+      // Click create connection button
+      await page.click('[data-testid="create-connection-btn"]');
+      
+      // Validate mobile layout
+      await expect(page.locator('[data-testid="connection-name-input"]')).toBeVisible();
+      await expect(page.locator('[data-testid="submit-connection-btn"]')).toBeVisible();
+      
+      // Test mobile form interaction
+      await page.locator('[data-testid="connection-name-input"]').fill('Mobile Test Connection');
+      await expect(page.locator('[data-testid="connection-name-input"]')).toHaveValue('Mobile Test Connection');
+    });
   });
 
   test.describe('OAuth2 Connection Management', () => {

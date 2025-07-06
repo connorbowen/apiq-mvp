@@ -62,6 +62,327 @@ Error responses:
 
 ## API Endpoints
 
+### Natural Language Workflow Generation 🆕
+
+The Natural Language Workflow Generation API allows users to create complex workflows by describing them in plain English. The system uses OpenAI GPT-4 to understand user intent and generate executable workflows.
+
+#### `POST /api/workflows/generate`
+
+Generate a workflow from natural language description.
+
+**Request Body:**
+
+```json
+{
+  "userDescription": "When a new GitHub issue is created, send a Slack notification to the team",
+  "context": "Optional additional context for the workflow"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "workflow": {
+      "id": "workflow_123",
+      "name": "GitHub Issue to Slack Notification",
+      "description": "Automatically sends Slack notifications when new GitHub issues are created",
+      "steps": [
+        {
+          "id": "step_1",
+          "name": "Monitor GitHub Issues",
+          "type": "api_call",
+          "apiConnectionId": "github_conn_123",
+          "endpoint": "/repos/{owner}/{repo}/issues",
+          "method": "GET",
+          "parameters": {
+            "state": "open",
+            "sort": "created",
+            "direction": "desc"
+          },
+          "order": 1
+        },
+        {
+          "id": "step_2",
+          "name": "Send Slack Notification",
+          "type": "api_call",
+          "apiConnectionId": "slack_conn_456",
+          "endpoint": "/chat.postMessage",
+          "method": "POST",
+          "parameters": {
+            "channel": "#team-notifications",
+            "text": "New GitHub issue: {{step_1.title}}",
+            "attachments": [
+              {
+                "title": "{{step_1.title}}",
+                "title_link": "{{step_1.html_url}}",
+                "text": "{{step_1.body}}",
+                "color": "#36a64f"
+              }
+            ]
+          },
+          "order": 2
+        }
+      ],
+      "estimatedExecutionTime": 5000,
+      "confidence": 0.95,
+      "explanation": "This workflow monitors GitHub for new issues and sends formatted notifications to Slack with issue details and links."
+    },
+    "validation": {
+      "isValid": true,
+      "issues": [],
+      "suggestions": [
+        "Consider adding error handling for API rate limits",
+        "You may want to filter issues by labels or assignees"
+      ]
+    },
+    "alternatives": [
+      {
+        "id": "workflow_124",
+        "name": "GitHub Issue to Discord Webhook",
+        "description": "Alternative workflow using Discord instead of Slack",
+        "confidence": 0.85
+      }
+    ]
+  }
+}
+```
+
+**Error Response (No API Connections):**
+
+```json
+{
+  "success": false,
+  "error": "No active API connections found. Please add at least one API connection before generating workflows."
+}
+```
+
+**Error Response (Invalid Description):**
+
+```json
+{
+  "success": false,
+  "error": "Unable to generate workflow. Please provide more specific details about what you want to accomplish."
+}
+```
+
+### Workflow Management 🆕
+
+The Workflow Management API provides CRUD operations for workflows and execution control.
+
+#### `GET /api/workflows`
+
+List all workflows for the authenticated user.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "workflows": [
+      {
+        "id": "workflow_123",
+        "name": "GitHub Issue to Slack Notification",
+        "description": "Automatically sends Slack notifications when new GitHub issues are created",
+        "status": "ACTIVE",
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+#### `POST /api/workflows`
+
+Create a new workflow.
+
+**Request Body:**
+
+```json
+{
+  "name": "My Workflow",
+  "description": "Description of the workflow",
+  "steps": [
+    {
+      "name": "Step 1",
+      "type": "api_call",
+      "apiConnectionId": "conn_123",
+      "endpoint": "/api/endpoint",
+      "method": "GET",
+      "parameters": {},
+      "order": 1
+    }
+  ]
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "workflow_123",
+    "name": "My Workflow",
+    "description": "Description of the workflow",
+    "status": "DRAFT",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### `GET /api/workflows/{id}`
+
+Get a specific workflow by ID.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "workflow_123",
+    "name": "My Workflow",
+    "description": "Description of the workflow",
+    "status": "ACTIVE",
+    "steps": [
+      {
+        "id": "step_1",
+        "name": "Step 1",
+        "type": "api_call",
+        "apiConnectionId": "conn_123",
+        "endpoint": "/api/endpoint",
+        "method": "GET",
+        "parameters": {},
+        "order": 1
+      }
+    ],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### `PUT /api/workflows/{id}`
+
+Update an existing workflow.
+
+**Request Body:**
+
+```json
+{
+  "name": "Updated Workflow Name",
+  "description": "Updated description",
+  "status": "ACTIVE"
+}
+```
+
+#### `DELETE /api/workflows/{id}`
+
+Delete a workflow.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Workflow deleted successfully"
+}
+```
+
+### Workflow Execution Control 🆕
+
+#### `POST /api/workflows/{id}/execute`
+
+Execute a workflow.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "executionId": "exec_123",
+    "status": "PENDING",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### `GET /api/workflows/executions/{executionId}`
+
+Get execution status and details.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "exec_123",
+    "workflowId": "workflow_123",
+    "status": "RUNNING",
+    "currentStep": 2,
+    "totalSteps": 3,
+    "progress": 66.67,
+    "startedAt": "2024-01-01T00:00:00.000Z",
+    "estimatedCompletion": "2024-01-01T00:00:30.000Z",
+    "logs": [
+      {
+        "step": 1,
+        "status": "COMPLETED",
+        "message": "Step 1 completed successfully",
+        "timestamp": "2024-01-01T00:00:10.000Z"
+      }
+    ]
+  }
+}
+```
+
+#### `POST /api/workflows/executions/{executionId}/pause`
+
+Pause a running execution.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Execution paused successfully"
+}
+```
+
+#### `POST /api/workflows/executions/{executionId}/resume`
+
+Resume a paused execution.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Execution resumed successfully"
+}
+```
+
+#### `POST /api/workflows/executions/{executionId}/cancel`
+
+Cancel a running execution.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Execution cancelled successfully"
+}
+```
+
 ### Secrets Management
 
 The Secrets Vault provides secure storage and management of sensitive data such as API keys, OAuth2 tokens, and custom secrets. All secrets are encrypted with AES-256 and include comprehensive input validation, rate limiting, and audit logging.
@@ -73,6 +394,7 @@ The Secrets Vault provides secure storage and management of sensitive data such 
 - **Rate Limiting**: 100 requests per minute per user
 - **Audit Logging**: Complete audit trail for all secret operations
 - **No Sensitive Logging**: Never logs secret values, tokens, or PII
+- **Automatic Rotation**: Support for automatic secret rotation with configurable intervals
 
 #### `POST /api/secrets`
 
@@ -85,11 +407,10 @@ Store a new secret.
   "name": "my-api-key",
   "type": "api_key",
   "value": "sk_test_...",
-  "metadata": {
-    "description": "Stripe test API key",
-    "environment": "test"
-  },
-  "expiresAt": "2024-12-31T23:59:59.000Z"
+  "description": "Stripe test API key",
+  "expiresAt": "2024-12-31T23:59:59.000Z",
+  "rotationEnabled": true,
+  "rotationInterval": 30
 }
 ```
 
@@ -188,10 +509,7 @@ Update an existing secret.
 ```json
 {
   "value": "sk_test_new_key_...",
-  "metadata": {
-    "description": "Updated Stripe test API key",
-    "environment": "test"
-  }
+  "description": "Updated Stripe test API key"
 }
 ```
 
@@ -207,15 +525,46 @@ Update an existing secret.
     "isActive": true,
     "version": 2,
     "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-02T00:00:00.000Z"
+    "updatedAt": "2024-01-01T00:00:00.000Z"
   },
   "message": "Secret updated successfully"
 }
 ```
 
+#### `POST /api/secrets/{name}/rotate` 🆕
+
+Rotate a secret (create new version with new value).
+
+**Request Body:**
+
+```json
+{
+  "value": "sk_test_rotated_key_...",
+  "description": "Rotated Stripe API key"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "secret_123",
+    "name": "my-api-key",
+    "type": "api_key",
+    "isActive": true,
+    "version": 3,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  "message": "Secret rotated successfully"
+}
+```
+
 #### `DELETE /api/secrets/{id}`
 
-Delete a secret (soft delete).
+Delete a secret (soft delete for audit trail).
 
 **Response:**
 
@@ -226,61 +575,22 @@ Delete a secret (soft delete).
 }
 ```
 
-#### `POST /api/secrets/{id}/rotate`
+### Audit Logs 🆕
 
-Rotate the master encryption key for all secrets.
+The Audit Logs API provides comprehensive logging for all system activities, including user actions, API calls, and security events.
 
-**Response:**
+#### `GET /api/audit-logs`
 
-```json
-{
-  "success": true,
-  "data": {
-    "rotatedSecrets": 5,
-    "newKeyId": "key_456"
-  },
-  "message": "Master key rotated successfully"
-}
-```
+Retrieve audit logs with filtering and pagination.
 
-### Queue Management
-
-The Queue Management API provides robust job queue management using PgBoss 10.3.2 for workflow execution, ensuring reliable, scalable, and fault-tolerant job processing.
-
-#### Security Features
-
-- **Job Data Sanitization**: Sensitive data removed from logs
-- **Input Validation**: Zod schema validation for job payloads
-- **Error Handling**: Secure error messages without data exposure
-- **Access Control**: Queue operations require proper authentication
-
-#### `POST /api/queue/jobs`
-
-Submit a new job to the queue.
-
-**Request Body:**
-
-```json
-{
-  "queueName": "workflow-execution",
-  "name": "execute-workflow",
-  "data": {
-    "workflowId": "workflow_123",
-    "userId": "user_456",
-    "parameters": {
-      "input": "test data"
-    }
-  },
-  "options": {
-    "priority": 5,
-    "delay": 0,
-    "retryLimit": 3,
-    "retryDelay": 5000,
-    "timeout": 300000,
-    "jobKey": "unique-job-identifier"
-  }
-}
-```
+**Query Parameters:**
+- `userId` (optional): Filter by specific user
+- `action` (optional): Filter by action type (create, update, delete, execute)
+- `resource` (optional): Filter by resource type (workflow, secret, connection)
+- `startDate` (optional): Filter logs from this date (ISO 8601)
+- `endDate` (optional): Filter logs to this date (ISO 8601)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 50, max: 100)
 
 **Response:**
 
@@ -288,1340 +598,31 @@ Submit a new job to the queue.
 {
   "success": true,
   "data": {
-    "queueName": "workflow-execution",
-    "jobId": "job_789",
-    "jobKey": "unique-job-identifier"
-  },
-  "message": "Job submitted successfully"
-}
-```
-
-**Error Response (Validation Error):**
-
-```json
-{
-  "success": false,
-  "error": "Invalid job data: missing required fields",
-  "code": "VALIDATION_ERROR"
-}
-```
-
-#### `GET /api/queue/jobs/{queueName}/{jobId}`
-
-Get the status of a specific job.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "job_789",
-    "queueName": "workflow-execution",
-    "name": "execute-workflow",
-    "data": {
-      "workflowId": "workflow_123",
-      "userId": "user_456"
-    },
-    "state": "completed",
-    "retryCount": 0,
-    "retryLimit": 3,
-    "output": {
-      "result": "workflow completed successfully"
-    },
-    "createdOn": "2024-01-01T00:00:00.000Z",
-    "completedOn": "2024-01-01T00:01:30.000Z"
-  }
-}
-```
-
-#### `DELETE /api/queue/jobs/{queueName}/{jobId}`
-
-Cancel a running or queued job.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "queueName": "workflow-execution",
-    "jobId": "job_789"
-  },
-  "message": "Job cancelled successfully"
-}
-```
-
-#### `GET /api/queue/health`
-
-Get the health status of the queue system.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "status": "healthy",
-    "message": "Queue system is operating normally",
-    "activeJobs": 5,
-    "queuedJobs": 12,
-    "failedJobs": 2,
-    "workers": 3,
-    "uptime": 86400000,
-    "lastHealthCheck": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-#### `GET /api/queue/workers`
-
-Get statistics for all workers.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "workers": [
+    "logs": [
       {
-        "workerId": "worker_1",
-        "activeJobs": 2,
-        "completedJobs": 150,
-        "failedJobs": 3,
-        "lastActivity": "2024-01-01T00:00:00.000Z"
-      }
-    ],
-    "totalWorkers": 3,
-    "totalActiveJobs": 5,
-    "totalCompletedJobs": 450,
-    "totalFailedJobs": 8
-  }
-}
-```
-
-#### `POST /api/queue/workers`
-
-Register a new worker for a queue.
-
-**Request Body:**
-
-```json
-{
-  "queueName": "workflow-execution",
-  "handler": "workflowHandler",
-  "options": {
-    "teamSize": 5,
-    "timeout": 300000,
-    "retryLimit": 3
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "queueName": "workflow-execution",
-    "workerId": "worker_4",
-    "teamSize": 5
-  },
-  "message": "Worker registered successfully"
-}
-```
-
-#### `DELETE /api/queue/failed-jobs`
-
-Clear all failed jobs from the queue.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "clearedCount": 15
-  },
-  "message": "Failed jobs cleared successfully"
-}
-```
-
-### Authentication
-
-#### `GET /api/auth/session`
-
-Get the current user session.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "user_id",
-      "email": "user@example.com",
-      "name": "John Doe",
-      "role": "USER"
-    },
-    "expires": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-#### `POST /api/auth/signout`
-
-Sign out the current user.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "message": "Signed out successfully"
-}
-```
-
-#### `POST /api/auth/register`
-
-Register a new user account.
-
-**Request Body:**
-
-```json
-{
-  "email": "user@example.com",
-  "name": "User Name",
-  "password": "password123"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "message": "Registration successful! Please check your email to verify your account.",
-    "userId": "user_id"
-  },
-  "message": "Registration successful"
-}
-```
-
-**Error Response (Email Already Exists):**
-
-```json
-{
-  "success": false,
-  "error": "Email already exists",
-  "code": "EMAIL_EXISTS"
-}
-```
-
-**Error Response (Email Service Failure):**
-
-```json
-{
-  "success": false,
-  "error": "Failed to send verification email",
-  "code": "EMAIL_SEND_FAILED"
-}
-```
-
-#### `POST /api/auth/verify`
-
-Verify user email address using verification token.
-
-**Request Body:**
-
-```json
-{
-  "token": "verification_token_from_email"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "message": "Email verified successfully! Welcome to APIQ!",
-    "user": {
-      "id": "user_id",
-      "email": "user@example.com",
-      "name": "User Name",
-      "role": "USER"
-    },
-    "accessToken": "jwt_token",
-    "refreshToken": "refresh_token",
-    "expiresIn": 900
-  },
-  "message": "Email verification successful"
-}
-```
-
-**Error Response:**
-
-```json
-{
-  "success": false,
-  "error": "Invalid or expired verification token",
-  "code": "INVALID_TOKEN"
-}
-```
-
-#### `POST /api/auth/resend-verification`
-
-Resend verification email to user.
-
-**Request Body:**
-
-```json
-{
-  "email": "user@example.com"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "message": "Verification email sent successfully"
-  },
-  "message": "Verification email sent"
-}
-```
-
-**Error Response (Email Service Failure):**
-
-```json
-{
-  "success": false,
-  "error": "Failed to send verification email",
-  "code": "EMAIL_SEND_FAILED"
-}
-```
-
-#### `POST /api/auth/request-password-reset`
-
-Request a password reset email.
-
-**Request Body:**
-
-```json
-{
-  "email": "user@example.com"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "message": "If an account with this email exists, a password reset link has been sent."
-  },
-  "message": "Password reset email sent"
-}
-```
-
-#### `POST /api/auth/reset-password`
-
-Reset password using reset token.
-
-**Request Body:**
-
-```json
-{
-  "token": "reset_token_from_email",
-  "password": "new_password123"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "message": "Password reset successfully"
-  },
-  "message": "Password reset successful"
-}
-```
-
-**Error Response:**
-
-```json
-{
-  "success": false,
-  "error": "Invalid or expired reset token",
-  "code": "INVALID_TOKEN"
-}
-```
-
-#### `POST /api/auth/login`
-
-Authenticate user with email and password.
-
-**Request Body:**
-
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "user_id",
-      "email": "user@example.com",
-      "name": "User Name",
-      "role": "USER"
-    },
-    "accessToken": "jwt_token",
-    "refreshToken": "refresh_token",
-    "expiresIn": 900
-  },
-  "message": "Login successful"
-}
-```
-
-#### `POST /api/auth/refresh`
-
-Refresh access token using refresh token.
-
-**Request Body:**
-
-```json
-{
-  "refreshToken": "refresh_token"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "accessToken": "new_jwt_token",
-    "expiresIn": 900
-  },
-  "message": "Token refreshed successfully"
-}
-```
-
-#### `GET /api/auth/me`
-
-Get current authenticated user information.
-
-**Headers:**
-
-```
-Authorization: Bearer <access_token>
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "user_id",
-      "email": "user@example.com",
-      "name": "User Name",
-      "role": "USER"
-    }
-  }
-}
-```
-
-#### `GET /api/auth/oauth2`
-
-Initiate OAuth2 login flow for user authentication.
-
-**Query Parameters:**
-
-- `provider` (required) - OAuth2 provider name (google, github, slack)
-- `redirectUri` (optional) - Custom redirect URI (defaults to `/dashboard`)
-
-**Response:** Redirects to OAuth2 provider authorization URL
-
-**Example:**
-
-```
-GET /api/auth/oauth2?provider=google&redirectUri=/dashboard
-```
-
-#### `GET /api/auth/oauth2/callback`
-
-Process OAuth2 callback for user authentication.
-
-**Query Parameters:**
-
-- `code` (required) - Authorization code from OAuth2 provider
-- `state` (required) - State parameter for CSRF protection
-- `error` (optional) - Error from OAuth2 provider
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "user_id",
-      "email": "user@example.com",
-      "name": "User Name",
-      "role": "USER"
-    },
-    "accessToken": "jwt_token",
-    "expiresIn": 900
-  },
-  "message": "OAuth2 login successful"
-}
-```
-
-**Error Response:**
-
-```json
-{
-  "success": false,
-  "error": "OAuth2 login failed",
-  "code": "OAUTH2_LOGIN_ERROR"
-}
-```
-
-### Enterprise SSO (SAML/OIDC)
-
-#### `GET /api/auth/saml/{provider}`
-
-Initiate SAML SSO flow for enterprise authentication.
-
-**Path Parameters:**
-
-- `provider` (required) - SSO provider name (okta, azure, google-workspace)
-
-**Query Parameters:**
-
-- `redirectUri` (optional) - Custom redirect URI (defaults to `/dashboard`)
-
-**Response:** Redirects to SAML identity provider
-
-**Example:**
-
-```
-GET /api/auth/saml/okta?redirectUri=/dashboard
-```
-
-#### `POST /api/auth/saml/callback`
-
-Process SAML assertion for user authentication.
-
-**Request Body:**
-
-```json
-{
-  "SAMLResponse": "base64_encoded_saml_response",
-  "RelayState": "optional_relay_state"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "user_id",
-      "email": "user@company.com",
-      "name": "User Name",
-      "role": "USER",
-      "organization": "Company Name"
-    },
-    "accessToken": "jwt_token",
-    "expiresIn": 900
-  },
-  "message": "SAML authentication successful"
-}
-```
-
-#### `GET /api/auth/oidc/{provider}`
-
-Initiate OpenID Connect flow for enterprise authentication.
-
-**Path Parameters:**
-
-- `provider` (required) - OIDC provider name (okta, azure, google-workspace)
-
-**Query Parameters:**
-
-- `redirectUri` (optional) - Custom redirect URI (defaults to `/dashboard`)
-
-**Response:** Redirects to OIDC identity provider
-
-**Example:**
-
-```
-GET /api/auth/oidc/azure?redirectUri=/dashboard
-```
-
-#### `GET /api/auth/oidc/callback`
-
-Process OIDC callback for user authentication.
-
-**Query Parameters:**
-
-- `code` (required) - Authorization code from OIDC provider
-- `state` (required) - State parameter for CSRF protection
-- `error` (optional) - Error from OIDC provider
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "user_id",
-      "email": "user@company.com",
-      "name": "User Name",
-      "role": "USER",
-      "organization": "Company Name"
-    },
-    "accessToken": "jwt_token",
-    "expiresIn": 900
-  },
-  "message": "OIDC authentication successful"
-}
-```
-
-### API Connections
-
-#### `GET /api/connections`
-
-Get all API connections for the current user.
-
-**Query Parameters:**
-
-- `status` (optional): Filter by status (`active`, `inactive`)
-- `type` (optional): Filter by authentication type
-- `page` (optional): Page number for pagination
-- `limit` (optional): Number of items per page (default: 20)
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "connections": [
-      {
-        "id": "api_id",
-        "name": "Customer CRM",
-        "description": "Customer relationship management API",
-        "baseUrl": "https://api.crm.com",
-        "authType": "api_key",
-        "documentationUrl": "https://api.crm.com/docs",
-        "status": "ACTIVE",
-        "ingestionStatus": "SUCCEEDED",
-        "endpointCount": 15,
-        "lastUsed": "2024-01-01T00:00:00.000Z",
-        "createdAt": "2024-01-01T00:00:00.000Z",
-        "updatedAt": "2024-01-01T00:00:00.000Z"
-      }
-    ],
-    "total": 50,
-    "active": 45,
-    "failed": 5
-  }
-}
-```
-
-> **Note:** The `endpointCount` field is always present in API connection responses. It is `0` if endpoint extraction fails or if the API has no endpoints.
-
-#### `GET /api/connections/{id}/endpoints`
-
-Get all endpoints for a specific API connection.
-
-**Query Parameters:**
-
-- `method` (optional): Filter by HTTP method
-- `tag` (optional): Filter by OpenAPI tag
-- `search` (optional): Search in endpoint descriptions
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "endpoints": [
-      {
-        "id": "endpoint_id",
-        "path": "/customers",
-        "method": "GET",
-        "summary": "Get customers",
-        "description": "Retrieve a list of customers with optional filtering",
-        "parameters": [
-          {
-            "name": "limit",
-            "type": "integer",
-            "required": false,
-            "description": "Number of customers to return"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "schema": {
-              /* JSON schema */
-            }
-          }
-        }
-      }
-    ]
-  }
-}
-```
-
-#### `POST /api/connections`
-
-Create a new API connection.
-
-**Request Body:**
-
-```json
-{
-  "name": "Customer CRM",
-  "description": "Customer relationship management API",
-  "baseUrl": "https://api.crm.com",
-  "authType": "api_key",
-  "authConfig": {
-    "apiKey": "your-api-key",
-    "headerName": "X-API-Key"
-  },
-  "documentationUrl": "https://api.crm.com/docs"
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "new_api_id",
-    "name": "Customer CRM",
-    "description": "Customer relationship management API",
-    "baseUrl": "https://api.crm.com",
-    "authType": "api_key",
-    "status": "ACTIVE",
-    "ingestionStatus": "SUCCEEDED",
-    "endpointCount": 15,
-    "lastUsed": "2024-01-01T00:00:00.000Z",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  },
-  "message": "API connection created successfully"
-}
-```
-
-#### `PATCH /api/connections/{id}`
-
-Update an existing API connection.
-
-**Request Body:**
-
-```json
-{
-  "name": "Updated CRM",
-  "description": "Updated description",
-  "authConfig": {
-    "apiKey": "new-api-key"
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "api_id",
-    "name": "Updated CRM",
-    "description": "Updated description",
-    "baseUrl": "https://api.crm.com",
-    "authType": "api_key",
-    "status": "ACTIVE",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  },
-  "message": "API connection updated successfully"
-}
-```
-
-#### `DELETE /api/connections/{id}`
-
-Delete an API connection.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "message": "API connection deleted successfully"
-}
-```
-
-#### `POST /api/connections/{id}/test`
-
-Test an API connection.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "status": "success",
-    "responseTime": 245,
-    "endpoints": 15,
-    "newEndpoints": 3,
-    "message": "Connection test successful - OpenAPI spec parsed and endpoints extracted"
-  }
-}
-```
-
-#### `POST /api/connections/{id}/refresh`
-
-Refresh the OpenAPI specification for an API connection.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "endpointsUpdated": 15,
-    "newEndpoints": 3,
-    "removedEndpoints": 1,
-    "specChanged": true,
-    "responseTime": 1200,
-    "message": "API specification refreshed successfully - endpoints updated"
-  }
-}
-```
-
-### Workflows
-
-#### `GET /api/workflows`
-
-Get all workflows for the current user.
-
-**Query Parameters:**
-
-- `status` (optional): Filter by status (`draft`, `active`, `paused`)
-- `search` (optional): Search in workflow names and descriptions
-- `page` (optional): Page number for pagination
-- `limit` (optional): Number of items per page
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "workflows": [
-      {
-        "id": "workflow_id",
-        "name": "Customer Onboarding",
-        "description": "Automated customer onboarding process",
-        "status": "active",
-        "stepCount": 5,
-        "lastExecuted": "2024-01-01T00:00:00.000Z",
-        "createdAt": "2024-01-01T00:00:00.000Z"
+        "id": "log_123",
+        "userId": "user_123",
+        "action": "create",
+        "resource": "workflow",
+        "resourceId": "workflow_123",
+        "details": {
+          "workflowName": "GitHub to Slack",
+          "steps": 2
+        },
+        "ipAddress": "192.168.1.1",
+        "userAgent": "Mozilla/5.0...",
+        "timestamp": "2024-01-01T00:00:00.000Z"
       }
     ],
     "pagination": {
       "page": 1,
-      "limit": 20,
-      "total": 25,
-      "totalPages": 2
-    }
-  }
-}
-```
-
-#### `GET /api/workflows/{id}`
-
-Get a specific workflow by ID.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "workflow_id",
-    "name": "Customer Onboarding",
-    "description": "Automated customer onboarding process",
-    "status": "active",
-    "steps": [
-      {
-        "id": "step_id",
-        "name": "Create Customer",
-        "type": "api_call",
-        "apiConnectionId": "api_id",
-        "endpoint": "/customers",
-        "method": "POST",
-        "parameters": {
-          "name": "{{input.customerName}}",
-          "email": "{{input.customerEmail}}"
-        }
-      }
-    ],
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-#### `POST /api/workflows`
-
-Create a new workflow.
-
-**Request Body:**
-
-```json
-{
-  "name": "New Workflow",
-  "description": "Workflow description",
-  "steps": [
-    {
-      "name": "Step 1",
-      "type": "api_call",
-      "apiConnectionId": "api_id",
-      "endpoint": "/endpoint",
-      "method": "GET"
-    }
-  ]
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "new_workflow_id",
-    "name": "New Workflow",
-    "status": "draft",
-    "createdAt": "2024-01-01T00:00:00.000Z"
-  },
-  "message": "Workflow created successfully"
-}
-```
-
-#### `PUT /api/workflows/{id}`
-
-Update an existing workflow.
-
-**Request Body:**
-
-```json
-{
-  "name": "Updated Workflow",
-  "description": "Updated description",
-  "steps": [
-    /* updated steps */
-  ]
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "workflow_id",
-    "name": "Updated Workflow",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  },
-  "message": "Workflow updated successfully"
-}
-```
-
-#### `DELETE /api/workflows/{id}`
-
-Delete a workflow.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "message": "Workflow deleted successfully"
-}
-```
-
-#### `POST /api/workflows/{id}/execute`
-
-Execute a workflow.
-
-**Request Body:**
-
-```json
-{
-  "input": {
-    "customerName": "John Doe",
-    "customerEmail": "john@example.com"
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "executionId": "execution_id",
-    "status": "running",
-    "startedAt": "2024-01-01T00:00:00.000Z"
-  },
-  "message": "Workflow execution started"
-}
-```
-
-### Workflow Executions
-
-#### `GET /api/workflows/{workflowId}/executions`
-
-Get execution history for a workflow.
-
-**Query Parameters:**
-
-- `status` (optional): Filter by execution status
-- `page` (optional): Page number for pagination
-- `limit` (optional): Number of items per page
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "executions": [
-      {
-        "id": "execution_id",
-        "status": "completed",
-        "startedAt": "2024-01-01T00:00:00.000Z",
-        "completedAt": "2024-01-01T00:00:01.000Z",
-        "duration": 1000,
-        "stepCount": 5,
-        "successfulSteps": 5
-      }
-    ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 50,
+      "limit": 50,
+      "total": 150,
       "totalPages": 3
     }
   }
 }
 ```
-
-#### `GET /api/executions/{id}`
-
-Get detailed information about a specific execution.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "execution_id",
-    "workflowId": "workflow_id",
-    "status": "completed",
-    "input": {
-      "customerName": "John Doe"
-    },
-    "output": {
-      "customerId": "customer123",
-      "welcomeEmailSent": true
-    },
-    "steps": [
-      {
-        "id": "step_id",
-        "name": "Create Customer",
-        "status": "completed",
-        "startedAt": "2024-01-01T00:00:00.000Z",
-        "completedAt": "2024-01-01T00:00:00.500Z",
-        "duration": 500,
-        "input": {
-          /* step input */
-        },
-        "output": {
-          /* step output */
-        }
-      }
-    ],
-    "startedAt": "2024-01-01T00:00:00.000Z",
-    "completedAt": "2024-01-01T00:00:01.000Z"
-  }
-}
-```
-
-#### `POST /api/workflows/executions/{executionId}/cancel`
-
-Cancel a running workflow execution.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "executionId": "execution_id",
-    "status": "cancelled",
-    "cancelledAt": "2024-01-01T00:00:00.000Z",
-    "message": "Execution cancelled successfully"
-  }
-}
-```
-
-**Error Response (Execution not found):**
-
-```json
-{
-  "success": false,
-  "error": "Execution not found",
-  "code": "EXECUTION_NOT_FOUND"
-}
-```
-
-**Error Response (Execution already completed):**
-
-```json
-{
-  "success": false,
-  "error": "Cannot cancel completed execution",
-  "code": "EXECUTION_ALREADY_COMPLETED"
-}
-```
-
-#### `POST /api/workflows/executions/{executionId}/pause`
-
-Pause a running workflow execution.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "executionId": "execution_id",
-    "status": "paused",
-    "pausedAt": "2024-01-01T00:00:00.000Z",
-    "message": "Execution paused successfully"
-  }
-}
-```
-
-**Error Response (Execution not found):**
-
-```json
-{
-  "success": false,
-  "error": "Execution not found",
-  "code": "EXECUTION_NOT_FOUND"
-}
-```
-
-**Error Response (Execution not running):**
-
-```json
-{
-  "success": false,
-  "error": "Cannot pause non-running execution",
-  "code": "EXECUTION_NOT_RUNNING"
-}
-```
-
-#### `POST /api/workflows/executions/{executionId}/resume`
-
-Resume a paused workflow execution.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "executionId": "execution_id",
-    "status": "running",
-    "resumedAt": "2024-01-01T00:00:00.000Z",
-    "message": "Execution resumed successfully"
-  }
-}
-```
-
-**Error Response (Execution not found):**
-
-```json
-{
-  "success": false,
-  "error": "Execution not found",
-  "code": "EXECUTION_NOT_FOUND"
-}
-```
-
-**Error Response (Execution not paused):**
-
-```json
-{
-  "success": false,
-  "error": "Cannot resume non-paused execution",
-  "code": "EXECUTION_NOT_PAUSED"
-}
-```
-
-#### `GET /api/workflows/executions/{executionId}/status`
-
-Get the current status of a workflow execution.
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "executionId": "execution_id",
-    "status": "running",
-    "currentStep": 2,
-    "totalSteps": 5,
-    "progress": 40,
-    "startedAt": "2024-01-01T00:00:00.000Z",
-    "estimatedCompletion": "2024-01-01T00:00:05.000Z",
-    "lastActivity": "2024-01-01T00:00:02.000Z"
-  }
-}
-```
-
-**Error Response (Execution not found):**
-
-```json
-{
-  "success": false,
-  "error": "Execution not found",
-  "code": "EXECUTION_NOT_FOUND"
-}
-```
-
-### AI Chat
-
-#### `POST /api/chat`
-
-Send a natural language request to generate a workflow.
-
-**Request Body:**
-
-```json
-{
-  "message": "Get customer data from CRM and send a welcome email",
-  "context": {
-    "availableApis": ["CRM API", "Email API"],
-    "previousMessages": []
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "workflow": {
-      "name": "Customer Welcome Process",
-      "description": "Get customer data and send welcome email",
-      "steps": [
-        {
-          "name": "Get Customer Data",
-          "type": "api_call",
-          "apiConnectionId": "crm_api_id",
-          "endpoint": "/customers/{id}",
-          "method": "GET"
-        },
-        {
-          "name": "Send Welcome Email",
-          "type": "api_call",
-          "apiConnectionId": "email_api_id",
-          "endpoint": "/emails",
-          "method": "POST"
-        }
-      ]
-    },
-    "explanation": "This workflow will first retrieve customer information from the CRM API, then send a personalized welcome email using the Email API.",
-    "confidence": 0.95
-  }
-}
-```
-
-#### `POST /api/chat/execute`
-
-Execute a workflow from a natural language request.
-
-**Request Body:**
-
-```json
-{
-  "message": "Get customer data from CRM and send a welcome email",
-  "input": {
-    "customerId": "customer123"
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "executionId": "execution_id",
-    "workflow": {
-      /* generated workflow */
-    },
-    "status": "running",
-    "startedAt": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-### Audit Logs
 
 #### `GET /api/logs`
 

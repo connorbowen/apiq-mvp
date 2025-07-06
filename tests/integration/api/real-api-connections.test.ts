@@ -7,12 +7,8 @@ import fs from 'fs';
 import path from 'path';
 import { createCommonTestData } from '../../helpers/createTestData';
 
-// Mock the OpenAPI service to avoid external network calls
-jest.mock('../../../src/services/openApiService', () => ({
-  openApiService: {
-    fetchSpec: jest.fn()
-  }
-}));
+// Remove OpenAPI service mock - use real OpenAPI service for integration testing
+// This ensures we test the actual OpenAPI parsing functionality
 
 // Load local fixture for Petstore API once at module level
 const petstoreFixture = JSON.parse(
@@ -21,9 +17,6 @@ const petstoreFixture = JSON.parse(
     'utf-8'
   )
 );
-
-// Get the mocked service once at module level
-const { openApiService } = require('../../../src/services/openApiService');
 
 describe('Real API Connections Integration Tests', () => {
   const testSuite = createTestSuite('Real API Connections Tests');
@@ -56,20 +49,12 @@ describe('Real API Connections Integration Tests', () => {
 
   describe('POST /api/connections - Real API Tests', () => {
     it('should create API connection with real Petstore OpenAPI spec', async () => {
-      // Mock successful OpenAPI spec fetch
-      openApiService.fetchSpec.mockResolvedValue({
-        success: true,
-        spec: petstoreFixture,
-        cached: false,
-        duration: 100
-      });
-
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'Petstore API',
           baseUrl: 'https://petstore.swagger.io/v2',
           authType: 'NONE',
-          documentationUrl: 'https://petstore.swagger.io/v2/swagger.json'
+          documentationUrl: 'https://petstore.swagger.io/v2/swagger.json' // Use documentation URL
         }
       });
 
@@ -89,20 +74,13 @@ describe('Real API Connections Integration Tests', () => {
       expect(data.data.endpointCount).toBeGreaterThan(0);
     });
 
-    it('should handle missing OpenAPI spec gracefully', async () => {
-      // Mock failed OpenAPI spec fetch
-      openApiService.fetchSpec.mockResolvedValue({
-        success: false,
-        error: 'HTTP 404: Not Found',
-        duration: 100
-      });
-
+    it('should handle invalid OpenAPI spec gracefully', async () => {
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
-          name: 'JSONPlaceholder API',
-          baseUrl: 'https://jsonplaceholder.typicode.com',
+          name: 'Invalid API',
+          baseUrl: 'https://invalid-api.com',
           authType: 'NONE',
-          documentationUrl: 'https://jsonplaceholder.typicode.com/openapi.json'
+          documentationUrl: 'https://invalid-api.com/invalid-spec.json' // Invalid OpenAPI spec URL
         }
       });
 
@@ -115,20 +93,13 @@ describe('Real API Connections Integration Tests', () => {
       expect(data.warning).toBeDefined();
     });
 
-    it('should handle network errors gracefully', async () => {
-      // Mock network error
-      openApiService.fetchSpec.mockResolvedValue({
-        success: false,
-        error: 'Network error - unable to reach the server',
-        duration: 100
-      });
-
+    it('should handle malformed OpenAPI spec gracefully', async () => {
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
-          name: 'Invalid API',
-          baseUrl: 'https://invalid-api.com',
+          name: 'Malformed API',
+          baseUrl: 'https://malformed-api.com',
           authType: 'NONE',
-          documentationUrl: 'https://invalid-api.com/swagger.json'
+          documentationUrl: 'https://malformed-api.com/malformed-spec.json' // Malformed OpenAPI spec URL
         }
       });
 

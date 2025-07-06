@@ -23,12 +23,12 @@ const customJestConfig = {
   ],
   coverageDirectory: 'coverage/integration',
   coverageReporters: ['text', 'lcov', 'html'],
-  testTimeout: 15000, // Reduced from 30000 for faster feedback
+  testTimeout: 10000, // Reduced from 15000 for faster feedback
   verbose: false, // Set to false to reduce output noise
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
-  maxWorkers: 2, // Reduced from 4 to prevent database connection pool exhaustion
+  maxWorkers: '50%', // Use 50% of available CPU cores instead of fixed 2
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
@@ -39,6 +39,10 @@ const customJestConfig = {
   },
   globalSetup: '<rootDir>/jest.integration.setup.ts',
   globalTeardown: '<rootDir>/jest.integration.teardown.ts',
+  // Add parallelization optimizations
+  bail: false, // Don't bail on first failure
+  detectOpenHandles: true,
+  forceExit: true, // Force exit after tests complete
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

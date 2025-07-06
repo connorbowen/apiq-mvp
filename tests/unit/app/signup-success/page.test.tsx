@@ -32,7 +32,8 @@ describe('SignupSuccessPage', () => {
     
     expect(screen.getByText('Account Created Successfully!')).toBeInTheDocument();
     expect(screen.getByText(/test@example\.com/)).toBeInTheDocument();
-    expect(screen.getByText('Welcome to APIQ! We\'ve sent a verification email to:')).toBeInTheDocument();
+    expect(screen.getByText('Welcome to APIQ!')).toBeInTheDocument();
+    expect(screen.getByText('We\'ve sent a verification email to:')).toBeInTheDocument();
   });
 
   it('should render step-by-step instructions', () => {
@@ -172,7 +173,8 @@ describe('SignupSuccessPage', () => {
     render(<SignupSuccessPage />);
     
     expect(screen.getByText('Account Created Successfully!')).toBeInTheDocument();
-    expect(screen.getByText('Welcome to APIQ! We\'ve sent a verification email to:')).toBeInTheDocument();
+    expect(screen.getByText('Welcome to APIQ!')).toBeInTheDocument();
+    expect(screen.getByText('We\'ve sent a verification email to:')).toBeInTheDocument();
   });
 
   it('should clear resend message when resending again', async () => {

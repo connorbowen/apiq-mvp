@@ -1,7 +1,208 @@
 import { test, expect } from '@playwright/test';
 import { generateTestId } from '../../helpers/testUtils';
+import { prisma } from '../../../lib/database/client';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
+test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => {
+  test('should debug registration form submission', async ({ page }) => {
+    const testEmail = `e2e-debug-${generateTestId('user')}@example.com`;
+    const testPassword = 'SecurePass123!';
+    const testName = 'E2E Debug User';
+
+    await page.goto(`${BASE_URL}/signup`);
+    // Fill form with valid data
+    await page.getByLabel('Full name').fill(testName);
+    await page.getByLabel('Email address').fill(testEmail);
+    await page.locator('#password').fill(testPassword);
+    await page.locator('#confirmPassword').fill(testPassword);
+
+    // Listen for network requests
+    const responsePromise = page.waitForResponse(response => 
+      response.url().includes('/api/auth/register') && response.request().method() === 'POST'
+    );
+
+    // Submit form
+    await page.getByRole('button', { name: 'Create account' }).click();
+
+    // Wait for response and log it
+    try {
+      const response = await responsePromise;
+      const responseData = await response.json();
+      console.log('Registration response:', response.status(), responseData);
+      
+      if (response.ok()) {
+        console.log('Registration successful, checking for redirect...');
+        // Wait a bit for redirect
+        await page.waitForTimeout(2000);
+        console.log('Current URL:', page.url());
+      } else {
+        console.log('Registration failed:', responseData);
+      }
+    } catch (error) {
+      console.log('No registration request detected or timeout');
+    }
+
+    // Clean up
+    await prisma.user.deleteMany({
+      where: { email: testEmail }
+    });
+  });
+
+  test('should have best-in-class UX for user registration', async ({ page }) => {
+    const testEmail = `e2e-reg-${generateTestId('user')}@example.com`;
+    const testPassword = 'SecurePass123!';
+    const testName = 'E2E Test User';
+
+    await page.goto(`${BASE_URL}/signup`);
+
+    // 1. CLEAR HEADING HIERARCHY (Activation)
+    await expect(page.locator('h2')).toHaveText('Create your APIQ account');
+    await expect(page.locator('p')).toContainText('Start orchestrating APIs with natural language');
+
+    // 2. ACCESSIBLE FORM FIELDS (Usability)
+    const nameInput = page.getByLabel('Full name');
+    const emailInput = page.getByLabel('Email address');
+    const passwordInput = page.locator('#password');
+    const confirmPasswordInput = page.locator('#confirmPassword');
+
+    await expect(nameInput).toBeVisible();
+    await expect(emailInput).toBeVisible();
+    await expect(passwordInput).toBeVisible();
+    await expect(confirmPasswordInput).toBeVisible();
+
+    // Check required attributes
+    await expect(nameInput).toHaveAttribute('required', '');
+    await expect(emailInput).toHaveAttribute('required', '');
+    await expect(passwordInput).toHaveAttribute('required', '');
+    await expect(confirmPasswordInput).toHaveAttribute('required', '');
+
+    // Check input types and autocomplete
+    await expect(emailInput).toHaveAttribute('type', 'email');
+    await expect(passwordInput).toHaveAttribute('type', 'password');
+    await expect(confirmPasswordInput).toHaveAttribute('type', 'password');
+    await expect(emailInput).toHaveAttribute('autocomplete', 'email');
+    await expect(passwordInput).toHaveAttribute('autocomplete', 'new-password');
+    await expect(confirmPasswordInput).toHaveAttribute('autocomplete', 'new-password');
+
+    // 3. HELPFUL PLACEHOLDER TEXT (Adoption)
+    await expect(nameInput).toHaveAttribute('placeholder', 'Enter your full name');
+    await expect(emailInput).toHaveAttribute('placeholder', 'Enter your email address');
+    await expect(passwordInput).toHaveAttribute('placeholder', 'Create a strong password');
+    await expect(confirmPasswordInput).toHaveAttribute('placeholder', 'Confirm your password');
+
+    // 4. DESCRIPTIVE BUTTON TEXT (Activation)
+    await expect(page.getByRole('button', { name: 'Create account' })).toBeVisible();
+
+    // 5. HELPFUL NAVIGATION LINKS (Adoption)
+    await expect(page.getByRole('link', { name: /Sign in/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Back to home/i })).toBeVisible();
+
+    // 6. FILL FORM WITH VALID DATA
+    await nameInput.fill(testName);
+    await emailInput.fill(testEmail);
+    await passwordInput.fill(testPassword);
+    await confirmPasswordInput.fill(testPassword);
+
+    // 7. SUBMIT AND VERIFY LOADING STATE
+    const submitButton = page.locator('[data-testid="signup-submit"]');
+    await submitButton.click();
+    await expect(submitButton).toBeDisabled();
+    await expect(submitButton).toHaveText('Creating account...');
+    await expect(page).toHaveURL(/.*signup-success/, { timeout: 10000 });
+
+    // 8. SUCCESS REDIRECT WITH CLEAR MESSAGING
+    await expect(page.locator('h2')).toHaveText('Account Created Successfully!');
+    await expect(page.getByText(testEmail)).toBeVisible();
+
+    // Clean up - delete user by email
+    await prisma.user.deleteMany({
+      where: { email: testEmail }
+    });
+  });
+
+  test('should handle registration errors with clear messaging', async ({ page }) => {
+    await page.goto(`${BASE_URL}/signup`);
+
+    // Try to submit empty form
+    await page.getByRole('button', { name: 'Create account' }).click();
+
+    // Should show validation errors in accessible containers
+    await expect(page.locator('.bg-red-50')).toBeVisible();
+    await expect(page.locator('.text-red-800')).toContainText(/required|fill in/i);
+
+    // Try with invalid email
+    await page.getByLabel('Full name').fill('Test User');
+    await page.getByLabel('Email address').fill('invalid-email');
+    await page.locator('#password').fill('password123');
+    await page.locator('#confirmPassword').fill('password123');
+    await page.getByRole('button', { name: 'Create account' }).click();
+
+    // Should show email validation error
+    await expect(page.locator('.bg-red-50')).toBeVisible();
+    await expect(page.locator('.text-red-800')).toContainText(/valid email|email format/i);
+
+    // Try with mismatched passwords
+    await page.getByLabel('Email address').fill('test@example.com');
+    await page.locator('#password').fill('password123');
+    await page.locator('#confirmPassword').fill('different123');
+    await page.getByRole('button', { name: 'Create account' }).click();
+
+    // Should show password mismatch error
+    await expect(page.locator('.bg-red-50')).toBeVisible();
+    await expect(page.locator('.text-red-800')).toContainText(/match|same password/i);
+  });
+
+  test('should handle existing user registration gracefully', async ({ page }) => {
+    const existingEmail = 'existing@example.com';
+
+    await page.goto(`${BASE_URL}/signup`);
+
+    // Fill form with existing email
+    await page.getByLabel('Full name').fill('Test User');
+    await page.getByLabel('Email address').fill(existingEmail);
+    await page.locator('#password').fill('ValidPass123');
+    await page.locator('#confirmPassword').fill('ValidPass123');
+    const submitButton2 = page.locator('[data-testid="signup-submit"]');
+    await submitButton2.click();
+    await expect(submitButton2).toBeDisabled();
+    await expect(submitButton2).toHaveText('Creating account...');
+    // Wait for error to appear (button re-enabled after error)
+    await expect(submitButton2).toBeVisible();
+    await expect(submitButton2).not.toBeDisabled();
+    await expect(page.locator('.bg-red-50')).toBeVisible();
+    await expect(page.locator('.text-red-800')).toContainText(/already exists|already registered/i);
+
+    // Should provide helpful next steps
+    await expect(page.getByRole('link', { name: /Sign in/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Back to home/i })).toBeVisible();
+  });
+
+  test('should have accessible password requirements', async ({ page }) => {
+    await page.goto(`${BASE_URL}/signup`);
+
+    // Check if password requirements are visible and accessible
+    const passwordInput = page.locator('#password');
+    await passwordInput.focus();
+
+    // Should show password requirements or have aria-describedby
+    const requirementsElement = page.locator('[data-testid="password-requirements"], .password-requirements, [aria-describedby*="password"]');
+    
+    // If requirements are shown, they should be accessible
+    if (await requirementsElement.isVisible()) {
+      await expect(requirementsElement).toBeVisible();
+    }
+
+    // Test weak password
+    await passwordInput.fill('weak');
+    await page.locator('#confirmPassword').fill('weak');
+    await page.getByRole('button', { name: 'Create account' }).click();
+
+    // Should show password strength error
+    await expect(page.locator('.bg-red-50')).toBeVisible();
+    await expect(page.locator('.text-red-800')).toContainText(/at least 8 characters|password requirements/i);
+  });
+});
 
 test.describe('Registration & Email Verification E2E Tests', () => {
   test.describe('User Registration Flow', () => {
@@ -15,7 +216,7 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       
       // Verify signup page loads correctly
       await expect(page).toHaveTitle(/APIQ/);
-      await expect(page.locator('h2')).toContainText('Create your account');
+      await expect(page.locator('h2')).toContainText('Create your APIQ account');
       
       // Fill registration form
       await page.fill('input[name="name"]', testName);
@@ -27,9 +228,9 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       await page.click('button[type="submit"]');
       
       // Should redirect to success page
-      await expect(page).toHaveURL(/.*signup-success/);
-      await expect(page.locator('h1')).toContainText('Account Created Successfully!');
-      await expect(page.locator('p')).toContainText(testEmail);
+      await expect(page).toHaveURL(/.*signup-success/, { timeout: 10000 });
+      await expect(page.locator('h2')).toContainText('Account Created Successfully!');
+      await expect(page.getByText(testEmail)).toBeVisible();
       
       // Verify success page elements
       await expect(page.locator('text=Welcome to APIQ!')).toBeVisible();
@@ -55,7 +256,7 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       await page.fill('input[name="confirmPassword"]', 'validpassword123');
       await page.click('button[type="submit"]');
       
-      await expect(page.locator('.bg-red-50')).toContainText(/invalid email/i);
+      await expect(page.locator('.bg-red-50')).toContainText(/valid email/i);
       
       // Test password mismatch
       await page.fill('input[name="email"]', 'test@example.com');
@@ -98,8 +299,8 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       await page.goto(`${BASE_URL}/signup`);
       await page.fill('input[name="name"]', 'Different User');
       await page.fill('input[name="email"]', testEmail);
-      await page.fill('input[name="password"]', 'differentpassword123');
-      await page.fill('input[name="confirmPassword"]', 'differentpassword123');
+      await page.fill('input[name="password"]', 'DifferentPass123');
+      await page.fill('input[name="confirmPassword"]', 'DifferentPass123');
       await page.click('button[type="submit"]');
       
       // Should show error message
@@ -133,10 +334,10 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       
       // Should show verification page
       await expect(page).toHaveTitle(/APIQ/);
-      await expect(page.locator('text=Email Verification')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Email Verification' })).toBeVisible();
       
       // Should show verification page content
-      await expect(page.locator('text=Email Verification')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Email Verification' })).toBeVisible();
     });
 
     test('should handle email verification with invalid token', async ({ page }) => {
@@ -145,19 +346,19 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       await page.goto(`${BASE_URL}/verify?token=${invalidToken}`);
       
       // Should show error message
-      await expect(page.locator('text=Invalid verification token')).toBeVisible();
+      await expect(page.locator('text=Email verification failed')).toBeVisible();
       await expect(page.locator('text=The verification link may be invalid or expired.')).toBeVisible();
       
       // Should show resend verification option
       await expect(page.locator('text=Didn\'t receive the verification email?')).toBeVisible();
-      await expect(page.locator('a[href="/resend-verification"]')).toBeVisible();
+      await expect(page.locator('a[href="/resend-verification"]').first()).toBeVisible();
     });
 
     test('should handle missing verification token', async ({ page }) => {
       await page.goto(`${BASE_URL}/verify`);
       
       // Should show error message
-      await expect(page.locator('text=Invalid verification token')).toBeVisible();
+      await expect(page.locator('text=No verification token provided')).toBeVisible();
       await expect(page.locator('text=The verification link may be invalid or expired.')).toBeVisible();
     });
 
@@ -166,10 +367,10 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       
       // Should show resend verification links
       const resendLinks = page.locator('a[href="/resend-verification"]');
-      await expect(resendLinks).toBeVisible();
+      await expect(resendLinks.first()).toBeVisible();
       
       // Should show navigation links
-      await expect(page.locator('a[href="/login"]')).toContainText('Back to login');
+      await expect(page.locator('a[href="/login"]')).toContainText('Back to sign in');
       await expect(page.locator('a[href="/signup"]')).toContainText('Create a new account');
     });
   });
@@ -180,7 +381,7 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       
       // Should show resend verification page
       await expect(page).toHaveTitle(/APIQ/);
-      await expect(page.locator('button')).toContainText('Resend Verification');
+      await expect(page.locator('button')).toContainText('Resend verification email');
       
       // Fill email form
       const testEmail = `e2e-resend-${generateTestId('user')}@example.com`;
@@ -198,9 +399,10 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       await page.fill('input[name="email"]', 'invalid-email');
       await page.click('button[type="submit"]');
       
-      await expect(page.locator('.bg-red-50')).toContainText(/invalid email/i);
+      await expect(page.locator('.bg-red-50')).toContainText(/valid email/i);
       
-      // Test missing email
+      // Test missing email - clear the field first
+      await page.fill('input[name="email"]', '');
       await page.click('button[type="submit"]');
       await expect(page.locator('.bg-red-50')).toContainText(/email is required/i);
     });
@@ -219,7 +421,7 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       await page.goto(`${BASE_URL}/signup`);
       
       // Should have link to login
-      await expect(page.locator('a[href="/login"]')).toContainText(/sign in to your existing account/i);
+      await expect(page.locator('a[href="/login"]')).toContainText(/Sign in/i);
       
       // Test navigation from login page
       await page.goto(`${BASE_URL}/login`);
@@ -234,11 +436,11 @@ test.describe('Registration & Email Verification E2E Tests', () => {
     test('should handle loading states during registration', async ({ page }) => {
       await page.goto(`${BASE_URL}/signup`);
       
-      // Fill form
+      // Fill form with valid data
       await page.fill('input[name="name"]', 'Test User');
       await page.fill('input[name="email"]', 'test@example.com');
-      await page.fill('input[name="password"]', 'password123');
-      await page.fill('input[name="confirmPassword"]', 'password123');
+      await page.fill('input[name="password"]', 'ValidPass123');
+      await page.fill('input[name="confirmPassword"]', 'ValidPass123');
       
       // Submit and check loading state
       await page.click('button[type="submit"]');
@@ -256,7 +458,7 @@ test.describe('Registration & Email Verification E2E Tests', () => {
       await page.click('button[type="submit"]');
       
       // Should show specific error messages
-      await expect(page.locator('.bg-red-50')).toContainText(/invalid email/i);
+      await expect(page.locator('.bg-red-50')).toContainText(/valid email/i);
       await expect(page.locator('.bg-red-50')).toContainText(/password must be at least 8 characters/i);
     });
   });

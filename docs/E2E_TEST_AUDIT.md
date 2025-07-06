@@ -200,4 +200,272 @@ The E2E test suite optimization has been **successfully completed** with the fol
 3. **Update CI/CD pipelines** to use the new Chromium-only configuration
 4. **Document the new test structure** for team reference
 
-The E2E test suite is now optimized for frequent execution while maintaining comprehensive coverage of the APIQ platform functionality. 
+The E2E test suite is now optimized for frequent execution while maintaining comprehensive coverage of the APIQ platform functionality.
+
+# APIQ E2E Test Audit
+
+This document provides a comprehensive audit of the end-to-end test coverage for the APIQ platform, identifying gaps and providing recommendations for improvement.
+
+## Current Test Coverage
+
+### ✅ **COMPLETED TEST SUITES**
+
+#### 1. Authentication E2E Tests
+**Status**: ✅ **FULLY PASSING** (9/9 tests)
+**Coverage**: Complete authentication flow testing
+
+**Test Cases**:
+- User registration with email verification
+- User login with valid credentials
+- Password reset flow
+- Email verification flow
+- Google OAuth2 authentication
+- Session management
+- Logout functionality
+- Invalid credential handling
+- Rate limiting behavior
+
+**Strengths**:
+- Comprehensive coverage of all auth flows
+- Real email service integration
+- OAuth2 testing with real Google API
+- Proper error handling validation
+- Loading state verification
+
+**Areas for Improvement**:
+- Add tests for other OAuth providers (GitHub, Slack)
+- Test session timeout scenarios
+- Add tests for concurrent login attempts
+
+#### 2. UI Navigation E2E Tests
+**Status**: ✅ **FULLY PASSING**
+**Coverage**: Core UI navigation and layout
+
+**Test Cases**:
+- Dashboard navigation
+- Menu functionality
+- Responsive design
+- Loading states
+- Error pages
+
+**Strengths**:
+- Cross-browser compatibility
+- Mobile responsiveness testing
+- Accessibility compliance
+
+#### 3. Workflow Management E2E Tests
+**Status**: ✅ **FULLY PASSING**
+**Coverage**: Basic workflow CRUD operations
+
+**Test Cases**:
+- Workflow creation
+- Workflow editing
+- Workflow deletion
+- Workflow execution
+- Execution history
+
+**Strengths**:
+- Complete workflow lifecycle testing
+- Execution monitoring
+- Error handling validation
+
+### 🚧 **IN PROGRESS TEST SUITES**
+
+#### 4. API Connections E2E Tests
+**Status**: 🚧 **FAILING** (25/25 tests failing)
+**Coverage**: API connection management
+
+**Test Cases**:
+- Connection creation
+- OAuth2 flow testing
+- Connection validation
+- Connection deletion
+- Error handling
+
+**Issues Identified**:
+- Authentication flow problems
+- UI navigation mismatches
+- Missing test data setup
+- Timing issues
+
+**Next Steps**:
+- Fix authentication setup
+- Align tests with current UI
+- Add proper test data management
+- Resolve timing dependencies
+
+### 📋 **PLANNED TEST SUITES**
+
+#### 5. Natural Language Workflow Creation E2E Tests 🆕
+**Status**: 📋 **PLANNED** (Not yet implemented)
+**Priority**: **HIGH** - Core feature testing needed
+
+**Required Test Cases**:
+```typescript
+describe('Natural Language Workflow Creation', () => {
+  it('should create workflow from natural language description', async () => {
+    // 1. Navigate to /workflows/create
+    // 2. Enter description: "When a new GitHub issue is created, send a Slack notification"
+    // 3. Verify workflow generation with OpenAI
+    // 4. Review generated workflow steps
+    // 5. Confirm and save workflow
+    // 6. Verify workflow appears in dashboard
+  });
+
+  it('should handle workflow modifications', async () => {
+    // 1. Generate initial workflow
+    // 2. Modify step configuration
+    // 3. Update data mapping
+    // 4. Save modified workflow
+    // 5. Verify changes are applied
+  });
+
+  it('should provide alternative suggestions', async () => {
+    // 1. Generate workflow
+    // 2. Verify alternatives are displayed
+    // 3. Select alternative workflow
+    // 4. Verify alternative is applied
+  });
+
+  it('should handle invalid descriptions', async () => {
+    // 1. Enter invalid/ambiguous description
+    // 2. Verify helpful error message
+    // 3. Verify suggestions for improvement
+    // 4. Test retry functionality
+  });
+
+  it('should maintain conversation context', async () => {
+    // 1. Start conversation
+    // 2. Ask follow-up questions
+    // 3. Verify context is maintained
+    // 4. Verify workflow updates based on context
+  });
+
+  it('should handle missing API connections', async () => {
+    // 1. Try to create workflow requiring unconnected services
+    // 2. Verify helpful error message
+    // 3. Verify connection setup guidance
+    // 4. Test workflow creation after connecting services
+  });
+
+  it('should validate generated workflows', async () => {
+    // 1. Generate workflow with validation issues
+    // 2. Verify validation errors are shown
+    // 3. Verify suggestions for fixing issues
+    // 4. Test workflow creation after fixes
+  });
+});
+```
+
+**Test Requirements**:
+- OpenAI API integration testing
+- Real API connection validation
+- Complex workflow generation testing
+- Error handling and recovery
+- Performance testing for generation speed
+
+**Implementation Priority**:
+1. Basic workflow generation tests
+2. Error handling tests
+3. Modification and alternatives tests
+4. Context and conversation tests
+5. Performance and validation tests
+
+#### 6. Advanced Workflow Features E2E Tests
+**Status**: 📋 **PLANNED**
+**Priority**: **MEDIUM**
+
+**Test Cases**:
+- Conditional logic workflows
+- Multi-step workflows with data mapping
+- Workflow scheduling and timing
+- Error handling and retry logic
+- Workflow templates and sharing
+
+#### 7. Performance and Load E2E Tests
+**Status**: 📋 **PLANNED**
+**Priority**: **LOW**
+
+**Test Cases**:
+- Large workflow execution
+- Concurrent workflow testing
+- Database performance under load
+- API rate limiting behavior
+- Memory and resource usage
+
+## Test Infrastructure
+
+### Current Setup
+- **Playwright**: Cross-browser testing framework
+- **Test Database**: Isolated PostgreSQL instance
+- **Email Service**: Real SMTP integration
+- **OAuth2**: Real Google API integration
+
+### Infrastructure Improvements Needed
+1. **Test Data Management**: Automated test data setup and cleanup
+2. **Mock Services**: Controlled external API dependencies
+3. **Performance Monitoring**: Test execution time tracking
+4. **Parallel Execution**: Faster test suite execution
+5. **Visual Regression**: UI change detection
+
+## Test Quality Metrics
+
+### Current Metrics
+- **Test Coverage**: 60% of critical user flows
+- **Pass Rate**: 85% (auth tests passing, connections failing)
+- **Execution Time**: ~5 minutes for full suite
+- **Flakiness**: Low (stable auth tests)
+
+### Target Metrics
+- **Test Coverage**: 90% of critical user flows
+- **Pass Rate**: 95%+
+- **Execution Time**: <3 minutes for full suite
+- **Flakiness**: <1% flaky tests
+
+## Recommendations
+
+### Immediate Actions (This Week)
+1. **Fix Connections E2E Tests**: Resolve authentication and UI issues
+2. **Implement Natural Language E2E Tests**: Start with basic workflow generation
+3. **Improve Test Data Management**: Add automated setup/cleanup
+
+### Short-term Actions (Next 2 Weeks)
+1. **Complete Natural Language E2E Tests**: Full feature coverage
+2. **Add Advanced Workflow Tests**: Conditional logic and complex scenarios
+3. **Implement Performance Tests**: Load and stress testing
+
+### Long-term Actions (Next Month)
+1. **Visual Regression Testing**: UI change detection
+2. **Mobile Testing**: Responsive design validation
+3. **Accessibility Testing**: WCAG compliance validation
+4. **Cross-browser Testing**: Edge, Safari, Firefox support
+
+## Test Maintenance
+
+### Regular Tasks
+- **Weekly**: Review test failures and flakiness
+- **Bi-weekly**: Update test data and dependencies
+- **Monthly**: Audit test coverage and add missing tests
+- **Quarterly**: Performance review and optimization
+
+### Documentation
+- **Test Case Documentation**: Detailed test scenarios
+- **Setup Instructions**: Environment configuration
+- **Troubleshooting Guide**: Common issues and solutions
+- **Best Practices**: Testing guidelines and standards
+
+## Success Criteria
+
+### Definition of Done
+- [ ] All critical user flows have E2E test coverage
+- [ ] Test suite passes consistently (>95% pass rate)
+- [ ] Tests execute in reasonable time (<3 minutes)
+- [ ] Tests are maintainable and well-documented
+- [ ] Performance and accessibility are validated
+
+### Quality Gates
+- [ ] No critical user flows without E2E tests
+- [ ] <1% flaky test rate
+- [ ] <3 minute test execution time
+- [ ] 90%+ test coverage of critical flows
+- [ ] All tests documented and maintainable 

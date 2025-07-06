@@ -65,7 +65,8 @@ process.env.OPENAI_API_KEY = 'test-openai-key'
 process.env.NEXTAUTH_SECRET = 'test-secret'
 process.env.NEXTAUTH_URL = 'http://localhost:3000'
 process.env.ENCRYPTION_KEY = 'test-encryption-key-32-chars-long'
-process.env.JWT_SECRET = 'your-super-secret-jwt-key-change-this-in-production'
+process.env.ENCRYPTION_MASTER_KEY = 'test-master-key-32-chars-long-for-secrets'
+// process.env.JWT_SECRET = 'your-super-secret-jwt-key-change-this-in-production'
 process.env.JWT_EXPIRES_IN = '24h'
 
 // Mock scrollIntoView for jsdom

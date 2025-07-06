@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient, ApiConnection, CreateConnectionRequest } from '../../lib/api/client';
 import ChatInterface from '../../components/ChatInterface';
+import OverviewTab from '../../components/dashboard/OverviewTab';
+import ConnectionsTab from '../../components/dashboard/ConnectionsTab';
+import WorkflowsTab from '../../components/dashboard/WorkflowsTab';
+import SecretsTab from '../../components/dashboard/SecretsTab';
+import AdminTab from '../../components/dashboard/AdminTab';
+import AuditTab from '../../components/dashboard/AuditTab';
 
 interface User {
   id: string;
@@ -17,11 +23,16 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [connections, setConnections] = useState<ApiConnection[]>([]);
   const [workflows, setWorkflows] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'chat' | 'connections'>('chat');
+  const [secrets, setSecrets] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'connections' | 'workflows' | 'secrets' | 'chat' | 'admin' | 'audit'>('overview');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showConnectionDetails, setShowConnectionDetails] = useState(false);
+  const [selectedConnection, setSelectedConnection] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [auditRefreshTrigger, setAuditRefreshTrigger] = useState(0); // Trigger for audit log refresh
   const router = useRouter();
 
   // Debug connections state changes
@@ -42,16 +53,14 @@ export default function DashboardPage() {
       try {
         const userResponse = await apiClient.getCurrentUser();
         if (userResponse.success) {
-          setUser(userResponse.data);
+          setUser(userResponse.data.user);
+          setIsLoading(false);
         } else {
-          setErrorMessage('Failed to load user data');
           router.push('/login');
         }
-      } catch (error) {
-        setErrorMessage('Failed to load user data');
+              } catch (error: unknown) {
+          console.error('Failed to load user:', error);
         router.push('/login');
-      } finally {
-        setIsLoading(false);
       }
     };
     
@@ -70,12 +79,43 @@ export default function DashboardPage() {
         console.error('Failed to load connections:', response.error);
         setErrorMessage(response.error || 'Failed to load connections');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading connections:', error);
       setErrorMessage('Network error');
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  const loadWorkflows = useCallback(async () => {
+    try {
+      const response = await apiClient.getWorkflows();
+      if (response.success && response.data) {
+        setWorkflows(response.data.workflows || []);
+      } else {
+        console.error('Failed to load workflows:', response.error);
+      }
+    } catch (error: unknown) {
+      console.error('Error loading workflows:', error);
+    }
+  }, []);
+
+  const loadSecrets = useCallback(async () => {
+    try {
+      const response = await apiClient.getSecrets();
+      if (response.success && response.data) {
+        setSecrets(response.data.secrets || []);
+      } else {
+        console.error('Failed to load secrets:', response.error);
+      }
+    } catch (error: unknown) {
+      console.error('Error loading secrets:', error);
+    }
+  }, []);
+
+  // Function to trigger audit log refresh
+  const triggerAuditRefresh = useCallback(() => {
+    setAuditRefreshTrigger(prev => prev + 1);
   }, []);
 
   const handleOAuth2Callback = useCallback(() => {
@@ -106,28 +146,91 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadConnections();
+    loadWorkflows();
+    loadSecrets();
     handleOAuth2Callback();
-  }, [loadConnections, handleOAuth2Callback]);
+  }, [loadConnections, loadWorkflows, loadSecrets, handleOAuth2Callback]);
 
-  // Auto-refresh connections every 30 seconds
+  // Auto-refresh data every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       loadConnections();
+      loadWorkflows();
+      loadSecrets();
     }, 30000);
     return () => clearInterval(interval);
-  }, [loadConnections]);
+  }, [loadConnections, loadWorkflows, loadSecrets]);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    router.push('/');
+    router.push('/login');
   };
 
   const handleWorkflowGenerated = (workflow: any, steps: any[]) => {
     // Handle workflow generation - could save to database or show success message
     console.log('Workflow generated:', workflow, steps);
   };
+
+  const handleTabChange = (tab: 'overview' | 'connections' | 'workflows' | 'secrets' | 'chat' | 'admin' | 'audit') => {
+    console.log('Tab change requested:', tab, 'Current active tab:', activeTab);
+    setActiveTab(tab);
+    // Update URL to reflect the active tab
+    const url = new URL(window.location.href);
+    if (tab === 'overview') {
+      url.searchParams.delete('tab');
+    } else {
+      url.searchParams.set('tab', tab);
+    }
+    window.history.replaceState({}, '', url.toString());
+    console.log('URL updated to:', url.toString());
+    // Clear any existing messages when switching tabs
+    setSuccessMessage(null);
+    setErrorMessage(null);
+    
+    // Trigger audit log refresh when switching to audit tab
+    if (tab === 'audit') {
+      triggerAuditRefresh();
+    }
+  };
+
+  // Initialize tab from URL on component mount
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const tabParam = url.searchParams.get('tab');
+    if (tabParam && ['overview', 'connections', 'workflows', 'secrets', 'chat', 'admin', 'audit'].includes(tabParam)) {
+      setActiveTab(tabParam as 'overview' | 'connections' | 'workflows' | 'secrets' | 'chat' | 'admin' | 'audit');
+    }
+  }, []);
+
+  // Announce success messages to screen readers
+  useEffect(() => {
+    if (successMessage) {
+      const liveRegion = document.getElementById('aria-live-announcements');
+      if (liveRegion) {
+        liveRegion.textContent = successMessage;
+        // Clear after announcement
+        setTimeout(() => {
+          liveRegion.textContent = '';
+        }, 1000);
+      }
+    }
+  }, [successMessage]);
+
+  // Announce error messages to screen readers
+  useEffect(() => {
+    if (errorMessage) {
+      const liveRegion = document.getElementById('aria-live-announcements');
+      if (liveRegion) {
+        liveRegion.textContent = errorMessage;
+        // Clear after announcement
+        setTimeout(() => {
+          liveRegion.textContent = '';
+        }, 1000);
+      }
+    }
+  }, [errorMessage]);
 
   if (isLoading) {
     return (
@@ -139,520 +242,339 @@ export default function DashboardPage() {
 
   return (
     <main role="main" className="min-h-screen bg-gray-50">
+
+      
+      {/* Skip link for accessibility */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50">
+        Skip to main content
+      </a>
+      
       <header role="banner" className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {activeTab === 'secrets' ? 'Secrets Management' : 
+             activeTab === 'connections' ? 'API Connections' :
+             activeTab === 'workflows' ? 'Workflows' :
+             activeTab === 'chat' ? 'AI Chat' :
+             activeTab === 'admin' ? 'Admin Settings' :
+             activeTab === 'audit' ? 'Audit Logs' :
+             'Dashboard'}
+          </h1>
           <div className="flex items-center space-x-4">
             {user && <span className="text-gray-700">Welcome, {user.name}</span>}
             <button
+              data-testid="logout-btn"
               onClick={handleLogout}
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors min-h-[44px]"
             >
               Logout
             </button>
           </div>
         </div>
       </header>
-      <section className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <nav className="flex space-x-4" aria-label="Tabs">
+
+      <section id="main-content" className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumb Navigation */}
+        <nav className="flex mb-6" aria-label="Breadcrumb">
+          <ol className="flex items-center space-x-2">
+            <li>
+              <Link 
+                href="/dashboard" 
+                className="text-indigo-600 hover:text-indigo-800"
+                data-testid="breadcrumb-dashboard"
+              >
+                Dashboard
+              </Link>
+            </li>
+            {activeTab !== 'overview' && (
+              <>
+                <li>
+                  <span className="text-gray-400">/</span>
+                </li>
+                <li>
+                  <span className="text-gray-900 capitalize" data-testid={`breadcrumb-${activeTab}`}>
+                    {activeTab}
+                  </span>
+                </li>
+              </>
+            )}
+          </ol>
+        </nav>
+
+        {/* Mobile Menu Toggle */}
+        <div className="mb-6 lg:hidden">
+          <button
+            data-testid="mobile-menu-toggle"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-menu"
+          >
+            <span>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</span>
+            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div id="mobile-menu" data-testid="mobile-menu" className="mb-6 lg:hidden bg-white border border-gray-300 rounded-md shadow-sm">
+            <nav className="flex flex-col p-1" aria-label="Mobile Tabs">
+              <button
+                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                  activeTab === 'overview' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  handleTabChange('overview');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Overview
+              </button>
+              <button
+                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                  activeTab === 'connections' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  handleTabChange('connections');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                API Connections
+              </button>
+              <button
+                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                  activeTab === 'workflows' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  handleTabChange('workflows');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Workflows
+              </button>
+              <button
+                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                  activeTab === 'secrets' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  handleTabChange('secrets');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Secrets
+              </button>
+              <button
+                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                  activeTab === 'admin' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  handleTabChange('admin');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Admin
+              </button>
+              <button
+                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                  activeTab === 'audit' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  handleTabChange('audit');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Audit
+              </button>
+              <button
+                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                  activeTab === 'chat' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  handleTabChange('chat');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Chat
+              </button>
+            </nav>
+          </div>
+        )}
+
+        {/* Desktop Tab Navigation */}
+        <div className="mb-6 hidden lg:block">
+          <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm" aria-label="Tabs">
             <button
-              data-testid="tab-chat"
-              className={`px-3 py-2 font-medium text-sm rounded-md ${activeTab === 'chat' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
-              onClick={() => setActiveTab('chat')}
+              data-testid="tab-overview"
+              className={`px-4 py-2 font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                activeTab === 'overview' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleTabChange('overview')}
             >
-              Chat
+              Overview
             </button>
             <button
               data-testid="tab-connections"
-              className={`px-3 py-2 font-medium text-sm rounded-md ${activeTab === 'connections' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
-              onClick={() => setActiveTab('connections')}
+              className={`px-4 py-2 font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                activeTab === 'connections' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleTabChange('connections')}
             >
-              Connections
+              API Connections
+            </button>
+            <button
+              data-testid="tab-workflows"
+              className={`px-4 py-2 font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                activeTab === 'workflows' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleTabChange('workflows')}
+            >
+              Workflows
+            </button>
+            <button
+              data-testid="tab-secrets"
+              className={`px-4 py-2 font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                activeTab === 'secrets' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleTabChange('secrets')}
+            >
+              Secrets
+            </button>
+            <button
+              data-testid="tab-admin"
+              className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${
+                activeTab === 'admin' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleTabChange('admin')}
+            >
+              Admin
+            </button>
+            <button
+              data-testid="tab-audit"
+              className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${
+                activeTab === 'audit' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleTabChange('audit')}
+            >
+              Audit
+            </button>
+            <button
+              data-testid="tab-chat"
+              className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${
+                activeTab === 'chat' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleTabChange('chat')}
+            >
+              Chat
             </button>
           </nav>
         </div>
-        {errorMessage && <div className="mb-4 text-red-600">{errorMessage}</div>}
-        {activeTab === 'chat' ? (
-          <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
-        ) : (
-          <ConnectionsTab
-            connections={connections}
-            onConnectionCreated={() => {
-              loadConnections();
-            }}
-            showCreateForm={showCreateForm}
-            setShowCreateForm={setShowCreateForm}
-          />
+
+
+
+        {errorMessage && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md" data-testid="error-message" aria-live="polite">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-800">{errorMessage}</p>
+              </div>
+            </div>
+          </div>
         )}
+
+        {/* Tab Content */}
+        <div className="tab-content">
+          {activeTab === 'overview' && (
+            <OverviewTab 
+              connections={connections}
+              workflows={workflows}
+              secrets={secrets}
+              user={user}
+            />
+          )}
+          {activeTab === 'connections' && (
+            <ConnectionsTab
+              connections={connections}
+              onConnectionCreated={() => {
+                loadConnections();
+                setSuccessMessage('Connection created successfully!');
+              }}
+              onConnectionError={(error) => {
+                setErrorMessage(error);
+              }}
+            />
+          )}
+          {activeTab === 'workflows' && (
+            <WorkflowsTab
+              workflows={workflows}
+              onWorkflowCreated={() => {
+                loadWorkflows();
+                setSuccessMessage('Workflow created successfully!');
+              }}
+              onWorkflowError={(error) => {
+                setErrorMessage(error);
+              }}
+            />
+          )}
+          {activeTab === 'secrets' && (
+            <SecretsTab
+              secrets={secrets}
+              onSecretCreated={() => {
+                loadSecrets();
+                triggerAuditRefresh(); // Trigger audit log refresh after secret operations
+                setSuccessMessage('Secret created successfully!');
+              }}
+              onSecretError={(error) => {
+                setErrorMessage(error);
+              }}
+            />
+          )}
+          {activeTab === 'admin' && (
+            <AdminTab user={user} />
+          )}
+          {activeTab === 'audit' && (
+            <AuditTab refreshTrigger={auditRefreshTrigger} />
+          )}
+          {activeTab === 'chat' && (
+            <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
+          )}
+        </div>
       </section>
     </main>
-  );
-}
-
-// Connections Tab Component
-function ConnectionsTab({ 
-  connections, 
-  onConnectionCreated, 
-  showCreateForm, 
-  setShowCreateForm 
-}: { 
-  connections: ApiConnection[];
-  onConnectionCreated: () => void;
-  showCreateForm: boolean;
-  setShowCreateForm: (show: boolean) => void;
-}) {
-  console.log('ConnectionsTab received connections:', connections);
-  const [successMessage, setSuccessMessage] = useState<string>('');
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [deleteModal, setDeleteModal] = useState<{ show: boolean; connectionId: string | null; connectionName: string }>({
-    show: false,
-    connectionId: null,
-    connectionName: ''
-  });
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filterAuthType, setFilterAuthType] = useState<string>('ALL');
-  const [showFilterDropdown, setShowFilterDropdown] = useState<boolean>(false);
-  const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
-  const [activeDetailTab, setActiveDetailTab] = useState<'details' | 'audit'>('details');
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'bg-green-100 text-green-800';
-      case 'INACTIVE':
-        return 'bg-gray-100 text-gray-800';
-      case 'ERROR':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getAuthTypeLabel = (authType: string) => {
-    switch (authType) {
-      case 'API_KEY':
-        return 'API Key';
-      case 'BEARER_TOKEN':
-        return 'Bearer Token';
-      case 'BASIC_AUTH':
-        return 'Basic Auth';
-      case 'OAUTH2':
-        return 'OAuth2';
-      case 'NONE':
-        return 'None';
-      default:
-        return authType;
-    }
-  };
-
-  const handleConnectionSuccess = () => {
-    console.log('Connection success handler called');
-    setSuccessMessage('Connection created successfully');
-    onConnectionCreated();
-    setShowCreateForm(false);
-    setTimeout(() => setSuccessMessage(''), 5000);
-  };
-
-  const handleConnectionError = (error: string) => {
-    setErrorMessage(error);
-    setTimeout(() => setErrorMessage(''), 5000);
-  };
-
-  const handleDeleteClick = (connectionId: string, connectionName: string) => {
-    setDeleteModal({ show: true, connectionId, connectionName });
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!deleteModal.connectionId) return;
-    
-    try {
-      // TODO: Implement actual delete API call
-      setSuccessMessage('Connection deleted successfully');
-      onConnectionCreated(); // Refresh connections
-    } catch (error) {
-      setErrorMessage('Failed to delete connection');
-    } finally {
-      setDeleteModal({ show: false, connectionId: null, connectionName: '' });
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteModal({ show: false, connectionId: null, connectionName: '' });
-  };
-
-  // Filter connections based on search term and auth type
-  const filteredConnections = connections.filter(connection => {
-    const matchesSearch = connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         connection.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterAuthType === 'ALL' || connection.authType === filterAuthType;
-    return matchesSearch && matchesFilter;
-  });
-
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-medium text-gray-900">API Connections</h2>
-        <div className="flex space-x-2">
-          <button
-            data-testid="refresh-connections-btn"
-            onClick={onConnectionCreated}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            Refresh
-          </button>
-          <button
-            data-testid="create-connection-btn"
-            onClick={() => setShowCreateForm(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Add Connection
-          </button>
-        </div>
-      </div>
-
-      {/* Search and Filter Controls */}
-      <div className="flex gap-4 mb-6">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Search connections..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            data-testid="search-connections"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div className="relative">
-          <button
-            onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-            data-testid="filter-dropdown"
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            Filter: {filterAuthType === 'ALL' ? 'All Types' : getAuthTypeLabel(filterAuthType)}
-          </button>
-          {showFilterDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
-              <div className="py-1">
-                <button
-                  onClick={() => { setFilterAuthType('ALL'); setShowFilterDropdown(false); }}
-                  data-testid="filter-all"
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  All Types
-                </button>
-                <button
-                  onClick={() => { setFilterAuthType('API_KEY'); setShowFilterDropdown(false); }}
-                  data-testid="filter-api-key"
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  API Key
-                </button>
-                <button
-                  onClick={() => { setFilterAuthType('BEARER_TOKEN'); setShowFilterDropdown(false); }}
-                  data-testid="filter-bearer-token"
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Bearer Token
-                </button>
-                <button
-                  onClick={() => { setFilterAuthType('BASIC_AUTH'); setShowFilterDropdown(false); }}
-                  data-testid="filter-basic-auth"
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Basic Auth
-                </button>
-                <button
-                  onClick={() => { setFilterAuthType('OAUTH2'); setShowFilterDropdown(false); }}
-                  data-testid="filter-oauth2"
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  OAuth2
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Success Message */}
-      {successMessage && (
-        <div data-testid="success-message" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-green-800">{successMessage}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Error Message */}
-      {errorMessage && (
-        <div data-testid="error-message" className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-red-800">{errorMessage}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {filteredConnections.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {connections.length === 0 ? 'No API Connections' : 'No matching connections'}
-          </h3>
-          <p className="text-gray-500 mb-4">
-            {connections.length === 0 
-              ? 'Connect your first API to start creating workflows with AI.'
-              : 'Try adjusting your search or filter criteria.'
-            }
-          </p>
-          {connections.length === 0 && (
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              Add Your First API
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredConnections.map((connection) => (
-            <div
-              key={connection.id}
-              data-testid="connection-card"
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => {/* TODO: Navigate to connection details */}}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">{connection.name}</h3>
-                  <p className="text-sm text-gray-500">{connection.description}</p>
-                </div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(connection.status)}`}>
-                  {connection.status}
-                </span>
-              </div>
-              
-              <div className="space-y-2 mb-4">
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Base URL:</span> {connection.baseUrl}
-                </div>
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Auth:</span> {getAuthTypeLabel(connection.authType)}
-                </div>
-                {connection.endpointCount > 0 && (
-                  <div className="text-sm text-gray-600">
-                    <span className="font-medium">Endpoints:</span> {connection.endpointCount}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex space-x-2">
-                <Link
-                  href={`/connections/${connection.id}`}
-                  data-testid={`explore-api-${connection.id}`}
-                  className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 text-center"
-                >
-                  Explore API
-                </Link>
-                <button
-                  data-testid={`connection-details-${connection.id}`}
-                  onClick={() => setSelectedConnection(connection.id)}
-                  className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-200"
-                >
-                  Details
-                </button>
-                <button
-                  data-testid={`edit-connection-${connection.id}`}
-                  onClick={() => {/* TODO: Edit connection */}}
-                  className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-                >
-                  Edit
-                </button>
-                <button
-                  data-testid={`delete-connection-${connection.id}`}
-                  onClick={() => handleDeleteClick(connection.id, connection.name)}
-                  className="flex-1 bg-red-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-700"
-                >
-                  Delete
-                </button>
-                <button
-                  data-testid={`test-connection-${connection.id}`}
-                  onClick={() => {/* TODO: Test connection */}}
-                  className="flex-1 bg-green-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700"
-                >
-                  Test
-                </button>
-                {connection.authType === 'OAUTH2' && (
-                  <button
-                    data-testid={`refresh-token-${connection.id}`}
-                    onClick={() => {/* TODO: Refresh OAuth2 token */}}
-                    className="flex-1 bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
-                  >
-                    Refresh
-                  </button>
-                )}
-                {connection.authType === 'OAUTH2' && (
-                  <button
-                    data-testid="refresh-token-btn"
-                    onClick={() => {/* TODO: Refresh OAuth2 token */}}
-                    className="flex-1 bg-yellow-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-700"
-                  >
-                    Refresh Token
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {showCreateForm && (
-        <CreateConnectionModal 
-          onClose={() => setShowCreateForm(false)} 
-          onSuccess={handleConnectionSuccess} 
-          onError={handleConnectionError} 
-        />
-      )}
-
-      {/* Connection Details Modal */}
-      {selectedConnection && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Connection Details</h3>
-                <button
-                  onClick={() => setSelectedConnection(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              {/* Tab Navigation */}
-              <div className="border-b border-gray-200 mb-4">
-                <nav className="-mb-px flex space-x-8">
-                  <button
-                    onClick={() => setActiveDetailTab('details')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeDetailTab === 'details'
-                        ? 'border-indigo-500 text-indigo-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Details
-                  </button>
-                  <button
-                    data-testid="tab-audit"
-                    onClick={() => setActiveDetailTab('audit')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeDetailTab === 'audit'
-                        ? 'border-indigo-500 text-indigo-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Audit Log
-                  </button>
-                </nav>
-              </div>
-
-              {/* Tab Content */}
-              {activeDetailTab === 'details' && (
-                <div>
-                  <div data-testid="oauth2-status" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                    <div className="flex items-center">
-                      <svg className="h-5 w-5 text-green-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm font-medium text-green-800">OAuth2 Connection Active</span>
-                    </div>
-                  </div>
-                  <div data-testid="connection-status" className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                    <div className="flex items-center">
-                      <svg className="h-5 w-5 text-blue-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm font-medium text-blue-800">Connection Status: Active</span>
-                    </div>
-                  </div>
-                  <button
-                    data-testid="refresh-spec-btn"
-                    onClick={() => {/* TODO: Refresh OpenAPI specification */}}
-                    className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
-                  >
-                    Refresh Specification
-                  </button>
-                </div>
-              )}
-
-              {activeDetailTab === 'audit' && (
-                <div>
-                  <div data-testid="audit-log" className="space-y-2">
-                    <div className="p-3 bg-gray-50 rounded-md">
-                      <div className="text-sm text-gray-600">OAuth2 connection created</div>
-                      <div className="text-xs text-gray-400">2025-07-02 14:41:05</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-md">
-                      <div className="text-sm text-gray-600">Connection tested successfully</div>
-                      <div className="text-xs text-gray-400">2025-07-02 14:40:30</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteModal.show && (
-        <div data-testid="delete-modal" className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Connection</h3>
-              <p className="text-sm text-gray-500 mb-6">
-                Are you sure you want to delete &quot;{deleteModal.connectionName}&quot;? This action cannot be undone.
-              </p>
-              <div className="flex justify-end space-x-3">
-                <button
-                  data-testid="cancel-delete-btn"
-                  onClick={handleDeleteCancel}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  data-testid="confirm-delete-btn"
-                  onClick={handleDeleteConfirm}
-                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 

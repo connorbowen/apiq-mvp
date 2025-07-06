@@ -4,7 +4,8 @@
   "description": "Multi-API Orchestrator Webapp - AI-powered workflow automation across multiple APIs",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "./scripts/smart-dev.sh",
+    "dev:direct": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -18,6 +19,12 @@
     "test:integration": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles",
     "test:integration:debug": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles --runInBand --verbose",
     "test:integration:dotenv": "dotenv -e .env.test -- jest --config=jest.integration.config.js",
+    "test:integration:fast": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles --maxWorkers=4 --testTimeout=8000",
+    "test:integration:core": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles tests/integration/api/auth.test.ts tests/integration/api/health.test.ts tests/integration/api/workflows.test.ts tests/integration/api/secrets.integration.test.ts",
+    "test:integration:auth": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles tests/integration/api/auth.test.ts tests/integration/api/auth-flow.test.ts tests/integration/api/registration.test.ts",
+    "test:integration:oauth2": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles tests/integration/api/oauth2.test.ts tests/integration/api/oauth2-google.test.ts tests/integration/api/oauth2-slack.test.ts tests/integration/api/oauth2-github.test.ts",
+    "test:integration:workflows": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles tests/integration/api/workflows.test.ts tests/integration/queue/queueService.integration.test.ts",
+    "test:integration:secrets": "cross-env DOTENV_CONFIG_PATH=.env.test jest --config=jest.integration.config.js --detectOpenHandles tests/integration/api/secrets.integration.test.ts tests/integration/lib/secrets/secretsVault.integration.test.ts",
     "test:oauth2": "dotenv -e .env.test -- jest tests/integration/api/oauth2.test.ts --detectOpenHandles",
     "test:e2e": "./scripts/kill-port-3000.sh && playwright test",
     "test:e2e:all-browsers": "CI=true playwright test",
@@ -42,26 +49,22 @@
     "db:setup": "npm run db:migrate && npm run db:generate",
     "rotate-secrets": "node scripts/rotate-secrets.js",
     "check:no-mock-data": "grep -r -E 'test-user-123|test-user-456|demo-key|demo-token|fake API|mock.*api|create-test-user' . --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=.git --exclude=package-lock.json --exclude=package.json --exclude=.husky || exit 0",
-    
     "test:e2e:current": "./scripts/kill-port-3000.sh && playwright test tests/e2e/auth/authentication-session.test.ts tests/e2e/auth/oauth2-google-signin.test.ts tests/e2e/ui/critical-ui.test.ts tests/e2e/ui/basic-navigation.test.ts --grep-invert='oauth2|advanced|complex'",
-    
     "test:e2e:p0": "./scripts/kill-port-3000.sh && playwright test tests/e2e/auth/authentication-session.test.ts tests/e2e/auth/registration-verification.test.ts tests/e2e/auth/password-reset.test.ts tests/e2e/connections/ tests/e2e/workflow-engine/workflow-management.test.ts tests/e2e/security/",
     "test:e2e:p1": "./scripts/kill-port-3000.sh && playwright test tests/e2e/ui/ tests/e2e/workflow-engine/step-runner-engine.test.ts",
     "test:e2e:p2": "./scripts/kill-port-3000.sh && playwright test tests/e2e/security/",
     "test:e2e:p3": "echo 'P3 features not yet implemented - no E2E tests to run'",
-    
     "test:e2e:auth-area": "./scripts/kill-port-3000.sh && playwright test tests/e2e/auth/authentication-session.test.ts tests/e2e/auth/registration-verification.test.ts tests/e2e/auth/password-reset.test.ts tests/e2e/auth/oauth2-authentication.test.ts",
     "test:e2e:connections-area": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/ --grep-invert='oauth2'",
     "test:e2e:workflow-area": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/workflow-management.test.ts tests/e2e/workflow-engine/step-runner-engine.test.ts --grep-invert='advanced|complex|data-flow|conditional'",
     "test:e2e:ui-area": "./scripts/kill-port-3000.sh && playwright test tests/e2e/ui/",
     "test:e2e:security-area": "./scripts/kill-port-3000.sh && playwright test tests/e2e/security/",
-    
     "test:e2e:fast": "./scripts/kill-port-3000.sh && playwright test tests/e2e/ui/critical-ui.test.ts tests/e2e/auth/authentication-session.test.ts --timeout=10000",
     "test:e2e:smoke": "./scripts/kill-port-3000.sh && playwright test tests/e2e/ui/critical-ui.test.ts tests/e2e/auth/authentication-session.test.ts tests/e2e/security/secrets-vault.test.ts",
     "test:e2e:core": "./scripts/kill-port-3000.sh && playwright test tests/e2e/auth/authentication-session.test.ts tests/e2e/auth/registration-verification.test.ts tests/e2e/auth/password-reset.test.ts tests/e2e/ui/critical-ui.test.ts tests/e2e/ui/basic-navigation.test.ts tests/e2e/security/secrets-vault.test.ts tests/e2e/workflow-engine/workflow-management.test.ts",
-    
     "test:e2e:debug": "playwright test --headed --debug",
     "test:e2e:report": "playwright show-report",
+    "test:e2e:setup-smtp": "./scripts/setup-e2e-smtp.sh",
     "check:server": "node scripts/check-server-health.js",
     "test:e2e:safe": "npm run check:server && playwright test"
   },
@@ -79,6 +82,8 @@
   "license": "MIT",
   "dependencies": {
     "@apidevtools/swagger-parser": "^12.0.0",
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "^6.10.1",
     "@tailwindcss/postcss": "^4.1.11",
@@ -137,7 +142,7 @@
     "tailwindcss": "^4.1.11",
     "ts-jest": "^29.4.0",
     "tsx": "^4.6.2",
-    "typescript": "^5.2.2",
+    "typescript": "^5.3.3",
     "wait-on": "^8.0.3"
   },
   "engines": {

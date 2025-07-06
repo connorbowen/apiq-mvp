@@ -5,22 +5,8 @@ import { prisma } from '../../../lib/database/client'
 import { healthHandler } from '../../../pages/api/health'
 import { createCommonTestData } from '../../helpers/createTestData';
 
-// Remove database health check mock
-// jest.mock('../../../src/database/init', ... )
-
-// Mock the OpenAI service
-jest.mock('../../../src/services/openaiService', () => ({
-  openaiService: {
-    validateConfig: jest.fn().mockReturnValue(true)
-  }
-}))
-
-// Mock the encryption service
-jest.mock('../../../src/utils/encryption', () => ({
-  encryptionService: {
-    validateKeyStrength: jest.fn().mockReturnValue(true)
-  }
-}))
+// Remove all mocks - use real services for integration testing
+// This ensures we test the actual health check functionality
 
 // Helper function to create properly typed mock requests
 function createMockRequest(options: any = {}) {

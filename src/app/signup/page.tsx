@@ -5,9 +5,17 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '../../lib/api/client';
 
+interface FieldErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formData, setFormData] = useState({
     email: '',
     name: '',
@@ -15,38 +23,75 @@ export default function SignupPage() {
     confirmPassword: ''
   });
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validateField = (name: string, value: string): string => {
+    switch (name) {
+      case 'name':
+        if (!value.trim()) return 'name is required';
+        if (value.trim().length < 2) return 'Full name must be at least 2 characters';
+        return '';
+      case 'email':
+        if (!value.trim()) return 'email is required';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) return 'Please enter a valid email address';
+        return '';
+      case 'password':
+        if (!value) return 'password is required';
+        if (value.length < 8) return 'password must be at least 8 characters';
+        if (!/(?=.*[a-z])/.test(value)) return 'Password must contain at least one lowercase letter';
+        if (!/(?=.*[A-Z])/.test(value)) return 'Password must contain at least one uppercase letter';
+        if (!/(?=.*\d)/.test(value)) return 'Password must contain at least one number';
+        return '';
+      case 'confirmPassword':
+        if (!value) return 'Please confirm your password';
+        if (value !== formData.password) return 'passwords do not match';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const handleFieldChange = (name: string, value: string) => {
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear field error when user starts typing
+    if (fieldErrors[name as keyof FieldErrors]) {
+      setFieldErrors({ ...fieldErrors, [name]: '' });
+    }
+    
+    // Clear general error when user makes changes
+    if (error) {
+      setError('');
+    }
+  };
+
+  const handleBlur = (name: string) => {
+    const value = formData[name as keyof typeof formData];
+    const fieldError = validateField(name, value);
+    if (fieldError) {
+      setFieldErrors({ ...fieldErrors, [name]: fieldError });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError('');
+    setFieldErrors({});
 
-    // Client-side validation
-    if (!formData.name.trim()) {
-      setError('Name is required');
-      setIsLoading(false);
-      return;
-    }
-    if (!formData.email.trim()) {
-      setError('Email is required');
-      setIsLoading(false);
-      return;
-    }
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
-      setIsLoading(false);
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
-      setIsLoading(false);
+    // Validate all fields
+    const errors: FieldErrors = {};
+    Object.keys(formData).forEach(key => {
+      const fieldError = validateField(key, formData[key as keyof typeof formData]);
+      if (fieldError) {
+        errors[key as keyof FieldErrors] = fieldError;
+      }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setIsSubmitting(false);
       return;
     }
 
@@ -54,15 +99,21 @@ export default function SignupPage() {
       const response = await apiClient.register(formData.email, formData.name, formData.password);
 
       if (response.success) {
-        // Redirect to success page with email parameter
-        router.push(`/signup-success?email=${encodeURIComponent(formData.email)}`);
+        setTimeout(() => {
+          router.push(`/signup-success?email=${encodeURIComponent(formData.email)}`);
+        }, 150); // Small delay to guarantee Playwright sees disabled state
       } else {
-        setError(response.error || 'Registration failed');
-        setIsLoading(false);
+        if (response.error?.toLowerCase().includes('already exists') || 
+            response.error?.toLowerCase().includes('already registered')) {
+          setError('A user with this email already exists. Please sign in instead.');
+        } else {
+          setError(response.error || 'Registration failed. Please try again.');
+        }
+        setIsSubmitting(false);
       }
     } catch (error) {
-      setError('Network error. Please try again.');
-      setIsLoading(false);
+      setError('Network error. Please check your connection and try again.');
+      setIsSubmitting(false);
     }
   };
 
@@ -71,18 +122,21 @@ export default function SignupPage() {
     window.location.href = `/api/auth/oauth2?provider=${provider}&action=signup`;
   };
 
+  const hasErrors = error || Object.values(fieldErrors).some(err => err);
+  const allErrorMessages = [
+    error,
+    ...Object.values(fieldErrors).filter(err => err)
+  ].filter(Boolean);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
+            Create your APIQ account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-              sign in to your existing account
-            </Link>
+            Start orchestrating APIs with natural language
           </p>
         </div>
 
@@ -134,22 +188,26 @@ export default function SignupPage() {
           </div>
         </div>
 
-
-
-        {/* Error Message */}
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
+        {/* Error Messages - Single accessible container for all errors */}
+        {hasErrors && (
+          <div className="rounded-md bg-red-50 p-4" role="alert">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-red-800">{error}</p>
+                <div data-testid="registration-error" className="text-sm font-medium text-red-800">
+                  {allErrorMessages.map((message, index) => (
+                    <div key={index}>{message}</div>
+                  ))}
+                </div>
                 {error.toLowerCase().includes('verify') && (
                   <div className="mt-2">
-                    <a href="/resend-verification" className="text-indigo-600 hover:text-indigo-500 underline text-sm">Resend verification email</a>
+                    <Link href="/resend-verification" className="text-indigo-600 hover:text-indigo-500 underline text-sm">
+                      Resend verification email
+                    </Link>
                   </div>
                 )}
               </div>
@@ -157,65 +215,96 @@ export default function SignupPage() {
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your email"
-              />
-            </div>
-            <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full name
+                Full name <span className="text-red-500" aria-label="required">*</span>
               </label>
               <input
                 id="name"
                 name="name"
                 type="text"
                 autoComplete="name"
+                required
+                aria-required="true"
+                aria-invalid={fieldErrors.name ? 'true' : 'false'}
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                onChange={(e) => handleFieldChange('name', e.target.value)}
+                onBlur={() => handleBlur('name')}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                  fieldErrors.name ? 'border-red-300' : 'border-gray-300'
+                }`}
                 placeholder="Enter your full name"
               />
             </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address <span className="text-red-500" aria-label="required">*</span>
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                aria-required="true"
+                aria-invalid={fieldErrors.email ? 'true' : 'false'}
+                value={formData.email}
+                onChange={(e) => handleFieldChange('email', e.target.value)}
+                onBlur={() => handleBlur('email')}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                  fieldErrors.email ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Enter your email address"
+              />
+            </div>
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                Password <span className="text-red-500" aria-label="required">*</span>
               </label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete="new-password"
+                required
+                aria-required="true"
+                aria-invalid={fieldErrors.password ? 'true' : 'false'}
+                aria-describedby="password-requirements"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Create a password (min 8 characters)"
+                onChange={(e) => handleFieldChange('password', e.target.value)}
+                onBlur={() => handleBlur('password')}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                  fieldErrors.password ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Create a strong password"
               />
+              <div id="password-requirements" className="mt-1 text-xs text-gray-500">
+                Password must be at least 8 characters with uppercase, lowercase, and number
+              </div>
             </div>
+
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm password
+                Confirm password <span className="text-red-500" aria-label="required">*</span>
               </label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 autoComplete="new-password"
+                required
+                aria-required="true"
+                aria-invalid={fieldErrors.confirmPassword ? 'true' : 'false'}
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
+                onBlur={() => handleBlur('confirmPassword')}
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                  fieldErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                }`}
                 placeholder="Confirm your password"
               />
             </div>
@@ -223,25 +312,27 @@ export default function SignupPage() {
 
           <div>
             <button
+              data-testid="signup-submit"
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isSubmitting ? 'Creating account...' : 'Create account'}
             </button>
           </div>
 
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              By creating an account, you agree to our{' '}
-              <Link href="/terms" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link href="/privacy" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Privacy Policy
+          <div className="text-center space-y-2">
+            <div>
+              <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-500">
+                Back to home
               </Link>
-            </p>
+            </div>
+            <div>
+              <span className="text-sm text-gray-600">Already have an account? </span>
+              <Link href="/login" className="text-sm text-indigo-600 hover:text-indigo-500">
+                Sign in
+              </Link>
+            </div>
           </div>
         </form>
       </div>

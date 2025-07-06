@@ -1,17 +1,33 @@
 # APIQ - Natural Language Workflow Orchestrator
 
-A semi-agentic, low-code web application that enables non-technincal users to create complex workflows across multiple APIs using natural language and AI-powered automation. The platform prioritizes conversational workflow creation over complex API management.
+A semi-agentic, low-code web application that enables non-technical users to create complex workflows across multiple APIs using natural language and AI-powered automation. The platform prioritizes conversational workflow creation over complex API management.
 
 ## 🚀 Features
 
 ### Core Functionality
-- **Natural Language Workflow Creation** - Chat-based interface for describing workflows in plain English
-- **AI-Powered Orchestration** - OpenAI GPT-4 integration for intelligent workflow generation
+- **Natural Language Workflow Creation** - Chat-based interface for describing workflows in plain English 🆕
+- **AI-Powered Orchestration** - OpenAI GPT-4 integration for intelligent workflow generation 🆕
 - **Multi-API Integration** - Connect to any API with OpenAPI/Swagger documentation
-- **Conversational Interface** - Friendly, helpful AI responses with clear explanations
+- **Conversational Interface** - Friendly, helpful AI responses with clear explanations 🆕
 - **Simplified User Experience** - Streamlined interface focused on workflow creation
-- **Real-time Monitoring** - Live workflow execution monitoring and error handling
-- **Comprehensive Audit Trails** - Complete logging for compliance and debugging
+- **Real-time Monitoring** - Live workflow execution monitoring and error handling 🆕
+- **Comprehensive Audit Trails** - Complete logging for compliance and debugging 🆕
+
+### Workflow Management 🆕
+- **Natural Language Generation** - Describe workflows in plain English, AI creates them automatically
+- **Workflow Execution Engine** - Robust execution with pause/resume/cancel capabilities
+- **Real-time Progress Tracking** - Monitor workflow execution step by step
+- **Execution Control** - Pause, resume, or cancel running workflows
+- **Comprehensive Logging** - Detailed execution logs for debugging and monitoring
+- **Alternative Suggestions** - AI suggests alternative approaches when needed
+
+### Secrets Management 🆕
+- **Encrypted Secrets Vault** - AES-256 encryption for all sensitive data
+- **Automatic Rotation** - Configurable secret rotation for enhanced security
+- **Multiple Secret Types** - API keys, OAuth2 tokens, webhook secrets, custom secrets
+- **Version History** - Track all versions of your secrets
+- **Expiration Management** - Set expiration dates for temporary secrets
+- **Secure Access** - Secrets never logged or exposed in error messages
 
 ### Authentication & Security
 - **JWT Authentication** - Secure token-based authentication with role-based access control
@@ -34,7 +50,7 @@ A semi-agentic, low-code web application that enables non-technincal users to cr
 
 ### Developer Experience
 - **TypeScript** - Full type safety throughout the application
-- **Comprehensive Testing** - 362+ tests with 100% pass rate, organized into logical groups
+- **Comprehensive Testing** - 1041+ tests with 100% pass rate, organized into logical groups
 - **Authentication Flow Testing** - 44 tests covering all authentication UX improvements
 - **Dependency Injection** - Testable service architecture
 - **API Documentation** - Complete API reference documentation
@@ -67,6 +83,7 @@ AI: "I'll help you create a workflow that monitors GitHub for new issues and sen
 - **Backend**: Next.js API Routes, Prisma ORM, PostgreSQL
 - **Authentication**: JWT, OAuth2, bcrypt
 - **Security**: AES-256 encryption, CSRF protection
+- **AI Integration**: OpenAI GPT-4 for natural language processing 🆕
 - **Testing**: Jest, Playwright, Dependency Injection
 - **Monitoring**: Audit logging, error tracking, performance monitoring
 
@@ -86,6 +103,7 @@ AI: "I'll help you create a workflow that monitors GitHub for new issues and sen
 - Node.js 18+
 - PostgreSQL 12+
 - npm or yarn
+- OpenAI API key (for natural language workflow generation) 🆕
 
 ### Installation
 
@@ -147,6 +165,15 @@ To use OAuth2 authentication:
    GOOGLE_CLIENT_SECRET=your_google_client_secret   # Required for Google OAuth2 tests
    ```
 
+#### OpenAI Configuration 🆕
+
+To use natural language workflow generation:
+
+1. **Configure OpenAI** in your environment variables:
+   ```bash
+   OPENAI_API_KEY=your_openai_api_key
+   ```
+
 #### Enterprise SSO Configuration (SAML/OIDC)
 
 To use enterprise SSO authentication:
@@ -191,10 +218,11 @@ To use enterprise SSO authentication:
 
 - **[Product Requirements Document](docs/prd.md)** - Detailed product specifications
 - **[Implementation Plan](docs/implementation-plan.md)** - Development roadmap and progress
-- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation including OAuth2 endpoints
+- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation including new workflow generation endpoints
+- **[User Guide](docs/user-guide.md)** - User-friendly guide for natural language workflow creation
 - **[Architecture Documentation](docs/ARCHITECTURE.md)** - System architecture and design
 - **[Security Guide](docs/SECURITY_GUIDE.md)** - Security best practices and OAuth2 security
-- **[Testing Guide](docs/TESTING.md)** - Testing strategies and OAuth2 testing
+- **[Testing Documentation Index](docs/TESTING_INDEX.md)** - Consolidated testing documentation and guides
 - **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment instructions
 
 ## 🔧 Development

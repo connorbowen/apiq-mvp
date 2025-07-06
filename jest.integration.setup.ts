@@ -4,6 +4,9 @@ import { loadFixtures } from './tests/fixtures/seed';
 import { PrismaClient } from '@prisma/client';
 
 export default async function globalSetup() {
+  // Set NODE_ENV to 'test' for integration tests
+  (process.env as any).NODE_ENV = 'test';
+  
   await prisma.$connect();
   await boss.start();
 

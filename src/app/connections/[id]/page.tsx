@@ -10,6 +10,10 @@ interface Endpoint {
   method: string;
   summary: string;
   description?: string;
+  parameters?: any[];
+  responses?: any[];
+  requestSchema?: any;
+  responseSchema?: any;
 }
 
 export default function APIExplorerPage() {
@@ -17,34 +21,107 @@ export default function APIExplorerPage() {
   const connectionId = params?.id as string;
   const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedEndpoint, setSelectedEndpoint] = useState<Endpoint | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    // Mock endpoints for testing
+    // Mock endpoints for testing - these would come from the actual OpenAPI spec
     setEndpoints([
       {
         id: '1',
         path: '/pets',
         method: 'GET',
         summary: 'List all pets',
-        description: 'Returns a list of all pets in the store'
+        description: 'Returns a list of all pets in the store',
+        parameters: [
+          { name: 'limit', type: 'integer', description: 'Maximum number of pets to return' },
+          { name: 'offset', type: 'integer', description: 'Number of pets to skip' }
+        ],
+        responses: [
+          { code: 200, description: 'Successful response' },
+          { code: 400, description: 'Bad request' }
+        ],
+        requestSchema: null,
+        responseSchema: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              name: { type: 'string' },
+              status: { type: 'string' }
+            }
+          }
+        }
       },
       {
         id: '2',
         path: '/pets',
         method: 'POST',
         summary: 'Create a pet',
-        description: 'Creates a new pet in the store'
+        description: 'Creates a new pet in the store',
+        parameters: [],
+        responses: [
+          { code: 201, description: 'Pet created successfully' },
+          { code: 400, description: 'Invalid input' }
+        ],
+        requestSchema: {
+          type: 'object',
+          required: ['name'],
+          properties: {
+            name: { type: 'string', description: 'Pet name' },
+            status: { type: 'string', enum: ['available', 'pending', 'sold'] }
+          }
+        },
+        responseSchema: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            name: { type: 'string' },
+            status: { type: 'string' }
+          }
+        }
       },
       {
         id: '3',
         path: '/pets/{id}',
         method: 'GET',
         summary: 'Get pet by ID',
-        description: 'Returns a single pet by ID'
+        description: 'Returns a single pet by ID',
+        parameters: [
+          { name: 'id', type: 'integer', description: 'Pet ID', required: true }
+        ],
+        responses: [
+          { code: 200, description: 'Successful response' },
+          { code: 404, description: 'Pet not found' }
+        ],
+        requestSchema: null,
+        responseSchema: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            name: { type: 'string' },
+            status: { type: 'string' }
+          }
+        }
       }
     ]);
     setIsLoading(false);
   }, [connectionId]);
+
+  const handleRefreshSpec = async () => {
+    try {
+      setIsLoading(true);
+      // TODO: Implement actual refresh API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setSuccessMessage('Specification refreshed successfully');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Failed to refresh specification:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -62,13 +139,41 @@ export default function APIExplorerPage() {
           <p className="text-gray-600">Explore and test API endpoints</p>
         </div>
 
+        {/* Success Message */}
+        {successMessage && (
+          <div data-testid="success-message" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-800">{successMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Refresh Button */}
+        <div className="mb-6">
+          <button
+            data-testid="refresh-spec-btn"
+            onClick={handleRefreshSpec}
+            disabled={isLoading}
+            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          >
+            {isLoading ? 'Refreshing...' : 'Refresh Specification'}
+          </button>
+        </div>
+
         <div data-testid="endpoint-list" className="space-y-4">
           {endpoints.map((endpoint) => (
             <div
               key={endpoint.id}
               data-testid="endpoint-item"
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => {/* TODO: Show endpoint details */}}
+              onClick={() => setSelectedEndpoint(selectedEndpoint?.id === endpoint.id ? null : endpoint)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -87,6 +192,101 @@ export default function APIExplorerPage() {
               </div>
               {endpoint.description && (
                 <p className="mt-2 text-sm text-gray-600">{endpoint.description}</p>
+              )}
+              
+              {/* Expanded Endpoint Documentation */}
+              {selectedEndpoint?.id === endpoint.id && (
+                <div className="mt-4 space-y-3" data-testid="endpoint-description">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">Description</h4>
+                    <p className="text-sm text-gray-600">{endpoint.description || endpoint.summary}</p>
+                  </div>
+                  
+                  <div data-testid="endpoint-parameters">
+                    <h4 className="text-sm font-medium text-gray-900">Parameters</h4>
+                    {endpoint.parameters && endpoint.parameters.length > 0 ? (
+                      <div className="mt-2 space-y-2">
+                        {endpoint.parameters.map((param, index) => (
+                          <div key={index} className="text-sm text-gray-600">
+                            <span className="font-medium">{param.name}</span>
+                            {param.required && <span className="text-red-500 ml-1">*</span>}
+                            <span className="ml-2">({param.type})</span>
+                            {param.description && <span className="ml-2">- {param.description}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600">No parameters required</p>
+                    )}
+                  </div>
+                  
+                  <div data-testid="endpoint-responses">
+                    <h4 className="text-sm font-medium text-gray-900">Responses</h4>
+                    <div className="mt-2 space-y-1">
+                      {endpoint.responses?.map((response, index) => (
+                        <div key={index} className="text-sm text-gray-600">
+                          {response.code}: {response.description}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Request Schema */}
+                  {endpoint.requestSchema && (
+                    <div data-testid="request-schema">
+                      <h4 className="text-sm font-medium text-gray-900">Request Schema</h4>
+                      <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                        <pre className="text-xs text-gray-700 overflow-x-auto">
+                          {JSON.stringify(endpoint.requestSchema, null, 2)}
+                        </pre>
+                      </div>
+                      {endpoint.requestSchema.required && endpoint.requestSchema.required.length > 0 && (
+                        <div data-testid="required-fields" className="mt-2">
+                          <h5 className="text-xs font-medium text-gray-700">Required Fields:</h5>
+                          <div className="text-xs text-gray-600">
+                            {endpoint.requestSchema.required.join(', ')}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Response Schema */}
+                  {endpoint.responseSchema && (
+                    <div data-testid="response-schema">
+                      <h4 className="text-sm font-medium text-gray-900">Response Schema</h4>
+                      <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                        <pre className="text-xs text-gray-700 overflow-x-auto">
+                          {JSON.stringify(endpoint.responseSchema, null, 2)}
+                        </pre>
+                      </div>
+                      <div data-testid="response-examples" className="mt-2">
+                        <h5 className="text-xs font-medium text-gray-700">Example Response:</h5>
+                        <div className="text-xs text-gray-600">
+                          {endpoint.method === 'GET' && endpoint.path === '/pets' ? (
+                            <pre className="mt-1 p-2 bg-gray-50 rounded">
+{`[
+  {
+    "id": 1,
+    "name": "Fluffy",
+    "status": "available"
+  }
+]`}
+                            </pre>
+                          ) : (
+                            <pre className="mt-1 p-2 bg-gray-50 rounded">
+{`{
+  "id": 1,
+  "name": "Fluffy",
+  "status": "available"
+}`}
+                            </pre>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           ))}

@@ -126,18 +126,34 @@ APIQ implements a multi-layered security approach:
 - **Database Schema**: New `Secret` model with encrypted data storage, versioning, and soft delete
 - **100% Test Coverage**: Comprehensive test suite including validation, rate limiting, and security tests
 
+### Natural Language Workflow Security
+
+#### AI Integration Security
+- **OpenAI API Security**: Secure API key management and request validation
+- **Prompt Injection Protection**: Input sanitization to prevent prompt injection attacks
+- **Function Calling Security**: Secure function generation from OpenAPI specifications
+- **Context Validation**: Validation of AI-generated workflow steps before execution
+- **Rate Limiting**: OpenAI API rate limiting to prevent abuse
+
+#### Workflow Execution Security
+- **Execution Isolation**: Each workflow execution runs in isolated context
+- **Input Validation**: All workflow inputs validated before execution
+- **Credential Security**: Secure credential retrieval from secrets vault
+- **Audit Logging**: Complete audit trail for all workflow executions
+- **Error Handling**: Secure error handling without exposing sensitive data
+
 ### Data Classification
 
 **Sensitive Data Types**
-1. **Critical**: API keys, passwords, tokens
-2. **High**: User personal information, workflow data
-3. **Medium**: API specifications, execution logs
-4. **Low**: Public documentation, system metrics
+1. **Critical**: API keys, passwords, tokens, secrets
+2. **High**: User personal information, workflow data, execution logs
+3. **Medium**: API specifications, audit logs, system metrics
+4. **Low**: Public documentation, non-sensitive configuration
 
 **Data Handling Requirements**
-- Critical data: Always encrypted, minimal access
-- High data: Encrypted, role-based access
-- Medium data: Encrypted at rest, logged access
+- Critical data: Always encrypted, minimal access, never logged
+- High data: Encrypted, role-based access, limited logging
+- Medium data: Encrypted at rest, logged access with sanitization
 - Low data: Standard protection, public access
 
 ### Data Retention
@@ -169,6 +185,12 @@ const retentionPolicies: RetentionPolicy[] = [
     retentionPeriod: 1095, // 3 years
     archivalPolicy: 'anonymize',
     legalHold: false
+  },
+  {
+    dataType: 'secrets',
+    retentionPeriod: 730, // 2 years after last access
+    archivalPolicy: 'delete',
+    legalHold: false
   }
 ];
 ```
@@ -185,6 +207,12 @@ const retentionPolicies: RetentionPolicy[] = [
 - **Type Checking**: Strong typing with TypeScript
 - **Sanitization**: Input sanitization to prevent injection attacks
 - **Rate Limiting**: Protection against abuse and DDoS
+
+#### Natural Language Input Security
+- **Prompt Sanitization**: Sanitize user inputs to prevent prompt injection
+- **Length Limits**: Enforce reasonable limits on natural language inputs
+- **Character Validation**: Validate input characters to prevent malicious content
+- **Context Isolation**: Ensure AI responses are properly isolated
 
 #### Error Handling
 - **Safe Error Messages**: No sensitive information in error responses

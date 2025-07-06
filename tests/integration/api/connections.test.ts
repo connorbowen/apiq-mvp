@@ -12,13 +12,6 @@ import { parseOpenApiSpec } from '../../../src/lib/api/parser';
 import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
 import { createCommonTestData } from '../../helpers/createTestData';
 
-// Mock the OpenAPI service to avoid external network calls
-jest.mock('../../../src/services/openApiService', () => ({
-  openApiService: {
-    fetchSpec: jest.fn()
-  }
-}));
-
 // Load local fixture for Petstore API
 const petstoreFixture = JSON.parse(
   fs.readFileSync(
@@ -72,21 +65,13 @@ describe('API Connections Integration Tests', () => {
     });
 
     it('should create API connection with OpenAPI spec and extract endpoints', async () => {
-      // Mock successful OpenAPI spec fetch
-      const { openApiService } = require('../../../src/services/openApiService');
-      openApiService.fetchSpec.mockResolvedValue({
-        success: true,
-        spec: petstoreFixture,
-        cached: false,
-        duration: 100
-      });
-
+      // Use real OpenAPI service with local fixture
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'Petstore API',
           baseUrl: 'https://petstore.swagger.io/v2',
           authType: 'NONE',
-          documentationUrl: 'https://petstore.swagger.io/v2/swagger.json'
+          documentationUrl: 'https://petstore.swagger.io/v2/swagger.json' // Use documentation URL
         }
       });
 
@@ -96,27 +81,20 @@ describe('API Connections Integration Tests', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(true);
       expect(data.data.name).toBe('Petstore API');
-      expect(data.data.ingestionStatus).toBe('SUCCEEDED');
+      expect(data.data.ingestionStatus).toBe('SUCCEEDED'); // Should succeed with valid OpenAPI spec
       
       // Track the created connection
       createdConnectionIds.push(data.data.id);
     });
 
     it('should handle OpenAPI parsing errors gracefully', async () => {
-      // Mock failed OpenAPI spec fetch
-      const { openApiService } = require('../../../src/services/openApiService');
-      openApiService.fetchSpec.mockResolvedValue({
-        success: false,
-        error: 'HTTP 404: NOT FOUND',
-        duration: 100
-      });
-
+      // Test with invalid OpenAPI spec URL
       const { req, res } = createAuthenticatedRequest('POST', testUser, {
         body: {
           name: 'Invalid API',
           baseUrl: 'https://invalid-api.com',
           authType: 'NONE',
-          documentationUrl: 'https://httpbin.org/status/404' // This will return 404
+          documentationUrl: 'https://invalid-api.com/invalid-spec.json' // Invalid OpenAPI spec URL
         }
       });
 
