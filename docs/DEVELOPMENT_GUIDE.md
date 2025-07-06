@@ -1751,13 +1751,12 @@ The Secrets Vault provides secure storage and management of sensitive data. Here
    ```typescript
    // tests/unit/lib/secrets/secretsVault.test.ts
    describe("SecretsVault", () => {
-     beforeEach(async () => {
-       // Clear test data and reset rate limits
-       await prisma.secret.deleteMany({ where: { userId: testUserId } });
-       if (vault && vault["rateLimitCache"]) {
-         vault["rateLimitCache"].clear();
-       }
-     });
+        beforeEach(async () => {
+     // Clear test data and reset rate limits
+     await prisma.secret.deleteMany({ where: { userId: testUserId } });
+     // Reset rate limits using test endpoint
+     await request.post('/api/test/reset-rate-limits');
+   });
 
      it("should store and retrieve secrets securely", async () => {
        const secretData = { value: "test-secret-value" };

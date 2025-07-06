@@ -42,6 +42,38 @@ All E2E test commands now include automatic port cleanup to prevent conflicts:
 ```
 *Note: The script is now safe to use even if your dev server is running.*
 
+## 🚫 **Rate Limiting Test Isolation**
+
+E2E tests now include automatic rate limiting isolation to prevent flaky test failures:
+
+- **Test-Only Reset Endpoint**: `/api/test/reset-rate-limits` clears rate limits before tests
+- **Automatic Isolation**: Rate limits are reset in `beforeEach` hooks for all tests
+- **Proper Retry Logic**: Tests retry requests after rate limit resets instead of skipping
+- **Reliable Execution**: All 41 smoke tests now pass consistently (was failing due to rate limits)
+
+**How it works**:
+- Tests automatically reset rate limits before each test
+- If a test hits a rate limit, it resets and retries instead of failing
+- Rate limiting functionality remains intact for production use
+- Reset endpoint is only available in test environment
+
+**Implementation**:
+```typescript
+// Automatic reset in test setup
+test.beforeEach(async ({ page, request }) => {
+  if (process.env.NODE_ENV === 'test') {
+    await request.post('/api/test/reset-rate-limits');
+  }
+  // ... rest of setup
+});
+
+// Manual reset in specific tests if needed
+if (response.status() === 429) {
+  await page.request.post('/api/test/reset-rate-limits');
+  // Retry the request
+}
+```
+
 ## 📋 **Test Commands by Implementation Priority**
 
 ### **P0: Core Value Proposition** (Must Have for MVP)

@@ -200,6 +200,45 @@ npm run db:test
 # Test API health endpoint
 curl http://localhost:3000/api/health
 
+# Test rate limiting reset (test environment only)
+curl -X POST http://localhost:3000/api/test/reset-rate-limits
+```
+
+### Rate Limiting Issues
+
+#### Issue: E2E tests failing due to rate limiting
+**Error**: Tests fail with 429 status codes or rate limit exceeded errors
+
+**Root Cause**: The rate limiting middleware uses an in-memory store with a limit of 10 requests per 15 minutes. When running multiple E2E tests that create secrets, the rate limit accumulates across tests, causing later tests to fail.
+
+**Solution**: 
+1. **Test-only reset endpoint**: Use `/api/test/reset-rate-limits` to clear rate limits before tests
+2. **Test isolation**: Reset rate limits in `beforeEach` hooks
+3. **Proper retry logic**: Instead of skipping tests, retry requests after rate limit reset
+
+**Implementation**:
+```typescript
+// In test setup
+test.beforeEach(async ({ page, request }) => {
+  if (process.env.NODE_ENV === 'test') {
+    await request.post('/api/test/reset-rate-limits');
+  }
+  // ... rest of setup
+});
+
+// In individual tests that might hit rate limits
+if (response.status() === 429 || secret.error?.includes('Rate limit exceeded')) {
+  await page.request.post('/api/test/reset-rate-limits');
+  // Retry the request after reset
+  const retryResponse = await page.request.post('/api/secrets', {
+    // ... retry logic
+  });
+}
+```
+
+**Note**: This approach maintains the rate limiting functionality while ensuring test reliability. The reset endpoint is only available in the test environment.
+curl http://localhost:3000/api/health
+
 # Test API connections endpoint
 curl http://localhost:3000/api/connections
 ```

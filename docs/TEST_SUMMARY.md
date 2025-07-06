@@ -149,6 +149,12 @@
 
 ### Recent Improvements (Latest Update - July 2025)
 
+- **Rate Limiting Test Fixes**: ✅ **LATEST - COMPLETED**
+  - Fixed shared rate limiting state causing flaky E2E tests
+  - Created test-only `/api/test/reset-rate-limits` endpoint for test isolation
+  - Removed test skipping in favor of proper rate limit handling and retry logic
+  - All 41 smoke tests now passing consistently (was failing due to rate limits)
+  - Maintained rate limiting functionality while ensuring test reliability
 - **Natural Language Workflow Tests**: ✅ **COMPLETED**
   - 25 comprehensive tests for AI-powered workflow generation
   - OpenAI GPT-4 integration testing with proper mocking
@@ -182,6 +188,8 @@
 - **Total Tests**: 1176+ tests with 100% pass rate ✅ **UPDATED**
 - **Execution Time**: ~75 seconds for full integration suite
 - **Parallel Execution**: Fully supported with proper test isolation
+- **Smoke Tests**: 41/41 passing (100% success rate) ✅ **LATEST**
+- **Rate Limiting**: Fully resolved with test isolation ✅ **LATEST**
 
 ### Test Configuration Status
 

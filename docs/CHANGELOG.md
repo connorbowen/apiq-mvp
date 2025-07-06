@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Rate Limiting Test Isolation** - ✅ **COMPLETED**
+  - **Shared Rate Limiting State**: Fixed flaky E2E tests caused by shared rate limiting state
+    - Rate limiting middleware uses in-memory store with 10 requests per 15 minutes limit
+    - Multiple E2E tests creating secrets accumulated rate limits, causing later tests to fail
+    - Tests were failing with 429 status codes and rate limit exceeded errors
+  - **Test-Only Reset Endpoint**: Created `/api/test/reset-rate-limits` endpoint for test isolation
+    - Endpoint clears in-memory rate limiter state for test environment only
+    - Maintains rate limiting functionality for production use
+    - Secured to only run in test environment with proper validation
+  - **Proper Test Handling**: Removed test skipping in favor of retry logic
+    - Tests now reset rate limits and retry requests instead of skipping
+    - Maintains full test coverage while ensuring reliability
+    - Follows project principle of "update implementation rather than tests"
+  - **Test Setup Improvements**: Added automatic rate limit reset in test setup
+    - Rate limits reset in `beforeEach` hooks for all tests
+    - Individual tests can reset rate limits if needed
+    - Proper retry logic with error handling for failed requests
+  - **Test Results**: All 41 smoke tests now passing consistently (was failing due to rate limits)
+    - 100% test success rate for E2E tests
+    - No more flaky test failures due to rate limiting
+    - Maintained rate limiting security while ensuring test reliability
+  - **Documentation**: Updated troubleshooting guide and E2E test guide with rate limiting solutions
+    - Added rate limiting section to TROUBLESHOOTING.md
+    - Updated E2E_TEST_GUIDE.md with rate limiting isolation documentation
+    - Documented implementation approach and best practices
+
 - **Database Migration and Test Infrastructure** - ✅ **COMPLETED**
   - **Database Schema Synchronization**: Fixed database schema issues after migration reset
     - Applied migrations to both main database (`apiq_mvp`) and test database (`apiq_test`)

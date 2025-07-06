@@ -840,6 +840,31 @@ X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 1640995200
 ```
 
+### Test Environment Rate Limiting
+
+In the test environment, rate limits can be reset using the test-only endpoint:
+
+#### `POST /api/test/reset-rate-limits`
+
+Reset rate limits for testing purposes. **Only available in test environment.**
+
+**Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Rate limits reset successfully"
+}
+```
+
+**Note**: This endpoint is only available when `NODE_ENV=test` and is used for test isolation to prevent flaky test failures due to shared rate limiting state.
+
 ## Pagination
 
 List endpoints support pagination with the following query parameters:
