@@ -282,7 +282,7 @@ data-testid="validation-errors"
 data-testid="tab-secrets"
 data-testid="tab-audit"
 data-testid="tab-admin"
-data-testid="create-secret-btn"
+data-testid="primary-action create-secret-btn"
 ```
 
 ### Accessibility Implementation

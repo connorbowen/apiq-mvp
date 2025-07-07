@@ -85,7 +85,7 @@ The Secrets Vault provides secure storage for your API keys, OAuth2 tokens, and 
 
 ### Adding Secrets
 1. **Go to Secrets Tab** - Access the secrets management section in your dashboard
-2. **Add New Secret** - Click "Add Secret" and choose the type:
+2. **Create New Secret** - Click "Create Secret" and choose the type:
    - **API Key** - For API authentication
    - **OAuth2 Token** - For OAuth2 connections
    - **Webhook Secret** - For webhook security

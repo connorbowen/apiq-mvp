@@ -289,7 +289,7 @@ test.describe('Mobile Responsiveness E2E Tests - P1 High Priority', () => {
   test.describe('Mobile Secrets Management', () => {
     test('should handle mobile secrets vault operations', async ({ page }) => {
       await page.getByRole('tab', { name: 'Secrets' }).click();
-      await page.getByRole('button', { name: 'Add Secret' }).click();
+              await page.getByRole('button', { name: 'Create Secret' }).click();
       
       // Test mobile secrets form
       await page.getByLabel('Secret Name').fill('Mobile Test Secret');
