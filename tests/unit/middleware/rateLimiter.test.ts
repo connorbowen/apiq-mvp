@@ -45,6 +45,9 @@ describe('Rate Limiter Middleware', () => {
     jest.clearAllMocks()
     // Use fake timers
     jest.useFakeTimers()
+    // Reset the shared rate limit store to prevent test interference
+    const { memoryRateLimitStore } = require('../../../src/middleware/rateLimiter');
+    memoryRateLimitStore.resetAll();
   })
 
   afterEach(() => {

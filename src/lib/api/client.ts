@@ -365,14 +365,30 @@ class ApiClient {
 
   // Secrets Methods
   async getSecrets(): Promise<ApiResponse<{ secrets: any[] }>> {
-    return this.request('/api/secrets');
+    const response = await this.request<{ secrets: any[] }>('/api/secrets');
+    // Handle the nested data structure from the API
+    if (response.success && response.data) {
+      return {
+        success: true,
+        data: response.data
+      };
+    }
+    return response as ApiResponse<{ secrets: any[] }>;
   }
 
   async createSecret(data: { name: string; value: string; description?: string; type?: string }): Promise<ApiResponse<any>> {
-    return this.request('/api/secrets', {
+    const response = await this.request('/api/secrets', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    // Handle the nested data structure from the API
+    if (response.success && response.data) {
+      return {
+        success: true,
+        data: response.data
+      };
+    }
+    return response;
   }
 
   async updateSecret(name: string, data: { value: string; description?: string }): Promise<ApiResponse<any>> {

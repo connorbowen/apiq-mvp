@@ -78,7 +78,8 @@ export class UXComplianceHelper {
     await expect(this.page.locator('.bg-red-50')).toBeVisible();
     // Use a more specific selector to avoid conflicts with other red text
     await expect(this.page.locator('.bg-red-50 .text-red-800')).toContainText(expectedError);
-    await expect(this.page.locator('[role="alert"]')).toBeVisible();
+    // Use a more specific selector for role="alert" to avoid conflicts
+    await expect(this.page.locator('.bg-red-50[role="alert"]')).toBeVisible();
   }
 
   /**

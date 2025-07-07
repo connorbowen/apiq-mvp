@@ -104,12 +104,13 @@ export default function WorkflowsPage() {
                 Create and manage your API workflows
               </p>
             </div>
-            <button
-              onClick={createNewWorkflow}
+            <Link
+              href="/workflows/create"
+              data-testid="create-workflow-btn"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Create Workflow
-            </button>
+            </Link>
           </div>
 
           {/* Error Message */}
@@ -139,14 +140,6 @@ export default function WorkflowsPage() {
               <p className="mt-1 text-sm text-gray-500">
                 Get started by creating your first workflow.
               </p>
-              <div className="mt-6">
-                <button
-                  onClick={createNewWorkflow}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Create Workflow
-                </button>
-              </div>
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

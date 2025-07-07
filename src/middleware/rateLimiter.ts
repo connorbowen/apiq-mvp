@@ -19,6 +19,8 @@ export interface RateLimitStore {
   get(key: string): Promise<{ count: number; resetTime: number } | null>;
   set(key: string, count: number, resetTime: number): Promise<void>;
   increment(key: string): Promise<{ count: number; resetTime: number }>;
+  reset(key: string): Promise<void>;
+  resetAll(): Promise<void>;
 }
 
 /**
@@ -53,6 +55,14 @@ class MemoryStore implements RateLimitStore {
     this.store.set(key, data);
     return data;
   }
+
+  async reset(key: string): Promise<void> {
+    this.store.delete(key);
+  }
+
+  async resetAll(): Promise<void> {
+    this.store.clear();
+  }
 }
 
 /**
@@ -64,6 +74,9 @@ const defaultKeyGenerator = (req: NextApiRequest): string => {
              'unknown';
   return `rate_limit:${ip}`;
 };
+
+// Use memory store for now - can be replaced with Redis in production
+export const memoryRateLimitStore = new MemoryStore();
 
 /**
  * Rate limiter middleware factory
@@ -78,7 +91,7 @@ export const createRateLimiter = (config: RateLimitConfig) => {
   } = config;
 
   // Use memory store for now - can be replaced with Redis in production
-  const store = new MemoryStore();
+  const store = memoryRateLimitStore;
 
   return async (req: NextApiRequest, res: NextApiResponse, next: () => void) => {
     try {

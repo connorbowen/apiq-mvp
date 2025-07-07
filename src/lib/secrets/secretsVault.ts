@@ -631,7 +631,7 @@ export class SecretsVault {
         data: {
           userId,
           action: actionText,
-          resource: secretName,
+          resource: 'SECRET',
           resourceId: secretName,
           details: {
             secretName,

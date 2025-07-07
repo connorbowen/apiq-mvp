@@ -8,7 +8,7 @@ import { errorHandler } from '../../../src/middleware/errorHandler';
 // Simple in-memory rate limiting (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
-const RATE_LIMIT_MAX = 100; // 100 requests per window for testing
+const RATE_LIMIT_MAX = 10; // 10 requests per window for testing (lowered to trigger rate limiting)
 
 function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
   const now = Date.now();
@@ -77,7 +77,7 @@ async function handleGetSecrets(req: NextApiRequest, res: NextApiResponse, userI
   try {
     const secrets = await secretsVault.listSecrets(userId);
     logInfo('Secrets retrieved', { userId, count: secrets.length });
-    return res.status(200).json({ data: secrets });
+    return res.status(200).json({ success: true, data: { secrets } });
   } catch (error) {
     logError('Failed to retrieve secrets', error as Error);
     return res.status(500).json({ error: 'Failed to retrieve secrets' });
@@ -123,7 +123,7 @@ async function handleCreateSecret(req: NextApiRequest, res: NextApiResponse, use
     );
 
     logInfo('Secret created', { userId, secretId: secret.id, name });
-    return res.status(201).json({ data: secret });
+    return res.status(201).json({ success: true, data: secret });
   } catch (error) {
     console.error('Detailed error in handleCreateSecret:', error);
     logError('Failed to create secret', error as Error);

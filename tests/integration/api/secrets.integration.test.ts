@@ -71,9 +71,9 @@ describe('Secrets API Integration Tests', () => {
 
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
-      expect(data.data).toHaveLength(2);
-      expect(data.data.some((s: any) => s.name === 'test-secret-1')).toBe(true);
-      expect(data.data.some((s: any) => s.name === 'test-secret-2')).toBe(true);
+      expect(data.data.secrets).toHaveLength(2);
+      expect(data.data.secrets.some((s: any) => s.name === 'test-secret-1')).toBe(true);
+      expect(data.data.secrets.some((s: any) => s.name === 'test-secret-2')).toBe(true);
     });
 
     it('should return 401 without authentication', async () => {
@@ -275,11 +275,11 @@ describe('Secrets API Integration Tests', () => {
 
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
-      expect(data.data).toHaveLength(3);
+      expect(data.data.secrets).toHaveLength(3);
       
       // Verify all secrets are present
       for (const name of secretNames) {
-        expect(data.data.some((s: any) => s.name === name)).toBe(true);
+        expect(data.data.secrets.some((s: any) => s.name === name)).toBe(true);
       }
     });
 

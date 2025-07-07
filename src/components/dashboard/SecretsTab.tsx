@@ -22,7 +22,7 @@ export default function SecretsTab({
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
-  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [secretList, setSecretList] = useState(secrets);
   const [activeSecretId, setActiveSecretId] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export default function SecretsTab({
   // Clear messages after 5 seconds
   useEffect(() => {
     if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(''), 5000);
+      const timer = setTimeout(() => setSuccessMessage(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
@@ -155,7 +155,7 @@ export default function SecretsTab({
   });
 
   const handleSecretCreated = () => {
-    setSuccessMessage('Secret created successfully!');
+    setSuccessMessage('Secret created successfully');
     setShowCreateForm(false);
     onSecretCreated();
     
@@ -163,7 +163,7 @@ export default function SecretsTab({
     setTimeout(() => {
       const announcementRegion = document.getElementById('aria-live-announcements');
       if (announcementRegion) {
-        announcementRegion.textContent = 'Secret created successfully!';
+        announcementRegion.textContent = 'Secret created successfully';
         setTimeout(() => {
           announcementRegion.textContent = '';
         }, 3000);
@@ -187,24 +187,21 @@ export default function SecretsTab({
 
   return (
     <div data-testid="secrets-management" role="region" aria-labelledby="secrets-heading">
-      {/* Header */}
+      {/* Main heading for secrets management */}
       <div className="mb-6">
-        <h2 id="secrets-heading" className="text-xl font-semibold text-gray-800">Manage your encrypted API keys, tokens, and sensitive credentials</h2>
+        <h2 id="secrets-heading" className="text-xl font-semibold text-gray-800">
+          Manage your encrypted API keys, tokens, and sensitive credentials
+        </h2>
       </div>
 
-      {/* Success Message */}
+      {/* Success Banner lifted out of modal */}
       {successMessage && (
-        <div role="alert" data-testid="success-message" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM16.707 7.293a1 1 0 00-1.414-1.414L9 12.586l-2.293-2.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-green-800">{successMessage}</p>
-            </div>
-          </div>
+        <div 
+          role="alert" 
+          data-testid="success-message"
+          className="mb-4 bg-green-50 border border-green-200 rounded-md p-4 text-green-800 font-medium flex items-center justify-between"
+        >
+          {successMessage}
         </div>
       )}
 
@@ -226,11 +223,11 @@ export default function SecretsTab({
 
       {/* Create Secret Button */}
       <div className="mb-6">
-                  <button
-            data-testid="create-secret-btn"
-            onClick={() => setShowCreateForm(true)}
-            className="inline-flex items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
-          >
+        <button
+          data-testid="create-secret-btn"
+          onClick={() => setShowCreateForm(true)}
+          className="inline-flex items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
+        >
           <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
@@ -334,7 +331,16 @@ export default function SecretsTab({
         ) : (
           <ul className="divide-y divide-gray-200" role="list">
             {filteredSecrets.map((secret) => (
-              <SecretCard key={secret.id} secret={secret} onRotated={handleSecretRotated} handleDeleteSecret={handleDeleteSecret} isLoading={isLoading} activeSecretId={activeSecretId} handleSecretToggle={handleSecretToggle} />
+              <li key={secret.id} data-testid="secret-card" className="p-4 border-b border-gray-200 last:border-b-0">
+                <SecretCard 
+                  secret={secret} 
+                  onRotated={handleSecretRotated} 
+                  handleDeleteSecret={handleDeleteSecret} 
+                  isLoading={isLoading} 
+                  activeSecretId={activeSecretId} 
+                  handleSecretToggle={handleSecretToggle} 
+                />
+              </li>
             ))}
           </ul>
         )}
@@ -344,9 +350,11 @@ export default function SecretsTab({
       {showCreateForm && (
         <CreateSecretModal
           onClose={() => setShowCreateForm(false)}
-          onSuccess={() => {
-            setShowCreateForm(false);
-            handleSecretCreated();
+          onSuccess={msg => {
+            setSuccessMessage(msg);
+            onSecretCreated();
+            // Add a small delay to ensure the success message is displayed before closing modal
+            setTimeout(() => setShowCreateForm(false), 500);
           }}
           onError={handleSecretError}
         />
@@ -498,170 +506,169 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
   };
 
   return (
-    <li key={secret.id} data-testid="secret-card" className="mb-4 p-4 border rounded-md bg-white shadow-sm">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-semibold">{secret.name}</div>
-              <div className="text-xs text-gray-500">{getSecretTypeLabel(secret.type)}</div>
-              {/* Show description if available */}
-              {secret.description && (
-                <div className="text-xs text-gray-600 mt-1">{secret.description}</div>
-              )}
-              {/* Show secret value or masked value */}
-              {isActive && showSecretValue && secretValue ? (
-                <div className="text-xs text-gray-600 mt-1 font-mono bg-gray-100 p-1 rounded">
-                  {secretValue}
-                </div>
-              ) : isActive && viewingSecret === secret.id ? (
-                <div className="text-xs text-gray-500 mt-1">Loading secret value...</div>
-              ) : (
-                <div className="text-xs text-gray-400 mt-1">••••••••••••••••</div>
-              )}
-              {viewError && isActive && (
-                <div className="text-xs text-red-600 mt-1" role="alert">{viewError}</div>
-              )}
-            </div>
-            <button
-              onClick={() => handleSecretToggle(secret.id)}
-              className="text-gray-500 hover:text-gray-700 p-2"
-              aria-label={isActive ? "Collapse secret details" : "Expand secret details"}
-            >
-              <svg 
-                className={`h-4 w-4 transform transition-transform ${isActive ? 'rotate-180' : ''}`} 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+    <div data-testid={`secret-card-${secret.id}`} className="flex flex-col md:flex-row md:items-center md:justify-between">
+      <div className="flex-1">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="font-semibold" data-testid={`secret-name-${secret.id}`}>{secret.name}</div>
+            <div className="text-xs text-gray-500" data-testid={`secret-type-${secret.id}`}>{getSecretTypeLabel(secret.type)}</div>
+            {/* Show description if available */}
+            {secret.description && (
+              <div className="text-xs text-gray-600 mt-1" data-testid={`secret-description-${secret.id}`}>{secret.description}</div>
+            )}
+            {/* Show secret value or masked value */}
+            {isActive && showSecretValue && secretValue ? (
+              <div className="text-xs text-gray-600 mt-1 font-mono bg-gray-100 p-1 rounded" data-testid={`secret-value-${secret.id}`}>
+                {secretValue}
+              </div>
+            ) : isActive && viewingSecret === secret.id ? (
+              <div className="text-xs text-gray-500 mt-1" data-testid={`secret-loading-${secret.id}`}>Loading secret value...</div>
+            ) : (
+              <div className="text-xs text-gray-400 mt-1" data-testid={`secret-masked-${secret.id}`}>••••••••••••••••</div>
+            )}
+            {viewError && isActive && (
+              <div className="text-xs text-red-600 mt-1" role="alert" data-testid={`secret-error-${secret.id}`}>{viewError}</div>
+            )}
           </div>
-          
-          {/* Rotation Controls for API Keys - only show when active */}
-          {isActive && secret.type === 'api_key' && (
-            <div className="mt-2 space-y-1">
-              <div className="flex items-center gap-2">
-                <label htmlFor={`rotation-enabled-${secret.id}`} className="text-xs mr-2">Rotation:</label>
+          <button
+            data-testid={`secret-toggle-${secret.id}`}
+            onClick={() => handleSecretToggle(secret.id)}
+            className="text-gray-500 hover:text-gray-700 p-2"
+            aria-label={isActive ? "Collapse secret details" : "Expand secret details"}
+          >
+            <svg 
+              className={`h-4 w-4 transform transition-transform ${isActive ? 'rotate-180' : ''}`} 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+        
+        {/* Rotation Controls for API Keys - only show when active */}
+        {isActive && secret.type === 'api_key' && (
+          <div className="mt-2 space-y-1" data-testid={`rotation-controls-${secret.id}`}>
+            <div className="flex items-center gap-2">
+              <label htmlFor={`rotation-enabled-${secret.id}`} className="text-xs mr-2">Rotation:</label>
+              <input
+                id={`rotation-enabled-${secret.id}`}
+                data-testid="rotation-enabled-toggle"
+                type="checkbox"
+                checked={rotationEnabled}
+                onChange={e => { setRotationEnabled(e.target.checked); setEditing(true); }}
+                aria-checked={rotationEnabled}
+                aria-label="Enable automatic rotation"
+                disabled={saving}
+              />
+              <span data-testid="rotation-enabled" className={rotationEnabled ? 'text-green-700' : 'text-gray-400'}>{rotationEnabled ? 'Enabled' : 'Disabled'}</span>
+            </div>
+            {rotationEnabled && (
+              <div className="flex items-center gap-2 mt-1">
+                <label htmlFor={`rotation-interval-${secret.id}`} className="text-xs">Interval:</label>
                 <input
-                  id={`rotation-enabled-${secret.id}`}
-                  data-testid="rotation-enabled-toggle"
-                  type="checkbox"
-                  checked={rotationEnabled}
-                  onChange={e => { setRotationEnabled(e.target.checked); setEditing(true); }}
-                  aria-checked={rotationEnabled}
-                  aria-label="Enable automatic rotation"
+                  id={`rotation-interval-${secret.id}`}
+                  data-testid="rotation-interval-input"
+                  type="number"
+                  min={1}
+                  value={rotationInterval}
+                  onChange={e => { setRotationInterval(Number(e.target.value)); setEditing(true); }}
+                  className="w-16 px-1 py-0.5 border rounded text-xs"
+                  aria-label="Rotation interval in days"
                   disabled={saving}
                 />
-                <span data-testid="rotation-enabled" className={rotationEnabled ? 'text-green-700' : 'text-gray-400'}>{rotationEnabled ? 'Enabled' : 'Disabled'}</span>
+                <span className="text-xs">days</span>
               </div>
-              {rotationEnabled && (
-                <div className="flex items-center gap-2 mt-1">
-                  <label htmlFor={`rotation-interval-${secret.id}`} className="text-xs">Interval:</label>
-                  <input
-                    id={`rotation-interval-${secret.id}`}
-                    data-testid="rotation-interval-input"
-                    type="number"
-                    min={1}
-                    value={rotationInterval}
-                    onChange={e => { setRotationInterval(Number(e.target.value)); setEditing(true); }}
-                    className="w-16 px-1 py-0.5 border rounded text-xs"
-                    aria-label="Rotation interval in days"
-                    disabled={saving}
-                  />
-                  <span className="text-xs">days</span>
-                </div>
-              )}
-              <div data-testid="rotation-interval" className="text-xs">
-                Interval: {secret.rotationInterval ? `${secret.rotationInterval} days` : 'N/A'}
-              </div>
-              <div data-testid="next-rotation" className="text-xs">
-                Next Rotation: {secret.nextRotationAt ? new Date(secret.nextRotationAt).toLocaleDateString() : 'N/A'}
-              </div>
-              {editing && (
-                <button
-                  data-testid="save-rotation-settings-btn"
-                  className="mt-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 min-h-[36px]"
-                  onClick={handleSaveRotationSettings}
-                  disabled={saving}
-                  aria-busy={saving}
-                  aria-label="Save rotation settings"
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-              )}
-              {saveSuccess && (
-                <div className="mt-2 text-xs text-green-700" role="status">{saveSuccess}</div>
-              )}
-              {saveError && (
-                <div className="mt-2 text-xs text-red-700" role="alert">{saveError}</div>
-              )}
-              <button
-                data-testid="rotate-now-btn"
-                aria-label="Rotate now"
-                className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[36px]"
-                onClick={handleRotate}
-                disabled={rotating || !rotationEnabled}
-              >
-                {rotating ? 'Rotating...' : 'Rotate Now'}
-              </button>
-              {rotating && (
-                <div data-testid="rotation-progress" className="mt-2 text-xs text-blue-600" aria-live="polite">
-                  Rotating API key...
-                </div>
-              )}
-              {rotationSuccess && (
-                <div className="mt-2 text-xs text-green-700" role="status">{rotationSuccess}</div>
-              )}
-              {rotationError && (
-                <div className="mt-2 text-xs text-red-700" role="alert">{rotationError}</div>
-              )}
+            )}
+            <div data-testid="rotation-interval" className="text-xs">
+              Interval: {secret.rotationInterval ? `${secret.rotationInterval} days` : 'N/A'}
             </div>
-          )}
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            data-testid={`secret-details-${secret.id}`}
-            onClick={() => handleViewSecret(secret.id, secret.name)}
-            className="text-blue-600 hover:text-blue-900 text-sm font-medium min-h-[44px] px-3"
-            aria-label={`View details for ${secret.name}`}
-          >
-            View
-          </button>
-          {isActive && !showSecretValue && (
+            <div data-testid="next-rotation" className="text-xs">
+              Next Rotation: {secret.nextRotationAt ? new Date(secret.nextRotationAt).toLocaleDateString() : 'N/A'}
+            </div>
+            {editing && (
+              <button
+                data-testid="save-rotation-settings-btn"
+                className="mt-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 min-h-[36px]"
+                onClick={handleSaveRotationSettings}
+                disabled={saving}
+                aria-busy={saving}
+                aria-label="Save rotation settings"
+              >
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+            )}
+            {saveSuccess && (
+              <div className="mt-2 text-xs text-green-700" role="status">{saveSuccess}</div>
+            )}
+            {saveError && (
+              <div className="mt-2 text-xs text-red-700" role="alert">{saveError}</div>
+            )}
             <button
-              data-testid={`show-secret-value-${secret.id}`}
-              onClick={() => fetchSecretValue()}
-              className="text-green-600 hover:text-green-900 text-sm font-medium min-h-[44px] px-3"
-              aria-label={`Show value for ${secret.name}`}
-              disabled={viewingSecret === secret.id}
+              data-testid="rotate-now-btn"
+              aria-label="Rotate now"
+              className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[36px]"
+              onClick={handleRotate}
+              disabled={rotating || !rotationEnabled}
             >
-              {viewingSecret === secret.id ? 'Loading...' : 'Show Value'}
+              {rotating ? 'Rotating...' : 'Rotate Now'}
             </button>
-          )}
-          {isActive && showSecretValue && (
-            <button
-              data-testid={`hide-secret-value-${secret.id}`}
-              onClick={() => setShowSecretValue(false)}
-              className="text-gray-600 hover:text-gray-900 text-sm font-medium min-h-[44px] px-3"
-              aria-label={`Hide value for ${secret.name}`}
-            >
-              Hide Value
-            </button>
-          )}
-          <button
-            onClick={() => handleDeleteSecret(secret.id, secret.name)}
-            className="text-red-600 hover:text-red-900 text-sm font-medium min-h-[44px] px-3"
-            disabled={isLoading}
-            aria-label={`Delete secret ${secret.name}`}
-            aria-busy={isLoading}
-          >
-            {isLoading ? 'Deleting...' : 'Delete'}
-          </button>
-        </div>
+            {rotating && (
+              <div data-testid="rotation-progress" className="mt-2 text-xs text-blue-600" aria-live="polite">
+                Rotating API key...
+              </div>
+            )}
+            {rotationSuccess && (
+              <div className="mt-2 text-xs text-green-700" role="status">{rotationSuccess}</div>
+            )}
+            {rotationError && (
+              <div className="mt-2 text-xs text-red-700" role="alert">{rotationError}</div>
+            )}
+          </div>
+        )}
       </div>
-    </li>
+      <div className="flex items-center space-x-2">
+        <button
+          data-testid={`secret-details-${secret.id}`}
+          onClick={() => handleViewSecret(secret.id, secret.name)}
+          className="text-blue-600 hover:text-blue-900 text-sm font-medium min-h-[44px] px-3"
+          aria-label={`View details for ${secret.name}`}
+        >
+          View
+        </button>
+        {isActive && !showSecretValue && (
+          <button
+            data-testid={`show-secret-value-${secret.id}`}
+            onClick={() => fetchSecretValue()}
+            className="text-green-600 hover:text-green-900 text-sm font-medium min-h-[44px] px-3"
+            aria-label={`Show value for ${secret.name}`}
+            disabled={viewingSecret === secret.id}
+          >
+            {viewingSecret === secret.id ? 'Loading...' : 'Show Value'}
+          </button>
+        )}
+        {isActive && showSecretValue && (
+          <button
+            data-testid={`hide-secret-value-${secret.id}`}
+            onClick={() => setShowSecretValue(false)}
+            className="text-gray-600 hover:text-gray-900 text-sm font-medium min-h-[44px] px-3"
+            aria-label={`Hide value for ${secret.name}`}
+          >
+            Hide Value
+          </button>
+        )}
+        <button
+          onClick={() => handleDeleteSecret(secret.id, secret.name)}
+          className="text-red-600 hover:text-red-900 text-sm font-medium min-h-[44px] px-3"
+          disabled={isLoading}
+          aria-label={`Delete secret ${secret.name}`}
+          aria-busy={isLoading}
+        >
+          {isLoading ? 'Deleting...' : 'Delete'}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -672,7 +679,7 @@ function CreateSecretModal({
   onError 
 }: { 
   onClose: () => void; 
-  onSuccess: () => void; 
+  onSuccess: (msg: string) => void; 
   onError: (error: string) => void; 
 }) {
   const [formData, setFormData] = useState({
@@ -765,7 +772,7 @@ function CreateSecretModal({
         type: data.type.toLowerCase()
       });
       if (response.success) {
-        onSuccess();
+        onSuccess(response.data.message || 'Secret created successfully');
       } else {
         setErrorMsg(response.error || 'Failed to create secret');
         onError(response.error || 'Failed to create secret');

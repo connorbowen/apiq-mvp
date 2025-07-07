@@ -85,7 +85,7 @@ describe('Encryption Utils', () => {
     it('should throw error for corrupted data', () => {
       expect(() => {
         decryptData('corrupted-data')
-      }).toThrow('Decryption failed')
+      }).toThrow(/Decryption failed/)
     })
 
     it('should handle special characters', () => {
