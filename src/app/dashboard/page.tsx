@@ -245,8 +245,16 @@ export default function DashboardPage() {
 
       
       {/* Skip link for accessibility */}
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
         Skip to main content
+      </a>
+      
+      {/* Additional skip links for better accessibility */}
+      <a href="#workflows-section" className="sr-only focus:not-sr-only focus:absolute focus:top-16 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
+        Skip to workflows
+      </a>
+      <a href="#admin-section" className="sr-only focus:not-sr-only focus:absolute focus:top-28 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
+        Skip to admin
       </a>
       
       <header role="banner" className="bg-white shadow">
@@ -281,7 +289,7 @@ export default function DashboardPage() {
             <li>
               <Link 
                 href="/dashboard" 
-                className="text-indigo-600 hover:text-indigo-800"
+                className="text-indigo-600 hover:text-indigo-800 min-h-[44px] min-w-[44px] flex items-center"
                 data-testid="breadcrumb-dashboard"
               >
                 Dashboard
@@ -540,16 +548,18 @@ export default function DashboardPage() {
             />
           )}
           {activeTab === 'workflows' && (
-            <WorkflowsTab
-              workflows={workflows}
-              onWorkflowCreated={() => {
-                loadWorkflows();
-                setSuccessMessage('Workflow created successfully!');
-              }}
-              onWorkflowError={(error) => {
-                setErrorMessage(error);
-              }}
-            />
+            <div id="workflows-section">
+              <WorkflowsTab
+                workflows={workflows}
+                onWorkflowCreated={() => {
+                  loadWorkflows();
+                  setSuccessMessage('Workflow created successfully!');
+                }}
+                onWorkflowError={(error) => {
+                  setErrorMessage(error);
+                }}
+              />
+            </div>
           )}
           {activeTab === 'secrets' && (
             <SecretsTab
@@ -565,7 +575,9 @@ export default function DashboardPage() {
             />
           )}
           {activeTab === 'admin' && (
-            <AdminTab user={user} />
+            <div id="admin-section">
+              <AdminTab user={user} />
+            </div>
           )}
           {activeTab === 'audit' && (
             <AuditTab refreshTrigger={auditRefreshTrigger} />

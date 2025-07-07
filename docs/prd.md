@@ -308,7 +308,7 @@ APIQ provides a unified platform that:
 
 ### Advanced Features
 
-#### 5. Workflow Templates & Libraries
+#### 6. Workflow Templates & Libraries
 **Priority**: P1 (High)
 **Description**: Provide pre-built workflow templates and sharing capabilities
 
@@ -325,7 +325,7 @@ APIQ provides a unified platform that:
 - Templates can be shared within organizations
 - Community can contribute new templates
 
-#### 6. Advanced Analytics & Reporting
+#### 7. Advanced Analytics & Reporting
 **Priority**: P2 (Medium)
 **Description**: Provide insights into workflow performance and usage
 
@@ -342,7 +342,7 @@ APIQ provides a unified platform that:
 - Custom reports can be generated
 - Data can be exported in multiple formats
 
-#### 7. Enterprise Features
+#### 8. Enterprise Features
 **Priority**: P2 (Medium)
 **Description**: Advanced features for enterprise customers
 
@@ -363,7 +363,7 @@ APIQ provides a unified platform that:
 
 ### Future Features
 
-#### 8. AI-Powered Optimization
+#### 9. AI-Powered Optimization
 **Priority**: P3 (Low)
 **Description**: AI-driven workflow optimization and suggestions
 
@@ -374,7 +374,7 @@ APIQ provides a unified platform that:
 - Predictive error detection
 - Automated workflow improvements
 
-#### 9. Mobile Application
+#### 10. Mobile Application
 **Priority**: P3 (Low)
 **Description**: Native mobile applications for iOS and Android
 
@@ -385,7 +385,7 @@ APIQ provides a unified platform that:
 - Mobile-optimized interface
 - Biometric authentication
 
-#### 10. Advanced Integrations
+#### 11. Advanced Integrations
 **Priority**: P3 (Low)
 **Description**: Integration with additional platforms and services
 
@@ -555,10 +555,27 @@ APIQ provides a unified platform that:
 
 #### 4. API Explorer
 - API documentation browser
-- Endpoint testing interface
+- **Endpoint testing interface** – Execute individual API calls directly from the Explorer
+- **Quick-execute mode** – One-off operations without creating a workflow
 - Authentication configuration
 - Response visualization
 - Schema exploration
+
+#### 5. API Execution Models
+**Priority**: P1 (High)
+**Description**: Users need both multi-step workflows *and* the ability to run single API calls.
+
+**Requirements**:
+- **Workflow Execution**: Multi-step orchestration across multiple APIs (existing feature).
+- **Single Call Execution**: Execute any exposed endpoint in "Quick-execute" mode.
+- **API Explorer Testing**: "Try it out" buttons in the Explorer UI invoke the real endpoint.
+- **Low-friction UX**: No workflow creation required for one-off calls.
+
+**Acceptance Criteria**:
+- Users can run a saved or ad-hoc workflow (as before).
+- Users can invoke any API method directly from the Explorer and see live results.
+- Quick-execute calls complete in under 5 seconds.
+- The UI clearly distinguishes "Workflow" vs. "Single Call" modes.
 
 ## Security & Compliance Requirements
 

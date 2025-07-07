@@ -101,13 +101,14 @@ export const createTestUser = async (
 };
 
 /**
- * Create a test API connection
+ * Create a test API connection with endpoints
  */
 export const createTestConnection = async (
   user: TestUser,
   name?: string,
   baseUrl?: string,
-  authType: AuthType = 'NONE'
+  authType: AuthType = 'NONE',
+  createEndpoints: boolean = true
 ): Promise<TestConnection> => {
   // Ensure the user exists in the database
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
@@ -132,6 +133,31 @@ export const createTestConnection = async (
     }
   });
 
+  // Create default endpoints if requested
+  if (createEndpoints) {
+    // Create endpoints based on connection name
+    const connectionName = testName.toLowerCase();
+    
+    if (connectionName.includes('github')) {
+      // Create GitHub-specific endpoints
+      await createTestEndpoint(connection, '/repos/{owner}/{repo}/issues', 'GET', 'Get GitHub issues');
+      await createTestEndpoint(connection, '/repos/{owner}/{repo}/issues/{issue_number}', 'GET', 'Get specific GitHub issue');
+      await createTestEndpoint(connection, '/repos/{owner}/{repo}/issues/{issue_number}/comments', 'POST', 'Comment on GitHub issue');
+      await createTestEndpoint(connection, '/repos/{owner}/{repo}/hooks', 'POST', 'Create GitHub webhook');
+    } else if (connectionName.includes('slack')) {
+      // Create Slack-specific endpoints
+      await createTestEndpoint(connection, '/chat.postMessage', 'POST', 'Send Slack message');
+      await createTestEndpoint(connection, '/chat.postEphemeral', 'POST', 'Send ephemeral Slack message');
+      await createTestEndpoint(connection, '/conversations.list', 'GET', 'List Slack conversations');
+      await createTestEndpoint(connection, '/webhooks/slack', 'POST', 'Create Slack webhook');
+    } else {
+      // Create generic endpoints for other APIs
+      await createTestEndpoint(connection, '/api/endpoint1', 'GET', 'Get data');
+      await createTestEndpoint(connection, '/api/endpoint2', 'POST', 'Create data');
+      await createTestEndpoint(connection, '/api/endpoint3', 'PUT', 'Update data');
+    }
+  }
+
   return {
     id: connection.id,
     name: testName,
@@ -147,18 +173,22 @@ export const createTestConnection = async (
 export const createTestEndpoint = async (
   connection: TestConnection,
   path?: string,
-  method: string = 'GET'
+  method: string = 'GET',
+  summary?: string
 ): Promise<TestEndpoint> => {
   const testPath = path || `/${generateTestId('endpoint')}`;
+
+  // Use provided summary or generate a default one
+  const endpointSummary = summary || `Test ${method} endpoint`;
 
   const endpoint = await prisma.endpoint.create({
     data: {
       apiConnectionId: connection.id,
       path: testPath,
       method: method,
-      summary: `Test ${method} endpoint`,
+      summary: endpointSummary,
       description: `Test endpoint for ${connection.name}`,
-      parameters: {},
+      parameters: [], // Use empty array instead of empty object
       responses: {}
     }
   });
@@ -411,6 +441,62 @@ export const createUnauthenticatedRequest = (
   req.env = {};
   
   return { req: req as any, res: res as any };
+};
+
+/**
+ * Create a test workflow
+ */
+export const createTestWorkflow = async (
+  user: TestUser,
+  name?: string,
+  description?: string,
+  steps?: any[]
+): Promise<{
+  id: string;
+  name: string;
+  description: string;
+  userId: string;
+}> => {
+  const testName = name || `Test Workflow ${generateTestId()}`;
+  const testDescription = description || `Test workflow for ${user.email}`;
+  const defaultSteps = steps || [
+    {
+      stepOrder: 1,
+      name: 'Test API Call',
+      description: 'Test step for E2E testing',
+      action: 'GET /api/test',
+      parameters: {},
+      isActive: true
+    }
+  ];
+
+  const workflow = await prisma.workflow.create({
+    data: {
+      name: testName,
+      description: testDescription,
+      userId: user.id,
+      status: 'ACTIVE',
+      steps: {
+        create: defaultSteps
+      }
+    }
+  });
+
+  return {
+    id: workflow.id,
+    name: testName,
+    description: testDescription,
+    userId: user.id
+  };
+};
+
+/**
+ * Clean up test workflow
+ */
+export const cleanupTestWorkflow = async (workflowId: string): Promise<void> => {
+  await prisma.workflow.deleteMany({
+    where: { id: workflowId }
+  });
 };
 
 if (!process.env.JWT_SECRET) {

@@ -65,54 +65,81 @@ class NaturalLanguageWorkflowService {
    */
   async generateWorkflow(request: WorkflowGenerationRequest): Promise<WorkflowGenerationResponse> {
     try {
+      console.log('NaturalLanguageWorkflowService: Starting workflow generation');
+      console.log('NaturalLanguageWorkflowService: Available connections:', request.availableConnections.length);
+      
       // Convert available connections to function definitions for GPT
       const functions = this.convertConnectionsToFunctions(request.availableConnections);
+      console.log('NaturalLanguageWorkflowService: Generated functions:', functions.length);
       
-      // Create the system prompt
-      const systemPrompt = this.createSystemPrompt();
-      
-      // Create the user message
-      const userMessage = this.createUserMessage(request);
-
-      // Call OpenAI with function calling
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
-        ],
-        functions: functions,
-        function_call: 'auto',
-        temperature: 0.1, // Low temperature for consistent results
-        max_tokens: 2000,
-      });
-      
-      const choice = response.choices[0];
-      if (!choice.message) {
+      if (functions.length === 0) {
         return {
           success: false,
-          error: 'Failed to generate workflow due to technical error'
+          error: 'No API endpoints available for workflow generation. Please add at least one API connection with endpoints.',
+          alternatives: []
         };
       }
-      if (choice.finish_reason === 'function_call') {
-        if (choice.message.function_call) {
-          // Parse the function call to extract workflow
-          const workflow = this.parseFunctionCallToWorkflow(
-            choice.message.function_call,
-            request.availableConnections
-          );
+
+      // Create system prompt
+      const systemPrompt = this.createSystemPrompt();
+      console.log('NaturalLanguageWorkflowService: System prompt created');
+
+      // Create messages array
+      const messages = [
+        { role: 'system' as const, content: systemPrompt },
+        { role: 'user' as const, content: request.userDescription }
+      ];
+
+      // DEBUG: Log exactly what we're sending to OpenAI
+      console.log('=== OPENAI API DEBUG ===');
+      console.log('→ FUNCTIONS:', JSON.stringify(functions, null, 2));
+      console.log('→ MESSAGES:', JSON.stringify(messages, null, 2));
+      console.log('→ USER REQUEST:', request.userDescription);
+      console.log('=== END DEBUG ===');
+
+      // Call OpenAI API
+      const completion = await this.openai.chat.completions.create({
+        model: 'gpt-4',
+        messages,
+        functions,
+        function_call: 'auto',
+        temperature: 0.1,
+        max_tokens: 2000
+      });
+
+      console.log('NaturalLanguageWorkflowService: OpenAI response received');
+      console.log('NaturalLanguageWorkflowService: Response choices:', completion.choices.length);
+      
+      const choice = completion.choices[0];
+      console.log('NaturalLanguageWorkflowService: Choice finish reason:', choice.finish_reason);
+      console.log('NaturalLanguageWorkflowService: Choice message:', JSON.stringify(choice.message, null, 2));
+
+      if (choice.finish_reason === 'function_call' && choice.message.function_call) {
+        console.log('NaturalLanguageWorkflowService: Function call detected');
+        const functionCall = choice.message.function_call;
+        
+        try {
+          const args = JSON.parse(functionCall.arguments);
+          console.log('NaturalLanguageWorkflowService: Parsed function arguments:', JSON.stringify(args, null, 2));
+          
+          // Generate workflow from function call
+          const workflow = this.parseFunctionCallToWorkflow(functionCall, request.availableConnections);
+          
           return {
             success: true,
             workflow,
             alternatives: await this.generateAlternatives(request, functions, systemPrompt)
           };
-        } else {
+        } catch (parseError) {
+          console.error('NaturalLanguageWorkflowService: Failed to parse function arguments:', parseError);
           return {
             success: false,
-            error: 'Failed to generate workflow due to technical error'
+            error: 'Failed to parse workflow generation response',
+            alternatives: await this.generateAlternatives(request, functions, systemPrompt)
           };
         }
       } else if (choice.finish_reason === 'stop' && choice.message.content) {
+        console.log('NaturalLanguageWorkflowService: Stop finish reason with content');
         // Handle case where GPT provides explanation without function call
         return {
           success: false,
@@ -120,16 +147,19 @@ class NaturalLanguageWorkflowService {
           alternatives: await this.generateAlternatives(request, functions, systemPrompt)
         };
       } else {
+        console.log('NaturalLanguageWorkflowService: Unexpected finish reason:', choice.finish_reason);
         return {
           success: false,
-          error: 'Failed to generate workflow due to technical error'
+          error: 'Failed to generate workflow due to technical error',
+          alternatives: await this.generateAlternatives(request, functions, systemPrompt)
         };
       }
-
     } catch (error) {
+      console.error('NaturalLanguageWorkflowService: Error in generateWorkflow:', error);
       return {
         success: false,
-        error: 'Failed to generate workflow due to technical error'
+        error: 'Failed to generate workflow due to technical error',
+        alternatives: []
       };
     }
   }
@@ -142,11 +172,19 @@ class NaturalLanguageWorkflowService {
 
     for (const connection of connections) {
       for (const endpoint of connection.endpoints) {
-        const functionName = `${connection.name}_${endpoint.method.toLowerCase()}_${endpoint.path.replace(/\//g, '_').replace(/[^a-zA-Z0-9_]/g, '')}`;
+        // Generate a user-friendly function name using the connection name and action
+        const connectionName = connection.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const action = endpoint.summary.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/\s+/g, '_');
+        
+        // Create a brief, action-oriented function name
+        const functionName = `${connectionName}_${action}`;
+        
+        // Ensure the function name is under 64 characters
+        const finalFunctionName = functionName.length > 64 ? functionName.substring(0, 64) : functionName;
         
         functions.push({
-          name: functionName,
-          description: `Call ${endpoint.method} ${endpoint.path} on ${connection.name}: ${endpoint.summary}`,
+          name: finalFunctionName,
+          description: `${endpoint.summary} using ${connection.name}`,
           parameters: {
             type: 'object',
             properties: {
@@ -186,6 +224,12 @@ class NaturalLanguageWorkflowService {
   private convertOpenAPIParametersToJSONSchema(parameters: any[]) {
     const properties: Record<string, any> = {};
     
+    // Handle case where parameters is not an array
+    if (!Array.isArray(parameters)) {
+      console.log('NaturalLanguageWorkflowService: Parameters is not an array, using empty object');
+      return properties;
+    }
+    
     for (const param of parameters) {
       if (param.name && param.schema) {
         properties[param.name] = {
@@ -207,40 +251,30 @@ class NaturalLanguageWorkflowService {
   private createSystemPrompt(): string {
     return `You are an expert API workflow automation assistant. Your job is to help users create workflows by connecting different APIs based on their natural language descriptions.
 
+CRITICAL: You MUST ALWAYS call one of the provided functions to create workflows. NEVER provide text-only explanations or responses.
+
 Key capabilities:
 - Parse natural language requests into structured API workflows
 - Identify the appropriate API endpoints to use
 - Map user intent to specific API calls
 - Generate workflows that are executable and well-structured
 
+WORKFLOW GENERATION RULES:
+1. ALWAYS call a function - never provide text explanations
+2. Choose the most appropriate function based on the user's request
+3. If the user's request cannot be accomplished with available APIs, call the closest function and explain what additional APIs would be needed
+4. If the request is unclear, call a function anyway and let the system handle validation
+
 When a user describes what they want to accomplish, you should:
 1. Analyze their request to understand the goal
-2. Identify which APIs and endpoints are needed
-3. Create a workflow with the appropriate steps
-4. Provide clear explanations of what the workflow will do
+2. Identify which APIs and endpoints are needed from the available functions
+3. ALWAYS call the appropriate function(s) to create the workflow
+4. Never provide text-only responses
 
-Always use the provided function definitions to create workflows. If you cannot create a workflow with the available APIs, explain what additional information or APIs would be needed.`;
-  }
+Example user request: "Send a Slack notification when a new GitHub issue is created"
+Expected response: Call the appropriate function (e.g., GitHub_create_webhook or Slack_send_message)
 
-  /**
-   * Create user message for workflow generation
-   */
-  private createUserMessage(request: WorkflowGenerationRequest): string {
-    let message = `Create a workflow for: ${request.userDescription}`;
-    
-    if (request.context) {
-      message += `\n\nContext: ${request.context}`;
-    }
-    
-    message += `\n\nAvailable API connections:`;
-    for (const connection of request.availableConnections) {
-      message += `\n- ${connection.name} (${connection.baseUrl})`;
-      for (const endpoint of connection.endpoints) {
-        message += `\n  - ${endpoint.method} ${endpoint.path}: ${endpoint.summary}`;
-      }
-    }
-    
-    return message;
+Remember: ALWAYS call a function. Never provide text explanations without function calls.`;
   }
 
   /**

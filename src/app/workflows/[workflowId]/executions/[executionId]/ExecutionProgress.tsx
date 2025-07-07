@@ -29,7 +29,7 @@ export default function ExecutionProgress({ progress, execution, queueJobStatus 
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="execution-progress">
       {/* Progress Bar */}
       <div>
         <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -45,7 +45,7 @@ export default function ExecutionProgress({ progress, execution, queueJobStatus 
       </div>
 
       {/* Step Information */}
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="grid grid-cols-2 gap-4 text-sm" data-testid="step-execution">
         <div>
           <dt className="text-gray-500">Current Step</dt>
           <dd className="font-medium text-gray-900">
@@ -111,7 +111,7 @@ export default function ExecutionProgress({ progress, execution, queueJobStatus 
       )}
 
       {/* Execution Status Details */}
-      <div className="mt-4 p-3 bg-gray-50 rounded-md">
+      <div className="mt-4 p-3 bg-gray-50 rounded-md" data-testid="execution-status">
         <h4 className="text-sm font-medium text-gray-700 mb-2">Execution Details</h4>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div>

@@ -94,8 +94,7 @@ export default function ConnectionsTab({
     <div data-testid="connections-management">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">API Connections</h2>
-        <p className="text-gray-600 mt-1">Manage your API integrations and connections</p>
+        <p className="text-gray-600">Manage your API integrations and connections</p>
       </div>
 
       {/* Search and Filter */}

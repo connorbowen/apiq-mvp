@@ -8,7 +8,7 @@ import { errorHandler } from '../../../src/middleware/errorHandler';
 // Simple in-memory rate limiting (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
-const RATE_LIMIT_MAX = 10; // 10 requests per window for testing (lowered to trigger rate limiting)
+const RATE_LIMIT_MAX = 50; // 50 requests per window for testing (increased from 10)
 
 function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
   const now = Date.now();

@@ -143,6 +143,17 @@ export const authOptions: NextAuthOptions = {
   jwt: {
     maxAge: 15 * 60, // 15 minutes
   },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   callbacks: {
     async signIn({ user, account, profile }) {
       try {

@@ -113,7 +113,7 @@ export default function ExecutionLogs({ executionId, initialLogs }: ExecutionLog
         </button>
       </div>
       
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      <div className="space-y-2 max-h-96 overflow-y-auto" data-testid="step-response">
         {logs.map((log) => (
           <div
             key={log.id}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 
 interface WorkflowsTabProps {
@@ -17,6 +17,9 @@ export default function WorkflowsTab({
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [workflowToDelete, setWorkflowToDelete] = useState<{ id: string, name: string } | null>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -70,18 +73,29 @@ export default function WorkflowsTab({
     }
   };
 
-  const handleDeleteWorkflow = async (workflowId: string, workflowName: string) => {
-    if (confirm(`Are you sure you want to delete the workflow "${workflowName}"?`)) {
-      try {
-        setIsLoading(true);
-        // TODO: Implement delete workflow API call
-        onWorkflowCreated(); // Refresh the list
-      } catch (error) {
-        onWorkflowError('Failed to delete workflow');
-      } finally {
-        setIsLoading(false);
-      }
+  const handleDeleteWorkflow = (workflowId: string, workflowName: string) => {
+    setWorkflowToDelete({ id: workflowId, name: workflowName });
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!workflowToDelete) return;
+    try {
+      setIsLoading(true);
+      // TODO: Implement delete workflow API call
+      setShowDeleteDialog(false);
+      setWorkflowToDelete(null);
+      onWorkflowCreated(); // Refresh the list
+    } catch (error) {
+      onWorkflowError('Failed to delete workflow');
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteDialog(false);
+    setWorkflowToDelete(null);
   };
 
   const handleToggleWorkflow = async (workflowId: string, currentStatus: string) => {
@@ -91,6 +105,18 @@ export default function WorkflowsTab({
       onWorkflowCreated(); // Refresh the list
     } catch (error) {
       onWorkflowError('Failed to toggle workflow status');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExecuteWorkflow = async (workflowId: string) => {
+    try {
+      setIsLoading(true);
+      // TODO: Implement execute workflow API call
+      onWorkflowCreated(); // Refresh the list
+    } catch (error) {
+      onWorkflowError('Failed to execute workflow');
     } finally {
       setIsLoading(false);
     }
@@ -107,13 +133,12 @@ export default function WorkflowsTab({
     <div data-testid="workflows-management">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Workflows</h2>
-        <p className="text-gray-600 mt-1">Manage your automated workflows and integrations</p>
+        <p className="text-gray-600">Manage your automated workflows and integrations</p>
       </div>
 
       {/* Search and Filter */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <label htmlFor="workflow-search-input" className="sr-only">Search workflows</label>
           <input
             id="workflow-search-input"
@@ -122,17 +147,17 @@ export default function WorkflowsTab({
             placeholder="Search workflows..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px] min-w-[200px]"
           />
         </div>
-        <div className="sm:w-48">
+        <div className="sm:w-48 min-w-0">
           <label htmlFor="workflow-filter-select" className="sr-only">Filter by status</label>
           <select
             id="workflow-filter-select"
             data-testid="workflow-filter-select"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px] min-w-[200px]"
           >
             <option value="all">All Status</option>
             <option value="ACTIVE">Active</option>
@@ -144,8 +169,8 @@ export default function WorkflowsTab({
         </div>
         <Link
           href="/workflows/create"
-          data-testid="create-workflow-btn"
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors text-center"
+          data-testid="create-workflow-btn primary-action"
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors text-center min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           Create Workflow
         </Link>
@@ -180,6 +205,7 @@ export default function WorkflowsTab({
               <div className="mt-6">
                 <Link
                   href="/workflows/create"
+                  data-testid="primary-action"
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -211,28 +237,39 @@ export default function WorkflowsTab({
                         </div>
                         <p className="text-sm text-gray-500">{workflow.description}</p>
                         <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <span className="mr-4">Steps: {workflow.steps?.length || 0}</span>
-                          <span>Last run: {workflow.lastRun ? new Date(workflow.lastRun).toLocaleDateString() : 'Never'}</span>
+                          <span className="mr-4" data-testid="workflow-steps">Steps: {workflow.steps?.length || 0}</span>
+                          <span data-testid="workflow-last-run">Last run: {workflow.lastRun ? new Date(workflow.lastRun).toLocaleDateString() : 'Never'}</span>
+                        </div>
+                        <div className="mt-1 flex items-center text-sm text-gray-500">
+                          <span data-testid="workflow-status">Status: {workflow.status}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Link
                         href={`/workflows/${workflow.id}`}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-indigo-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
                       >
                         View
                       </Link>
                       <button
+                        data-testid={`execute-workflow-${workflow.id}`}
+                        onClick={() => handleExecuteWorkflow(workflow.id)}
+                        className="text-green-600 hover:text-green-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-green-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        disabled={isLoading}
+                      >
+                        Execute
+                      </button>
+                      <button
                         onClick={() => handleToggleWorkflow(workflow.id, workflow.status)}
-                        className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+                        className="text-gray-600 hover:text-gray-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-gray-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
                         disabled={isLoading}
                       >
                         {workflow.status === 'ACTIVE' ? 'Pause' : 'Activate'}
                       </button>
                       <button
                         onClick={() => handleDeleteWorkflow(workflow.id, workflow.name)}
-                        className="text-red-600 hover:text-red-900 text-sm font-medium"
+                        className="text-red-600 hover:text-red-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
                         disabled={isLoading}
                       >
                         Delete
@@ -251,11 +288,40 @@ export default function WorkflowsTab({
         <button
           data-testid="refresh-workflows"
           onClick={() => onWorkflowCreated()}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px] min-w-[44px]"
         >
           Refresh
         </button>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-600 bg-opacity-50" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-auto">
+            <h2 id="delete-dialog-title" className="text-lg font-semibold text-gray-900 mb-4">Delete Workflow</h2>
+            <p className="text-sm text-gray-700 mb-6">Are you sure you want to delete this workflow{workflowToDelete?.name ? ` "${workflowToDelete.name}"` : ''}? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={handleCancelDelete}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px] min-w-[44px]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                ref={confirmButtonRef}
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 min-h-[44px] min-w-[44px]"
+                disabled={isLoading}
+                autoFocus
+              >
+                {isLoading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

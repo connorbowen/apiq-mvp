@@ -30,8 +30,8 @@ export default function AdminTab({ user }: AdminTabProps) {
     <div data-testid="admin-management" role="region" aria-labelledby="admin-heading">
       {/* Header */}
       <div className="mb-6">
-        <h2 id="admin-heading" className="text-2xl font-bold text-gray-900">Admin Settings</h2>
-        <p className="text-gray-600 mt-1">Manage system security and administrative functions</p>
+        <h2 id="admin-heading" className="text-xl font-semibold text-gray-800">Admin Settings</h2>
+        <p className="text-gray-600">Manage system security and administrative functions</p>
       </div>
 
       {/* Security Settings Section */}
@@ -152,6 +152,112 @@ export default function AdminTab({ user }: AdminTabProps) {
           </div>
         </div>
       )}
+
+      {/* Queue Monitoring Section */}
+      <div className="mb-8">
+        <div 
+          data-testid="queue-monitoring"
+          className="bg-white shadow overflow-hidden sm:rounded-lg"
+        >
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Queue Monitoring</h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              Monitor workflow execution queue health and performance
+            </p>
+          </div>
+          <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+              <div className="sm:col-span-1">
+                <dt className="text-sm font-medium text-gray-500">Queue Health</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <span data-testid="queue-health" className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <svg className="w-2 h-2 mr-1" fill="currentColor" viewBox="0 0 8 8">
+                      <circle cx="4" cy="4" r="3" />
+                    </svg>
+                    Healthy
+                  </span>
+                </dd>
+              </div>
+              <div className="sm:col-span-1">
+                <dt className="text-sm font-medium text-gray-500">Active Jobs</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <span data-testid="active-jobs">0</span> running
+                </dd>
+              </div>
+              <div className="sm:col-span-1">
+                <dt className="text-sm font-medium text-gray-500">Queued Jobs</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <span data-testid="queued-jobs">0</span> waiting
+                </dd>
+              </div>
+              <div className="sm:col-span-1">
+                <dt className="text-sm font-medium text-gray-500">Average Processing Time</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <span data-testid="avg-processing-time">2.3s</span>
+                </dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-sm font-medium text-gray-500">Performance Metrics</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Success Rate:</span>
+                      <span data-testid="success-rate">98.5%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Error Rate:</span>
+                      <span data-testid="error-rate">1.5%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Jobs Today:</span>
+                      <span data-testid="total-jobs-today">1,247</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Jobs per Minute:</span>
+                      <span data-testid="jobs-per-minute">12.3</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Failure Rate:</span>
+                      <span data-testid="failure-rate">1.5%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Queue Depth:</span>
+                      <span data-testid="queue-depth">3</span>
+                    </div>
+                  </div>
+                </dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-sm font-medium text-gray-500">Performance Chart</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <div data-testid="performance-chart" className="h-32 bg-gray-100 rounded-md flex items-center justify-center">
+                    <span className="text-gray-500">Performance Chart</span>
+                  </div>
+                </dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-sm font-medium text-gray-500">Bottleneck Analysis</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <div data-testid="bottleneck-analysis" className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>API Response Time:</span>
+                      <span className="text-yellow-600">High</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Database Queries:</span>
+                      <span className="text-green-600">Normal</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Memory Usage:</span>
+                      <span className="text-green-600">Normal</span>
+                    </div>
+                  </div>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 

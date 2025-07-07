@@ -44,12 +44,15 @@ export default async function ExecutionDetailsPage({ params }: ExecutionDetailsP
           <div className="py-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Execution Details
-                </h1>
+                <h1 className="text-2xl font-bold text-gray-900">Execution Details</h1>
                 <p className="mt-1 text-sm text-gray-500">
                   {workflow.name} • {executionId}
                 </p>
+                <div className="mt-2 flex flex-col gap-1">
+                  <span data-testid="workflow-status">Status: {execution.status || 'N/A'}</span>
+                  <span data-testid="workflow-last-run">Last run: {execution.completedAt ? new Date(execution.completedAt).toLocaleString() : 'Never'}</span>
+                  <span data-testid="workflow-steps">Steps: {execution.totalSteps ?? 'N/A'}</span>
+                </div>
               </div>
               <div className="flex items-center space-x-3">
                 <span 

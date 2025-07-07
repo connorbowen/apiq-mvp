@@ -73,6 +73,37 @@ The fundamental features that deliver the core value proposition and enable the 
 - ✅ **Unit Tests**: All tests passing (100% pass rate)
 - ✅ **E2E Tests**: Workflow creation tests implemented and passing
 
+**🚧 CRITICAL IMPROVEMENTS NEEDED** (Based on Debug Analysis):
+- [ ] **Multi-Step Workflow Generation** - Currently only generates single-step workflows
+  - [ ] Implement workflow planning to break complex requests into multiple steps
+  - [ ] Add data flow mapping between steps (output → input)
+  - [ ] Support conditional logic and branching
+  - [ ] Add step dependencies and ordering
+- [ ] **Function Name Collision Prevention** - Current naming can create conflicts
+  - [ ] Add API prefix to function names (e.g., "GitHub_", "Slack_")
+  - [ ] Implement function name uniqueness validation
+  - [ ] Add function name conflict resolution
+- [ ] **Parameter Schema Enhancement** - Current schemas are too generic
+  - [ ] Improve OpenAPI parameter conversion to include examples
+  - [ ] Add parameter validation and constraints
+  - [ ] Support complex parameter types (arrays, objects, nested structures)
+  - [ ] Add parameter descriptions from OpenAPI specs
+- [ ] **Context-Aware Function Filtering** - Send only relevant functions to OpenAI
+  - [ ] Implement API categorization (payment, communication, etc.)
+  - [ ] Add function relevance scoring based on user request
+  - [ ] Limit function count to prevent token overflow
+  - [ ] Add function prioritization (most commonly used first)
+- [ ] **Workflow Validation Enhancement** - Current validation is basic
+  - [ ] Add workflow step dependency validation
+  - [ ] Validate data flow between steps
+  - [ ] Check for circular dependencies
+  - [ ] Validate parameter compatibility across steps
+- [ ] **Error Handling Improvements** - Better error messages and recovery
+  - [ ] Add specific error messages for different failure types
+  - [ ] Implement workflow generation retry logic
+  - [ ] Add fallback workflows when primary generation fails
+  - [ ] Provide actionable error messages to users
+
 #### **P0.2: Workflow Execution Engine** ✅ **COMPLETED**
 **Business Impact**: Enables the workflows created by P0.1 to actually run
 **User Value**: Reliable execution of complex multi-API workflows
@@ -107,6 +138,23 @@ The fundamental features that deliver the core value proposition and enable the 
 - ✅ **Execution Control**: Cancel, pause, resume API endpoints
 - ✅ **E2E Tests**: All workflow execution tests passing
 
+**🚧 ENHANCEMENTS NEEDED** (Based on Multi-Step Workflow Requirements):
+- [ ] **Enhanced Data Flow Engine** - Support complex data transformations
+  - [ ] Add data mapping UI for step-to-step data flow
+  - [ ] Support data transformation functions (JSON path, templates)
+  - [ ] Add data validation between steps
+  - [ ] Support conditional data flow based on step results
+- [ ] **Advanced Conditional Logic** - Support complex workflow branching
+  - [ ] Add if/then/else step types
+  - [ ] Support multiple condition evaluation
+  - [ ] Add switch/case logic for multiple branches
+  - [ ] Support nested conditional logic
+- [ ] **Workflow Templates** - Pre-built workflow patterns
+  - [ ] Add common workflow patterns (webhook → action)
+  - [ ] Support template customization
+  - [ ] Add template validation and testing
+  - [ ] Support template sharing and reuse
+
 #### **P0.3: API Connection Management** ✅ **COMPLETED**
 **Business Impact**: Foundation that enables all workflows to connect to external APIs
 **User Value**: Easy setup and management of API connections
@@ -128,6 +176,28 @@ The fundamental features that deliver the core value proposition and enable the 
 - [x] Connection status is monitored in real-time ✅ COMPLETED
 - [x] Failed connections provide clear error messages ✅ COMPLETED
 - [x] OAuth2 flows work seamlessly ✅ COMPLETED
+
+**🚧 ENHANCEMENTS NEEDED** (Based on Dynamic API Analysis):
+- [ ] **API Quality Assessment** - Evaluate OpenAPI specification quality
+  - [ ] Add OpenAPI specification validation and scoring
+  - [ ] Identify missing or poor documentation
+  - [ ] Suggest improvements for better function generation
+  - [ ] Add API documentation quality indicators
+- [ ] **Smart Endpoint Filtering** - Only expose relevant endpoints
+  - [ ] Add endpoint categorization (CRUD, webhook, utility)
+  - [ ] Implement endpoint relevance scoring
+  - [ ] Filter out deprecated or internal endpoints
+  - [ ] Add endpoint usage analytics
+- [ ] **API Version Management** - Handle API versioning
+  - [ ] Support multiple API versions per connection
+  - [ ] Add version migration workflows
+  - [ ] Handle breaking changes gracefully
+  - [ ] Add version compatibility checking
+- [ ] **API Rate Limiting Integration** - Respect API rate limits
+  - [ ] Parse rate limit headers from APIs
+  - [ ] Implement adaptive rate limiting
+  - [ ] Add rate limit monitoring and alerts
+  - [ ] Support rate limit bypass for critical workflows
 
 #### **P0.4: Dashboard UI Implementation** ✅ **COMPLETED**
 **Business Impact**: Enables users to manage all core resources from a unified interface
@@ -157,6 +227,23 @@ The fundamental features that deliver the core value proposition and enable the 
 - ✅ **Comprehensive test coverage** ✅ COMPLETED
 - ✅ **Execution monitoring UI** ✅ COMPLETED
 
+**🚧 ENHANCEMENTS NEEDED** (Based on Workflow Management Requirements):
+- [ ] **Enhanced Workflow Builder UI** - Visual workflow creation and editing
+  - [ ] Add drag-and-drop workflow builder
+  - [ ] Support visual step configuration
+  - [ ] Add data flow visualization
+  - [ ] Support workflow templates and patterns
+- [ ] **Advanced Workflow Monitoring** - Better execution visibility
+  - [ ] Add real-time step-by-step execution view
+  - [ ] Support execution history and replay
+  - [ ] Add performance analytics and optimization suggestions
+  - [ ] Support workflow debugging and troubleshooting
+- [ ] **API Explorer Enhancement** - Better API discovery and testing
+  - [ ] Add API endpoint testing interface
+  - [ ] Support parameter auto-completion
+  - [ ] Add response visualization and formatting
+  - [ ] Support API documentation browsing
+
 ### **P1: USER EXPERIENCE & ADOPTION** (High Priority)
 Features that make the product intuitive, accessible, and sticky for users.
 
@@ -170,7 +257,9 @@ Features that make the product intuitive, accessible, and sticky for users.
 - [x] **Authentication System** - Secure user registration and login ✅ COMPLETED
 - [x] **Chat Interface** - Natural language interaction for workflow creation ✅ COMPLETED
 - [x] **Visual Workflow Builder** - Drag-and-drop interface for complex workflows ✅ COMPLETED
-- [x] **API Explorer** - Browse and test connected APIs ✅ COMPLETED
+- [x] **API Explorer** - Browse API documentation ✅ COMPLETED
+- [ ] **API Explorer Testing** - Execute individual API calls 🚧 PLANNED
+- [ ] **Quick-execute API** - One-off endpoint invocation UI 🚧 PLANNED
 - [x] **Dashboard** - Overview of workflows, connections, and system status ✅ COMPLETED
 - [x] **Mobile-Responsive Design** - Full functionality on mobile devices ✅ COMPLETED
 - [x] **Secrets Management UI** - Intuitive secrets vault interface ✅ COMPLETED
@@ -184,6 +273,23 @@ Features that make the product intuitive, accessible, and sticky for users.
 - [x] Mobile experience is fully functional ✅ COMPLETED
 - [x] Secrets management is user-friendly ✅ COMPLETED
 - [x] Execution monitoring is real-time and informative ✅ COMPLETED
+
+**🚧 CRITICAL IMPROVEMENTS NEEDED** (Based on Debug Analysis):
+- [ ] **Enhanced Natural Language Chat** - Better conversation flow
+  - [ ] Add conversation history and context
+  - [ ] Support follow-up questions and clarifications
+  - [ ] Add workflow modification through chat
+  - [ ] Support multi-turn workflow creation
+- [ ] **Workflow Preview and Confirmation** - Better workflow review
+  - [ ] Add visual workflow preview before execution
+  - [ ] Support workflow step-by-step explanation
+  - [ ] Add workflow modification interface
+  - [ ] Support workflow testing before saving
+- [ ] **Error Recovery and Guidance** - Better error handling
+  - [ ] Add specific error messages for different issues
+  - [ ] Provide actionable guidance for error resolution
+  - [ ] Support error recovery workflows
+  - [ ] Add help and documentation integration
 
 #### **P1.2: Workflow Templates & Libraries** 🚧 PLANNED
 **Business Impact**: Reduces time-to-value and increases user retention
@@ -203,6 +309,28 @@ Features that make the product intuitive, accessible, and sticky for users.
 - Templates can be shared within organizations
 - Community can contribute new templates
 
+**🚧 IMPLEMENTATION PLAN** (Based on Common Workflow Patterns):
+- [ ] **Webhook-Based Templates** - Common webhook → action patterns
+  - [ ] GitHub issue → Slack notification
+  - [ ] Stripe payment → CRM update
+  - [ ] Form submission → Email notification
+  - [ ] Calendar event → Reminder creation
+- [ ] **Data Sync Templates** - Cross-platform data synchronization
+  - [ ] CRM ↔ Email marketing sync
+  - [ ] Calendar ↔ Project management sync
+  - [ ] Customer support ↔ Slack sync
+  - [ ] Analytics ↔ Reporting sync
+- [ ] **Automation Templates** - Common business automation
+  - [ ] Lead qualification and routing
+  - [ ] Customer onboarding automation
+  - [ ] Invoice and payment processing
+  - [ ] Support ticket escalation
+- [ ] **Template Management System** - Template creation and management
+  - [ ] Template builder interface
+  - [ ] Template validation and testing
+  - [ ] Template versioning and updates
+  - [ ] Template marketplace and discovery
+
 #### **P1.3: Onboarding & User Journey** 🚧 PLANNED
 **Business Impact**: Increases conversion from signup to active user
 **User Value**: Guided experience to first successful workflow
@@ -221,6 +349,51 @@ Features that make the product intuitive, accessible, and sticky for users.
 - Users can complete onboarding in <10 minutes
 - 70% of users create their first workflow within 24 hours
 - Clear path from signup to first successful workflow execution
+
+**🚧 IMPLEMENTATION PLAN** (Based on User Journey Analysis):
+- [ ] **Progressive Onboarding** - Step-by-step user activation
+  - [ ] Welcome screen with value proposition
+  - [ ] First API connection setup (with sample APIs)
+  - [ ] First workflow creation (using templates)
+  - [ ] First workflow execution and success celebration
+- [ ] **Interactive Tutorials** - Hands-on learning experience
+  - [ ] Guided API connection setup
+  - [ ] Interactive workflow creation tutorial
+  - [ ] Workflow execution and monitoring demo
+  - [ ] Advanced features introduction
+
+#### **P1.4: Single API Operations** 🚧 PLANNED
+**Business Impact**: Empowers non-technical users to perform quick tasks without full workflows  
+**User Value**: Test endpoints and retrieve data on demand  
+**Market Position**: Differentiates product by supporting both simple calls and complex workflows
+
+**Requirements**:
+- [ ] **API Explorer Testing** – "Try it out" buttons in `/explore-api` page call the real endpoint.
+- [ ] **Quick-execute API endpoint** – Backend route (`/api/quick-exec`) that proxies single-call requests.
+- [ ] **Single Call UI** – In the Explorer, add parameter forms and an "Execute" button.
+- [ ] **Result Visualization** – Show response JSON or formatted table inline.
+
+**Success Criteria**:
+- Users can invoke any stored endpoint with custom parameters.
+- Responses render in the UI immediately.
+- No workflow creation needed for standalone calls.
+
+**🚧 IMPLEMENTATION PLAN** (Based on API Explorer Requirements):
+- [ ] **API Explorer Enhancement** - Interactive API testing interface
+  - [ ] Add endpoint testing interface with parameter forms
+  - [ ] Support parameter auto-completion and validation
+  - [ ] Add response visualization and formatting
+  - [ ] Support request/response history
+- [ ] **Quick Execute Backend** - Single API call execution
+  - [ ] Implement `/api/quick-exec` endpoint
+  - [ ] Add parameter validation and transformation
+  - [ ] Support authentication and rate limiting
+  - [ ] Add response caching and optimization
+- [ ] **Result Visualization** - Better response display
+  - [ ] Add JSON response formatting and syntax highlighting
+  - [ ] Support table view for structured data
+  - [ ] Add response filtering and search
+  - [ ] Support response export and sharing
 
 ### **P2: ENTERPRISE READINESS** (Medium Priority)
 Features that enable enterprise adoption and compliance requirements.
@@ -249,6 +422,23 @@ Features that enable enterprise adoption and compliance requirements.
 - [x] OAuth2 flows are secure ✅ COMPLETED
 - [x] RBAC controls access properly ✅ COMPLETED
 
+**🚧 ENHANCEMENTS NEEDED** (Based on Enterprise Requirements):
+- [ ] **Advanced Security Features** - Enterprise-grade security
+  - [ ] Add IP whitelisting and geofencing
+  - [ ] Support SAML SSO integration
+  - [ ] Add advanced threat detection
+  - [ ] Support security compliance frameworks (SOC 2, GDPR)
+- [ ] **Enhanced Audit Logging** - Comprehensive compliance tracking
+  - [ ] Add detailed workflow execution logs
+  - [ ] Support log retention and archiving
+  - [ ] Add compliance reporting and dashboards
+  - [ ] Support log export and integration
+- [ ] **Advanced Access Control** - Granular permissions
+  - [ ] Add resource-level permissions
+  - [ ] Support workflow sharing and collaboration
+  - [ ] Add approval workflows for sensitive operations
+  - [ ] Support multi-tenant access control
+
 #### **P2.2: Team Collaboration** 🚧 PLANNED
 **Business Impact**: Enables team-based workflow management
 **User Value**: Collaborative workflow creation and management
@@ -266,6 +456,23 @@ Features that enable enterprise adoption and compliance requirements.
 - Role-based permissions work correctly
 - Workflow sharing is secure and controlled
 - Collaborative editing is real-time and reliable
+
+**🚧 IMPLEMENTATION PLAN** (Based on Team Collaboration Requirements):
+- [ ] **Team Management** - Multi-user organization support
+  - [ ] Add team creation and management
+  - [ ] Support user invitations and role assignment
+  - [ ] Add team workspace isolation
+  - [ ] Support team billing and usage tracking
+- [ ] **Workflow Collaboration** - Shared workflow development
+  - [ ] Add workflow sharing and permissions
+  - [ ] Support collaborative workflow editing
+  - [ ] Add workflow versioning and history
+  - [ ] Support workflow comments and feedback
+- [ ] **Approval Workflows** - Governance and compliance
+  - [ ] Add workflow approval processes
+  - [ ] Support multi-level approval chains
+  - [ ] Add approval notifications and tracking
+  - [ ] Support approval audit trails
 
 ### **P3: ADVANCED FEATURES** (Lower Priority)
 Features that provide advanced capabilities for power users.
@@ -288,6 +495,23 @@ Features that provide advanced capabilities for power users.
 - Workflow dependencies are managed correctly
 - ML integration provides value
 
+**🚧 IMPLEMENTATION PLAN** (Based on Advanced Features Requirements):
+- [ ] **Custom Function Builder** - User-defined transformations
+  - [ ] Add visual function builder interface
+  - [ ] Support JavaScript/TypeScript custom functions
+  - [ ] Add function testing and validation
+  - [ ] Support function sharing and reuse
+- [ ] **Advanced Scheduling** - Complex workflow scheduling
+  - [ ] Add cron-based scheduling
+  - [ ] Support event-driven scheduling
+  - [ ] Add dependency-based scheduling
+  - [ ] Support conditional scheduling
+- [ ] **Workflow Orchestration** - Complex workflow management
+  - [ ] Add workflow dependencies and triggers
+  - [ ] Support workflow chaining and branching
+  - [ ] Add workflow performance optimization
+  - [ ] Support workflow monitoring and alerting
+
 #### **P3.2: Analytics & Insights** 🚧 PLANNED
 **Business Impact**: Provides insights into workflow performance and usage
 **User Value**: Analytics and insights for optimization
@@ -306,6 +530,243 @@ Features that provide advanced capabilities for power users.
 - Cost optimization reduces operational costs
 - Predictive analytics improve reliability
 
+**🚧 IMPLEMENTATION PLAN** (Based on Analytics Requirements):
+- [ ] **Performance Analytics** - Workflow execution insights
+  - [ ] Add execution time and success rate tracking
+  - [ ] Support performance bottleneck identification
+  - [ ] Add cost analysis and optimization suggestions
+  - [ ] Support performance trend analysis
+- [ ] **Usage Analytics** - User behavior insights
+  - [ ] Add feature usage tracking and analysis
+  - [ ] Support user journey and conversion analysis
+  - [ ] Add A/B testing and optimization
+  - [ ] Support user feedback and satisfaction tracking
+- [ ] **Predictive Analytics** - ML-powered insights
+  - [ ] Add workflow success prediction
+  - [ ] Support failure pattern detection
+  - [ ] Add optimization recommendations
+  - [ ] Support anomaly detection and alerting
+
+## **CRITICAL IMPROVEMENTS BASED ON DEBUG ANALYSIS** 🚨
+
+Based on the detailed analysis of the natural language workflow generation system and debug output, the following critical improvements are needed to enhance the core value proposition:
+
+### **P0.1.1: Multi-Step Workflow Generation** 🚨 **HIGH PRIORITY**
+**Current Issue**: System only generates single-step workflows, limiting complex automation scenarios.
+
+**Debug Evidence**: 
+- Current workflow generation creates only one step per request
+- No support for multi-step orchestration (e.g., "webhook → transform → action")
+- Missing data flow between steps
+
+**Implementation Plan**:
+- [ ] **Workflow Planning Engine** - Break complex requests into multiple steps
+  - [ ] Implement workflow decomposition logic
+  - [ ] Add step dependency analysis
+  - [ ] Support common patterns (webhook → action, data sync, etc.)
+  - [ ] Add step ordering and sequencing
+- [ ] **Data Flow Mapping** - Connect outputs to inputs across steps
+  - [ ] Add data mapping UI for step-to-step connections
+  - [ ] Support JSON path and template transformations
+  - [ ] Add data validation between steps
+  - [ ] Support conditional data flow based on step results
+- [ ] **Enhanced System Prompt** - Better guidance for multi-step generation
+  - [ ] Update prompt to encourage multi-step workflows
+  - [ ] Add examples of common multi-step patterns
+  - [ ] Include guidance on data flow and dependencies
+  - [ ] Add validation for workflow completeness
+
+**Success Criteria**:
+- System generates 2-5 step workflows for complex requests
+- Data flows correctly between workflow steps
+- Users can understand and modify multi-step workflows
+- Workflow execution handles step dependencies correctly
+
+### **P0.1.2: Function Name Collision Prevention** 🚨 **HIGH PRIORITY**
+**Current Issue**: Function names can conflict when APIs have similar endpoint patterns.
+
+**Debug Evidence**:
+- Function names like `Slack_post__repos__owner___repo` are confusing
+- No API prefix to distinguish between different APIs
+- Potential for name collisions with similar endpoint patterns
+
+**Implementation Plan**:
+- [ ] **API-Prefixed Function Names** - Clear API identification
+  - [ ] Add API name prefix to all function names (e.g., "GitHub_", "Slack_")
+  - [ ] Implement function name uniqueness validation
+  - [ ] Add function name conflict resolution
+  - [ ] Update function name generation logic
+- [ ] **Function Name Optimization** - Better naming strategy
+  - [ ] Use endpoint summary for action description
+  - [ ] Keep names under 64 characters while being descriptive
+  - [ ] Add function name validation and testing
+  - [ ] Support function name customization
+
+**Success Criteria**:
+- All function names include API prefix
+- No function name collisions in the system
+- Function names are clear and descriptive
+- OpenAI can distinguish between similar endpoints from different APIs
+
+### **P0.1.3: Parameter Schema Enhancement** 🚨 **MEDIUM PRIORITY**
+**Current Issue**: Parameter schemas are too generic, limiting workflow generation quality.
+
+**Debug Evidence**:
+- All parameters show as empty objects `{}`
+- No parameter validation or constraints
+- Missing parameter descriptions and examples
+- No support for complex parameter types
+
+**Implementation Plan**:
+- [ ] **Enhanced OpenAPI Parameter Conversion** - Better schema generation
+  - [ ] Improve parameter type detection and conversion
+  - [ ] Add parameter validation and constraints
+  - [ ] Support complex parameter types (arrays, objects, nested structures)
+  - [ ] Include parameter descriptions and examples from OpenAPI specs
+- [ ] **Parameter Validation** - Ensure parameter quality
+  - [ ] Add parameter required/optional validation
+  - [ ] Support parameter format validation (email, URL, etc.)
+  - [ ] Add parameter enum value support
+  - [ ] Include parameter default values
+- [ ] **Parameter Documentation** - Better parameter descriptions
+  - [ ] Extract parameter descriptions from OpenAPI specs
+  - [ ] Add parameter usage examples
+  - [ ] Include parameter constraints and limits
+  - [ ] Support parameter categorization
+
+**Success Criteria**:
+- Parameter schemas include proper types and constraints
+- OpenAI receives detailed parameter information
+- Workflow generation includes appropriate parameter values
+- Users can understand parameter requirements
+
+### **P0.1.4: Context-Aware Function Filtering** 🚨 **MEDIUM PRIORITY**
+**Current Issue**: All functions are sent to OpenAI, potentially hitting token limits and reducing relevance.
+
+**Debug Evidence**:
+- All available functions sent to OpenAI regardless of relevance
+- No filtering based on user request context
+- Potential for token overflow with many APIs
+- Reduced generation quality due to irrelevant functions
+
+**Implementation Plan**:
+- [ ] **API Categorization** - Group APIs by function
+  - [ ] Add API categories (payment, communication, data, etc.)
+  - [ ] Implement automatic API categorization
+  - [ ] Support manual API categorization
+  - [ ] Add category-based function filtering
+- [ ] **Function Relevance Scoring** - Prioritize relevant functions
+  - [ ] Implement function relevance scoring based on user request
+  - [ ] Add keyword matching for function selection
+  - [ ] Support semantic similarity for function matching
+  - [ ] Add function usage analytics for prioritization
+- [ ] **Token Management** - Prevent token overflow
+  - [ ] Implement function count limits
+  - [ ] Add token usage monitoring
+  - [ ] Support dynamic function selection
+  - [ ] Add fallback strategies for large function sets
+
+**Success Criteria**:
+- Only relevant functions sent to OpenAI
+- Token limits respected for all requests
+- Function selection improves workflow generation quality
+- System scales to support hundreds of APIs
+
+### **P0.1.5: Workflow Validation Enhancement** 🚨 **MEDIUM PRIORITY**
+**Current Issue**: Basic workflow validation doesn't catch complex issues.
+
+**Debug Evidence**:
+- Current validation only checks basic workflow structure
+- No validation of step dependencies or data flow
+- Missing validation for parameter compatibility
+- No circular dependency detection
+
+**Implementation Plan**:
+- [ ] **Step Dependency Validation** - Ensure proper workflow structure
+  - [ ] Add step dependency analysis and validation
+  - [ ] Check for circular dependencies
+  - [ ] Validate step ordering and sequencing
+  - [ ] Add dependency visualization and explanation
+- [ ] **Data Flow Validation** - Ensure data flows correctly
+  - [ ] Validate data mapping between steps
+  - [ ] Check parameter compatibility across steps
+  - [ ] Add data type validation
+  - [ ] Support data flow optimization suggestions
+- [ ] **Workflow Completeness Validation** - Ensure workflows are complete
+  - [ ] Check for missing required steps
+  - [ ] Validate workflow termination conditions
+  - [ ] Add workflow completeness scoring
+  - [ ] Provide workflow improvement suggestions
+
+**Success Criteria**:
+- Workflow validation catches complex issues
+- Users receive clear validation feedback
+- System suggests workflow improvements
+- Workflow execution reliability improves
+
+### **P0.1.6: Error Handling Improvements** 🚨 **MEDIUM PRIORITY**
+**Current Issue**: Generic error messages don't help users understand and fix issues.
+
+**Debug Evidence**:
+- Generic error messages like "Failed to generate workflow"
+- No specific guidance for different failure types
+- Missing retry logic for transient failures
+- No fallback strategies for generation failures
+
+**Implementation Plan**:
+- [ ] **Specific Error Messages** - Clear, actionable error guidance
+  - [ ] Add specific error types and messages
+  - [ ] Provide actionable guidance for error resolution
+  - [ ] Include troubleshooting steps for common issues
+  - [ ] Add error categorization and severity levels
+- [ ] **Retry and Fallback Logic** - Improve reliability
+  - [ ] Implement workflow generation retry logic
+  - [ ] Add fallback workflows for common scenarios
+  - [ ] Support alternative generation strategies
+  - [ ] Add graceful degradation for partial failures
+- [ ] **User Guidance** - Help users succeed
+  - [ ] Add contextual help and documentation
+  - [ ] Provide workflow generation tips and best practices
+  - [ ] Include example workflows for common scenarios
+  - [ ] Add workflow generation wizard for complex requests
+
+**Success Criteria**:
+- Users receive clear, actionable error messages
+- System handles failures gracefully with retry logic
+- Users can resolve issues independently
+- Workflow generation success rate improves
+
+## Implementation Timeline for Critical Improvements
+
+### **Phase 1: Immediate Fixes (Week 1-2)**
+- [ ] P0.1.2: Function Name Collision Prevention
+- [ ] P0.1.6: Error Handling Improvements
+
+### **Phase 2: Core Enhancements (Week 3-4)**
+- [ ] P0.1.3: Parameter Schema Enhancement
+- [ ] P0.1.4: Context-Aware Function Filtering
+
+### **Phase 3: Advanced Features (Week 5-6)**
+- [ ] P0.1.1: Multi-Step Workflow Generation
+- [ ] P0.1.5: Workflow Validation Enhancement
+
+## Success Metrics for Critical Improvements
+
+### **Technical Metrics**
+- **Multi-Step Workflow Rate**: 80%+ of complex requests generate multi-step workflows
+- **Function Name Uniqueness**: 100% unique function names across all APIs
+- **Parameter Schema Quality**: 90%+ of parameters have proper schemas
+- **Token Usage Optimization**: 50%+ reduction in average token usage
+- **Workflow Validation Coverage**: 95%+ of workflow issues caught by validation
+- **Error Resolution Rate**: 80%+ of users can resolve errors independently
+
+### **User Experience Metrics**
+- **Workflow Generation Success Rate**: 95%+ successful generation for valid requests
+- **User Satisfaction**: 4.5+ star rating for workflow generation
+- **Time to First Workflow**: <5 minutes from request to working workflow
+- **Workflow Complexity**: Support for workflows with 2-5 steps
+- **Error Recovery**: 90%+ of users successfully resolve generation errors
+
 ## Implementation Timeline
 
 ### Phase 1: Core MVP (P0) ✅ **COMPLETED**
@@ -318,6 +779,7 @@ Features that provide advanced capabilities for power users.
 - **P1.1**: Intuitive User Interface ✅ **COMPLETED**
 - **P1.2**: Workflow Templates & Libraries 🚧 **PLANNED**
 - **P1.3**: Onboarding & User Journey 🚧 **PLANNED**
+- **P1.4**: Single API Operations 🚧 **PLANNED**
 
 ### Phase 1.5: Unit Test Coverage Improvement 🚧 **IN PROGRESS**
 - **UT1**: Backend API Endpoints Unit Tests 🚧 **IN PROGRESS**
@@ -671,11 +1133,11 @@ The APIQ MVP core engine is now **COMPLETE** with all P0 features fully implemen
 
 **Implementation Status Summary**
 - **P0 Features**: 4/4 Complete ✅
-- **P1 Features**: 1/3 Complete (33%)
+- **P1 Features**: 1/4 Complete (25%)
 - **P2 Features**: 1/2 Complete (50%)
 - **P3 Features**: 0/2 Complete (0%)
 - **Unit Test Improvement**: 0/7 phases complete (0%)
-- **Overall Progress**: 6/11 features complete (55%)
+- **Overall Progress**: 6/12 features complete (50%)
 - **Core MVP**: 100% Complete ✅
 - **Test Coverage**: 1176+ tests with 100% pass rate ✅
 - **Unit Test Coverage**: 8.38% statements, 4.66% branches 🚧 **NEEDS IMPROVEMENT**

@@ -106,6 +106,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
         createdWorkflowIds.push(workflow.data.id);
       }
       
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
+      
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
       
@@ -175,6 +181,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
       if (workflow.data?.id) {
         createdWorkflowIds.push(workflow.data.id);
       }
+      
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
       
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
@@ -248,6 +260,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
       if (workflow.data?.id) {
         createdWorkflowIds.push(workflow.data.id);
       }
+      
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
       
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
@@ -323,6 +341,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
       if (workflow.data?.id) {
         createdWorkflowIds.push(workflow.data.id);
       }
+      
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
       
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
@@ -402,6 +426,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
       if (workflow.data?.id) {
         createdWorkflowIds.push(workflow.data.id);
       }
+      
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
       
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
@@ -496,6 +526,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
         createdWorkflowIds.push(workflow.data.id);
       }
       
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
+      
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
       
@@ -585,6 +621,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
         createdWorkflowIds.push(workflow.data.id);
       }
       
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
+      
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
       
@@ -669,6 +711,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
         createdWorkflowIds.push(workflow.data.id);
       }
       
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
+      
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
       
@@ -744,6 +792,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
         createdWorkflowIds.push(workflow.data.id);
       }
       
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
+      
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
       
@@ -811,6 +865,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
         createdWorkflowIds.push(workflow.data.id);
       }
       
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
+      
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
       
@@ -871,6 +931,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
       }
       
       const startTime = Date.now();
+      
+      // Navigate to workflows tab to see the created workflow
+      await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the execute button to be visible
+      await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
       
       // Navigate to workflow execution
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);

@@ -344,6 +344,9 @@ test.describe('Secrets Vault E2E Tests', () => {
     });
 
     test('should create encrypted OAuth2 token with proper type indicators', async ({ page }) => {
+      // Reset rate limits before this specific test to ensure it can run
+      await page.request.post('/api/test/reset-rate-limits');
+      
       // Click create secret button
       await page.click('[data-testid="create-secret-btn"]');
       
@@ -357,8 +360,12 @@ test.describe('Secrets Vault E2E Tests', () => {
       await page.click('[data-testid="secret-type-option"]:has-text("OAuth2 Token")');
       await page.fill('[data-testid="secret-value-input"]', testData.value);
       
-      // Submit form
+      // Submit form and check loading state
       await page.click('button[type="submit"]');
+      await expect(page.getByRole('button', { name: /Creating|Saving/i })).toBeDisabled();
+      
+      // Wait for loading state to complete
+      await page.waitForSelector('[data-testid="loading-spinner"]', { state: 'hidden', timeout: 10000 });
       
       // Wait for success message to appear
       await page.waitForSelector('[data-testid="success-message"]', { timeout: 10000 });
