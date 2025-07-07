@@ -58,7 +58,7 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
     await page.goto('/login');
     
     // Wait for login page to load
-    await page.waitForSelector('h1:has-text("Sign in")', { timeout: 10000 });
+    await page.waitForSelector('h2:has-text("Sign in to APIQ")', { timeout: 10000 });
     
     // Fill in real login credentials
     await page.getByLabel('Email address').fill(testUser.email);
