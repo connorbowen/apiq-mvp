@@ -443,7 +443,7 @@ APIQ provides a unified platform that:
 - **Framework**: Next.js API routes
 - **Language**: TypeScript
 - **Database ORM**: Prisma
-- **Authentication**: NextAuth.js
+- **Authentication**: Only Google OAuth2 is supported for user login. GitHub and Slack can be connected as API integrations for workflow automation, but not for user authentication.
 - **AI Integration**: OpenAI GPT-4
 
 #### Database
