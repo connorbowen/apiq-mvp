@@ -205,7 +205,7 @@ export default function WorkflowsTab({
               <div className="mt-6">
                 <Link
                   href="/workflows/create"
-                  data-testid="primary-action create-workflow-btn"
+                  data-testid="primary-action create-workflow-btn-empty-state"
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -252,21 +252,33 @@ export default function WorkflowsTab({
                       <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                         <button
                           data-testid={`execute-workflow-${workflow.id}`}
-                          onClick={() => handleExecuteWorkflow(workflow.id)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleExecuteWorkflow(workflow.id);
+                          }}
                           className="text-green-600 hover:text-green-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-green-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
                           disabled={isLoading}
                         >
                           Execute
                         </button>
                         <button
-                          onClick={() => handleToggleWorkflow(workflow.id, workflow.status)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleToggleWorkflow(workflow.id, workflow.status);
+                          }}
                           className="text-gray-600 hover:text-gray-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-gray-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
                           disabled={isLoading}
                         >
                           {workflow.status === 'ACTIVE' ? 'Pause' : 'Activate'}
                         </button>
                         <button
-                          onClick={() => handleDeleteWorkflow(workflow.id, workflow.name)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteWorkflow(workflow.id, workflow.name);
+                          }}
                           className="text-red-600 hover:text-red-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
                           disabled={isLoading}
                         >
@@ -295,7 +307,7 @@ export default function WorkflowsTab({
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-600 bg-opacity-50" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-600 bg-opacity-50" role="dialog" aria-modal="true" aria-labelledby="delete-dialog-title" data-testid="delete-workflow-dialog">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mx-auto">
             <h2 id="delete-dialog-title" className="text-lg font-semibold text-gray-900 mb-4">Delete Workflow</h2>
             <p className="text-sm text-gray-700 mb-6">Are you sure you want to delete this workflow{workflowToDelete?.name ? ` "${workflowToDelete.name}"` : ''}? This action cannot be undone.</p>

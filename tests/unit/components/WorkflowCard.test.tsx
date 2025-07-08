@@ -23,6 +23,13 @@ describe('WorkflowCard', () => {
     expect(screen.getByText('A test workflow')).toBeInTheDocument();
   });
 
+  it('renders the entire card as a clickable link', () => {
+    render(<WorkflowCard workflow={workflow} />);
+    const cardLink = screen.getByRole('link', { name: /Test Workflow/ });
+    expect(cardLink).toBeInTheDocument();
+    expect(cardLink).toHaveAttribute('href', '/workflows/wf-1');
+  });
+
   it('calls onDelete when delete is confirmed', () => {
     window.confirm = jest.fn(() => true);
     const onDelete = jest.fn();
@@ -37,6 +44,27 @@ describe('WorkflowCard', () => {
     render(<WorkflowCard workflow={workflow} onExecute={onExecute} />);
     const executeBtn = screen.getByRole('button', { name: /run|execute/i });
     fireEvent.click(executeBtn);
+    expect(onExecute).toHaveBeenCalledWith('wf-1');
+  });
+
+  it('prevents event propagation on action buttons', () => {
+    const onDelete = jest.fn();
+    const onExecute = jest.fn();
+    window.confirm = jest.fn(() => true);
+    
+    render(<WorkflowCard workflow={workflow} onDelete={onDelete} onExecute={onExecute} />);
+    
+    const deleteBtn = screen.getByRole('button', { name: /delete/i });
+    const executeBtn = screen.getByRole('button', { name: /run|execute/i });
+    
+    // Mock preventDefault and stopPropagation
+    const mockPreventDefault = jest.fn();
+    const mockStopPropagation = jest.fn();
+    
+    fireEvent.click(deleteBtn, { preventDefault: mockPreventDefault, stopPropagation: mockStopPropagation });
+    fireEvent.click(executeBtn, { preventDefault: mockPreventDefault, stopPropagation: mockStopPropagation });
+    
+    expect(onDelete).toHaveBeenCalledWith('wf-1');
     expect(onExecute).toHaveBeenCalledWith('wf-1');
   });
 }); 

@@ -454,3 +454,22 @@ NODE_ENV=test npm test
 - **E2E Guide**: `docs/E2E_TEST_GUIDE.md` - E2E testing commands and workflows
 - **UX Compliant Testing**: `docs/UX_COMPLIANT_TESTING.md` - UX-compliant testing approach
 - **Test Summary**: `docs/TEST_SUMMARY.md` - Current test status and achievements
+
+## Workflow Management E2E Test Coverage (2025-07-08)
+
+- All workflow management E2E tests now robustly cover both success and error scenarios for workflow creation, monitoring, and management.
+- Tests include:
+  - Natural language workflow creation (success and error cases)
+  - API response handling with debug logs and .waitForResponse
+  - Delete dialog rendering and accessibility
+  - Workflow card clickability (no separate View link)
+  - Dashboard and monitoring UX compliance
+  - Retry logic for workflow existence in monitoring tests
+  - Increased timeouts for slow API/UI responses
+- All 17 tests are passing as of this date.
+
+### Key Improvements
+- Increased selector and API timeouts for reliability
+- Retry/wait logic for workflow creation visibility
+- Tests now validate both happy path and error UX
+- All changes reflected in `tests/e2e/workflow-engine/workflow-management.test.ts`

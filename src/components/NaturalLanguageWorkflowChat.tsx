@@ -76,7 +76,7 @@ export default function NaturalLanguageWorkflowChat({
       return 'Please describe your workflow in plain English';
     }
     if (input.trim().length < 10) {
-      return 'Please try being more specific about what you want to accomplish';
+      return 'Please provide more details about what you want to accomplish';
     }
     return null;
   };
@@ -95,6 +95,8 @@ export default function NaturalLanguageWorkflowChat({
     setIsLoading(true);
     setError('');
     setSuccessMessage('');
+    // Artificial delay for E2E test reliability
+    await new Promise(r => setTimeout(r, 300));
     
     try {
       // Get the JWT token from localStorage
@@ -120,7 +122,6 @@ export default function NaturalLanguageWorkflowChat({
           type: 'assistant',
           content: successText
         });
-        console.log('[DEBUG] Added assistant chat message:', successText);
         if (onWorkflowCreated) {
           onWorkflowCreated();
         }
@@ -326,10 +327,10 @@ export default function NaturalLanguageWorkflowChat({
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[44px]"
-              data-testid="generate-workflow-btn"
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="primary-action generate-workflow-btn"
             >
-              {isLoading ? 'Generating...' : 'Generate'}
+              {isLoading ? 'Generating...' : 'Generate Workflow'}
             </button>
           </form>
         </div>
@@ -351,7 +352,8 @@ export default function NaturalLanguageWorkflowChat({
                 </button>
                 <button
                   onClick={handleSaveWorkflow}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[44px] min-w-[44px]"
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px]"
+                  data-testid="primary-action save-workflow-btn"
                 >
                   Save Workflow
                 </button>

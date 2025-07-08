@@ -157,7 +157,7 @@ test.describe('Dashboard Navigation E2E Tests', () => {
       });
       
       // Try to create a workflow (should fail)
-      await page.click('[data-testid="create-workflow-btn"]');
+      await page.click('[data-testid="primary-action create-workflow-btn"]');
       
       // Should show error message
       await expect(page.locator('[data-testid="error-message"]')).toContainText('Something went wrong');

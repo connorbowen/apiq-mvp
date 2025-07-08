@@ -468,4 +468,22 @@ describe('Natural Language Workflow Creation', () => {
 - [ ] <1% flaky test rate
 - [ ] <3 minute test execution time
 - [ ] 90%+ test coverage of critical flows
-- [ ] All tests documented and maintainable 
+- [ ] All tests documented and maintainable
+
+# E2E Test Audit: Workflow Management (2025-07-08)
+
+## Summary of Improvements
+- All workflow management E2E tests now pass reliably.
+- Tests now handle both success and error scenarios for workflow generation and monitoring.
+- Increased timeouts for selectors and API calls to handle real-world slowness.
+- Added retry logic for workflow existence in monitoring tests.
+- Debug logging for API requests and responses.
+- UI and test code updated to remove "View" links and ensure card clickability.
+
+## Key Files
+- `tests/e2e/workflow-engine/workflow-management.test.ts`
+- `src/components/WorkflowCard.tsx`
+- `src/components/dashboard/WorkflowsTab.tsx`
+
+## Date
+- 2025-07-08 
