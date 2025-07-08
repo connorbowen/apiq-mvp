@@ -105,7 +105,7 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await confirmPasswordInput.fill(testPassword);
 
     // 7. SUBMIT AND VERIFY LOADING STATE
-    const submitButton = page.locator('[data-testid="signup-submit"]');
+    const submitButton = page.locator('[data-testid="primary-action signup-submit"]');
     await submitButton.click();
     await expect(submitButton).toBeDisabled();
     await expect(submitButton).toHaveText('Creating account...');
@@ -163,7 +163,7 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await page.getByLabel('Email address').fill(existingEmail);
     await page.locator('#password').fill('ValidPass123');
     await page.locator('#confirmPassword').fill('ValidPass123');
-    const submitButton2 = page.locator('[data-testid="signup-submit"]');
+    const submitButton2 = page.locator('[data-testid="primary-action signup-submit"]');
     await submitButton2.click();
     await expect(submitButton2).toBeDisabled();
     await expect(submitButton2).toHaveText('Creating account...');
