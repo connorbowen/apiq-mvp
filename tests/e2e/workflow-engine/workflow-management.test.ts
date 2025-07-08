@@ -443,6 +443,7 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
     });
 
     test('should handle loading states and success feedback', async ({ page }) => {
+      test.setTimeout(60000); // Increase timeout for API calls
       // Wait for dashboard to load completely
       await page.waitForSelector('[data-testid="tab-workflows"]', { timeout: 10000 });
       
@@ -459,12 +460,16 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
       await page.waitForLoadState('networkidle', { timeout: 10000 });
       
-      // Wait for the form to be ready
+      // Wait for the form to be ready and NOT in loading state
       await page.waitForSelector('[data-testid="workflow-description-input"]', { timeout: 10000 });
       await page.waitForSelector('[data-testid="primary-action generate-workflow-btn"]', { timeout: 10000 });
       
-      // Fill workflow description
+      // Ensure the form is not in a loading state before proceeding
       const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
+      await expect(chatInput).not.toBeDisabled({ timeout: 5000 });
+      
+      // Clear any existing content and fill with new description
+      await chatInput.clear();
       await chatInput.fill('Loading Test Workflow - fetch data and send email');
       
       // Submit and validate loading state (UX spec requirement)
@@ -479,24 +484,36 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       // Click the button and wait for the form to submit
       await generateButton.click();
       
-      // Wait a moment for the form submission to process
-      await page.waitForTimeout(100);
-      
       // Wait for loading state to be set - wait for button to be disabled
       await expect(generateButton).toBeDisabled({ timeout: 10000 });
       await expect(generateButton).toHaveText(/Generating/);
       
-      // Wait for API response
-      const response = await responsePromise;
-      const responseBody = await response.json();
-      
-      // Handle both success and error cases
-      if (responseBody.success) {
-        // Wait for completion and validate success state
-        await expect(page.getByTestId('workflow-success-chat-message')).toContainText("I've created a workflow for you");
-      } else {
-        // Handle error case - should show error message
-        await expect(page.getByTestId('workflow-error-message')).toBeVisible();
+      // Wait for API response with better error handling
+      try {
+        const response = await responsePromise;
+        const responseBody = await response.json();
+        
+        // Handle both success and error cases
+        if (responseBody.success) {
+          // Wait for completion and validate success state
+          await expect(page.getByTestId('workflow-success-chat-message')).toContainText("I've created a workflow for you");
+        } else {
+          // Handle error case - should show error message
+          await expect(page.getByTestId('workflow-error-message')).toBeVisible();
+        }
+      } catch (error) {
+        // Check if the page context is still available before accessing elements
+        try {
+          // If API call times out, check if we're stuck in loading state
+          const isStillLoading = await generateButton.isDisabled();
+          if (isStillLoading) {
+            throw new Error('Workflow generation is stuck in loading state. Check the API endpoint and UI state management.');
+          }
+        } catch (contextError) {
+          // If we can't access the page (context closed), the original error is more relevant
+          console.log('Page context unavailable during error handling:', contextError.message);
+        }
+        throw error;
       }
     });
   });

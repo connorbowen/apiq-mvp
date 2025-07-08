@@ -16,6 +16,7 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
 - **Authentication Flow Tests**: 44 tests across 4 test suites, all passing ✅
 - **Execution State Management Tests**: 100% coverage with comprehensive unit and integration tests ✅
 - **Connection Service Tests**: 7 unit tests + integration tests, all passing ✅
+- **Workflow Management Tests**: 17/17 tests passing (100% success rate) ✅ **LATEST**
 - **Total Tests**: 1033+ tests with 100% pass rate ✅
 
 ### Test Execution Performance
@@ -270,6 +271,126 @@ For current E2E test status and audit results, see:
 - `docs/E2E_TEST_SUMMARY.md` - Current test results and status
 - `docs/E2E_UX_COMPLIANCE_AUDIT.md` - UX compliance audit results
 - `docs/E2E_TEST_FIXES_ACTION_PLAN.md` - Action plan for test improvements
+
+## E2E Test Timeout Handling & Error Management
+
+### Context-Aware Error Handling
+
+When writing E2E tests that involve API calls or long-running operations, it's important to handle Playwright context closure gracefully. The following pattern should be used for robust error handling:
+
+```typescript
+// Example: API-heavy test with proper error handling
+test('should handle loading states and success feedback', async ({ page }) => {
+  test.setTimeout(60000); // Increase timeout for API calls
+  
+  // ... test setup ...
+  
+  // Intercept API calls
+  const responsePromise = page.waitForResponse(
+    response => response.url().includes('/api/workflows/generate') && response.request().method() === 'POST',
+    { timeout: 30000 }
+  );
+  
+  // Submit form
+  await generateButton.click();
+  
+  // Wait for API response with context-aware error handling
+  try {
+    const response = await responsePromise;
+    const responseBody = await response.json();
+    
+    if (responseBody.success) {
+      await expect(page.getByTestId('success-message')).toBeVisible();
+    } else {
+      await expect(page.getByTestId('error-message')).toBeVisible();
+    }
+  } catch (error) {
+    // Check if page context is still available before accessing elements
+    try {
+      const isStillLoading = await generateButton.isDisabled();
+      if (isStillLoading) {
+        throw new Error('Operation is stuck in loading state. Check API endpoint and UI state management.');
+      }
+    } catch (contextError) {
+      // If we can't access the page (context closed), the original error is more relevant
+      console.log('Page context unavailable during error handling:', contextError.message);
+    }
+    throw error;
+  }
+});
+```
+
+### Timeout Management Best Practices
+
+#### 1. **Test-Level Timeouts**
+For tests involving API calls or complex UI interactions:
+```typescript
+test('should complete complex operation', async ({ page }) => {
+  test.setTimeout(60000); // Increase from default 15s for API-heavy tests
+  // ... test implementation
+});
+```
+
+#### 2. **Element-Level Timeouts**
+For specific element interactions:
+```typescript
+// Wait for form to be ready and NOT in loading state
+await expect(chatInput).not.toBeDisabled({ timeout: 5000 });
+
+// Wait for loading state to be set
+await expect(generateButton).toBeDisabled({ timeout: 10000 });
+```
+
+#### 3. **API Response Timeouts**
+For API call interception:
+```typescript
+const responsePromise = page.waitForResponse(
+  response => response.url().includes('/api/workflows/generate'),
+  { timeout: 30000 } // 30s for API responses
+);
+```
+
+### Common Error Patterns & Solutions
+
+#### Issue: "Target page, context or browser has been closed"
+**Cause**: Test timeout exceeded, causing Playwright to close the browser context
+**Solution**: Use context-aware error handling as shown above
+
+#### Issue: Tests stuck in loading state
+**Cause**: Form validation or API call never completes
+**Solution**: Add form readiness checks and clear existing content:
+```typescript
+// Ensure form is ready before proceeding
+await expect(chatInput).not.toBeDisabled({ timeout: 5000 });
+
+// Clear any existing content
+await chatInput.clear();
+await chatInput.fill('New test content');
+```
+
+#### Issue: API calls timing out
+**Cause**: Network latency or server response delays
+**Solution**: Increase timeouts appropriately:
+```typescript
+test.setTimeout(60000); // For API-heavy tests
+const responsePromise = page.waitForResponse(/* ... */, { timeout: 30000 });
+```
+
+### Test Reliability Improvements
+
+The workflow management tests have been updated with these patterns to ensure:
+
+- ✅ **Robust error handling** for context closure scenarios
+- ✅ **Appropriate timeouts** for API-heavy operations
+- ✅ **Form readiness validation** to prevent stuck states
+- ✅ **Context-aware error messages** for better debugging
+- ✅ **Graceful degradation** when page context is unavailable
+
+These patterns should be applied to all E2E tests that involve:
+- API calls with response interception
+- Long-running operations
+- Complex form interactions
+- Real-time feedback validation
 
 ## Test Commands
 

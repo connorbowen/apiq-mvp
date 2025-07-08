@@ -661,6 +661,131 @@ await uxHelper.validateMobileAccessibility();
 await expect(page.getByRole('button')).toBeVisible();
 ```
 
+## Robust Error Handling Patterns
+
+### Context-Aware Error Handling for API-Heavy Tests
+
+When testing features that involve API calls (like workflow generation), it's crucial to handle Playwright context closure gracefully. The following pattern ensures robust error handling:
+
+```typescript
+test('should handle loading states and success feedback', async ({ page }) => {
+  test.setTimeout(60000); // Increase timeout for API calls
+  
+  // Navigate and setup
+  await page.getByTestId('tab-workflows').click();
+  await page.getByTestId('primary-action create-workflow-btn').click();
+  
+  // Wait for form to be ready and NOT in loading state
+  const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
+  await expect(chatInput).not.toBeDisabled({ timeout: 5000 });
+  
+  // Clear any existing content and fill with new description
+  await chatInput.clear();
+  await chatInput.fill('Loading Test Workflow - fetch data and send email');
+  
+  // Intercept the API call
+  const responsePromise = page.waitForResponse(
+    response => response.url().includes('/api/workflows/generate') && response.request().method() === 'POST',
+    { timeout: 30000 }
+  );
+  
+  // Submit form
+  const generateButton = page.getByTestId('primary-action generate-workflow-btn');
+  await generateButton.click();
+  
+  // Wait for loading state
+  await expect(generateButton).toBeDisabled({ timeout: 10000 });
+  await expect(generateButton).toHaveText(/Generating/);
+  
+  // Handle API response with context-aware error handling
+  try {
+    const response = await responsePromise;
+    const responseBody = await response.json();
+    
+    if (responseBody.success) {
+      await expect(page.getByTestId('workflow-success-chat-message')).toContainText("I've created a workflow for you");
+    } else {
+      await expect(page.getByTestId('workflow-error-message')).toBeVisible();
+    }
+  } catch (error) {
+    // Check if page context is still available before accessing elements
+    try {
+      const isStillLoading = await generateButton.isDisabled();
+      if (isStillLoading) {
+        throw new Error('Workflow generation is stuck in loading state. Check the API endpoint and UI state management.');
+      }
+    } catch (contextError) {
+      // If we can't access the page (context closed), the original error is more relevant
+      console.log('Page context unavailable during error handling:', contextError.message);
+    }
+    throw error;
+  }
+});
+```
+
+### Key Error Handling Principles
+
+#### 1. **Form Readiness Validation**
+Always ensure forms are ready before interaction:
+```typescript
+// Ensure form is not in loading state
+await expect(chatInput).not.toBeDisabled({ timeout: 5000 });
+
+// Clear existing content to prevent stale data issues
+await chatInput.clear();
+```
+
+#### 2. **Context-Aware Error Handling**
+Handle cases where Playwright context is closed:
+```typescript
+try {
+  // Main test logic
+} catch (error) {
+  try {
+    // Check if page context is still available
+    const isStillLoading = await generateButton.isDisabled();
+    if (isStillLoading) {
+      throw new Error('Operation stuck in loading state');
+    }
+  } catch (contextError) {
+    console.log('Page context unavailable:', contextError.message);
+  }
+  throw error;
+}
+```
+
+#### 3. **Appropriate Timeout Management**
+Set timeouts based on operation complexity:
+```typescript
+test.setTimeout(60000); // For API-heavy tests
+const responsePromise = page.waitForResponse(/* ... */, { timeout: 30000 });
+await expect(element).toBeVisible({ timeout: 10000 });
+```
+
+### Common Error Scenarios & Solutions
+
+#### Scenario: "Target page, context or browser has been closed"
+**Cause**: Test timeout exceeded, Playwright closed browser context
+**Solution**: Use context-aware error handling pattern above
+
+#### Scenario: Tests stuck in loading state
+**Cause**: Form validation or API call never completes
+**Solution**: Add form readiness checks and clear content
+
+#### Scenario: API calls timing out
+**Cause**: Network latency or server response delays
+**Solution**: Increase timeouts appropriately for API operations
+
+### UX Compliance in Error Handling
+
+Error handling must also maintain UX compliance:
+
+- ✅ **Accessible error messages** with proper ARIA attributes
+- ✅ **Clear recovery paths** for users
+- ✅ **Loading state indicators** during operations
+- ✅ **Graceful degradation** when operations fail
+- ✅ **Consistent error messaging** across the application
+
 ## Conclusion
 
 The UX compliant E2E tests ensure that our application meets the highest standards for user experience, accessibility, security, and activation-first design. By following the UX spec, PRD, and user rules, we create tests that validate real user journeys and ensure our application provides a best-in-class experience.

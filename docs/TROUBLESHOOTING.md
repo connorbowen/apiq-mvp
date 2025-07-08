@@ -355,3 +355,102 @@ npm run dev
 - Use `clear-cache.js`, `debug-openapi.js`, and `debug-parser.js` for troubleshooting OpenAPI cache and parsing issues.
 - Use `/api/oauth/test.ts` for testing OAuth2 endpoints and flows.
 - Improved error handling in endpoint extraction and OAuth2 callback flows. Check logs for detailed error messages.
+
+### E2E Test Issues
+
+#### Issue: "Target page, context or browser has been closed" error
+**Error**: `Error: locator.isDisabled: Target page, context or browser has been closed`
+
+**Cause**: Test timeout exceeded, causing Playwright to close the browser context before error handling code can execute
+
+**Solution**: Use context-aware error handling pattern:
+```typescript
+// Before (problematic):
+} catch (error) {
+  const isStillLoading = await generateButton.isDisabled(); // ❌ Fails if context closed
+  if (isStillLoading) {
+    throw new Error('Operation stuck in loading state');
+  }
+  throw error;
+}
+
+// After (fixed):
+} catch (error) {
+  try {
+    const isStillLoading = await generateButton.isDisabled();
+    if (isStillLoading) {
+      throw new Error('Operation stuck in loading state');
+    }
+  } catch (contextError) {
+    console.log('Page context unavailable during error handling:', contextError.message);
+  }
+  throw error;
+}
+```
+
+**Additional fixes**:
+1. Increase test timeout for API-heavy tests: `test.setTimeout(60000);`
+2. Add form readiness checks: `await expect(chatInput).not.toBeDisabled({ timeout: 5000 });`
+3. Clear existing content: `await chatInput.clear();`
+
+#### Issue: E2E tests timing out on API calls
+**Error**: `Test timeout of 15000ms exceeded`
+
+**Cause**: API calls taking longer than default test timeout
+
+**Solution**:
+```typescript
+// Increase timeout for API-heavy tests
+test('should complete API operation', async ({ page }) => {
+  test.setTimeout(60000); // Increase from default 15s
+  
+  // Use appropriate timeouts for API responses
+  const responsePromise = page.waitForResponse(
+    response => response.url().includes('/api/workflows/generate'),
+    { timeout: 30000 }
+  );
+  
+  // ... test implementation
+});
+```
+
+#### Issue: Tests stuck in loading state
+**Error**: Tests fail because forms remain disabled or in loading state
+
+**Cause**: Form validation or API call never completes, leaving UI in loading state
+
+**Solution**:
+```typescript
+// Ensure form is ready before proceeding
+await expect(chatInput).not.toBeDisabled({ timeout: 5000 });
+
+// Clear any existing content that might cause issues
+await chatInput.clear();
+await chatInput.fill('New test content');
+
+// Wait for loading state to be set after submission
+await expect(generateButton).toBeDisabled({ timeout: 10000 });
+await expect(generateButton).toHaveText(/Generating/);
+```
+
+### E2E Test Best Practices
+
+#### 1. **Timeout Management**
+- Use `test.setTimeout(60000)` for API-heavy tests
+- Set appropriate timeouts for element interactions: `{ timeout: 10000 }`
+- Use longer timeouts for API responses: `{ timeout: 30000 }`
+
+#### 2. **Form Readiness**
+- Always check if forms are ready before interaction
+- Clear existing content to prevent stale data issues
+- Wait for loading states to be set after submission
+
+#### 3. **Error Handling**
+- Use context-aware error handling for robust tests
+- Check if page context is available before accessing elements
+- Provide meaningful error messages for debugging
+
+#### 4. **Test Isolation**
+- Use unique test data to prevent conflicts
+- Clean up test data after each test
+- Use proper test setup and teardown
