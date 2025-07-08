@@ -134,6 +134,7 @@ APIQ supports different user roles with varying levels of access:
    - Configure redirect URI
    - Set required scopes
    - Complete OAuth flow
+   - **Supported providers**: Google, GitHub, Slack
 
    **Secrets Vault**
    - Store API keys, tokens, and sensitive credentials securely
@@ -154,8 +155,15 @@ APIQ supports different user roles with varying levels of access:
 
 **View All APIs**
 - See all connected APIs in a list or grid view
-- Filter by status, type, or name
+- **Search connections** by name or description in real-time
+- **Filter by authentication type** (API Key, Bearer Token, Basic Auth, OAuth2)
 - Sort by connection date or last used
+
+**Search and Filter Features**
+- **Real-time search**: Type to instantly filter connections by name or description
+- **Auth type filtering**: Use the dropdown to show only connections with specific authentication methods
+- **Combined filtering**: Search and filter work together seamlessly
+- **Keyboard navigation**: Full keyboard support for search and filter interactions
 
 **Edit API Settings**
 - Update API information

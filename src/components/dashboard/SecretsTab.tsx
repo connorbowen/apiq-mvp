@@ -189,9 +189,10 @@ export default function SecretsTab({
     <div data-testid="secrets-management" role="region" aria-labelledby="secrets-heading">
       {/* Main heading for secrets management */}
       <div className="mb-6">
-        <h2 id="secrets-heading" className="text-xl font-semibold text-gray-800">
-          Manage your encrypted API keys, tokens, and sensitive credentials
+        <h2 id="secrets-heading" className="text-2xl font-semibold text-gray-900 mb-2">
+          Secrets Management
         </h2>
+        <p className="text-gray-600">Manage your encrypted API keys, tokens, and sensitive credentials</p>
       </div>
 
       {/* Success Banner lifted out of modal */}

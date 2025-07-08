@@ -133,6 +133,7 @@ export default function WorkflowsTab({
     <div data-testid="workflows-management">
       {/* Header */}
       <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Workflows</h2>
         <p className="text-gray-600">Manage your automated workflows and integrations</p>
       </div>
 

@@ -1,12 +1,14 @@
 # OAuth2 Setup Guide for Testing
 
-This guide provides step-by-step instructions for setting up real OAuth2 credentials for Google to enable end-to-end testing of OAuth2 flows.
+This guide provides step-by-step instructions for setting up real OAuth2 credentials for Google, GitHub, and Slack to enable end-to-end testing of OAuth2 flows.
 
-> **Note**: Currently, only Google OAuth2 is supported. GitHub and Slack OAuth2 providers have been removed to simplify the authentication system.
+> **Note**: Currently, Google, GitHub, and Slack OAuth2 providers are supported. Additional providers can be added as needed.
 
 ## Prerequisites
 
 - Google Cloud Console access
+- GitHub Developer Settings access
+- Slack API Apps access
 - Local development environment running
 
 ## Google OAuth2 Setup
@@ -32,6 +34,32 @@ This guide provides step-by-step instructions for setting up real OAuth2 credent
    - **Authorized redirect URIs**: `http://localhost:3000/api/oauth/callback`
 5. Note your **Client ID** and **Client Secret**
 
+## GitHub OAuth2 Setup
+
+### 1. Create GitHub OAuth App
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click "New OAuth App"
+3. Configure the OAuth App:
+   - **Application name**: `APIQ MVP Test`
+   - **Homepage URL**: `http://localhost:3000`
+   - **Authorization callback URL**: `http://localhost:3000/api/oauth/callback`
+4. Note your **Client ID** and **Client Secret**
+
+## Slack OAuth2 Setup
+
+### 1. Create Slack App
+
+1. Go to [Slack API Apps](https://api.slack.com/apps)
+2. Click "Create New App"
+3. Choose "From scratch"
+4. Configure the app:
+   - **App Name**: `APIQ MVP Test`
+   - **Workspace**: Select your workspace
+5. Go to "OAuth & Permissions"
+6. Add redirect URL: `http://localhost:3000/api/oauth/callback`
+7. Note your **Client ID** and **Client Secret**
+
 ### 3. Configure Environment Variables
 
 Add to your `.env` file:
@@ -39,13 +67,27 @@ Add to your `.env` file:
 # Google OAuth2 Configuration
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# GitHub OAuth2 Configuration
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+
+# Slack OAuth2 Configuration
+SLACK_CLIENT_ID="your-slack-client-id"
+SLACK_CLIENT_SECRET="your-slack-client-secret"
 ```
 
-### 4. Test Google OAuth2 Flow
+### 4. Test OAuth2 Flows
 
 ```bash
 # Run Google OAuth2 tests with real credentials
 npm test -- tests/integration/api/oauth2-google.test.ts
+
+# Run GitHub OAuth2 tests with real credentials
+npm test -- tests/integration/api/oauth2-github.test.ts
+
+# Run Slack OAuth2 tests with real credentials
+npm test -- tests/integration/api/oauth2-slack.test.ts
 ```
 
 ## Environment Configuration
@@ -58,6 +100,10 @@ Add these variables to your `.env` file:
 # OAuth2 Configuration for Testing
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+SLACK_CLIENT_ID="your-slack-client-id"
+SLACK_CLIENT_SECRET="your-slack-client-secret"
 
 # OAuth2 Redirect URLs
 OAUTH2_REDIRECT_URI="http://localhost:3000/api/oauth/callback"
@@ -79,6 +125,18 @@ export function createTestOAuth2Config(provider: string = 'google') {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'test-google-client-secret',
       redirectUri: process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
       scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly'
+    },
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID || 'test-github-client-id',
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || 'test-github-client-secret',
+      redirectUri: process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
+      scope: 'repo user'
+    },
+    slack: {
+      clientId: process.env.SLACK_CLIENT_ID || 'test-slack-client-id',
+      clientSecret: process.env.SLACK_CLIENT_SECRET || 'test-slack-client-secret',
+      redirectUri: process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
+      scope: 'chat:write channels:read users:read'
     }
   };
 }
@@ -87,8 +145,8 @@ export function createTestOAuth2Config(provider: string = 'google') {
 ### 2. Run Full OAuth2 Test Suite
 
 ```bash
-# Test OAuth2 provider
-npm test -- tests/integration/api/oauth2-google.test.ts
+# Test all OAuth2 providers
+npm test -- tests/integration/api/oauth2-*.test.ts
 ```
 
 ### 3. Manual OAuth2 Flow Testing
@@ -100,6 +158,8 @@ npm test -- tests/integration/api/oauth2-google.test.ts
 
 2. Navigate to OAuth2 authorization endpoints:
    - Google: `http://localhost:3000/api/oauth/authorize?provider=google&apiConnectionId=test`
+   - GitHub: `http://localhost:3000/api/oauth/authorize?provider=github&apiConnectionId=test`
+   - Slack: `http://localhost:3000/api/oauth/authorize?provider=slack&apiConnectionId=test`
 
 ## Security Considerations
 

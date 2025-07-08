@@ -184,4 +184,9 @@ This solution provides a robust, maintainable approach to primary action button 
 - Maintains accessibility standards
 - Scales for future growth
 
-The standardized patterns eliminate confusion and provide a clear path forward for maintaining consistent, high-quality user experiences. 
+The standardized patterns eliminate confusion and provide a clear path forward for maintaining consistent, high-quality user experiences.
+
+## July 2025 Update
+- All primary actions in Create Connection modal and ConnectionsTab use correct `data-testid` and ARIA patterns
+- Fully accessible via keyboard and screen reader
+- Confirmed by passing E2E and accessibility tests 

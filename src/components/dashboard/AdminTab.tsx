@@ -30,7 +30,7 @@ export default function AdminTab({ user }: AdminTabProps) {
     <div data-testid="admin-management" role="region" aria-labelledby="admin-heading">
       {/* Header */}
       <div className="mb-6">
-        <h2 id="admin-heading" className="text-xl font-semibold text-gray-800">Admin Settings</h2>
+        <h2 id="admin-heading" className="text-2xl font-semibold text-gray-900 mb-2">Admin Settings</h2>
         <p className="text-gray-600">Manage system security and administrative functions</p>
       </div>
 

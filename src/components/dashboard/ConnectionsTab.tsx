@@ -94,6 +94,7 @@ export default function ConnectionsTab({
     <div data-testid="connections-management">
       {/* Header */}
       <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">API Connections</h2>
         <p className="text-gray-600">Manage your API integrations and connections</p>
       </div>
 
@@ -103,7 +104,7 @@ export default function ConnectionsTab({
           <label htmlFor="search-input" className="sr-only">Search connections</label>
           <input
             id="search-input"
-            data-testid="search-input"
+            data-testid="search-connections"
             type="text"
             placeholder="Search connections..."
             value={searchTerm}
@@ -115,6 +116,7 @@ export default function ConnectionsTab({
           <label htmlFor="filter-select" className="sr-only">Filter by type</label>
           <select
             id="filter-select"
+            data-testid="filter-dropdown"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"

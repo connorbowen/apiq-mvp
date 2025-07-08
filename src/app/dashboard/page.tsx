@@ -204,7 +204,7 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Announce success messages to screen readers
+  // Announce success messages to screen readers and auto-clear
   useEffect(() => {
     if (successMessage) {
       const liveRegion = document.getElementById('aria-live-announcements');
@@ -215,10 +215,17 @@ export default function DashboardPage() {
           liveRegion.textContent = '';
         }, 1000);
       }
+      
+      // Auto-clear success message after 5 seconds
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
     }
   }, [successMessage]);
 
-  // Announce error messages to screen readers
+  // Announce error messages to screen readers and auto-clear
   useEffect(() => {
     if (errorMessage) {
       const liveRegion = document.getElementById('aria-live-announcements');
@@ -229,6 +236,13 @@ export default function DashboardPage() {
           liveRegion.textContent = '';
         }, 1000);
       }
+      
+      // Auto-clear error message after 8 seconds (longer than success)
+      const timer = setTimeout(() => {
+        setErrorMessage(null);
+      }, 8000);
+      
+      return () => clearTimeout(timer);
     }
   }, [errorMessage]);
 
@@ -259,16 +273,7 @@ export default function DashboardPage() {
       
       <header role="banner" className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">
-            {activeTab === 'overview' ? 'Dashboard' :
-             activeTab === 'secrets' ? 'Secrets Management' : 
-             activeTab === 'connections' ? 'API Connections' :
-             activeTab === 'workflows' ? 'Workflows' :
-             activeTab === 'chat' ? 'AI Chat' :
-             activeTab === 'admin' ? 'Admin Settings' :
-             activeTab === 'audit' ? 'Audit Logs' :
-             'Dashboard'}
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <div className="flex items-center space-x-4">
             {user && <span className="text-gray-700">Welcome, {user.name}</span>}
             <button
@@ -283,6 +288,37 @@ export default function DashboardPage() {
       </header>
 
       <section id="main-content" className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        {/* Success and Error Messages */}
+        {successMessage && (
+          <div data-testid="success-message" className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-800">{successMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {errorMessage && (
+          <div data-testid="error-message" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-800">{errorMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Breadcrumb Navigation */}
         <nav className="flex mb-6" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-2">

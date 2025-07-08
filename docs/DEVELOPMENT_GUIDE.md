@@ -8,11 +8,12 @@
 4. [Database Development](#database-development)
 5. [API Development](#api-development)
 6. [Frontend Development](#frontend-development)
-7. [Testing Strategy](#testing-strategy)
-8. [Development Tools & Scripts](#development-tools--scripts)
-9. [Security Guidelines](#security-guidelines)
-10. [Performance Guidelines](#performance-guidelines)
-11. [Deployment](#deployment)
+7. [Accessibility and UX Features](#accessibility-and-ux-features)
+8. [Testing Strategy](#testing-strategy)
+9. [Development Tools & Scripts](#development-tools--scripts)
+10. [Security Guidelines](#security-guidelines)
+11. [Performance Guidelines](#performance-guidelines)
+12. [Deployment](#deployment)
 
 ## Development Environment Setup
 
@@ -1105,9 +1106,11 @@ describe("QueueService", () => {
 
 ## Frontend Development
 
-### Component Guidelines
+### Component Architecture
 
-1. **Component Organization**
+The frontend follows a component-based architecture with clear separation of concerns:
+
+1. **Form Components**
 
    ```typescript
    // components/api/ApiConnectionForm.tsx
@@ -1194,11 +1197,9 @@ describe("QueueService", () => {
      render() {
        if (this.state.hasError) {
          return (
-           <div className="error-boundary">
-             <h2>Something went wrong.</h2>
-             <button onClick={() => this.setState({ hasError: false })}>
-               Try again
-             </button>
+           <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+             <h2 className="text-red-800 font-semibold">Something went wrong</h2>
+             <p className="text-red-600">Please try refreshing the page</p>
            </div>
          );
        }
@@ -1207,6 +1208,116 @@ describe("QueueService", () => {
      }
    }
    ```
+
+## Accessibility and UX Features
+
+### Create Connection Modal Accessibility
+
+The Create Connection modal includes comprehensive accessibility features that all developers should maintain:
+
+#### **ARIA Implementation**
+```typescript
+// Modal container with proper ARIA attributes
+<div 
+  role="dialog" 
+  aria-modal="true" 
+  aria-labelledby="modal-title"
+  ref={modalRef}
+>
+  <h3 id="modal-title">Create Connection</h3>
+  {/* Modal content */}
+</div>
+```
+
+#### **Keyboard Navigation**
+```typescript
+// Auto-focus on first input when modal opens
+useEffect(() => {
+  nameInputRef.current?.focus();
+}, []);
+
+// Focus trap to keep focus within modal
+useEffect(() => {
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onClose();
+    }
+    // Focus trap logic for Tab key
+  };
+}, []);
+```
+
+#### **Form Validation with Accessibility**
+```typescript
+// Field-level error handling with ARIA
+<input
+  aria-required="true"
+  aria-invalid={errors.name ? "true" : "false"}
+  aria-describedby={errors.name ? "name-error" : undefined}
+/>
+{errors.name && (
+  <div id="name-error" role="alert" className="text-red-600">
+    {errors.name.message}
+  </div>
+)}
+```
+
+### ConnectionsTab Search and Filter
+
+The ConnectionsTab includes real-time search and filtering with full accessibility:
+
+#### **Search Implementation**
+```typescript
+// Real-time search with proper ARIA labels
+<input
+  data-testid="search-connections"
+  aria-label="Search connections"
+  placeholder="Search connections..."
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+/>
+```
+
+#### **Filter Implementation**
+```typescript
+// Accessible filter dropdown
+<select
+  data-testid="filter-dropdown"
+  aria-label="Filter by auth type"
+  value={filterType}
+  onChange={(e) => setFilterType(e.target.value)}
+>
+  <option value="">All types</option>
+  <option value="API_KEY">API Key</option>
+  <option value="BEARER_TOKEN">Bearer Token</option>
+  <option value="BASIC_AUTH">Basic Auth</option>
+  <option value="OAUTH2">OAuth2</option>
+</select>
+```
+
+#### **Combined Filtering Logic**
+```typescript
+// Search and filter work together seamlessly
+const filteredConnections = connections.filter(connection => {
+  const matchesSearch = searchTerm === '' || 
+    connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    connection.description?.toLowerCase().includes(searchTerm.toLowerCase());
+  
+  const matchesFilter = filterType === '' || connection.authType === filterType;
+  
+  return matchesSearch && matchesFilter;
+});
+```
+
+### Development Guidelines
+
+When working with these components:
+
+1. **Maintain Accessibility**: Always preserve ARIA attributes, keyboard navigation, and focus management
+2. **Test Keyboard Navigation**: Ensure all interactive elements are reachable via Tab key
+3. **Validate Screen Reader Support**: Test with screen readers to ensure proper announcements
+4. **Preserve Search/Filter**: Maintain the real-time search and filtering functionality
+5. **Follow UX Patterns**: Use consistent error handling, loading states, and success feedback
 
 ## Testing Strategy
 

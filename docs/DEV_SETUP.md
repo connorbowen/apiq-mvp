@@ -90,7 +90,7 @@ OPENAI_TEMPERATURE=0.1
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click "New OAuth App"
 3. Set Homepage URL: `http://localhost:3000`
-4. Set Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+4. Set Authorization callback URL: `http://localhost:3000/api/oauth/callback`
 5. Add to `.env`:
    ```bash
    GITHUB_CLIENT_ID=your-github-client-id
@@ -101,7 +101,7 @@ OPENAI_TEMPERATURE=0.1
 1. Go to [Slack API Apps](https://api.slack.com/apps)
 2. Create New App
 3. Add OAuth & Permissions
-4. Set redirect URL: `http://localhost:3000/api/auth/callback/slack`
+4. Set redirect URL: `http://localhost:3000/api/oauth/callback`
 5. Add to `.env`:
    ```bash
    SLACK_CLIENT_ID=your-slack-client-id
@@ -123,8 +123,15 @@ OPENAI_TEMPERATURE=0.1
 
 ### **Test OAuth2 (if configured)**
 1. Go to `http://localhost:3000/login`
-2. Click on OAuth2 provider buttons
+2. Click on OAuth2 provider buttons (Google, GitHub, Slack)
 3. Complete the authentication flow
+
+### **Test Connections Management**
+1. Go to `http://localhost:3000/dashboard`
+2. Navigate to Connections tab
+3. Test creating connections with different auth types
+4. Test search and filter functionality
+5. Test keyboard navigation and accessibility features
 
 ## 🔧 Troubleshooting
 

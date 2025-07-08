@@ -114,7 +114,7 @@ export default function AuditTab({ refreshTrigger = 0 }: AuditTabProps) {
     <div data-testid="audit-management" role="region" aria-labelledby="audit-heading">
       {/* Header */}
       <div className="mb-6">
-        <h2 id="audit-heading" className="text-xl font-semibold text-gray-800">Audit Logs</h2>
+        <h2 id="audit-heading" className="text-2xl font-semibold text-gray-900 mb-2">Audit Logs</h2>
         <p className="text-gray-600">Monitor system activity and security events</p>
       </div>
 

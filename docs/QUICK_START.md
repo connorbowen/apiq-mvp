@@ -229,6 +229,56 @@ List secrets:
 curl http://localhost:3000/api/secrets
 ```
 
+### Testing Connections Management
+
+Test the search and filter functionality:
+```bash
+# Navigate to dashboard and test search
+# 1. Go to http://localhost:3000/dashboard
+# 2. Click on "Connections" tab
+# 3. Use the search box to filter connections by name
+# 4. Use the filter dropdown to filter by auth type
+# 5. Test keyboard navigation (Tab, Enter, Escape)
+```
+
+### Testing OAuth2 Providers
+
+Test OAuth2 flows for all supported providers:
+```bash
+# Test Google OAuth2
+curl -X POST http://localhost:3000/api/oauth/authorize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "google",
+    "apiConnectionId": "test-connection-id",
+    "clientId": "your-google-client-id",
+    "clientSecret": "your-google-client-secret",
+    "redirectUri": "http://localhost:3000/api/oauth/callback"
+  }'
+
+# Test GitHub OAuth2
+curl -X POST http://localhost:3000/api/oauth/authorize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "github",
+    "apiConnectionId": "test-connection-id",
+    "clientId": "your-github-client-id",
+    "clientSecret": "your-github-client-secret",
+    "redirectUri": "http://localhost:3000/api/oauth/callback"
+  }'
+
+# Test Slack OAuth2
+curl -X POST http://localhost:3000/api/oauth/authorize \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "slack",
+    "apiConnectionId": "test-connection-id",
+    "clientId": "your-slack-client-id",
+    "clientSecret": "your-slack-client-secret",
+    "redirectUri": "http://localhost:3000/api/oauth/callback"
+  }'
+```
+
 ## Current Database Schema
 
 ### Tables Created

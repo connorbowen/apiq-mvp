@@ -662,6 +662,56 @@ Would you like me to create this workflow?
 - Accessibility compliance testing
 - Security UX testing 🆕
 
+## Accessibility Improvements (Latest)
+
+### Create Connection Modal Accessibility
+
+The Create Connection modal has been enhanced with comprehensive accessibility features:
+
+#### ARIA Roles and Labels
+- **Modal Container**: `role="dialog"`, `aria-modal="true"`, `aria-labelledby="modal-title"`
+- **Modal Heading**: `id="modal-title"` with proper `aria-labelledby` connection
+- **Form Fields**: Proper `aria-label`, `aria-required`, `aria-invalid` attributes
+- **Error Messages**: `role="alert"` containers with programmatic association
+
+#### Keyboard Navigation
+- **Auto-focus**: Connection Name input receives focus when modal opens
+- **Focus Trap**: Tab navigation cycles within modal boundaries
+- **Escape Key**: Closes modal with Escape key
+- **Tab Order**: Logical tab sequence through all interactive elements
+
+#### Error Handling
+- **Field-level Errors**: Individual error messages for each form field
+- **Visible Containers**: Error messages are clearly visible with proper styling
+- **Programmatic Association**: Error messages linked to form fields via `aria-describedby`
+- **Validation Feedback**: Real-time validation with accessible error announcements
+
+#### Screen Reader Support
+- **Semantic Structure**: Proper heading hierarchy and landmark roles
+- **Form Labels**: All form fields have associated labels
+- **Status Announcements**: Error states and validation feedback announced
+- **Navigation Cues**: Clear indication of modal state and available actions
+
+### Search and Filter Accessibility
+
+The ConnectionsTab search and filter functionality includes:
+
+#### Search Input
+- **Label**: "Search connections" with proper `aria-label`
+- **Live Region**: Search results announced to screen readers
+- **Keyboard Support**: Full keyboard navigation and activation
+
+#### Filter Dropdown
+- **Native Select**: Uses semantic `<select>` element for maximum accessibility
+- **Label**: "Filter by auth type" with proper association
+- **Options**: Clear, descriptive option labels
+- **Keyboard Support**: Arrow keys, Enter, Escape for navigation
+
+#### Combined Functionality
+- **Real-time Updates**: Search and filter work together seamlessly
+- **Status Announcements**: Result counts and changes announced
+- **Focus Management**: Proper focus handling during dynamic updates
+
 ---
 
 **UX Specification Summary**

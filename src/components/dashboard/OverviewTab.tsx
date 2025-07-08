@@ -39,8 +39,8 @@ export default function OverviewTab({ connections, workflows, secrets, user }: O
     <div data-testid="overview-tab">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome back, {user?.name || 'User'}!</h2>
-        <p className="text-gray-600">Here&apos;s what&apos;s happening with your API integrations today.</p>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Overview</h2>
+        <p className="text-gray-600">Welcome back, {user?.name || 'User'}! Here&apos;s what&apos;s happening with your API integrations today.</p>
       </div>
 
       {/* Metrics Cards */}

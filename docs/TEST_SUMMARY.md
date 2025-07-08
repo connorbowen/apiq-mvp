@@ -193,9 +193,9 @@
 
 ### Current Test Results
 
-- **Integration Tests**: 224/224 passing (100% success rate) ✅ **UPDATED**
-- **Unit Tests**: 509/509 passing (100% success rate) ✅ **UPDATED**
-- **E2E Tests**: 300+ test cases across 24 files (100% success rate)
+- **Integration Tests**: 224/229 passing, 5 skipped (workflows CRUD, SSO browser flow)
+- **Unit Tests**: 511/511 passing
+- **E2E Tests**: All connections management tests passing
 - **Total Tests**: 1033+ tests with 100% pass rate ✅ **UPDATED**
 - **Execution Time**: ~75 seconds for full integration suite
 - **Parallel Execution**: Fully supported with proper test isolation
@@ -303,3 +303,10 @@ _Total tests: 1176+ (314 integration + 562 unit + 300+ e2e)_
 _Test status: 100% pass rate with parallel execution support_
 _Implementation plan status: Updated and current_
 _New features: Natural language workflow generation, secrets management, execution engine_
+
+### New Features Covered
+- Accessible Create Connection modal (ARIA, keyboard, error messages)
+- Real-time search and filter for connections
+- OAuth2 provider select (GitHub, Google, Slack, Discord)
+- Slack/GitHub OAuth2 backend support
+- Test isolation and reliability improvements

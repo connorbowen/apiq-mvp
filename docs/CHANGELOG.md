@@ -881,3 +881,11 @@ _This changelog is maintained by the APIQ team and community contributors._
 - Connections e2e tests failing due to authentication/UI navigation issues (25/25 failing)
 - Tests timeout waiting for connections tab/link after login
 - Potential issues with test user creation or session management
+
+## [Unreleased]
+- Accessibility: ARIA roles, error containers, and focus management for Create Connection modal
+- Keyboard navigation: Auto-focus, focus trap, and Escape key support in modals
+- Connections: Real-time search and filter by auth type in ConnectionsTab
+- OAuth2: Provider select for GitHub, Google, Slack, Discord; added Slack/GitHub to backend
+- Testing: All E2E, unit, and integration tests passing (except 5 intentionally skipped integration tests)
+- Test isolation and reliability improvements
