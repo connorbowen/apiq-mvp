@@ -49,22 +49,20 @@ describe('OAuth2Service', () => {
     it('should return supported OAuth2 providers', () => {
       const providers = oauth2Service.getSupportedProviders();
       
-      expect(providers).toContain('github');
       expect(providers).toContain('google');
-      expect(providers).toContain('slack');
       expect(providers.length).toBeGreaterThan(0);
     });
   });
 
   describe('getProviderConfig', () => {
     it('should return provider configuration for valid provider', () => {
-      const config = oauth2Service.getProviderConfig('github');
+      const config = oauth2Service.getProviderConfig('google');
       
       expect(config).toBeDefined();
-      expect(config?.name).toBe('GitHub');
-      expect(config?.authorizationUrl).toBe('https://github.com/login/oauth/authorize');
-      expect(config?.tokenUrl).toBe('https://github.com/login/oauth/access_token');
-      expect(config?.scope).toBe('repo user');
+      expect(config?.name).toBe('Google');
+      expect(config?.authorizationUrl).toBe('https://accounts.google.com/o/oauth2/v2/auth');
+      expect(config?.tokenUrl).toBe('https://oauth2.googleapis.com/token');
+      expect(config?.scope).toBe('https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly');
     });
 
     it('should return null for unsupported provider', () => {
@@ -118,23 +116,24 @@ describe('OAuth2Service', () => {
         authorizationUrl: '',
         tokenUrl: '',
         redirectUri: 'https://example.com/callback',
-        scope: 'repo user',
-        state: 'github'
+        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
+        state: 'google'
       };
 
       const url = oauth2Service.generateAuthorizationUrl(
         'user-123',
         'connection-456',
-        'github',
+        'google',
         config
       );
 
-      expect(url).toContain('https://github.com/login/oauth/authorize');
+      expect(url).toContain('https://accounts.google.com/o/oauth2/v2/auth');
       expect(url).toContain('client_id=test-client-id');
       expect(url).toContain('redirect_uri=https%3A%2F%2Fexample.com%2Fcallback');
       expect(url).toContain('response_type=code');
-      expect(url).toMatch(/scope=repo(%20|\+)user/);
       expect(url).toContain('state=');
+      // Accept both %20 and + as valid encodings for the space in the scope parameter
+      expect(url).toMatch(/scope=https%3A%2F%2Fwww\.googleapis\.com%2Fauth%2Fcalendar(%20|\+)https%3A%2F%2Fwww\.googleapis\.com%2Fauth%2Fgmail\.readonly/);
     });
 
     it('should throw error for unsupported provider', () => {
@@ -199,15 +198,15 @@ describe('OAuth2Service', () => {
         authorizationUrl: '',
         tokenUrl: '',
         redirectUri: 'https://example.com/callback',
-        scope: 'repo user',
-        state: 'github'
+        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
+        state: 'google'
       };
 
       // Create a valid state parameter
       const stateData = {
         userId: 'user-123',
         apiConnectionId: 'connection-456',
-        provider: 'github',
+        provider: 'google',
         timestamp: Date.now(),
         nonce: 'test-nonce-123'
       };
@@ -236,15 +235,15 @@ describe('OAuth2Service', () => {
         authorizationUrl: '',
         tokenUrl: '',
         redirectUri: 'https://example.com/callback',
-        scope: 'repo user',
-        state: 'github'
+        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
+        state: 'google'
       };
 
       // Create a valid state parameter
       const stateData = {
         userId: 'user-123',
         apiConnectionId: 'connection-456',
-        provider: 'github',
+        provider: 'google',
         timestamp: Date.now(),
         nonce: 'test-nonce-123'
       };

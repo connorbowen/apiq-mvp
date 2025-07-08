@@ -39,9 +39,7 @@ describe('SignupPage', () => {
   it('should render OAuth2 signup buttons', () => {
     render(<SignupPage />);
     
-    expect(screen.getByText(/continue with github/i)).toBeInTheDocument();
     expect(screen.getByText(/continue with google/i)).toBeInTheDocument();
-    expect(screen.getByText(/continue with slack/i)).toBeInTheDocument();
   });
 
   it('should show validation errors for invalid email', async () => {

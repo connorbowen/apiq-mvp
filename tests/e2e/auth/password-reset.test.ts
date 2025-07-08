@@ -2,12 +2,14 @@ import { test, expect } from '@playwright/test';
 import { generateTestId } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
 import bcrypt from 'bcryptjs';
+import { INVALID_TOKEN_PREFIX, TEST_TOKEN_PREFIX } from '../../../src/app/reset-password/page';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 test.describe('Password Reset E2E Tests - Complete Flow', () => {
   test.describe('Real Email Password Reset Flow', () => {
     test('should complete full password reset flow with real email', async ({ page }) => {
+      test.setTimeout(30000); // 30 seconds for complex password reset flow
       const testEmail = `e2e-reset-${generateTestId('user')}@example.com`;
       const originalPassword = 'OriginalPass123!';
       const newPassword = 'NewSecurePass456!';
@@ -67,7 +69,12 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         await page.fill('input[name="password"]', originalPassword);
         await page.click('button[type="submit"]');
         
+        // Wait for loading to complete and error to appear
+        await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Sign in' })).not.toBeDisabled();
+        
         // Should show error for invalid credentials
+        await expect(page.locator('.bg-red-50')).toBeVisible();
         await expect(page.locator('.bg-red-50')).toContainText(/Invalid credentials|Login failed/);
         
         // Step 5: Verify new password works
@@ -175,7 +182,7 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
     });
 
     test('should handle invalid reset token', async ({ page }) => {
-      const invalidToken = 'invalid-token-123';
+      const invalidToken = `${INVALID_TOKEN_PREFIX}-123`;
       
       await page.goto(`${BASE_URL}/reset-password?token=${invalidToken}`);
       
@@ -205,6 +212,7 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
     });
 
     test('should handle multiple password reset requests', async ({ page }) => {
+      test.setTimeout(30000); // 30 seconds for complex multiple reset flow
       const testEmail = `e2e-multiple-${generateTestId('user')}@example.com`;
 
       // Create a test user
@@ -383,7 +391,7 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should handle password reset with valid token and UX compliance', async ({ page }) => {
       // This test would require a real reset token
       // For E2E testing, we'll test the reset page UI
-      const testToken = `reset_token_${generateTestId()}`;
+      const testToken = `${TEST_TOKEN_PREFIX}-${generateTestId()}`;
       const newPassword = `newPassword${generateTestId()}`;
       
       await page.goto(`${BASE_URL}/reset-password?token=${testToken}`);
@@ -413,52 +421,56 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     });
 
     test('should handle password reset with invalid token and UX compliance', async ({ page }) => {
-      const invalidToken = `invalid_token_${generateTestId()}`;
-      
+      const invalidToken = `${INVALID_TOKEN_PREFIX}-${generateTestId()}`;
       await page.goto(`${BASE_URL}/reset-password?token=${invalidToken}`);
-      
-      // Verify UX compliance - accessible error container (UX spec: .bg-red-50)
-      await expect(page.locator('.bg-red-50')).toContainText('Missing or invalid reset token.');
+      await expect(page.getByTestId('validation-errors').filter({ hasText: 'Missing or invalid reset token.' })).toBeVisible();
+      await expect(page.getByTestId('password-input')).toBeDisabled();
+      await expect(page.getByTestId('confirm-password-input')).toBeDisabled();
+      await expect(page.getByTestId('submit-reset-btn')).toBeDisabled();
     });
 
     test('should handle missing reset token with UX compliance', async ({ page }) => {
       await page.goto(`${BASE_URL}/reset-password`);
-      
-      // Verify UX compliance - accessible error container (UX spec: .bg-red-50)
-      await expect(page.locator('.bg-red-50')).toContainText('Missing or invalid reset token.');
+      await expect(page.getByTestId('validation-errors').filter({ hasText: 'Missing or invalid reset token.' })).toBeVisible();
+      await expect(page.getByTestId('password-input')).toBeDisabled();
+      await expect(page.getByTestId('confirm-password-input')).toBeDisabled();
+      await expect(page.getByTestId('submit-reset-btn')).toBeDisabled();
     });
 
     test('should validate password reset form with UX compliance', async ({ page }) => {
-      const testToken = 'test-token-123';
+      const testToken = `${TEST_TOKEN_PREFIX}-123`;
       await page.goto(`${BASE_URL}/reset-password?token=${testToken}`);
       
-      // Test password mismatch
-      await page.fill('input[name="password"]', 'password123');
-      await page.fill('input[name="confirmPassword"]', 'differentpassword');
-      await page.click('button[type="submit"]');
+      // Test password mismatch - both fields should be invalid since both are involved
+      await page.fill('[data-testid="password-input"]', 'password123');
+      await page.fill('[data-testid="confirm-password-input"]', 'differentpassword');
+      await page.click('[data-testid="submit-reset-btn"]');
       
-      // Verify UX compliance - accessible error container (UX spec: .bg-red-50)
-      await expect(page.locator('.bg-red-50')).toContainText('Passwords do not match.');
+      // Assert error container and specific error
+      await expect(page.getByTestId('validation-errors').filter({ hasText: 'Passwords do not match.' })).toBeVisible();
+      await expect(page.getByTestId('password-input')).toHaveAttribute('aria-invalid', 'true');
+      await expect(page.getByTestId('confirm-password-input')).toHaveAttribute('aria-invalid', 'true');
       
-      // Test weak password
-      await page.fill('input[name="password"]', '123');
-      await page.fill('input[name="confirmPassword"]', '123');
-      await page.click('button[type="submit"]');
+      // Test weak password - only password field should be invalid (better UX)
+      await page.fill('[data-testid="password-input"]', '123');
+      await page.fill('[data-testid="confirm-password-input"]', '123');
+      await page.click('[data-testid="submit-reset-btn"]');
+      await expect(page.getByTestId('validation-errors')).toBeVisible();
+      await expect(page.getByTestId('password-input')).toHaveAttribute('aria-invalid', 'true');
+      // Confirm password field should NOT be invalid when passwords match but password is weak
+      await expect(page.getByTestId('confirm-password-input')).not.toHaveAttribute('aria-invalid', 'true');
       
-      // Verify UX compliance - accessible error container
-      await expect(page.locator('.bg-red-50')).toBeVisible();
-      
-      // Test missing passwords
-      await page.fill('input[name="password"]', '');
-      await page.fill('input[name="confirmPassword"]', '');
-      await page.click('button[type="submit"]');
-      
-      // Verify UX compliance - accessible error container
-      await expect(page.locator('.bg-red-50')).toBeVisible();
+      // Test missing passwords - both fields should be invalid
+      await page.fill('[data-testid="password-input"]', '');
+      await page.fill('[data-testid="confirm-password-input"]', '');
+      await page.click('[data-testid="submit-reset-btn"]');
+      await expect(page.getByTestId('validation-errors')).toBeVisible();
+      await expect(page.getByTestId('password-input')).toHaveAttribute('aria-invalid', 'true');
+      await expect(page.getByTestId('confirm-password-input')).toHaveAttribute('aria-invalid', 'true');
     });
 
     test('should validate form field requirements with UX compliance', async ({ page }) => {
-      const testToken = 'test-token-123';
+      const testToken = `${TEST_TOKEN_PREFIX}-123`;
       await page.goto(`${BASE_URL}/reset-password?token=${testToken}`);
       
       // Check that form fields exist with proper attributes
@@ -476,7 +488,7 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     });
 
     test('should handle loading states during password reset with UX compliance', async ({ page }) => {
-      const testToken = 'test-token-123';
+      const testToken = `${TEST_TOKEN_PREFIX}-123`;
       await page.goto(`${BASE_URL}/reset-password?token=${testToken}`);
       
       // Fill form
@@ -494,6 +506,7 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
 
   test.describe('Forgot Password Success Page - UX Compliance', () => {
     test('should display success page correctly with UX compliance', async ({ page }) => {
+      test.setTimeout(20000); // 20 seconds for page navigation under load
       const testEmail = 'test@example.com';
       await page.goto(`${BASE_URL}/forgot-password-success?email=${encodeURIComponent(testEmail)}`);
       

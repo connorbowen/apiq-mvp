@@ -100,7 +100,7 @@ async function getWorkflows(req: NextApiRequest, res: NextApiResponse, userId: s
 
 async function createWorkflow(req: NextApiRequest, res: NextApiResponse, userId: string) {
   try {
-    const { name, description, isPublic = false } = req.body;
+    const { name, description, isPublic = false, steps = [] } = req.body;
 
     if (!name) {
       return res.status(400).json({ success: false, error: 'Workflow name is required' });
@@ -115,16 +115,43 @@ async function createWorkflow(req: NextApiRequest, res: NextApiResponse, userId:
       return res.status(409).json({ success: false, error: 'Workflow with this name already exists' });
     }
 
-    const workflow = await prisma.workflow.create({
-      data: {
-        userId,
-        name,
-        description,
-        isPublic,
-        status: 'DRAFT'
-      },
+    // Create workflow with steps in a transaction
+    const workflow = await prisma.$transaction(async (tx) => {
+      // Create the workflow
+      const createdWorkflow = await tx.workflow.create({
+        data: {
+          userId,
+          name,
+          description,
+          isPublic,
+          status: 'DRAFT'
+        }
+      });
+
+      // Create workflow steps if provided
+      if (steps && steps.length > 0) {
+        const workflowSteps = steps.map((step: any, index: number) => ({
+          workflowId: createdWorkflow.id,
+          stepOrder: index + 1,
+          name: step.name || `Step ${index + 1}`,
+          description: step.description || '',
+          action: step.type || 'API_CALL',
+          parameters: step.parameters || {},
+          isActive: true
+        }));
+
+        await tx.workflowStep.createMany({
+          data: workflowSteps
+        });
+      }
+
+          // Return the workflow with steps
+    const workflowWithSteps = await tx.workflow.findUnique({
+      where: { id: createdWorkflow.id },
       include: {
-        steps: true,
+        steps: {
+          orderBy: { stepOrder: 'asc' }
+        },
         _count: {
           select: {
             steps: true,
@@ -134,7 +161,14 @@ async function createWorkflow(req: NextApiRequest, res: NextApiResponse, userId:
       }
     });
 
-    logInfo('Workflow created', { userId, workflowId: workflow.id, name });
+    if (!workflowWithSteps) {
+      throw new Error('Failed to retrieve created workflow');
+    }
+
+    return workflowWithSteps;
+  });
+
+  logInfo('Workflow created', { userId, workflowId: workflow.id, name, stepCount: steps.length });
 
     return res.status(201).json({
       success: true,

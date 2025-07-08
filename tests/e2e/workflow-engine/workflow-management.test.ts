@@ -90,14 +90,14 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.getByTestId('tab-workflows').click();
       
       // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
       // Validate UX compliance - heading hierarchy (UX spec requirement)
       await uxHelper.validateHeadingHierarchy(['Workflows']);
       await expect(page.getByRole('heading', { name: /Workflows/ })).toBeVisible();
       
       // Click "Create Workflow" button
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for navigation to create workflow page
       await expect(page).toHaveURL(/.*workflows\/create/);
@@ -166,9 +166,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.getByTestId('tab-workflows').click();
       
       // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for the create workflow page to load
       await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
@@ -194,9 +194,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.getByTestId('tab-workflows').click();
       
       // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for the create workflow page to load
       await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
@@ -295,9 +295,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.getByTestId('tab-workflows').click();
       
       // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for the create workflow page to load
       await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
@@ -332,9 +332,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.getByTestId('tab-workflows').click();
       
       // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for the create workflow page to load
       await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
@@ -365,9 +365,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await workflowsButton.click();
       
       // Wait for workflows tab to be active and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for the create workflow page to load
       await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
@@ -390,9 +390,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.getByTestId('tab-workflows').click();
       
       // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for the create workflow page to load
       await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
@@ -487,9 +487,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.getByTestId('tab-workflows').click();
       
       // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for the create workflow page to load
       await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
@@ -518,9 +518,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.getByTestId('tab-workflows').click();
       
       // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for the create workflow page to load
       await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
@@ -621,10 +621,10 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       const filterSelect = page.getByTestId('workflow-filter-select');
       await expect(filterSelect).toBeVisible();
       
-      // Test create workflow button (activation-first UX)
-      const createButton = page.getByTestId('create-workflow-btn');
-      await expect(createButton).toBeVisible();
-      await expect(createButton).toHaveText(/Create Workflow/);
+              // Test create workflow button (activation-first UX)
+        const createButton = page.getByTestId('primary-action create-workflow-btn');
+        await expect(createButton).toBeVisible();
+        await expect(createButton).toHaveText(/Create Workflow/);
       
       // Test workflow cards if they exist
       const workflowCards = page.getByTestId('workflow-card');
@@ -641,6 +641,7 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
         // Test empty state (UX spec requirement)
         await expect(page.getByText(/No workflows/)).toBeVisible();
         await expect(page.getByText(/Get started by creating your first workflow/)).toBeVisible();
+        await expect(page.getByTestId('primary-action create-workflow-btn')).toBeVisible();
       }
     });
 
@@ -652,10 +653,10 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.waitForSelector('h1:has-text("Workflows")', { timeout: 10000 });
       
       // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
       
       // Navigate to create workflow page
-      await page.getByTestId('create-workflow-btn').click();
+      await page.getByTestId('primary-action create-workflow-btn').click();
       
       // Wait for create workflow page to load
       await expect(page).toHaveURL(/.*workflows\/create/);

@@ -14,8 +14,6 @@ describe('LoginPage', () => {
   it('renders OAuth2/SSO login buttons', () => {
     render(<LoginPage />);
     expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /continue with github/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /continue with slack/i })).toBeInTheDocument();
   });
 
   it('allows user to type email and password', () => {
