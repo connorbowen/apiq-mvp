@@ -13,13 +13,13 @@ Comprehensive test suite covering backend API endpoints, frontend components, an
 
 #### Authentication & Authorization (89 tests)
 - **JWT Authentication**: 15 tests - Token validation, refresh, expiration
-- **OAuth2 Flow**: 111 tests - Complete OAuth2 implementation with GitHub, Google, Slack
+- **OAuth2 Flow**: 111 tests - Complete OAuth2 implementation with Google
 - **SAML/OIDC SSO**: 36 tests - Enterprise SSO with Okta, Azure AD, Google Workspace
 - **RBAC**: 12 tests - Role-based access control
 - **Session Management**: 15 tests - Session creation, validation, cleanup
 
 #### API Integration (67 tests)
-- **Real API Connections**: 25 tests - Petstore, HTTPBin, JSONPlaceholder, GitHub, Stripe
+- **Real API Connections**: 25 tests - Petstore, HTTPBin, JSONPlaceholder, Stripe
 - **OpenAPI Integration**: 18 tests - Spec parsing, endpoint extraction, validation
 - **API Management**: 24 tests - CRUD operations, testing, monitoring
 

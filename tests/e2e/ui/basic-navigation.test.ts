@@ -162,9 +162,7 @@ test.describe('Basic Navigation E2E Tests', () => {
       await expect(submitButton).toHaveText(/Sign in|Login/);
       
       // Validate UX compliance - OAuth2 provider labels
-      await expect(page.locator('button:has-text("Continue with GitHub")')).toBeVisible();
       await expect(page.locator('button:has-text("Continue with Google")')).toBeVisible();
-      await expect(page.locator('button:has-text("Continue with Slack")')).toBeVisible();
     });
 
     test('should validate login form fields', async ({ page }) => {

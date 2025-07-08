@@ -49,9 +49,7 @@ test.describe('Authentication & Session E2E Tests - Best-in-Class UX', () => {
       await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
       
       // 4. OAUTH2 PROVIDERS WITH CLEAR LABELS (Adoption)
-      await expect(page.getByRole('button', { name: /Continue with GitHub/i })).toBeVisible();
       await expect(page.getByRole('button', { name: /Continue with Google/i })).toBeVisible();
-      await expect(page.getByRole('button', { name: /Continue with Slack/i })).toBeVisible();
       
       // 5. HELPFUL NAVIGATION LINKS (Adoption)
       await expect(page.getByRole('link', { name: /Forgot password/i })).toBeVisible();
@@ -144,19 +142,13 @@ test.describe('Authentication & Session E2E Tests - Best-in-Class UX', () => {
     test('should handle OAuth2 flows with clear provider labels', async ({ page }) => {
       await page.goto(`${BASE_URL}/login`);
       
-      // Verify OAuth2 buttons have clear, descriptive text
-      const githubButton = page.getByRole('button', { name: /Continue with GitHub/i });
+      // Verify OAuth2 button has clear, descriptive text
       const googleButton = page.getByRole('button', { name: /Continue with Google/i });
-      const slackButton = page.getByRole('button', { name: /Continue with Slack/i });
       
-      await expect(githubButton).toBeVisible();
       await expect(googleButton).toBeVisible();
-      await expect(slackButton).toBeVisible();
       
-      // Verify buttons have proper disabled state during loading
-      await expect(githubButton).not.toBeDisabled();
+      // Verify button has proper disabled state during loading
       await expect(googleButton).not.toBeDisabled();
-      await expect(slackButton).not.toBeDisabled();
     });
   });
 

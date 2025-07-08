@@ -31,7 +31,7 @@ A semi-agentic, low-code web application that enables non-technical users to cre
 
 ### Authentication & Security
 - **JWT Authentication** - Secure token-based authentication with role-based access control
-- **OAuth2 User Login** - Complete OAuth2 authentication flow for user login (Google, GitHub, Slack)
+- **OAuth2 User Login** - Complete OAuth2 authentication flow for user login (Google)
 - **Enterprise SSO** - SAML/OIDC support for Okta, Azure AD, Google Workspace
 - **OAuth2 API Integration** - Multi-provider OAuth2 authentication for API connections
 - **OAuth2 Frontend Integration** - Complete UI components for OAuth2 flows and token management
@@ -72,8 +72,8 @@ APIQ has been refactored to prioritize **natural language workflow creation** ov
 Instead of manually configuring API connections and building workflows step-by-step, users can simply describe what they want:
 
 ```
-User: "When a new GitHub issue is created, send a Slack notification to the team"
-AI: "I'll help you create a workflow that monitors GitHub for new issues and sends Slack notifications. Let me set this up for you..."
+User: "When a new email arrives, create a calendar event"
+AI: "I'll help you create a workflow that monitors your email and creates calendar events. Let me set this up for you..."
 ```
 
 ## 🏗️ Architecture
@@ -88,7 +88,7 @@ AI: "I'll help you create a workflow that monitors GitHub for new issues and sen
 - **Monitoring**: Audit logging, error tracking, performance monitoring
 
 ### OAuth2 System
-- **Multi-Provider Support**: GitHub, Google, Slack (extensible)
+- **Multi-Provider Support**: Google (extensible)
 - **Secure Token Management**: Encrypted storage with automatic refresh
 - **CSRF Protection**: State parameter validation
 - **Comprehensive Logging**: Complete OAuth2 event audit trail
@@ -159,8 +159,8 @@ To use OAuth2 authentication:
 
 1. **Configure OAuth2 providers** in your environment variables:
    ```bash
-   GITHUB_CLIENT_ID=your_github_client_id
-   GITHUB_CLIENT_SECRET=your_github_client_secret
+   # GitHub and Slack OAuth2 providers have been removed
+   # Only Google OAuth2 is currently supported
    GOOGLE_CLIENT_ID=your_google_client_id   # Required for Google OAuth2 tests
    GOOGLE_CLIENT_SECRET=your_google_client_secret   # Required for Google OAuth2 tests
    ```
@@ -199,7 +199,7 @@ To use enterprise SSO authentication:
    - Navigate to the dashboard
    - Click "Create Connection"
    - Select "OAuth2" as authentication type
-   - Choose provider (GitHub, Google, Slack)
+   - Choose provider (Google)
    - Enter client ID, client secret, and redirect URI
    - Configure required scopes
 
@@ -315,8 +315,8 @@ To use OAuth2 authentication:
 
 1. **Configure OAuth2 providers** in your environment variables:
    ```bash
-   GITHUB_CLIENT_ID=your_github_client_id
-   GITHUB_CLIENT_SECRET=your_github_client_secret
+   # GitHub and Slack OAuth2 providers have been removed
+   # Only Google OAuth2 is currently supported
    GOOGLE_CLIENT_ID=your_google_client_id   # Required for Google OAuth2 tests
    GOOGLE_CLIENT_SECRET=your_google_client_secret   # Required for Google OAuth2 tests
    ```

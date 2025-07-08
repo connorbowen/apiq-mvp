@@ -94,7 +94,7 @@ export default function OAuth2SetupPage() {
     try {
       const response = await apiClient.refreshOAuth2Token(
         connectionId,
-        connection.authConfig?.provider || 'github'
+        connection.authConfig?.provider || 'google'
       );
 
       if (response.success) {

@@ -2,6 +2,8 @@
 
 This guide provides step-by-step instructions for setting up real OAuth2 credentials for Google to enable end-to-end testing of OAuth2 flows.
 
+> **Note**: Currently, only Google OAuth2 is supported. GitHub and Slack OAuth2 providers have been removed to simplify the authentication system.
+
 ## Prerequisites
 
 - Google Cloud Console access
@@ -69,16 +71,15 @@ The test utilities will automatically use real credentials when available:
 
 ```typescript
 // tests/helpers/oauth2TestUtils.ts
-export function createTestOAuth2Config(provider: string = 'github') {
+export function createTestOAuth2Config(provider: string = 'google') {
   // Use real credentials if available, fallback to test values
   const configs = {
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID || 'test-github-client-id',
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || 'test-github-client-secret',
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || 'test-google-client-id',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'test-google-client-secret',
       redirectUri: process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
-      scope: 'repo user'
-    },
-    // ... other providers
+      scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly'
+    }
   };
 }
 ```
@@ -86,10 +87,7 @@ export function createTestOAuth2Config(provider: string = 'github') {
 ### 2. Run Full OAuth2 Test Suite
 
 ```bash
-# Test all OAuth2 providers
-npm test -- tests/integration/api/oauth2-*.test.ts
-
-# Test individual providers
+# Test OAuth2 provider
 npm test -- tests/integration/api/oauth2-google.test.ts
 ```
 
@@ -145,9 +143,9 @@ OAUTH2_DEBUG=true
 
 ## Next Steps
 
-1. Set up real OAuth2 credentials for each provider
+1. Set up real Google OAuth2 credentials
 2. Update environment variables
-3. Run comprehensive OAuth2 test suite
+3. Run Google OAuth2 test suite
 4. Implement real OAuth2 flow testing
 5. Document any provider-specific requirements
 

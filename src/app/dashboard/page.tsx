@@ -933,9 +933,7 @@ function CreateConnectionModal({ onClose, onSuccess, onError }: { onClose: () =>
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="">Select Provider</option>
-                    <option value="github">GitHub</option>
                     <option value="google">Google</option>
-                    <option value="slack">Slack</option>
                   </select>
                 </div>
                 <div>

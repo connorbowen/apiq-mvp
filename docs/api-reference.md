@@ -153,7 +153,7 @@ Generate a workflow from natural language description.
 {
   "description": "When a new GitHub issue is created, send a Slack notification",
   "context": {
-    "availableConnections": ["github", "slack"],
+    "availableConnections": ["google"],
     "previousMessages": []
   }
 }
@@ -165,34 +165,36 @@ Generate a workflow from natural language description.
   "success": true,
   "workflow": {
     "id": "workflow_123",
-    "name": "GitHub Issue to Slack Notification",
-    "description": "Automatically notify Slack when new GitHub issues are created",
+    "name": "New Email to Calendar Event",
+    "description": "Automatically create a calendar event when a new email arrives",
     "steps": [
       {
         "id": "step_1",
         "type": "trigger",
-        "service": "github",
-        "action": "issue.created",
+        "service": "gmail",
+        "action": "email.received",
         "config": {
-          "repository": "owner/repo"
+          "label": "inbox"
         }
       },
       {
         "id": "step_2",
         "type": "action",
-        "service": "slack",
-        "action": "message.send",
+        "service": "google_calendar",
+        "action": "event.create",
         "config": {
-          "channel": "#general",
-          "message": "New issue created: {{step_1.title}}"
+          "calendarId": "primary",
+          "summary": "New email from {{step_1.from}}",
+          "description": "{{step_1.subject}}"
         }
       }
     ],
     "dataMapping": {
-      "step_2.message": "New issue created: {{step_1.title}} - {{step_1.url}}"
+      "step_2.summary": "New email from {{step_1.from}}",
+      "step_2.description": "{{step_1.subject}}"
     }
   },
-  "explanation": "This workflow will monitor your GitHub repository for new issues and automatically send notifications to your Slack channel.",
+  "explanation": "This workflow will monitor your Gmail inbox for new emails and automatically create calendar events.",
   "alternatives": [
     {
       "name": "Enhanced Notification",

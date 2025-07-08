@@ -44,8 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Get OAuth2 configuration
     const config = {
-      clientId: process.env.GITHUB_CLIENT_ID || '',
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || '',
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       authorizationUrl: '',
       tokenUrl: '',
       redirectUri: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/oauth/callback`,

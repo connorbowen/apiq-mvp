@@ -18,14 +18,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         message: 'OAuth2 test endpoint working',
         providers: [
           {
-            name: 'github',
-            displayName: 'GitHub',
-            authorizationUrl: 'https://github.com/login/oauth/authorize',
-            tokenUrl: 'https://github.com/login/oauth/access_token',
-            scope: 'repo user',
-            userInfoUrl: 'https://api.github.com/user'
-          },
-          {
             name: 'google',
             displayName: 'Google',
             authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -34,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo'
           }
         ],
-        count: 2
+        count: 1
       }
     });
 
