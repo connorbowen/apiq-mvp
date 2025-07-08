@@ -63,6 +63,9 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         // Should redirect to login page
         await expect(page).toHaveURL(/.*login/);
         
+        // Add a small delay to ensure password reset is fully committed
+        await page.waitForTimeout(1000);
+        
         // Step 4: Verify old password no longer works
         await page.goto(`${BASE_URL}/login`);
         await page.fill('input[name="email"]', testEmail);
@@ -141,7 +144,6 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         const resetToken = await prisma.passwordResetToken.findFirst({
           where: { email: testEmail }
         });
-        
         expect(resetToken).toBeTruthy();
         
         // Manually expire the token in database
@@ -160,13 +162,12 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         
         // Should show error for expired token
         await expect(page.locator('.bg-red-50')).toContainText(/expired|invalid/i);
-        
-        // Verify token was cleaned up
-        const deletedToken = await prisma.passwordResetToken.findUnique({
-          where: { token: resetToken!.token }
-        });
-        expect(deletedToken).toBeNull();
-        
+        // Should show disabled form fields and button
+        await expect(page.locator('input[name="password"]')).toBeDisabled();
+        await expect(page.locator('input[name="confirmPassword"]')).toBeDisabled();
+        await expect(page.locator('button[type="submit"]')).toBeDisabled();
+        // Should show a link to request a new reset
+        await expect(page.locator('a[href="/forgot-password"]')).toContainText(/request a new password reset/i);
       } finally {
         // Clean up test data
         await prisma.passwordResetToken.deleteMany({

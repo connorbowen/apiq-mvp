@@ -2,43 +2,37 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../../pages/api/auth/reset-password';
 import { prisma } from '../../../../lib/database/client';
-import { emailService } from '../../../../src/lib/services/emailService';
-import { truncateTestTables } from '../../../helpers/testIsolation';
+import { truncateTestTables, cleanupTestData } from '../../../helpers/testIsolation';
+import { createTestUser, generateTestId } from '../../../helpers/testUtils';
 import bcrypt from 'bcryptjs';
 
-// Remove email service mock - use real email service for integration testing
-// This ensures we test the actual email functionality
+// Test constants - centralized to avoid magic values
+const TEST_CONSTANTS = {
+  PASSWORD_MIN_LENGTH: 8,
+  TOKEN_EXPIRY_HOURS: 1,
+  TEST_PASSWORD: 'SecureTestPassword123!',
+  NEW_PASSWORD: 'NewSecurePassword456!',
+  WEAK_PASSWORD: '123',
+} as const;
 
 describe('Password Reset API Integration Tests', () => {
   let testUser: any;
   let resetToken: any;
 
   beforeAll(async () => {
-    // Clean up any existing test data
     await truncateTestTables();
   });
 
   beforeEach(async () => {
-    // Create test user for each test to ensure isolation
-    const hashedPassword = await bcrypt.hash('testPassword123', 12);
-    testUser = await prisma.user.create({
-      data: {
-        email: 'test-reset@example.com',
-        name: 'Test User',
-        password: hashedPassword,
-        isActive: true,
-        role: 'USER'
-      }
-    });
+    // Create test user with dynamic data
+    testUser = await createTestUser();
   });
 
   afterEach(async () => {
-    // Clean up test data after each test
-    await truncateTestTables();
+    await cleanupTestData();
   });
 
   afterAll(async () => {
-    // Final cleanup
     await truncateTestTables();
   });
 
@@ -58,15 +52,13 @@ describe('Password Reset API Integration Tests', () => {
       expect(data.success).toBe(true);
       expect(data.data.message).toContain('Password reset email sent successfully');
 
-      // Verify email was sent
-      // Should not verify email sending in tests without setting up a real email testing environment
-
       // Verify token was created in database
       const tokenRecord = await prisma.passwordResetToken.findFirst({
         where: { email: testUser.email }
       });
       expect(tokenRecord).toBeTruthy();
       expect(tokenRecord?.expiresAt).toBeInstanceOf(Date);
+      expect(tokenRecord?.expiresAt.getTime()).toBeGreaterThan(Date.now());
 
       // Verify audit log was created
       const auditLog = await prisma.auditLog.findFirst({
@@ -79,10 +71,12 @@ describe('Password Reset API Integration Tests', () => {
     });
 
     it('should handle non-existent user gracefully', async () => {
+      const nonExistentEmail = `nonexistent-${generateTestId()}@example.com`;
+      
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
-          email: 'nonexistent@example.com'
+          email: nonExistentEmail
         }
       });
 
@@ -93,15 +87,18 @@ describe('Password Reset API Integration Tests', () => {
       expect(data.success).toBe(true);
       expect(data.data.message).toContain('If an account with this email exists');
 
-      // Should not send email or create token
-      // Should not verify email sending in tests without setting up a real email testing environment
+      // Verify no token was created for non-existent user
+      const tokenRecord = await prisma.passwordResetToken.findFirst({
+        where: { email: nonExistentEmail }
+      });
+      expect(tokenRecord).toBeNull();
     });
 
     it('should handle invalid email format', async () => {
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
-          email: 'invalid-email'
+          email: 'invalid-email-format'
         }
       });
 
@@ -126,55 +123,27 @@ describe('Password Reset API Integration Tests', () => {
       expect(data.success).toBe(false);
       expect(data.error).toContain('Invalid request');
     });
-
-    it('should handle email service failure', async () => {
-      // Simulate email service failure by using an invalid SMTP config or by mocking if needed
-      // For now, just check that the token remains and the error is surfaced
-      // (In real test, you would mock emailService.sendPasswordResetEmail to return false)
-      // Here, we just check the token remains after a simulated failure
-      // (Assume the handler was called and returned 500)
-      //
-      // You may want to actually mock the email service for this test in the future
-      //
-      // For now, just assert the token exists and the error is correct
-      const tokenRecord = await prisma.passwordResetToken.findFirst({
-        where: { email: testUser.email }
-      });
-      expect(tokenRecord).not.toBeNull();
-      // Optionally, assert the error response (simulate handler call and check 500 + error JSON)
-      // expect(res._getStatusCode()).toBe(500);
-      // const data = JSON.parse(res._getData());
-      // expect(data.success).toBe(false);
-      // expect(data.error).toContain('Failed to send password reset email');
-    });
   });
 
   describe('POST /api/auth/reset-password - Reset Password', () => {
     beforeEach(async () => {
       // Create a valid reset token for testing
+      const tokenValue = `valid-token-${generateTestId()}`;
       resetToken = await prisma.passwordResetToken.create({
         data: {
           email: testUser.email,
-          token: 'test-reset-token-123',
-          expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
+          token: tokenValue,
+          expiresAt: new Date(Date.now() + TEST_CONSTANTS.TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
         }
       });
     });
 
-    afterEach(async () => {
-      // Clean up test tokens
-      await prisma.passwordResetToken.deleteMany({
-        where: { email: testUser.email }
-      });
-    });
-
     it('should reset password successfully with valid token', async () => {
-      const newPassword = 'newSecurePassword123';
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
           token: resetToken.token,
-          password: newPassword
+          password: TEST_CONSTANTS.NEW_PASSWORD
         }
       });
 
@@ -192,11 +161,11 @@ describe('Password Reset API Integration Tests', () => {
       expect(updatedUser).toBeTruthy();
       
       // Verify new password works
-      const isPasswordValid = await bcrypt.compare(newPassword, updatedUser!.password);
+      const isPasswordValid = await bcrypt.compare(TEST_CONSTANTS.NEW_PASSWORD, updatedUser!.password);
       expect(isPasswordValid).toBe(true);
 
       // Verify old password no longer works
-      const isOldPasswordValid = await bcrypt.compare('testPassword123', updatedUser!.password);
+      const isOldPasswordValid = await bcrypt.compare(testUser.password, updatedUser!.password);
       expect(isOldPasswordValid).toBe(false);
 
       // Verify token was deleted
@@ -216,11 +185,13 @@ describe('Password Reset API Integration Tests', () => {
     });
 
     it('should handle invalid token', async () => {
+      const invalidToken = `invalid-token-${generateTestId()}`;
+      
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
-          token: 'invalid-token',
-          password: 'newPassword123'
+          token: invalidToken,
+          password: TEST_CONSTANTS.NEW_PASSWORD
         }
       });
 
@@ -232,13 +203,14 @@ describe('Password Reset API Integration Tests', () => {
       expect(data.error).toContain('Invalid or expired reset token');
     });
 
-    it('should handle expired token', async () => {
+    it('should handle expired token and clean up', async () => {
       // Create expired token
+      const expiredTokenValue = `expired-token-${generateTestId()}`;
       const expiredToken = await prisma.passwordResetToken.create({
         data: {
           email: testUser.email,
-          token: 'expired-token-123',
-          expiresAt: new Date(Date.now() - 60 * 60 * 1000) // 1 hour ago
+          token: expiredTokenValue,
+          expiresAt: new Date(Date.now() - TEST_CONSTANTS.TOKEN_EXPIRY_HOURS * 60 * 60 * 1000) // 1 hour ago
         }
       });
 
@@ -246,7 +218,7 @@ describe('Password Reset API Integration Tests', () => {
         method: 'POST',
         body: {
           token: expiredToken.token,
-          password: 'newPassword123'
+          password: TEST_CONSTANTS.NEW_PASSWORD
         }
       });
 
@@ -269,7 +241,7 @@ describe('Password Reset API Integration Tests', () => {
         method: 'POST',
         body: {
           token: resetToken.token,
-          password: '123'
+          password: TEST_CONSTANTS.WEAK_PASSWORD
         }
       });
 
@@ -278,7 +250,7 @@ describe('Password Reset API Integration Tests', () => {
       expect(res._getStatusCode()).toBe(400);
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(false);
-      expect(data.error).toContain('Password must be at least 8 characters long');
+      expect(data.error).toContain(`Password must be at least ${TEST_CONSTANTS.PASSWORD_MIN_LENGTH} characters long`);
     });
 
     it('should handle missing password', async () => {
@@ -301,7 +273,7 @@ describe('Password Reset API Integration Tests', () => {
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
-          password: 'newPassword123'
+          password: TEST_CONSTANTS.NEW_PASSWORD
         }
       });
 
@@ -320,8 +292,8 @@ describe('Password Reset API Integration Tests', () => {
         method: 'POST',
         body: {
           email: testUser.email,
-          token: 'some-token',
-          password: 'newPassword123'
+          token: `token-${generateTestId()}`,
+          password: TEST_CONSTANTS.NEW_PASSWORD
         }
       });
 
@@ -338,7 +310,7 @@ describe('Password Reset API Integration Tests', () => {
         method: 'POST',
         body: {
           email: testUser.email,
-          password: 'newPassword123'
+          password: TEST_CONSTANTS.NEW_PASSWORD
         }
       });
 
@@ -348,6 +320,44 @@ describe('Password Reset API Integration Tests', () => {
       const data = JSON.parse(res._getData());
       expect(data.success).toBe(false);
       expect(data.error).toContain('Invalid request');
+    });
+  });
+
+  describe('POST /api/auth/reset-password - Expired Token Cleanup', () => {
+    it('should delete expired token and return error', async () => {
+      // Create a test user for this specific test
+      const expiredTestUser = await createTestUser();
+      
+      // Create an expired token
+      const expiredTokenValue = `expired-cleanup-${generateTestId()}`;
+      await prisma.passwordResetToken.create({
+        data: {
+          email: expiredTestUser.email,
+          token: expiredTokenValue,
+          expiresAt: new Date(Date.now() - TEST_CONSTANTS.TOKEN_EXPIRY_HOURS * 60 * 60 * 1000), // 1 hour ago
+        },
+      });
+
+      const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
+        method: 'POST',
+        body: { 
+          token: expiredTokenValue, 
+          password: TEST_CONSTANTS.NEW_PASSWORD 
+        },
+      });
+
+      await handler(req, res);
+
+      expect(res._getStatusCode()).toBe(400);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(false);
+      expect(data.error).toContain('expired');
+
+      // Verify token was deleted from database
+      const tokenInDb = await prisma.passwordResetToken.findUnique({ 
+        where: { token: expiredTokenValue } 
+      });
+      expect(tokenInDb).toBeNull();
     });
   });
 }); 

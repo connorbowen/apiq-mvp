@@ -228,10 +228,19 @@ class ApiClient {
    * ```
    */
   async requestPasswordReset(email: string): Promise<ApiResponse<{ message: string }>> {
-    return this.request('/api/auth/reset-password', {
+    const response = await this.request<{ message: string }>('/api/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
+    
+    // Handle the nested data structure from the API
+    if (response.success && response.data) {
+      return {
+        success: true,
+        data: response.data
+      };
+    }
+    return response;
   }
 
   /**
@@ -248,10 +257,19 @@ class ApiClient {
    * ```
    */
   async resetPassword(token: string, password: string): Promise<ApiResponse<{ message: string }>> {
-    return this.request('/api/auth/reset-password', {
+    const response = await this.request<{ message: string }>('/api/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify({ token, password }),
     });
+    
+    // Handle the nested data structure from the API
+    if (response.success && response.data) {
+      return {
+        success: true,
+        data: response.data
+      };
+    }
+    return response;
   }
 
   /**

@@ -2,7 +2,72 @@
 
 This guide covers common issues and their solutions when working with the APIQ project.
 
-## 🚨 Common Issues
+## �� Common Issues
+
+### Password Reset Issues
+
+#### Issue: Users can't log in after password reset
+**Error**: Login fails after successful password reset completion
+
+**Solution**: This issue has been resolved in the latest version. The password reset flow now properly handles:
+- Database transaction management to prevent partial updates
+- Proper error handling and logging for debugging
+- Token cleanup to prevent database bloat
+- Enhanced audit logging for security monitoring
+
+**If you encounter this issue**:
+```bash
+# Check the latest logs for password reset operations
+grep "password_reset" logs/app.log
+
+# Verify the user exists in the database
+psql -d apiq -c "SELECT id, email, isActive FROM users WHERE email = 'user@example.com';"
+
+# Check for expired tokens that might be causing issues
+psql -d apiq -c "SELECT email, expiresAt FROM password_reset_tokens WHERE expiresAt < NOW();"
+```
+
+#### Issue: Password reset tokens not being cleaned up
+**Error**: Expired tokens remain in database after use
+
+**Solution**: This has been fixed. Expired tokens are now immediately deleted when accessed:
+- Token deletion moved outside transaction to ensure cleanup
+- Automatic cleanup prevents database bloat
+- Enhanced logging for monitoring token lifecycle
+
+**Verification**:
+```bash
+# Check for any remaining expired tokens
+psql -d apiq -c "SELECT COUNT(*) FROM password_reset_tokens WHERE expiresAt < NOW();"
+
+# Should return 0 if cleanup is working properly
+```
+
+#### Issue: Password reset email not received
+**Error**: User requests password reset but doesn't receive email
+
+**Solution**:
+```bash
+# Check email service configuration
+grep "SMTP" .env
+
+# Verify email service is running
+npm run test:email
+
+# Check email logs for delivery status
+grep "Email sent" logs/app.log
+```
+
+#### Issue: Password reset form shows "token expired" immediately
+**Error**: Form displays expired token error right after clicking reset link
+
+**Solution**: This indicates the token has actually expired. The system now:
+- Provides clear error messages about token expiration
+- Offers navigation to request a new password reset
+- Disables form fields when token is expired
+- Maintains security by not allowing expired token usage
+
+**User Action**: Click "Request new password reset" link to get a fresh token.
 
 ### Prisma Client Issues
 
@@ -155,6 +220,37 @@ grep -E "DATABASE_URL|JWT_SECRET|OPENAI_API_KEY" .env
 ```
 
 ## 🧪 Testing & Verification
+
+### Password Reset Testing
+
+#### Verify Password Reset Flow
+```bash
+# Run password reset E2E tests
+npm run test:e2e -- tests/e2e/auth/password-reset.test.ts
+
+# Run password reset integration tests
+npm run test:integration -- tests/integration/api/auth/reset-password.integration.test.ts
+
+# Expected results: All tests should pass
+# - 23/23 E2E tests passing
+# - 13/13 integration tests passing
+```
+
+#### Test Password Reset Manually
+```bash
+# Start the development server
+npm run dev
+
+# Navigate to forgot password page
+open http://localhost:3000/forgot-password
+
+# Follow the password reset flow
+# 1. Enter email address
+# 2. Check email for reset link
+# 3. Click reset link
+# 4. Enter new password
+# 5. Verify login works with new password
+```
 
 ### Jest Configuration Issues
 

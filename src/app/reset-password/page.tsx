@@ -112,11 +112,10 @@ export default function ResetPasswordPage() {
     try {
       const response = await apiClient.resetPassword(token, password);
       if (response.success) {
-        // Add small delay to ensure loading state is observable by Playwright
-        setTimeout(() => {
-          setSuccess("Password reset successful! You can now log in.");
-          setTimeout(() => router.push("/login"), 2000);
-        }, 150);
+        // Show success message immediately
+        setSuccess("Password reset successful! You can now log in.");
+        // Redirect to login page after a short delay
+        setTimeout(() => router.push("/login"), 1000);
       } else {
         setError(response.error || "Failed to reset password");
         setIsLoading(false);

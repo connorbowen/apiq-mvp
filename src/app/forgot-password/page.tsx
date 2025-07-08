@@ -55,6 +55,8 @@ export default function ForgotPasswordPage() {
     setError("");
     setValidationError("");
     
+    console.log('[DEBUG] Form submitted with email:', email);
+    
     // Client-side validation
     const emailError = validateEmail(email);
     if (emailError) {
@@ -64,17 +66,22 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
     try {
+      console.log('[DEBUG] Making API call to requestPasswordReset...');
       const response = await apiClient.requestPasswordReset(email);
+      console.log('[DEBUG] API response:', response);
+      
       if (response.success) {
-        // Reset loading state before redirect
-        setIsLoading(false);
+        console.log('[DEBUG] API call successful, redirecting...');
+        // Keep loading state during redirect for better UX
         // Redirect to success page with email parameter
         router.push(`/forgot-password-success?email=${encodeURIComponent(email)}`);
       } else {
+        console.log('[DEBUG] API call failed:', response.error);
         setError(response.error || "Failed to send reset email");
         setIsLoading(false);
       }
     } catch (error) {
+      console.log('[DEBUG] API call threw error:', error);
       setError("Network error. Please try again.");
       setIsLoading(false);
     }

@@ -89,8 +89,16 @@ export const authenticateUser = async (email: string, password: string): Promise
     throw new ApplicationError('Invalid credentials', 401, 'INVALID_CREDENTIALS');
   }
   
+  console.log('[DEBUG] Login attempt for user:', {
+    email,
+    dbHash: user.password,
+    incomingPassword: password,
+    at: new Date().toISOString(),
+  });
+
   // Always use bcrypt for password validation - no plain text fallback
   const isPasswordValid = await bcrypt.compare(password, user.password);
+  console.log('[DEBUG] bcrypt.compare result:', isPasswordValid);
   
   if (!isPasswordValid) {
     throw new ApplicationError('Invalid credentials', 401, 'INVALID_CREDENTIALS');

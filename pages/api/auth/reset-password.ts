@@ -177,75 +177,61 @@ async function handlePasswordReset(req: NextApiRequest, res: NextApiResponse, to
     throw new ApplicationError('Password must be at least 8 characters long', 400, 'WEAK_PASSWORD');
   }
 
-  // Find password reset token
-  const resetToken = await prisma.passwordResetToken.findUnique({
-    where: { token }
-  });
-
+  // Find the reset token first
+  const resetToken = await prisma.passwordResetToken.findUnique({ where: { token } });
   if (!resetToken) {
     throw new ApplicationError('Invalid or expired reset token', 400, 'INVALID_TOKEN');
   }
 
-  // Check if token is expired
+  // If expired, delete immediately (outside transaction)
   if (resetToken.expiresAt < new Date()) {
-    // Clean up expired token
-    await prisma.passwordResetToken.delete({
-      where: { token }
-    });
-    
+    await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
     throw new ApplicationError('Reset token has expired', 400, 'EXPIRED_TOKEN');
   }
 
   // Find user by email
-  const user = await prisma.user.findUnique({
-    where: { email: resetToken.email }
-    });
-
+  const user = await prisma.user.findUnique({ where: { email: resetToken.email } });
   if (!user) {
     // Clean up orphaned token
-    await prisma.passwordResetToken.delete({
-      where: { token }
-    });
-    
+    await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
     throw new ApplicationError('User not found', 404, 'USER_NOT_FOUND');
   }
 
-  // Hash the new password
-  const hashedPassword = await bcrypt.hash(password, 12);
-
-  // Update user's password
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { 
-      password: hashedPassword,
-      updatedAt: new Date()
-    }
-  });
-
-  // Delete the used reset token
-  await prisma.passwordResetToken.delete({
-    where: { token }
-  });
-
-  // Log the password reset
-  await prisma.auditLog.create({
-    data: {
-      userId: user.id,
-      action: 'PASSWORD_RESET',
-      resource: 'USER',
-      resourceId: user.id,
-      details: {
-        email: resetToken.email,
-        resetViaToken: true
-      },
-      ipAddress: req.headers['x-forwarded-for'] as string || req.socket.remoteAddress,
-      userAgent: req.headers['user-agent']
-    }
+  // Use a transaction for the actual password reset operations
+  const result = await prisma.$transaction(async (tx) => {
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 12);
+    // Update user's password
+    const updatedUser = await tx.user.update({
+      where: { id: user.id },
+      data: { 
+        password: hashedPassword,
+        updatedAt: new Date()
+      }
+    });
+    // Delete the used reset token
+    await tx.passwordResetToken.delete({ where: { id: resetToken.id } });
+    // Log the password reset
+    await tx.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'PASSWORD_RESET',
+        resource: 'USER',
+        resourceId: user.id,
+        details: {
+          email: resetToken.email,
+          resetViaToken: true
+        },
+        ipAddress: req.headers['x-forwarded-for'] as string || req.socket.remoteAddress,
+        userAgent: req.headers['user-agent']
+      }
+    });
+    return { user, resetToken };
   });
 
   logInfo('Password reset successful', {
-    userId: user.id,
-    email: resetToken.email
+    userId: result.user.id,
+    email: result.resetToken.email
   });
 
   // Return success response
