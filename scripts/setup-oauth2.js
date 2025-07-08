@@ -59,7 +59,7 @@ function checkEnvironmentVariables() {
   }
 
   const envContent = fs.readFileSync(envPath, 'utf8');
-  const providers = ['GITHUB', 'GOOGLE', 'SLACK'];
+  const providers = ['GOOGLE'];
   let hasCredentials = false;
 
   providers.forEach(provider => {
@@ -80,14 +80,7 @@ function checkEnvironmentVariables() {
 function showSetupInstructions() {
   logHeader('OAuth2 Setup Instructions');
   
-  logStep('1. GitHub OAuth2 Setup:');
-  log('   - Go to: https://github.com/settings/developers');
-  log('   - Click "New OAuth App"');
-  log('   - Application name: APIQ MVP Test');
-  log('   - Homepage URL: http://localhost:3000');
-  log('   - Authorization callback URL: http://localhost:3000/api/oauth/callback');
-  
-  logStep('2. Google OAuth2 Setup:');
+  logStep('1. Google OAuth2 Setup:');
   log('   - Go to: https://console.cloud.google.com/');
   log('   - Create new project or select existing');
   log('   - Enable Google+ API and Google Calendar API');
@@ -96,22 +89,10 @@ function showSetupInstructions() {
   log('   - Application type: Web application');
   log('   - Authorized redirect URIs: http://localhost:3000/api/oauth/callback');
   
-  logStep('3. Slack OAuth2 Setup:');
-  log('   - Go to: https://api.slack.com/apps');
-  log('   - Click "Create New App" > "From scratch"');
-  log('   - App Name: APIQ MVP Test');
-  log('   - Go to "OAuth & Permissions"');
-  log('   - Add redirect URL: http://localhost:3000/api/oauth/callback');
-  log('   - Add scopes: channels:read, chat:write, users:read');
-  
-  logStep('4. Update .env file:');
+  logStep('2. Update .env file:');
   log('   Add these variables to your .env file:');
-  log('   GITHUB_CLIENT_ID="your-github-client-id"');
-  log('   GITHUB_CLIENT_SECRET="your-github-client-secret"');
   log('   GOOGLE_CLIENT_ID="your-google-client-id"');
   log('   GOOGLE_CLIENT_SECRET="your-google-client-secret"');
-  log('   SLACK_CLIENT_ID="your-slack-client-id"');
-  log('   SLACK_CLIENT_SECRET="your-slack-client-secret"');
   log('   OAUTH2_REDIRECT_URI="http://localhost:3000/api/oauth/callback"');
 }
 
@@ -119,27 +100,11 @@ function runTests() {
   logHeader('Running OAuth2 Tests');
   
   try {
-    logStep('Running GitHub OAuth2 tests...');
-    execSync('npm test -- tests/integration/api/oauth2-github.test.ts --verbose', { stdio: 'inherit' });
-    logSuccess('GitHub OAuth2 tests completed');
-  } catch (error) {
-    logError('GitHub OAuth2 tests failed');
-  }
-  
-  try {
     logStep('Running Google OAuth2 tests...');
     execSync('npm test -- tests/integration/api/oauth2-google.test.ts --verbose', { stdio: 'inherit' });
     logSuccess('Google OAuth2 tests completed');
   } catch (error) {
     logError('Google OAuth2 tests failed');
-  }
-  
-  try {
-    logStep('Running Slack OAuth2 tests...');
-    execSync('npm test -- tests/integration/api/oauth2-slack.test.ts --verbose', { stdio: 'inherit' });
-    logSuccess('Slack OAuth2 tests completed');
-  } catch (error) {
-    logError('Slack OAuth2 tests failed');
   }
 }
 
@@ -150,9 +115,7 @@ function showManualTestingInstructions() {
   log('   npm run dev');
   
   logStep('2. Test OAuth2 authorization flows:');
-  log('   GitHub: http://localhost:3000/api/oauth/authorize?provider=github&apiConnectionId=test');
   log('   Google: http://localhost:3000/api/oauth/authorize?provider=google&apiConnectionId=test');
-  log('   Slack: http://localhost:3000/api/oauth/authorize?provider=slack&apiConnectionId=test');
   
   logStep('3. Check callback handling:');
   log('   Callback URL: http://localhost:3000/api/oauth/callback');

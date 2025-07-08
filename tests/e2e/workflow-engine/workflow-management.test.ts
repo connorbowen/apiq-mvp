@@ -89,6 +89,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       // Navigate to workflows tab in dashboard
       await page.getByTestId('tab-workflows').click();
       
+      // Wait for the WorkflowsTab component to render and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      
       // Validate UX compliance - heading hierarchy (UX spec requirement)
       await uxHelper.validateHeadingHierarchy(['Workflows']);
       await expect(page.getByRole('heading', { name: /Workflows/ })).toBeVisible();
@@ -161,7 +164,14 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
     test('should handle workflow generation errors with clear messaging', async ({ page }) => {
       // Navigate to create workflow page
       await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the WorkflowsTab component to render and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      
       await page.getByTestId('create-workflow-btn').click();
+      
+      // Wait for the create workflow page to load
+      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
       
       // Test with invalid/empty input
       const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
@@ -182,15 +192,24 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
     test('should provide alternative workflow suggestions', async ({ page }) => {
       // Navigate to create workflow page
       await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the WorkflowsTab component to render and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      
       await page.getByTestId('create-workflow-btn').click();
+      
+      // Wait for the create workflow page to load
+      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
       
       // Create a workflow that might have alternatives
       const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
       await chatInput.fill('Send notifications when something happens');
       await page.getByRole('button', { name: 'Generate' }).click();
       
-      // Wait for response
-      await expect(page.getByText(/I've created a workflow for you/)).toBeVisible();
+      // Wait for response - look for the success message in the chat
+      // The API call might take a moment, so wait for the success message to appear
+      await page.waitForSelector('[data-testid="workflow-success-chat-message"]', { timeout: 15000 });
+      await expect(page.getByTestId('workflow-success-chat-message')).toBeVisible();
       
       // Check for alternative suggestions (UX spec requirement)
       const alternativesSection = page.getByText(/Alternative approaches/);
@@ -245,9 +264,8 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
         await expect(workflowCard.first()).toBeVisible();
         await expect(workflowCard.first().locator('p.text-sm.font-medium.text-gray-900')).toContainText(/[A-Za-z]/); // Workflow name
         
-        // Test workflow actions
-        const viewLink = workflowCard.first().getByRole('link', { name: /View/ });
-        await expect(viewLink).toBeVisible();
+        // Test workflow actions - the entire card is now clickable
+        await expect(workflowCard.first()).toBeVisible();
         
         // Test delete workflow with confirmation (UX spec requirement)
         const deleteButton = workflowCard.first().getByRole('button', { name: /Delete/ });
@@ -255,6 +273,7 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
           await deleteButton.click();
           
           // Should show confirmation dialog (UX spec requirement)
+          await page.waitForSelector('div[role="dialog"]', { timeout: 5000 });
           await expect(page.getByText(/Are you sure you want to delete/)).toBeVisible();
           
           // Cancel deletion
@@ -274,6 +293,10 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       
       // Navigate to workflows page
       await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the WorkflowsTab component to render and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      
       await page.getByTestId('create-workflow-btn').click();
       
       // Wait for the create workflow page to load
@@ -307,7 +330,14 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       
       // Navigate to workflows page
       await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the WorkflowsTab component to render and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      
       await page.getByTestId('create-workflow-btn').click();
+      
+      // Wait for the create workflow page to load
+      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
       
       // Try to generate without input
       await page.getByRole('button', { name: /Generate/ }).click();
@@ -334,8 +364,13 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       const workflowsButton = page.locator('#mobile-menu button').filter({ hasText: 'Workflows' });
       await workflowsButton.click();
       
-      // Wait for workflows tab to be active and click create button
+      // Wait for workflows tab to be active and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      
       await page.getByTestId('create-workflow-btn').click();
+      
+      // Wait for the create workflow page to load
+      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
       
       // Validate mobile layout (UX spec requirement)
       await expect(page.getByPlaceholder(/Describe your workflow in plain English/)).toBeVisible();
@@ -353,7 +388,14 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       
       // Navigate to workflows page
       await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the WorkflowsTab component to render and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      
       await page.getByTestId('create-workflow-btn').click();
+      
+      // Wait for the create workflow page to load
+      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
       
       // Fill workflow description
       const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
@@ -363,8 +405,8 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       const generateButton = page.getByRole('button', { name: /Generate/ });
       await generateButton.click();
       
-      // Wait for loading state to be set
-      await page.waitForTimeout(100);
+      // Wait for loading state to be set - wait for button to be disabled
+      await page.waitForSelector('button[disabled]', { timeout: 5000 });
       
       // Validate UX compliance - loading state
       await expect(generateButton).toBeDisabled();
@@ -386,7 +428,7 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       // Look for existing workflow
       const workflowCard = page.getByTestId('workflow-card');
       if (await workflowCard.count() > 0) {
-        // Click on first workflow
+        // Click on the workflow card to navigate to workflow detail page
         await workflowCard.first().click();
         
         // Should navigate to workflow detail page
@@ -419,7 +461,7 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       // Look for existing workflow
       const workflowCard = page.getByTestId('workflow-card');
       if (await workflowCard.count() > 0) {
-        // Click on first workflow
+        // Click on the workflow card to navigate to workflow detail page
         await workflowCard.first().click();
         
         // Should show workflow details (UX spec requirement)
@@ -443,7 +485,14 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       
       // Navigate to workflows page
       await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the WorkflowsTab component to render and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      
       await page.getByTestId('create-workflow-btn').click();
+      
+      // Wait for the create workflow page to load
+      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
       
       // Test network error handling by temporarily breaking the connection
       // This would require mocking in a real test, but we'll test the UI response
@@ -467,7 +516,14 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       
       // Navigate to workflows page
       await page.getByTestId('tab-workflows').click();
+      
+      // Wait for the WorkflowsTab component to render and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
+      
       await page.getByTestId('create-workflow-btn').click();
+      
+      // Wait for the create workflow page to load
+      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
       
       // Test validation error recovery
       const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
@@ -594,6 +650,9 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       
       // Wait for workflows page to load
       await page.waitForSelector('h1:has-text("Workflows")', { timeout: 10000 });
+      
+      // Wait for the WorkflowsTab component to render and the create button to be available
+      await page.waitForSelector('[data-testid="create-workflow-btn"]', { timeout: 10000 });
       
       // Navigate to create workflow page
       await page.getByTestId('create-workflow-btn').click();

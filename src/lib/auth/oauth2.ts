@@ -55,15 +55,6 @@ export class OAuth2Service {
   }
 
   private initializeProviders(): void {
-    // GitHub OAuth2
-    this.providers.set('github', {
-      name: 'GitHub',
-      authorizationUrl: 'https://github.com/login/oauth/authorize',
-      tokenUrl: 'https://github.com/login/oauth/access_token',
-      scope: 'repo user',
-      userInfoUrl: 'https://api.github.com/user'
-    });
-
     // Google OAuth2
     this.providers.set('google', {
       name: 'Google',
@@ -71,15 +62,6 @@ export class OAuth2Service {
       tokenUrl: 'https://oauth2.googleapis.com/token',
       scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
       userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo'
-    });
-
-    // Slack OAuth2
-    this.providers.set('slack', {
-      name: 'Slack',
-      authorizationUrl: 'https://slack.com/oauth/v2/authorize',
-      tokenUrl: 'https://slack.com/api/oauth.v2.access',
-      scope: 'channels:read chat:write users:read',
-      userInfoUrl: 'https://slack.com/api/users.info'
     });
   }
 

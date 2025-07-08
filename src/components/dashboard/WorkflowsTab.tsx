@@ -169,7 +169,7 @@ export default function WorkflowsTab({
         </div>
         <Link
           href="/workflows/create"
-          data-testid="create-workflow-btn primary-action"
+          data-testid="primary-action create-workflow-btn"
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors text-center min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           Create Workflow
@@ -205,7 +205,7 @@ export default function WorkflowsTab({
               <div className="mt-6">
                 <Link
                   href="/workflows/create"
-                  data-testid="primary-action"
+                  data-testid="primary-action create-workflow-btn"
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -220,63 +220,62 @@ export default function WorkflowsTab({
           <ul className="divide-y divide-gray-200">
             {filteredWorkflows.map((workflow) => (
               <li key={workflow.id} data-testid="workflow-card">
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                          {getStatusIcon(workflow.status)}
+                <Link
+                  href={`/workflows/${workflow.id}`}
+                  className="block hover:bg-gray-50 transition-colors"
+                >
+                  <div className="px-4 py-4 sm:px-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                            {getStatusIcon(workflow.status)}
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="flex items-center">
+                            <p className="text-sm font-medium text-gray-900">{workflow.name}</p>
+                            <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(workflow.status)}`}>
+                              {workflow.status}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500">{workflow.description}</p>
+                          <div className="mt-1 flex items-center text-sm text-gray-500">
+                            <span className="mr-4" data-testid="workflow-steps">Steps: {workflow.steps?.length || 0}</span>
+                            <span data-testid="workflow-last-run">Last run: {workflow.lastRun ? new Date(workflow.lastRun).toLocaleDateString() : 'Never'}</span>
+                          </div>
+                          <div className="mt-1 flex items-center text-sm text-gray-500">
+                            <span data-testid="workflow-status">Status: {workflow.status}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="flex items-center">
-                          <p className="text-sm font-medium text-gray-900">{workflow.name}</p>
-                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(workflow.status)}`}>
-                            {workflow.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500">{workflow.description}</p>
-                        <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <span className="mr-4" data-testid="workflow-steps">Steps: {workflow.steps?.length || 0}</span>
-                          <span data-testid="workflow-last-run">Last run: {workflow.lastRun ? new Date(workflow.lastRun).toLocaleDateString() : 'Never'}</span>
-                        </div>
-                        <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <span data-testid="workflow-status">Status: {workflow.status}</span>
-                        </div>
+                      <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          data-testid={`execute-workflow-${workflow.id}`}
+                          onClick={() => handleExecuteWorkflow(workflow.id)}
+                          className="text-green-600 hover:text-green-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-green-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          disabled={isLoading}
+                        >
+                          Execute
+                        </button>
+                        <button
+                          onClick={() => handleToggleWorkflow(workflow.id, workflow.status)}
+                          className="text-gray-600 hover:text-gray-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-gray-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          disabled={isLoading}
+                        >
+                          {workflow.status === 'ACTIVE' ? 'Pause' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteWorkflow(workflow.id, workflow.name)}
+                          className="text-red-600 hover:text-red-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          disabled={isLoading}
+                        >
+                          Delete
+                        </button>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Link
-                        href={`/workflows/${workflow.id}`}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-indigo-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                      >
-                        View
-                      </Link>
-                      <button
-                        data-testid={`execute-workflow-${workflow.id}`}
-                        onClick={() => handleExecuteWorkflow(workflow.id)}
-                        className="text-green-600 hover:text-green-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-green-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        disabled={isLoading}
-                      >
-                        Execute
-                      </button>
-                      <button
-                        onClick={() => handleToggleWorkflow(workflow.id, workflow.status)}
-                        className="text-gray-600 hover:text-gray-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-gray-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        disabled={isLoading}
-                      >
-                        {workflow.status === 'ACTIVE' ? 'Pause' : 'Activate'}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteWorkflow(workflow.id, workflow.name)}
-                        className="text-red-600 hover:text-red-900 text-sm font-medium px-3 py-2 rounded-md hover:bg-red-50 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        disabled={isLoading}
-                      >
-                        Delete
-                      </button>
                     </div>
                   </div>
-                </div>
+                </Link>
               </li>
             ))}
           </ul>

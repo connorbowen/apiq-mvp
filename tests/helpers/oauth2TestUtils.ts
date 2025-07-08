@@ -53,63 +53,34 @@ export function createExpiredOAuth2State(
 /**
  * Create test OAuth2 configuration
  */
-export function createTestOAuth2Config(provider: string = 'github') {
+export function createTestOAuth2Config(provider: string = 'google') {
   const configs = {
-    github: {
-      clientId: process.env.GITHUB_CLIENT_ID || 'test-github-client-id',
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || 'test-github-client-secret',
-      redirectUri: process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
-      scope: 'repo user'
-    },
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || 'test-google-client-id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'test-google-client-secret',
       redirectUri: process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
       scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly'
-    },
-    slack: {
-      clientId: process.env.SLACK_CLIENT_ID || 'test-slack-client-id',
-      clientSecret: process.env.SLACK_CLIENT_SECRET || 'test-slack-client-secret',
-      redirectUri: process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
-      scope: 'channels:read chat:write users:read'
     }
   };
 
-  return configs[provider as keyof typeof configs] || configs.github;
+  return configs[provider as keyof typeof configs] || configs.google;
 }
 
 /**
  * Create test OAuth2 token response
  */
-export function createTestOAuth2TokenResponse(provider: string = 'github') {
+export function createTestOAuth2TokenResponse(provider: string = 'google') {
   const responses = {
-    github: {
-      access_token: 'ghp_test_access_token_123',
-      token_type: 'bearer',
-      scope: 'repo user',
-      refresh_token: 'ghr_test_refresh_token_456'
-    },
     google: {
       access_token: 'ya29.test_access_token_123',
       token_type: 'Bearer',
       scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
       refresh_token: '1//test_refresh_token_456',
       expires_in: 3600
-    },
-    slack: {
-      ok: true,
-      access_token: 'xoxb-test-access-token-123',
-      token_type: 'Bearer',
-      scope: 'channels:read,chat:write,users:read',
-      bot_user_id: 'U1234567890',
-      team: {
-        name: 'Test Team',
-        id: 'T1234567890'
-      }
     }
   };
 
-  return responses[provider as keyof typeof responses] || responses.github;
+  return responses[provider as keyof typeof responses] || responses.google;
 }
 
 /**
@@ -146,9 +117,7 @@ export async function createTestOAuth2Connection(
  */
 function getProviderBaseUrl(provider: string): string {
   const urls = {
-    github: 'https://api.github.com',
-    google: 'https://www.googleapis.com',
-    slack: 'https://slack.com/api'
+    google: 'https://www.googleapis.com'
   };
 
   return urls[provider as keyof typeof urls] || 'https://api.example.com';

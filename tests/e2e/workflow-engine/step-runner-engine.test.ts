@@ -624,6 +624,15 @@ test.describe('Step Runner Engine E2E Tests', () => {
       // Navigate to workflows tab to see the created workflow
       await page.getByTestId('tab-workflows').click();
       
+      // Wait for the workflows tab to load
+      await page.waitForSelector('[data-testid="refresh-workflows"]', { timeout: 10000 });
+      
+      // Refresh the workflows list to ensure the new workflow appears
+      await page.getByTestId('refresh-workflows').click();
+      
+      // Wait for the workflow card to appear after refresh
+      await page.waitForSelector('[data-testid="workflow-card"]', { timeout: 10000 });
+      
       // Wait for the execute button to be visible
       await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
       
@@ -714,6 +723,15 @@ test.describe('Step Runner Engine E2E Tests', () => {
       // Navigate to workflows tab to see the created workflow
       await page.getByTestId('tab-workflows').click();
       
+      // Wait for the workflows tab to load
+      await page.waitForSelector('[data-testid="refresh-workflows"]', { timeout: 10000 });
+      
+      // Refresh the workflows list to ensure the new workflow appears
+      await page.getByTestId('refresh-workflows').click();
+      
+      // Wait for the workflow card to appear after refresh
+      await page.waitForSelector('[data-testid="workflow-card"]', { timeout: 10000 });
+      
       // Wait for the execute button to be visible
       await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
       
@@ -795,6 +813,15 @@ test.describe('Step Runner Engine E2E Tests', () => {
       // Navigate to workflows tab to see the created workflow
       await page.getByTestId('tab-workflows').click();
       
+      // Wait for the workflows tab to load
+      await page.waitForSelector('[data-testid="refresh-workflows"]', { timeout: 10000 });
+      
+      // Refresh the workflows list to ensure the new workflow appears
+      await page.getByTestId('refresh-workflows').click();
+      
+      // Wait for the workflow card to appear after refresh
+      await page.waitForSelector('[data-testid="workflow-card"]', { timeout: 10000 });
+      
       // Wait for the execute button to be visible
       await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
       
@@ -868,6 +895,15 @@ test.describe('Step Runner Engine E2E Tests', () => {
       // Navigate to workflows tab to see the created workflow
       await page.getByTestId('tab-workflows').click();
       
+      // Wait for the workflows tab to load
+      await page.waitForSelector('[data-testid="refresh-workflows"]', { timeout: 10000 });
+      
+      // Refresh the workflows list to ensure the new workflow appears
+      await page.getByTestId('refresh-workflows').click();
+      
+      // Wait for the workflow card to appear after refresh
+      await page.waitForSelector('[data-testid="workflow-card"]', { timeout: 10000 });
+      
       // Wait for the execute button to be visible
       await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });
       
@@ -934,6 +970,12 @@ test.describe('Step Runner Engine E2E Tests', () => {
       
       // Navigate to workflows tab to see the created workflow
       await page.getByTestId('tab-workflows').click();
+      
+      // Wait for workflows to load and refresh the list
+      await page.waitForSelector('[data-testid="workflow-card"]', { timeout: 10000 });
+      
+      // Refresh the workflows list to ensure the new workflow appears
+      await page.getByTestId('refresh-workflows').click();
       
       // Wait for the execute button to be visible
       await page.waitForSelector(`[data-testid="execute-workflow-${workflow.data.id}"]`, { timeout: 10000 });

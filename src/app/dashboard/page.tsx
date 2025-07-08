@@ -719,21 +719,10 @@ function CreateConnectionModal({ onClose, onSuccess, onError }: { onClose: () =>
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="">Select Provider</option>
-                    <option value="github">GitHub</option>
                     <option value="google">Google</option>
-                    <option value="slack">Slack</option>
                   </select>
                 </div>
                 <div className="grid grid-cols-1 gap-4 mt-4">
-                  <button
-                    type="button"
-                    data-testid="github-provider-btn"
-                    onClick={() => setFormData({ ...formData, authType: 'OAUTH2', authConfig: { ...formData.authConfig, provider: 'github' } })}
-                    className="p-3 border border-gray-300 rounded-md text-left hover:bg-gray-50"
-                  >
-                    <div className="font-medium">GitHub</div>
-                    <div className="text-sm text-gray-500">Connect to GitHub API</div>
-                  </button>
                   <button
                     type="button"
                     data-testid="google-provider-btn"
@@ -742,15 +731,6 @@ function CreateConnectionModal({ onClose, onSuccess, onError }: { onClose: () =>
                   >
                     <div className="font-medium">Google</div>
                     <div className="text-sm text-gray-500">Connect to Google APIs</div>
-                  </button>
-                  <button
-                    type="button"
-                    data-testid="slack-provider-btn"
-                    onClick={() => setFormData({ ...formData, authType: 'OAUTH2', authConfig: { ...formData.authConfig, provider: 'slack' } })}
-                    className="p-3 border border-gray-300 rounded-md text-left hover:bg-gray-50"
-                  >
-                    <div className="font-medium">Slack</div>
-                    <div className="text-sm text-gray-500">Connect to Slack API</div>
                   </button>
                 </div>
               </div>

@@ -11,12 +11,12 @@ const GOOGLE_REDIRECT_URI = process.env.OAUTH2_REDIRECT_URI || 'http://localhost
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     // Initiate OAuth2 flow
-    return handleOAuth2Initiate(req, res);
+    await handleOAuth2Initiate(req, res);
   } else if (req.method === 'POST') {
     // Handle OAuth2 callback
-    return handleOAuth2Callback(req, res);
+    await handleOAuth2Callback(req, res);
   } else {
-    return res.status(405).json({
+    res.status(405).json({
       success: false,
       error: 'Method not allowed',
       code: 'METHOD_NOT_ALLOWED'
@@ -29,19 +29,21 @@ async function handleOAuth2Initiate(req: NextApiRequest, res: NextApiResponse) {
     const { provider } = req.query;
 
     if (provider !== 'google') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Only Google OAuth2 is supported for user authentication',
         code: 'UNSUPPORTED_PROVIDER'
       });
+      return;
     }
 
     if (!GOOGLE_CLIENT_ID) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         error: 'Google OAuth2 is not configured',
         code: 'OAUTH2_NOT_CONFIGURED'
       });
+      return;
     }
 
     // Generate state parameter for CSRF protection
@@ -59,7 +61,7 @@ async function handleOAuth2Initiate(req: NextApiRequest, res: NextApiResponse) {
     authUrl.searchParams.set('scope', 'openid email profile');
     authUrl.searchParams.set('state', state);
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       data: {
         redirectUrl: authUrl.toString(),
@@ -69,7 +71,7 @@ async function handleOAuth2Initiate(req: NextApiRequest, res: NextApiResponse) {
 
   } catch (error) {
     console.error('OAuth2 initiate error:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: 'Failed to initiate OAuth2 flow',
       code: 'OAUTH2_INITIATE_ERROR'
@@ -82,28 +84,31 @@ async function handleOAuth2Callback(req: NextApiRequest, res: NextApiResponse) {
     const { code, state, error } = req.body;
 
     if (error) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'OAuth2 authorization failed',
         details: error,
         code: 'OAUTH2_ERROR'
       });
+      return;
     }
 
     if (!code || !state) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Missing authorization code or state',
         code: 'INVALID_CALLBACK'
       });
+      return;
     }
 
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         error: 'Google OAuth2 is not configured',
         code: 'OAUTH2_NOT_CONFIGURED'
       });
+      return;
     }
 
     // Exchange authorization code for access token
@@ -124,11 +129,12 @@ async function handleOAuth2Callback(req: NextApiRequest, res: NextApiResponse) {
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
       console.error('Google token exchange failed:', errorData);
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Failed to exchange authorization code for token',
         code: 'TOKEN_EXCHANGE_FAILED'
       });
+      return;
     }
 
     const tokenData = await tokenResponse.json();
@@ -142,11 +148,12 @@ async function handleOAuth2Callback(req: NextApiRequest, res: NextApiResponse) {
     });
 
     if (!userInfoResponse.ok) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Failed to get user info from Google',
         code: 'USER_INFO_FAILED'
       });
+      return;
     }
 
     const userInfo = await userInfoResponse.json();
@@ -212,7 +219,7 @@ async function handleOAuth2Callback(req: NextApiRequest, res: NextApiResponse) {
       isActive: user.isActive
     }, 'refresh');
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       data: {
         accessToken,
@@ -228,7 +235,7 @@ async function handleOAuth2Callback(req: NextApiRequest, res: NextApiResponse) {
 
   } catch (error) {
     console.error('OAuth2 callback error:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       error: 'OAuth2 authentication failed',
       code: 'OAUTH2_CALLBACK_ERROR'

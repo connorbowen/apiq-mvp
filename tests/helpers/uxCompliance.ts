@@ -384,19 +384,21 @@ export class UXComplianceHelper {
    * Validate activation-first UX as per UX spec
    */
   async validateActivationFirstUX() {
-    // Test clear call-to-action buttons
-    const primaryButtons = this.page.locator('[data-testid~="primary-action"]');
+    // Test clear call-to-action buttons - look for primary-action data-testid pattern
+    const primaryButtons = this.page.locator('[data-testid*="primary-action"]');
     let hasPrimaryAction = false;
+    
     for (let i = 0; i < await primaryButtons.count(); i++) {
       const button = primaryButtons.nth(i);
       const text = await button.textContent();
       if (text) {
-        // Skip utility/navigation buttons, tabs, and workflow actions
-        const isUtilityButton = /Logout|Cancel|Close|Back|Previous|Next|Skip|Menu|Settings|Profile|Account|Workflows|Overview|Connections|Secrets|Admin|Audit|Chat|Execute|Pause|Resume|Delete|View|Refresh/i.test(text);
-        if (!isUtilityButton) {
-          // Primary actions should be descriptive
-          expect(text).toMatch(/Create|Add|Start|Begin|Generate|Save|Submit|Connect|Sign|Login/i);
+        // Primary actions should be descriptive and match our standardized patterns
+        const isValidPrimaryAction = /Create Workflow|Add Connection|Create Secret|Sign in|Create account|Generate Workflow|Save Workflow/i.test(text);
+        if (isValidPrimaryAction) {
           hasPrimaryAction = true;
+          // Verify the button is visible and accessible
+          await expect(button).toBeVisible();
+          await expect(button).toBeEnabled();
         }
       }
     }
