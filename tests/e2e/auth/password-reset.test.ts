@@ -305,11 +305,20 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       
       // Fill email form
       await page.fill('input[name="email"]', testEmail);
-      await page.click('button[type="submit"]');
       
-      // Verify UX compliance - loading state
-      await expect(page.locator('button[type="submit"]')).toContainText('Sending...');
-      await expect(page.locator('button[type="submit"]')).toBeDisabled();
+      // Click and simultaneously watch for the "Sending..." state
+      await Promise.all([
+        page.waitForFunction(() => {
+          const btn = document.querySelector('button[type="submit"]');
+          return btn?.textContent?.includes('Sending...');
+        }, { timeout: 2000 }),
+        page.click('button[type="submit"]'),
+      ]);
+      
+      // Confirm loading UI
+      const submitBtn = page.locator('button[type="submit"]');
+      await expect(submitBtn).toBeDisabled();
+      await expect(submitBtn).toHaveText(/Sending.../);
       
       // Should redirect to success page
       await expect(page).toHaveURL(/.*forgot-password-success/);
@@ -366,12 +375,22 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       // Fill form
       await page.fill('input[name="email"]', 'test@example.com');
       
-      // Submit and check loading state
-      await page.click('button[type="submit"]');
+      // Click and simultaneously watch for the "Sending..." state
+      await Promise.all([
+        page.waitForFunction(() => {
+          const btn = document.querySelector('button[type="submit"]');
+          return btn?.textContent?.includes('Sending...');
+        }, { timeout: 2000 }),
+        page.click('button[type="submit"]'),
+      ]);
       
-      // Verify UX compliance - loading state (UX spec: button text changes and disabled)
-      await expect(page.locator('button[type="submit"]')).toContainText('Sending...');
-      await expect(page.locator('button[type="submit"]')).toBeDisabled();
+      // Confirm loading UI
+      const submitBtn = page.locator('button[type="submit"]');
+      await expect(submitBtn).toBeDisabled();
+      await expect(submitBtn).toHaveText(/Sending.../);
+      
+      // Final success screen
+      await expect(page).toHaveURL(/forgot-password-success/);
     });
 
     test('should provide helpful error messages with UX compliance', async ({ page }) => {
@@ -410,11 +429,20 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       // Fill password form
       await page.fill('input[name="password"]', newPassword);
       await page.fill('input[name="confirmPassword"]', newPassword);
-      await page.click('button[type="submit"]');
       
-      // Verify UX compliance - loading state
-      await expect(page.locator('button[type="submit"]')).toContainText('Resetting...');
-      await expect(page.locator('button[type="submit"]')).toBeDisabled();
+      // Click and simultaneously watch for the "Resetting..." state
+      await Promise.all([
+        page.waitForFunction(() => {
+          const btn = document.querySelector('button[type="submit"]');
+          return btn?.textContent?.includes('Resetting...');
+        }, { timeout: 2000 }),
+        page.click('button[type="submit"]'),
+      ]);
+      
+      // Confirm loading UI
+      const submitBtn = page.locator('button[type="submit"]');
+      await expect(submitBtn).toBeDisabled();
+      await expect(submitBtn).toHaveText(/Resetting.../);
       
       // Should show success message or redirect
       await expect(page).toHaveURL(/.*reset-password/);
@@ -495,12 +523,19 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await page.fill('input[name="password"]', 'newpassword123');
       await page.fill('input[name="confirmPassword"]', 'newpassword123');
       
-      // Submit and check loading state
-      await page.click('button[type="submit"]');
+      // Click and simultaneously watch for the "Resetting..." state
+      await Promise.all([
+        page.waitForFunction(() => {
+          const btn = document.querySelector('button[type="submit"]');
+          return btn?.textContent?.includes('Resetting...');
+        }, { timeout: 2000 }),
+        page.click('button[type="submit"]'),
+      ]);
       
-      // Verify UX compliance - loading state (UX spec: button text changes and disabled)
-      await expect(page.locator('button[type="submit"]')).toContainText('Resetting...');
-      await expect(page.locator('button[type="submit"]')).toBeDisabled();
+      // Confirm loading UI
+      const submitBtn = page.locator('button[type="submit"]');
+      await expect(submitBtn).toBeDisabled();
+      await expect(submitBtn).toHaveText(/Resetting.../);
     });
   });
 

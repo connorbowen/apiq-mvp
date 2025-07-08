@@ -17,14 +17,28 @@ interface AuditLogEntry {
 
 interface AuditTabProps {
   refreshTrigger?: number; // External trigger to refresh audit logs
+  liveRegion?: React.MutableRefObject<HTMLDivElement | null>; // For testing accessibility announcements
 }
 
-export default function AuditTab({ refreshTrigger = 0 }: AuditTabProps) {
+export default function AuditTab({ refreshTrigger = 0, liveRegion }: AuditTabProps) {
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState<string | null>(null);
+
+  // Helper function to get the live region element
+  const getLiveRegion = () => {
+    return (liveRegion && liveRegion.current) || document.getElementById('aria-live-announcements');
+  };
+
+  // Helper function to announce messages to screen readers
+  const announce = (message: string) => {
+    const liveEl = getLiveRegion();
+    if (liveEl) {
+      liveEl.textContent = message;
+    }
+  };
 
   const loadAuditLogs = async () => {
     setIsRefreshing(true);
@@ -65,16 +79,16 @@ export default function AuditTab({ refreshTrigger = 0 }: AuditTabProps) {
   }, [refreshTrigger]);
 
   const handleManualRefresh = () => {
+    // Announce refresh to screen readers immediately
+    announce('Refreshing audit logs...');
+    
+    // Start the async operation
     loadAuditLogs();
     
-    // Announce refresh to screen readers
-    const announcementRegion = document.getElementById('aria-live-announcements');
-    if (announcementRegion) {
-      announcementRegion.textContent = 'Refreshing audit logs...';
-      setTimeout(() => {
-        announcementRegion.textContent = '';
-      }, 2000);
-    }
+    // Clear the announcement after a delay
+    setTimeout(() => {
+      announce('');
+    }, 2000);
   };
 
   const filteredLogs = auditLogs.filter(log => {

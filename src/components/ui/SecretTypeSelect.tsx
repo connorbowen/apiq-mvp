@@ -17,7 +17,7 @@ export function SecretTypeSelect({
   'aria-describedby'?: string;
   disabled?: boolean;
 }) {
-  const current = options.find(o => o.value === selected)!;
+  const current = options.find(o => o.value === selected) || null;
 
   return (
     <Listbox value={selected} onChange={onChange} disabled={disabled}>
@@ -29,8 +29,12 @@ export function SecretTypeSelect({
           }`}
           aria-describedby={ariaDescribedBy}
         >
-          {current.label}
-          <ChevronUpDownIcon className="w-5 h-5 ml-2 text-gray-400" aria-hidden="true" />
+          {current ? current.label : 'Select type'}
+          <ChevronUpDownIcon 
+            data-testid="chevron-icon"
+            className="w-5 h-5 ml-2 text-gray-400" 
+            aria-hidden="true" 
+          />
         </Listbox.Button>
 
         <Listbox.Options

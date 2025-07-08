@@ -4,59 +4,143 @@ import '@testing-library/jest-dom';
 import { SecretTypeSelect } from '../../../src/components/ui/SecretTypeSelect';
 
 // Mock Headless UI components
-jest.mock('@headlessui/react', () => ({
-  Listbox: ({ children, value, onChange }: any) => {
+jest.mock('@headlessui/react', () => {
+  const React = require('react');
+  
+  const ListboxContext = React.createContext(null);
+  
+  const Listbox = ({ children, value, onChange, disabled }: any) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [selectedValue, setSelectedValue] = React.useState(value);
     
-    const handleButtonClick = () => setIsOpen(!isOpen);
+    const handleButtonClick = () => {
+      if (!disabled) {
+        setIsOpen(!isOpen);
+      }
+    };
+    
     const handleOptionClick = (optionValue: string) => {
       setSelectedValue(optionValue);
       onChange(optionValue);
       setIsOpen(false);
     };
     
+    // Update selectedValue when value prop changes
+    React.useEffect(() => {
+      setSelectedValue(value);
+    }, [value]);
+    
+    const handleKeyDown = (event: any) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handleButtonClick();
+      } else if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+    
+    const contextValue = {
+      isOpen,
+      selectedValue,
+      handleButtonClick,
+      handleOptionClick,
+      handleKeyDown,
+      disabled
+    };
+    
     return (
-      <div className="relative">
-        {React.Children.map(children, (child: any) => {
-          if (child.type === 'button') {
-            return React.cloneElement(child, {
-              onClick: handleButtonClick,
-              'aria-expanded': isOpen,
-              'aria-haspopup': 'listbox'
-            });
-          }
-          if (child.type === 'ul' && isOpen) {
-            return React.cloneElement(child, {
-              children: child.props.children.map((option: any) => 
-                React.cloneElement(option, {
-                  onClick: () => handleOptionClick(option.props.value),
-                  'aria-selected': option.props.value === selectedValue
-                })
-              )
-            });
-          }
-          return null;
-        })}
-      </div>
+      <ListboxContext.Provider value={contextValue}>
+        <div className="relative">
+          {children}
+        </div>
+      </ListboxContext.Provider>
     );
-  },
-  ListboxButton: ({ children, ...props }: any) => (
-    <button type="button" {...props}>
-      {children}
-    </button>
-  ),
-  ListboxOptions: ({ children, ...props }: any) => (
-    <ul role="listbox" {...props}>
-      {children}
-    </ul>
-  ),
-  ListboxOption: ({ children, value, ...props }: any) => (
-    <li role="option" value={value} {...props}>
-      {children}
-    </li>
-  )
-}));
+  };
+  
+  Listbox.Button = ({ children, ...props }: any) => {
+    const context = React.useContext(ListboxContext);
+    return (
+      <button
+        type="button"
+        {...props}
+        onClick={context.handleButtonClick}
+        onKeyDown={context.handleKeyDown}
+        aria-expanded={context.isOpen}
+        aria-haspopup="listbox"
+        disabled={context.disabled}
+      >
+        {children}
+      </button>
+    );
+  };
+  
+  Listbox.Options = ({ children, ...props }: any) => {
+    const context = React.useContext(ListboxContext);
+    if (!context.isOpen) return null;
+    
+    // Don't render if no children (empty options)
+    if (!children || children.length === 0) return null;
+    
+    return (
+      <ul role="listbox" {...props}>
+        {children}
+      </ul>
+    );
+  };
+  
+  Listbox.Option = ({ children, value, as, ...props }: any) => {
+    const context = React.useContext(ListboxContext);
+    
+    // Handle the render prop pattern used by Headless UI
+    if (typeof children === 'function') {
+      const renderProps = {
+        active: false,
+        selected: value === context.selectedValue
+      };
+      const rendered = children(renderProps);
+      return React.cloneElement(rendered, {
+        onClick: () => context.handleOptionClick(value)
+      });
+    }
+    
+    // Handle the as={Fragment} pattern
+    if (as === React.Fragment) {
+      return (
+        <li
+          role="option"
+          value={value}
+          {...props}
+          onClick={() => context.handleOptionClick(value)}
+          aria-selected={value === context.selectedValue}
+          className={`
+            cursor-pointer select-none p-2
+            ${value === context.selectedValue ? 'font-semibold bg-blue-50' : 'font-normal'}
+          `}
+        >
+          {children}
+        </li>
+      );
+    }
+    
+    return (
+      <li
+        role="option"
+        value={value}
+        {...props}
+        onClick={() => context.handleOptionClick(value)}
+        aria-selected={value === context.selectedValue}
+        className={`
+          cursor-pointer select-none p-2
+          ${value === context.selectedValue ? 'font-semibold bg-blue-50' : 'font-normal'}
+        `}
+      >
+        {children}
+      </li>
+    );
+  };
+  
+  return { Listbox };
+});
 
 // Mock Heroicons
 jest.mock('@heroicons/react/20/solid', () => ({
@@ -119,13 +203,16 @@ describe('SecretTypeSelect', () => {
       fireEvent.click(selectButton);
       
       await waitFor(() => {
-        expect(screen.getByText('API Key')).toBeInTheDocument();
-        expect(screen.getByText('Bearer Token')).toBeInTheDocument();
-        expect(screen.getByText('Password')).toBeInTheDocument();
-        expect(screen.getByText('SSH Key')).toBeInTheDocument();
-        expect(screen.getByText('Certificate')).toBeInTheDocument();
-        expect(screen.getByText('OAuth2 Token')).toBeInTheDocument();
-        expect(screen.getByText('Database Password')).toBeInTheDocument();
+        // Check that all options are in the dropdown (not the button)
+        const options = screen.getAllByTestId('secret-type-option');
+        expect(options).toHaveLength(mockOptions.length);
+        expect(options[0]).toHaveTextContent('API Key');
+        expect(options[1]).toHaveTextContent('Bearer Token');
+        expect(options[2]).toHaveTextContent('Password');
+        expect(options[3]).toHaveTextContent('SSH Key');
+        expect(options[4]).toHaveTextContent('Certificate');
+        expect(options[5]).toHaveTextContent('OAuth2 Token');
+        expect(options[6]).toHaveTextContent('Database Password');
       });
     });
   });
@@ -277,7 +364,11 @@ describe('SecretTypeSelect', () => {
     });
 
     it('handles selection of all available options', async () => {
-      render(<SecretTypeSelect {...defaultProps} />);
+      let selected = mockOptions[0].value;
+      const onChange = jest.fn((val) => { selected = val; });
+      const { rerender } = render(
+        <SecretTypeSelect options={mockOptions} selected={selected} onChange={onChange} />
+      );
       
       const selectButton = screen.getByTestId('secret-type-select');
       fireEvent.click(selectButton);
@@ -287,13 +378,13 @@ describe('SecretTypeSelect', () => {
       });
       
       // Test selecting each option
-      const options = screen.getAllByRole('option');
-      
-      for (let i = 0; i < options.length; i++) {
+      for (let i = 0; i < mockOptions.length; i++) {
+        const options = screen.getAllByRole('option');
         fireEvent.click(options[i]);
-        expect(defaultProps.onChange).toHaveBeenCalledWith(mockOptions[i].value);
-        
-        // Reopen dropdown for next selection
+        expect(onChange).toHaveBeenCalledWith(mockOptions[i].value);
+        onChange.mockClear();
+        // Simulate controlled component by updating selected prop
+        rerender(<SecretTypeSelect options={mockOptions} selected={mockOptions[i].value} onChange={onChange} />);
         fireEvent.click(selectButton);
         await waitFor(() => {
           expect(screen.getByRole('listbox')).toBeInTheDocument();
@@ -393,7 +484,7 @@ describe('SecretTypeSelect', () => {
       expect(selectButton).toBeInTheDocument();
       
       // Should not crash when no option is selected
-      expect(selectButton.textContent).toBe('');
+      expect(selectButton.textContent).toBe('Select type');
     });
 
     it('handles invalid selected value gracefully', () => {
@@ -403,7 +494,7 @@ describe('SecretTypeSelect', () => {
       expect(selectButton).toBeInTheDocument();
       
       // Should not crash when selected value doesn't exist in options
-      expect(selectButton.textContent).toBe('');
+      expect(selectButton.textContent).toBe('Select type');
     });
 
     it('handles rapid option changes without errors', async () => {

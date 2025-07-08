@@ -47,6 +47,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **[Testing Guide](TESTING.md)** - Comprehensive testing strategy, patterns, and infrastructure
 - **[Test Summary](TEST_SUMMARY.md)** - Current test status and recent test improvements
 - **[Test Coverage Comparison](TEST_COVERAGE_COMPARISON.md)** - Test coverage analysis and metrics
+- **[SecretTypeSelect Fixes](SECRET_TYPE_SELECT_FIXES.md)** - Component and test suite fixes documentation
 
 ### Test Optimization Guides
 - **[Integration Test Optimization Summary](INTEGRATION_TEST_OPTIMIZATION_SUMMARY.md)** - Performance optimization patterns and results

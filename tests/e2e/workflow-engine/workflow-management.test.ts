@@ -20,7 +20,7 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
     );
 
     // Ensure the user has at least one ACTIVE API connection (required for workflow generation)
-    await createTestConnection(
+    const githubConnection = await createTestConnection(
       testUser,
       'GitHub',
       'https://api.github.com',
@@ -28,12 +28,18 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
     );
 
     // Create a second connection for Slack
-    await createTestConnection(
+    const slackConnection = await createTestConnection(
       testUser,
       'Slack',
       'https://slack.com/api',
       'API_KEY'
     );
+    
+    // Debug: Verify connections are created with ACTIVE status
+    console.log('=== TEST CONNECTIONS CREATED ===');
+    console.log('GitHub Connection ID:', githubConnection.id);
+    console.log('Slack Connection ID:', slackConnection.id);
+    console.log('================================');
 
     // Create a test workflow for testing workflow management features
     testWorkflow = await createTestWorkflow(
@@ -121,51 +127,71 @@ test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
       await page.waitForSelector('[data-testid="workflow-description-input"]', { timeout: 20000 });
       await page.waitForSelector('[data-testid="primary-action generate-workflow-btn"]', { timeout: 20000 });
       
+      // Debug: Check if form is in correct state
+      const input = page.getByTestId('workflow-description-input');
+      const generateButton = page.getByTestId('primary-action generate-workflow-btn');
+      
+      await expect(input).toBeEnabled();
+      await expect(generateButton).toBeEnabled();
+      
       // Fill in the workflow description
       const workflowDescription = 'Create a workflow that sends a Slack notification when a new GitHub issue is created';
-      await page.getByTestId('workflow-description-input').fill(workflowDescription);
+      await input.fill(workflowDescription);
       
-      // Intercept the POST /api/workflows/generate call to debug the response
-      const chatResponsePromise = page.waitForResponse(
+      // Verify the input has the correct value
+      await expect(input).toHaveValue(workflowDescription);
+      
+      // Set up response interception BEFORE clicking
+      const responsePromise = page.waitForResponse(
         response => response.url().includes('/api/workflows/generate') && response.request().method() === 'POST',
         { timeout: 60000 }
       );
       
-      // Debug: Check request details before submitting
-      const requestPromise = page.waitForRequest(
-        request => request.url().includes('/api/workflows/generate') && request.method() === 'POST',
-        { timeout: 60000 }
-      );
+      // Click the button and wait for it to be disabled (loading state)
+      await generateButton.click();
       
-      // Submit the form
-      await page.getByTestId('primary-action generate-workflow-btn').click();
+      // Wait for the button to show loading state
+      await expect(generateButton).toHaveText('Generating...');
       
-      // Wait for and log the request details
-      const request = await requestPromise;
-      console.log('=== API REQUEST DETAILS ===');
-      console.log('URL:', request.url());
-      console.log('Method:', request.method());
-      console.log('Headers:', request.headers());
-      console.log('Post Data:', request.postData());
-      console.log('==========================');
+      // Wait for the API response with better error handling
+      let response;
+      let responseBody;
       
-      // Wait for and log the response
-      const chatResponse = await chatResponsePromise;
-      const responseBody = await chatResponse.json();
-      console.log('=== WORKFLOW GENERATION RESPONSE ===');
-      console.log('Status:', chatResponse.status());
-      console.log('Response Body:', JSON.stringify(responseBody, null, 2));
-      console.log('=====================================');
-      
-      // Assert on the response structure
-      expect(chatResponse.ok()).toBeTruthy();
-      expect(responseBody).toHaveProperty('success');
-      
-      if (responseBody.success) {
-        expect(responseBody.data).toBeDefined();
-        console.log('✅ Workflow generation succeeded');
-      } else {
-        console.log('❌ Workflow generation failed:', responseBody.error || responseBody.message);
+      try {
+        response = await responsePromise;
+        responseBody = await response.json();
+        
+        console.log('=== WORKFLOW GENERATION RESPONSE ===');
+        console.log('Status:', response.status());
+        console.log('Response Body:', JSON.stringify(responseBody, null, 2));
+        console.log('=====================================');
+        
+        // Assert on the response structure
+        expect(response.ok()).toBeTruthy();
+        expect(responseBody).toHaveProperty('success');
+        
+        if (responseBody.success) {
+          expect(responseBody.data).toBeDefined();
+          console.log('✅ Workflow generation succeeded');
+        } else {
+          console.log('❌ Workflow generation failed:', responseBody.error || responseBody.message);
+        }
+      } catch (error) {
+        console.error('=== API RESPONSE ERROR ===');
+        console.error('Failed to get response:', error);
+        
+        // Check if button is still in loading state
+        const buttonText = await generateButton.textContent();
+        console.log('Button text after timeout:', buttonText);
+        
+        // Check for any error messages in the UI
+        const errorElement = page.locator('[data-testid="workflow-error-message"]');
+        if (await errorElement.isVisible()) {
+          const errorText = await errorElement.textContent();
+          console.log('UI Error message:', errorText);
+        }
+        
+        throw error;
       }
       
       // Wait for the success message in the UI
