@@ -92,7 +92,7 @@ describe('ForgotPasswordPage', () => {
     });
   });
 
-  test('handles successful password reset request', async () => {
+  test('handles successful password reset request with proper loading state management', async () => {
     const { apiClient } = require('../../../../src/lib/api/client');
     apiClient.requestPasswordReset.mockResolvedValue({ success: true });
 
@@ -104,6 +104,11 @@ describe('ForgotPasswordPage', () => {
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.submit(form);
 
+    // Verify loading state is active during API call
+    expect(screen.getByRole('button', { name: 'Sending...' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sending...' })).toBeDisabled();
+
+    // Wait for navigation to occur (which requires loading state to be reset)
     await waitFor(() => {
       expect(mockRouter.push).toHaveBeenCalledWith('/forgot-password-success?email=test%40example.com');
     });

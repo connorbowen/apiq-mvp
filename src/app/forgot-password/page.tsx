@@ -66,6 +66,8 @@ export default function ForgotPasswordPage() {
     try {
       const response = await apiClient.requestPasswordReset(email);
       if (response.success) {
+        // Reset loading state before redirect
+        setIsLoading(false);
         // Redirect to success page with email parameter
         router.push(`/forgot-password-success?email=${encodeURIComponent(email)}`);
       } else {
