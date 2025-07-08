@@ -100,6 +100,10 @@ async function handleCreateSecret(req: NextApiRequest, res: NextApiResponse, use
       return res.status(400).json({ error: 'Name and value are required' });
     }
 
+    if (!value || typeof value !== 'string' || value.trim() === '') {
+      return res.status(400).json({ success: false, error: 'Secret value must not be empty.' });
+    }
+
     const secretData = {
       value,
       metadata: {
@@ -123,7 +127,34 @@ async function handleCreateSecret(req: NextApiRequest, res: NextApiResponse, use
     );
 
     logInfo('Secret created', { userId, secretId: secret.id, name });
-    return res.status(201).json({ success: true, data: secret });
+    
+    // Log the full secret object for debugging
+    console.log('Full secret object from vault:', JSON.stringify(secret, null, 2));
+    
+    // Return the secret with all required fields for the frontend
+    const responseSecret = {
+      id: secret.id,
+      name: secret.name,
+      type: secret.type,
+      description: (secret as any).description, // Description is added by mapToSecretMetadata
+      isActive: secret.isActive,
+      createdAt: secret.createdAt,
+      updatedAt: secret.updatedAt,
+      rotationEnabled: secret.rotationEnabled,
+      rotationInterval: secret.rotationInterval,
+      lastRotatedAt: secret.lastRotatedAt,
+      nextRotationAt: secret.nextRotationAt
+    };
+    
+    console.log('Response secret object:', JSON.stringify(responseSecret, null, 2));
+    
+    return res.status(201).json({ 
+      success: true, 
+      data: {
+        secret: responseSecret,
+        message: 'Secret created successfully'
+      }
+    });
   } catch (error) {
     console.error('Detailed error in handleCreateSecret:', error);
     logError('Failed to create secret', error as Error);

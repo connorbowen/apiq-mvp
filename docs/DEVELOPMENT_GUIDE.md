@@ -1358,6 +1358,74 @@ When working with these components:
 
 ### Testing Best Practices
 
+#### Component Testing Best Practices
+
+```typescript
+// ✅ GOOD: Robust text matching for split elements
+expect(screen.getAllByText(/Test API Key/i, { exact: false }).length).toBeGreaterThan(0);
+
+// ✅ GOOD: Card-based assertions for filtering tests
+const cards = screen.getAllByTestId('secret-card');
+expect(cards.some(card => within(card).getByTestId('secret-name-secret-1'))).toBe(true);
+
+// ✅ GOOD: Case-insensitive type comparison
+expect(secret.type?.toUpperCase() === 'API_KEY').toBe(true);
+
+// ❌ BAD: Exact text matching that fails with split elements
+expect(screen.getByText('Test API Key')).toBeInTheDocument();
+
+// ❌ BAD: Case-sensitive type comparison
+expect(secret.type === 'api_key').toBe(true);
+```
+
+#### Mock Management
+
+```typescript
+// ✅ GOOD: Named export mocking
+jest.mock('../../../src/components/ui/SecretTypeSelect', () => ({
+  SecretTypeSelect: jest.fn(({ selected, onChange, disabled }) => (
+    <select 
+      data-testid="secret-type-select"
+      value={selected} 
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+    >
+      <option value="API_KEY">API Key</option>
+      <option value="BEARER_TOKEN">Bearer Token</option>
+    </select>
+  ))
+}));
+
+// ❌ BAD: Default export mocking for named exports
+jest.mock('../../../src/components/ui/SecretTypeSelect', () => 
+  jest.fn(() => <div>Mocked Component</div>)
+);
+```
+
+#### Test Data Consistency
+
+```typescript
+// ✅ GOOD: Uppercase types to match UI expectations
+const mockSecrets = [
+  {
+    id: 'secret-1',
+    name: 'Test API Key',
+    type: 'API_KEY', // Uppercase to match UI
+    description: 'A test API key'
+  }
+];
+
+// ❌ BAD: Lowercase types that don't match UI
+const mockSecrets = [
+  {
+    id: 'secret-1',
+    name: 'Test API Key',
+    type: 'api_key', // Lowercase doesn't match UI expectations
+    description: 'A test API key'
+  }
+];
+```
+
 #### Database Testing
 
 ```typescript

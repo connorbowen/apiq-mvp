@@ -192,6 +192,61 @@ npm test -- --clearCache
 npm test -- --verbose
 ```
 
+### Test Reliability Issues
+
+#### Issue: Component tests failing with text matching errors
+**Error**: `Unable to find an element with the text: Test API Key. This could be because the text is broken up by multiple elements.`
+
+**Solution**:
+```typescript
+// Use robust text matching for split elements
+expect(screen.getAllByText(/Test API Key/i, { exact: false }).length).toBeGreaterThan(0);
+
+// Or use card-based assertions for filtering tests
+const cards = screen.getAllByTestId('secret-card');
+expect(cards.some(card => within(card).getByTestId('secret-name-secret-1'))).toBe(true);
+```
+
+#### Issue: Type comparison failures in component tests
+**Error**: Tests expecting uppercase types but receiving lowercase
+
+**Solution**:
+```typescript
+// Use case-insensitive type comparison
+expect(secret.type?.toUpperCase() === 'API_KEY').toBe(true);
+
+// Update mock data to use uppercase types
+const mockSecrets = [
+  {
+    id: 'secret-1',
+    name: 'Test API Key',
+    type: 'API_KEY', // Uppercase to match UI expectations
+    description: 'A test API key'
+  }
+];
+```
+
+#### Issue: Named export mocking failures
+**Error**: `Cannot read property 'default' of undefined` when mocking components
+
+**Solution**:
+```typescript
+// Use named export mocking for named exports
+jest.mock('../../../src/components/ui/SecretTypeSelect', () => ({
+  SecretTypeSelect: jest.fn(({ selected, onChange, disabled }) => (
+    <select 
+      data-testid="secret-type-select"
+      value={selected} 
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+    >
+      <option value="API_KEY">API Key</option>
+      <option value="BEARER_TOKEN">Bearer Token</option>
+    </select>
+  ))
+}));
+```
+
 ### Health Check Commands
 ```bash
 # Test database connection

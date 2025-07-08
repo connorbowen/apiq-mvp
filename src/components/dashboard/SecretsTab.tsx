@@ -24,7 +24,7 @@ export default function SecretsTab({
   const [filterType, setFilterType] = useState<string>('all');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [secretList, setSecretList] = useState(secrets);
+  const [secretList, setSecretList] = useState(secrets || []);
   const [activeSecretId, setActiveSecretId] = useState<string | null>(null);
 
   // Debug logging
@@ -47,6 +47,11 @@ export default function SecretsTab({
       return () => clearTimeout(timer);
     }
   }, [errorMessage]);
+
+  // Sync local state with props - add defensive check
+  useEffect(() => {
+    setSecretList(secrets || []);
+  }, [secrets]);
 
   const getSecretTypeLabel = (type: string) => {
     const normalizedType = type.toUpperCase();
@@ -113,6 +118,12 @@ export default function SecretsTab({
   };
 
   const handleDeleteSecret = async (secretId: string, secretName: string) => {
+    if (!secretId || !secretName) {
+      console.error('Cannot delete secret: missing id or name', { secretId, secretName });
+      onSecretError('Invalid secret data for deletion');
+      return;
+    }
+    
     if (confirm(`Are you sure you want to delete the secret "${secretName}"? This action cannot be undone.`)) {
       try {
         setIsLoading(true);
@@ -127,6 +138,12 @@ export default function SecretsTab({
   };
 
   const handleRotateSecret = async (secretId: string, secretName: string) => {
+    if (!secretId || !secretName) {
+      console.error('Cannot rotate secret: missing id or name', { secretId, secretName });
+      onSecretError('Invalid secret data for rotation');
+      return;
+    }
+    
     if (confirm(`Are you sure you want to rotate the secret "${secretName}"? This will generate a new value.`)) {
       try {
         setIsLoading(true);
@@ -141,34 +158,94 @@ export default function SecretsTab({
   };
 
   const handleViewSecret = (secretId: string, secretName: string) => {
+    if (!secretId || !secretName) {
+      console.error('Cannot view secret: missing id or name', { secretId, secretName });
+      onSecretError('Invalid secret data for viewing');
+      return;
+    }
+    
     console.log(`Viewing secret: ${secretName} (ID: ${secretId})`);
     // Expand the secret to show details including rotation settings
     handleSecretToggle(secretId);
     // TODO: Implement proper secret viewing functionality
   };
 
-  const filteredSecrets = secrets.filter(secret => {
+  const filteredSecrets = (secretList || []).filter(secret => {
+    // Defensive check: ensure secret has required properties
+    if (!secret?.id || !secret?.name) {
+      console.warn('Filtering out secret with missing id or name:', secret);
+      return false;
+    }
+    
     const matchesSearch = secret.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          secret.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterType === 'all' || secret.type === filterType;
     return matchesSearch && matchesFilter;
   });
 
-  const handleSecretCreated = () => {
-    setSuccessMessage('Secret created successfully');
-    setShowCreateForm(false);
-    onSecretCreated();
+  const handleSecretCreated = (message?: string, newSecret?: any) => {
+    console.log('handleSecretCreated called with:', { message, newSecret });
+    
+    // Use flushSync to ensure immediate UI updates
+    flushSync(() => {
+      setSuccessMessage(message || 'Secret created successfully');
+      
+      // If we have the new secret data, add it to the local state immediately
+      if (newSecret && newSecret.id) {
+        console.log('Adding new secret to local state:', newSecret);
+        
+        // Ensure the secret has the correct type format for display
+        const formattedSecret = {
+          ...newSecret,
+          type: newSecret.type?.toUpperCase() || 'API_KEY' // Normalize type to uppercase
+        };
+        
+        setSecretList((prev: any[]) => {
+          console.log('Current secret list:', prev);
+          // Check if secret already exists to avoid duplicates
+          const exists = prev.some(s => s.id === formattedSecret.id);
+          if (exists) {
+            console.log('Secret already exists in state, updating instead');
+            return prev.map(s => s.id === formattedSecret.id ? formattedSecret : s);
+          }
+          console.log('Adding new secret to state');
+          const newList = [...prev, formattedSecret];
+          console.log('New secret list:', newList);
+          return newList;
+        });
+        
+        // Debug: Log the state immediately after the update
+        console.log('State update completed, secretList should now include the new secret');
+      } else {
+        console.log('No secret data provided, refreshing list');
+        console.log('Received newSecret:', newSecret);
+        // If no secret data, refresh the list
+        onSecretCreated();
+      }
+    });
     
     // Announce success to screen readers immediately
+    const announcementRegion = document.getElementById('aria-live-announcements');
+    if (announcementRegion) {
+      announcementRegion.textContent = message || 'Secret created successfully';
+      setTimeout(() => {
+        announcementRegion.textContent = '';
+      }, 3000);
+    }
+    
+    // Close the modal after a longer delay to ensure success message is visible
     setTimeout(() => {
-      const announcementRegion = document.getElementById('aria-live-announcements');
-      if (announcementRegion) {
-        announcementRegion.textContent = 'Secret created successfully';
-        setTimeout(() => {
-          announcementRegion.textContent = '';
-        }, 3000);
+      // Debug: Log the current state of the secrets list before closing
+      console.log('About to close modal, current secretList state:', secretList);
+      console.log('Current secrets prop:', secrets);
+      
+      setShowCreateForm(false);
+      
+      // Only call onSecretCreated if we didn't already add the secret to local state
+      if (!newSecret || !newSecret.id) {
+        onSecretCreated();
       }
-    }, 100);
+    }, 4000); // Increased from 2000ms to 4000ms to ensure success message is visible
   };
 
   const handleSecretError = (error: string) => {
@@ -177,16 +254,34 @@ export default function SecretsTab({
   };
 
   const handleSecretRotated = (updatedSecret: any) => {
+    if (!updatedSecret?.id) {
+      console.error('Cannot update secret: missing id', updatedSecret);
+      return;
+    }
+    
     setSecretList((prev: any[]) => prev.map(s => s.id === updatedSecret.id ? updatedSecret : s));
   };
 
   const handleSecretToggle = async (secretId: string) => {
+    if (!secretId) {
+      console.error('Cannot toggle secret: missing id', secretId);
+      return;
+    }
+    
     const isExpanding = activeSecretId !== secretId;
     setActiveSecretId(id => (id === secretId ? null : secretId));
   };
 
   return (
     <div data-testid="secrets-management" role="region" aria-labelledby="secrets-heading">
+      {/* Skip link for accessibility */}
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-md z-50">
+        Skip to main content
+      </a>
+      
+      {/* ARIA live region for announcements */}
+      <div id="aria-live-announcements" aria-live="polite" className="sr-only"></div>
+      
       {/* Main heading for secrets management */}
       <div className="mb-6">
         <h2 id="secrets-heading" className="text-2xl font-semibold text-gray-900 mb-2">
@@ -198,17 +293,32 @@ export default function SecretsTab({
       {/* Success Banner lifted out of modal */}
       {successMessage && (
         <div 
-          role="alert" 
           data-testid="success-message"
-          className="mb-4 bg-green-50 border border-green-200 rounded-md p-4 text-green-800 font-medium flex items-center justify-between"
+          role="alert" 
+          aria-live="polite"
+          className="mb-4 bg-green-50 border border-green-200 rounded-md p-4"
         >
-          {successMessage}
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">{successMessage}</p>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Error Message */}
+      {/* Error Banner */}
       {errorMessage && (
-        <div role="alert" className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+        <div 
+          data-testid="error-message"
+          role="alert" 
+          aria-live="assertive"
+          className="mb-4 bg-red-50 border border-red-200 rounded-md p-4"
+        >
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -216,61 +326,73 @@ export default function SecretsTab({
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-red-800">{errorMessage}</p>
+              <p className="text-sm font-medium text-red-800">{errorMessage}</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Create Secret Button */}
-      <div className="mb-6">
-        <button
-          data-testid="primary-action create-secret-btn"
-          onClick={() => setShowCreateForm(true)}
-          className="inline-flex items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
-        >
-          <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Create Secret
-        </button>
-      </div>
-
-      {/* Search and Filter */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <label htmlFor="secret-search-input" className="sr-only">Search secrets</label>
-          <input
-            id="secret-search-input"
-            data-testid="search-input"
-            type="text"
-            placeholder="Search secrets..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            aria-describedby="search-help"
-          />
-          <div id="search-help" className="sr-only">Search secrets by name or description</div>
-        </div>
-        <div className="sm:w-48">
-          <label htmlFor="secret-filter-select" className="sr-only">Filter by type</label>
-          <select
-            id="secret-filter-select"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+      {/* Controls Section */}
+      <div className="mb-6 space-y-4">
+        {/* Primary Action Button */}
+        <div className="flex justify-between items-center">
+          <button
+            data-testid="primary-action create-secret-btn"
+            onClick={() => setShowCreateForm(true)}
+            className="inline-flex items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
+            aria-describedby="create-secret-help"
           >
-            <option value="all">All Types</option>
-            <option value="API_KEY">API Key</option>
-            <option value="BEARER_TOKEN">Bearer Token</option>
-            <option value="PASSWORD">Password</option>
-            <option value="SSH_KEY">SSH Key</option>
-            <option value="CERTIFICATE">Certificate</option>
-            <option value="OAUTH2_TOKEN">OAuth2 Token</option>
-            <option value="DATABASE_PASSWORD">Database Password</option>
-          </select>
+            <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Create Secret
+          </button>
+          <div id="create-secret-help" className="sr-only">Create a new encrypted secret for storing sensitive credentials</div>
         </div>
 
+        {/* Search and Filter Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="secret-search-input" className="block text-sm font-medium text-gray-700 mb-1">
+              Search secrets
+            </label>
+            <input
+              id="secret-search-input"
+              data-testid="secret-search-input"
+              type="text"
+              placeholder="Search secrets..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px] min-w-[200px]"
+              aria-describedby="search-help"
+            />
+            <div id="search-help" className="sr-only">Search through your secrets by name or description</div>
+          </div>
+          
+          <div>
+            <label htmlFor="secret-filter-select" className="block text-sm font-medium text-gray-700 mb-1">
+              Filter by type
+            </label>
+            <select
+              id="secret-filter-select"
+              data-testid="secret-filter-select"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px] min-w-[200px]"
+              aria-describedby="filter-help"
+            >
+              <option value="all">All Types</option>
+              <option value="API_KEY">API Key</option>
+              <option value="BEARER_TOKEN">Bearer Token</option>
+              <option value="PASSWORD">Password</option>
+              <option value="SSH_KEY">SSH Key</option>
+              <option value="CERTIFICATE">Certificate</option>
+              <option value="OAUTH2_TOKEN">OAuth2 Token</option>
+              <option value="DATABASE_PASSWORD">Database Password</option>
+            </select>
+            <div id="filter-help" className="sr-only">Filter secrets by their type</div>
+          </div>
+        </div>
       </div>
 
       {/* Security Notice */}
@@ -291,22 +413,11 @@ export default function SecretsTab({
       </div>
 
       {/* Secrets List */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
+      <div id="main-content" role="main">
         {filteredSecrets.length === 0 ? (
-          <div className="text-center py-12">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
+          <div className="text-center py-12" role="status" aria-live="polite">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">No secrets</h3>
             <p className="mt-1 text-sm text-gray-500">
@@ -331,20 +442,22 @@ export default function SecretsTab({
             )}
           </div>
         ) : (
-          <ul className="divide-y divide-gray-200" role="list">
+          <div className="space-y-4" role="list" aria-label="Secrets list">
             {filteredSecrets.map((secret) => (
-              <li key={secret.id} data-testid="secret-card" className="p-4 border-b border-gray-200 last:border-b-0">
-                <SecretCard 
-                  secret={secret} 
-                  onRotated={handleSecretRotated} 
-                  handleDeleteSecret={handleDeleteSecret} 
-                  isLoading={isLoading} 
-                  activeSecretId={activeSecretId} 
-                  handleSecretToggle={handleSecretToggle} 
-                />
-              </li>
+              secret && secret.id ? (
+                <div key={secret.id} role="listitem">
+                  <SecretCard
+                    secret={secret}
+                    onRotated={handleSecretRotated}
+                    handleDeleteSecret={handleDeleteSecret}
+                    isLoading={isLoading}
+                    activeSecretId={activeSecretId}
+                    handleSecretToggle={handleSecretToggle}
+                  />
+                </div>
+              ) : null
             ))}
-          </ul>
+          </div>
         )}
       </div>
 
@@ -352,12 +465,7 @@ export default function SecretsTab({
       {showCreateForm && (
         <CreateSecretModal
           onClose={() => setShowCreateForm(false)}
-          onSuccess={msg => {
-            setSuccessMessage(msg);
-            onSecretCreated();
-            // Add a small delay to ensure the success message is displayed before closing modal
-            setTimeout(() => setShowCreateForm(false), 500);
-          }}
+          onSuccess={handleSecretCreated}
           onError={handleSecretError}
         />
       )}
@@ -366,13 +474,40 @@ export default function SecretsTab({
 }
 
 function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSecretId, handleSecretToggle }: { 
-  secret: any, 
+  secret: { id: string; name: string; type: string; description?: string; rotationEnabled?: boolean; rotationInterval?: number; nextRotationAt?: string; [key: string]: any },
   onRotated: (updated: any) => void, 
   handleDeleteSecret: (id: string, name: string) => void, 
   isLoading: boolean,
   activeSecretId: string | null,
   handleSecretToggle: (secretId: string) => void
 }) {
+  // 1️⃣ constants derived from props
+  const secretId = secret.id;
+  const isActive = activeSecretId === secretId;
+
+  // 2️⃣ hooks -- always run, no conditionals above
+  const [rotating, setRotating] = useState(false);
+  const [rotationError, setRotationError] = useState<string | null>(null);
+  const [rotationSuccess, setRotationSuccess] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [rotationEnabled, setRotationEnabled] = useState(!!secret.rotationEnabled);
+  const [rotationInterval, setRotationInterval] = useState<number>(secret.rotationInterval || 30);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [viewingSecret, setViewingSecret] = useState<string | null>(null);
+  const [secretValue, setSecretValue] = useState<string | null>(null);
+  const [viewError, setViewError] = useState<string | null>(null);
+  const [showSecretValue, setShowSecretValue] = useState(false);
+  useEffect(() => {
+    if (!isActive) {
+      setShowSecretValue(false);
+    }
+  }, [isActive]);
+
+  // 3️⃣ early return guard
+  // Removed early return guard as secret is now required
+
   const getSecretTypeLabel = (type: string) => {
     const normalizedType = type.toUpperCase();
     switch (normalizedType) {
@@ -394,19 +529,13 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
         return type;
     }
   };
-  const [rotating, setRotating] = useState(false);
-  const [rotationError, setRotationError] = useState<string | null>(null);
-  const [rotationSuccess, setRotationSuccess] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [rotationEnabled, setRotationEnabled] = useState(!!secret.rotationEnabled);
-  const [rotationInterval, setRotationInterval] = useState<number>(secret.rotationInterval || 30);
-  const [saving, setSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
-
-  const isActive = activeSecretId === secret.id;
 
   const handleRotate = async () => {
+    if (!secret.id || !secret.name) {
+      console.error('Cannot rotate secret: missing id or name', secret);
+      return;
+    }
+    
     setRotating(true);
     setRotationError(null);
     setRotationSuccess(null);
@@ -426,6 +555,11 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
   };
 
   const handleSaveRotationSettings = async () => {
+    if (!secret.id || !secret.name) {
+      console.error('Cannot save rotation settings: missing id or name', secret);
+      return;
+    }
+    
     setSaving(true);
     setSaveError(null);
     setSaveSuccess(null);
@@ -448,11 +582,6 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
     }
   };
 
-  const [viewingSecret, setViewingSecret] = useState<string | null>(null);
-  const [secretValue, setSecretValue] = useState<string | null>(null);
-  const [viewError, setViewError] = useState<string | null>(null);
-  const [showSecretValue, setShowSecretValue] = useState(false);
-
   // Reset showSecretValue when secret is collapsed
   useEffect(() => {
     if (!isActive) {
@@ -462,6 +591,11 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
 
   // Fetch secret value only when explicitly requested
   const fetchSecretValue = async () => {
+    if (!secret.id || !secret.name) {
+      console.error('Cannot fetch secret value: missing id or name', secret);
+      return;
+    }
+    
     if (secretValue) {
       // Already fetched, just show it
       setShowSecretValue(true);
@@ -501,6 +635,11 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
   };
 
   const handleViewSecret = async (secretId: string, secretName: string) => {
+    if (!secretId || !secretName) {
+      console.error('Cannot view secret: missing id or name', { secretId, secretName });
+      return;
+    }
+    
     console.log(`Viewing secret: ${secretName} (ID: ${secretId})`);
     // Expand the secret to show details including rotation settings
     handleSecretToggle(secretId);
@@ -508,7 +647,7 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
   };
 
   return (
-    <div data-testid={`secret-card-${secret.id}`} className="flex flex-col md:flex-row md:items-center md:justify-between">
+    <div data-testid="secret-card" className="flex flex-col md:flex-row md:items-center md:justify-between p-4 border border-gray-200 rounded-md bg-white shadow-sm">
       <div className="flex-1">
         <div className="flex items-center justify-between">
           <div>
@@ -550,7 +689,7 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
         </div>
         
         {/* Rotation Controls for API Keys - only show when active */}
-        {isActive && secret.type === 'api_key' && (
+        {isActive && secret.type?.toUpperCase() === 'API_KEY' && (
           <div className="mt-2 space-y-1" data-testid={`rotation-controls-${secret.id}`}>
             <div className="flex items-center gap-2">
               <label htmlFor={`rotation-enabled-${secret.id}`} className="text-xs mr-2">Rotation:</label>
@@ -632,7 +771,7 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
       </div>
       <div className="flex items-center space-x-2">
         <button
-          data-testid={`secret-details-${secret.id}`}
+          data-testid={`secret-details-${secret.id || 'unknown'}`}
           onClick={() => handleViewSecret(secret.id, secret.name)}
           className="text-blue-600 hover:text-blue-900 text-sm font-medium min-h-[44px] px-3"
           aria-label={`View details for ${secret.name}`}
@@ -641,7 +780,7 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
         </button>
         {isActive && !showSecretValue && (
           <button
-            data-testid={`show-secret-value-${secret.id}`}
+            data-testid={`show-secret-value-${secret.id || 'unknown'}`}
             onClick={() => fetchSecretValue()}
             className="text-green-600 hover:text-green-900 text-sm font-medium min-h-[44px] px-3"
             aria-label={`Show value for ${secret.name}`}
@@ -652,7 +791,7 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, isLoading, activeSe
         )}
         {isActive && showSecretValue && (
           <button
-            data-testid={`hide-secret-value-${secret.id}`}
+            data-testid={`hide-secret-value-${secret.id || 'unknown'}`}
             onClick={() => setShowSecretValue(false)}
             className="text-gray-600 hover:text-gray-900 text-sm font-medium min-h-[44px] px-3"
             aria-label={`Hide value for ${secret.name}`}
@@ -681,21 +820,21 @@ function CreateSecretModal({
   onError 
 }: { 
   onClose: () => void; 
-  onSuccess: (msg: string) => void; 
+  onSuccess: (msg: string, secret?: any) => void; 
   onError: (error: string) => void; 
 }) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    type: 'all',
-    value: '',
-    tags: ''
+    type: 'API_KEY',
+    value: ''
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Focus management
   useEffect(() => {
@@ -766,26 +905,65 @@ function CreateSecretModal({
   const createSecret = async (data: typeof formData) => {
     setIsSubmitting(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
     try {
-      const response = await apiClient.createSecret({
+      console.log('Creating secret with data:', { name: data.name, type: data.type, hasValue: !!data.value });
+      
+      const requestData = {
         name: data.name,
         value: data.value,
         description: data.description,
         type: data.type.toLowerCase()
-      });
+      };
+      
+      console.log('Sending request to API:', requestData);
+      
+      const response = await apiClient.createSecret(requestData);
+      
+      console.log('API response:', response);
+      
       if (response.success) {
-        onSuccess(response.data.message || 'Secret created successfully');
+        console.log('Secret created successfully, setting success message');
+        console.log('Response data:', response.data);
+        console.log('Secret object from response:', response.data.secret);
+        
+        // Set success message in modal first
+        setSuccessMsg(response.data.message || 'Secret created successfully');
+        
+        // Pass the created secret data back to the parent
+        if (response.data.secret) {
+          console.log('Calling onSuccess with secret data:', response.data.secret);
+          onSuccess(response.data.message || 'Secret created successfully', response.data.secret);
+        } else {
+          console.log('No secret data in response, calling onSuccess without secret');
+          onSuccess(response.data.message || 'Secret created successfully');
+        }
+        
+        // Close modal after a longer delay to ensure success message is visible
+        setTimeout(() => {
+          onClose();
+        }, 4000); // Increased from 2000ms to 4000ms to ensure success message is visible
       } else {
+        console.error('API returned error:', response.error);
         setErrorMsg(response.error || 'Failed to create secret');
         onError(response.error || 'Failed to create secret');
       }
     } catch (error: any) {
+      console.error('Exception in createSecret:', error);
       if (error?.response?.status === 429 || error?.message?.toLowerCase().includes('rate limit')) {
-        setErrorMsg('Rate limit exceeded. Please wait and try again.');
+        const rateLimitMsg = 'Rate limit exceeded. Please wait and try again.';
+        setErrorMsg(rateLimitMsg);
+        onError(rateLimitMsg);
+      } else if (error?.response?.status === 400) {
+        // Handle API validation errors (like empty secret value)
+        const apiErrorMsg = error.response.data?.error || 'Validation error occurred.';
+        setErrorMsg(apiErrorMsg);
+        onError(apiErrorMsg);
       } else {
-        setErrorMsg(error?.message || 'Failed to create secret');
+        const errorMsg = error?.message || 'Failed to create secret';
+        setErrorMsg(errorMsg);
+        onError(errorMsg);
       }
-      onError(error?.message || 'Failed to create secret');
     } finally {
       setIsSubmitting(false);
     }
@@ -796,7 +974,44 @@ function CreateSecretModal({
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <h3 id="modal-title" className="text-lg font-medium text-gray-900 mb-4">Add New Secret</h3>
-          {errorMsg && <AlertBanner>{errorMsg}</AlertBanner>}
+          {errorMsg && (
+            <div 
+              data-testid="alert-banner"
+              role="alert" 
+              aria-live="assertive"
+              className="mb-4 bg-red-50 border border-red-200 rounded-md p-4"
+            >
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-red-800">{errorMsg}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {successMsg && (
+            <div 
+              data-testid="success-message"
+              role="alert" 
+              aria-live="polite"
+              className="mb-4 bg-green-50 border border-green-200 rounded-md p-4"
+            >
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-green-800">{successMsg}</p>
+                </div>
+              </div>
+            </div>
+          )}
           <form onSubmit={handleSubmit} aria-describedby="form-help" noValidate>
             <div id="form-help" className="sr-only">Form to create a new secret with name, description, type, and value</div>
             
@@ -831,15 +1046,17 @@ function CreateSecretModal({
                   required
                   aria-required="true"
                   aria-invalid={validationErrors.name ? "true" : "false"}
-                  aria-describedby={validationErrors.name ? "name-error" : undefined}
+                  aria-describedby={validationErrors.name ? "name-error" : "name-help"}
                   value={formData.name}
                   onChange={handleNameChange}
+                  disabled={isSubmitting || !!successMsg}
                   className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
                     validationErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
+                  } ${(isSubmitting || successMsg) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   placeholder="e.g., GitHub API Key"
                   ref={nameInputRef}
                 />
+                <div id="name-help" className="sr-only">Enter a name for your secret</div>
                 {validationErrors.name && (
                   <div id="name-error" className="mt-1 text-sm">
                     {validationErrors.name}
@@ -856,10 +1073,15 @@ function CreateSecretModal({
                   data-testid="secret-description-input"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  disabled={isSubmitting || !!successMsg}
+                  className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
+                    (isSubmitting || successMsg) ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   placeholder="Optional description"
                   rows={3}
+                  aria-describedby="description-help"
                 />
+                <div id="description-help" className="sr-only">Optional description for your secret</div>
               </div>
               
               <div>
@@ -878,7 +1100,10 @@ function CreateSecretModal({
                   ]}
                   selected={formData.type === 'all' ? 'API_KEY' : formData.type}
                   onChange={(value) => setFormData({ ...formData, type: value })}
+                  aria-describedby="type-help"
+                  disabled={isSubmitting || !!successMsg}
                 />
+                <div id="type-help" className="sr-only">Select the type of secret you want to create</div>
                 {validationErrors.type && (
                   <div id="type-error" className="mt-1 text-sm">
                     {validationErrors.type}
@@ -897,14 +1122,16 @@ function CreateSecretModal({
                   required
                   aria-required="true"
                   aria-invalid={validationErrors.value ? "true" : "false"}
-                  aria-describedby={validationErrors.value ? "value-error" : undefined}
+                  aria-describedby={validationErrors.value ? "value-error" : "value-help"}
                   value={formData.value}
                   onChange={handleValueChange}
+                  disabled={isSubmitting || !!successMsg}
                   className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
                     validationErrors.value ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
+                  } ${(isSubmitting || successMsg) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   placeholder="Enter the secret value"
                 />
+                <div id="value-help" className="sr-only">Enter the secret value to be encrypted and stored</div>
                 {validationErrors.value && (
                   <div id="value-error" className="mt-1 text-sm">
                     {validationErrors.value}
@@ -916,20 +1143,22 @@ function CreateSecretModal({
                 <button
                   type="button"
                   onClick={onClose}
-                disabled={isSubmitting}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
+                  {successMsg ? 'Close' : 'Cancel'}
                 </button>
                 <button
                   type="submit"
-                data-testid="submit-secret-btn"
-                  disabled={isSubmitting}
+                  data-testid="primary-action create-secret-btn-modal"
+                  disabled={isSubmitting || !!successMsg}
                   aria-busy={isSubmitting}
                   aria-describedby={isSubmitting ? "loading-description" : undefined}
                   className={`px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px] ${
                     isSubmitting 
                       ? 'bg-gray-400 cursor-not-allowed' 
+                      : successMsg
+                      ? 'bg-green-600 cursor-not-allowed'
                       : 'bg-indigo-600 hover:bg-indigo-700'
                   }`}
                 >
@@ -946,7 +1175,14 @@ function CreateSecretModal({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                    <span data-testid="loading-text">Creating</span>
+                      <span data-testid="loading-text">Creating</span>
+                    </>
+                  ) : successMsg ? (
+                    <>
+                      <svg className="-ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Created
                     </>
                   ) : (
                     'Create Secret'

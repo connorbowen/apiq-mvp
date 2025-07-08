@@ -264,7 +264,7 @@ model ExecutionLog {
   @@map("execution_logs")
 }
 
-// Audit Logging
+/// WARNING: Never store secret values or plaintext credentials in audit logs.
 model AuditLog {
   id         String   @id @default(cuid())
   userId     String

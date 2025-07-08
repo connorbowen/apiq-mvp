@@ -152,6 +152,21 @@ This guide provides comprehensive documentation for the Secrets Vault user exper
 
 ## Advanced Features
 
+### Type Normalization & Compatibility
+
+#### **Secret Type Handling**
+- **Case-Insensitive Comparison**: Component handles both uppercase and lowercase type values
+- **Backend Compatibility**: Works with backend returning lowercase types (`api_key`, `bearer_token`)
+- **Frontend Display**: UI displays uppercase types (`API_KEY`, `BEARER_TOKEN`) for consistency
+- **Robust Implementation**: Type comparison uses `secret.type?.toUpperCase() === 'API_KEY'` for reliability
+- **Cross-Environment Support**: Works consistently across development, testing, and production environments
+
+#### **Type Display Standards**
+- **UI Labels**: Secret types displayed in user-friendly format (e.g., "API Key", "Bearer Token")
+- **Filter Options**: Dropdown shows standardized type options for consistent filtering
+- **Card Display**: Secret cards show normalized type labels with appropriate icons
+- **Form Validation**: Type selection validates against allowed values with proper error handling
+
 ### Rate Limiting
 
 #### **Rate Limit UX**

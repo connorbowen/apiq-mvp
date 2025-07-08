@@ -420,15 +420,21 @@ Store a new secret.
 {
   "success": true,
   "data": {
-    "id": "secret_123",
-    "name": "my-api-key",
-    "type": "api_key",
-    "isActive": true,
-    "version": 1,
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  },
-  "message": "Secret stored successfully"
+    "secret": {
+      "id": "secret_123",
+      "name": "my-api-key",
+      "type": "api_key",
+      "description": "Stripe test API key",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "rotationEnabled": true,
+      "rotationInterval": 30,
+      "lastRotatedAt": null,
+      "nextRotationAt": "2024-02-01T00:00:00.000Z"
+    },
+    "message": "Secret created successfully"
+  }
 }
 ```
 

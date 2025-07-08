@@ -166,6 +166,10 @@ export class SecretsVault {
     try {
       // Validate and sanitize inputs
       this.validateInput(userId, name, secretData);
+      // Short-circuit: reject empty/whitespace value before any DB or encryption
+      if (!secretData.value || typeof secretData.value !== 'string' || secretData.value.trim().length === 0) {
+        throw new Error('Invalid secret value: must be a non-empty string');
+      }
       
       // Check rate limiting
       this.checkRateLimit(userId);

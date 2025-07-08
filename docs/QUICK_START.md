@@ -229,6 +229,8 @@ List secrets:
 curl http://localhost:3000/api/secrets
 ```
 
+**Note**: The API returns secrets in the format `{ "success": true, "data": { "secrets": [...] } }`. The response structure is consistent across all secrets endpoints.
+
 ### Testing Connections Management
 
 Test the search and filter functionality:

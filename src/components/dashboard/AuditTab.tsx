@@ -257,7 +257,23 @@ export default function AuditTab({ refreshTrigger = 0 }: AuditTabProps) {
                         {log.ipAddress}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
-                        {typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}
+                        {(() => {
+                          // Sanitize details to prevent sensitive data leakage
+                          if (typeof log.details === 'string') {
+                            return log.details;
+                          }
+                          if (log.details && typeof log.details === 'object') {
+                            // Only show safe fields, exclude any potential sensitive data
+                            const safeDetails = {
+                              secretName: log.details.secretName,
+                              action: log.details.action,
+                              timestamp: log.details.timestamp,
+                              // Explicitly exclude: value, encryptedData, keyId, etc.
+                            };
+                            return JSON.stringify(safeDetails);
+                          }
+                          return JSON.stringify(log.details);
+                        })()}
                       </td>
                     </tr>
                   ))}

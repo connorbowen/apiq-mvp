@@ -145,8 +145,8 @@ describe('Secrets API Integration Tests', () => {
 
       expect(res._getStatusCode()).toBe(201);
       const data = JSON.parse(res._getData());
-      expect(data.data.name).toBe('new-api-key');
-      expect(data.data.type).toBe('api_key');
+      expect(data.data.secret.name).toBe('new-api-key');
+      expect(data.data.secret.type).toBe('api_key');
       
       // Verify secret was actually stored using real database operation
       const storedSecret = await secretsVault.getSecret(testUser.id, 'new-api-key');
@@ -210,8 +210,8 @@ describe('Secrets API Integration Tests', () => {
 
       expect(res._getStatusCode()).toBe(201);
       const data = JSON.parse(res._getData());
-      expect(data.data.name).toBe('github-oauth-token');
-      expect(data.data.type).toBe('oauth2_token');
+      expect(data.data.secret.name).toBe('github-oauth-token');
+      expect(data.data.secret.type).toBe('oauth2_token');
       
       // Verify secret was actually stored
       const storedSecret = await secretsVault.getSecret(testUser.id, 'github-oauth-token');
