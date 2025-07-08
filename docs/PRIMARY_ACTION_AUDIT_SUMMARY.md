@@ -4,8 +4,8 @@
 
 ### Issues Found
 
-1. **Inconsistent `data-testid` usage**: Some buttons used `primary-action`, others used specific IDs like `create-workflow-btn`
-2. **Missing primary action attributes**: Many buttons lacked the `data-testid="primary-action"` attribute
+1. **Inconsistent `data-testid` usage**: Some buttons used separate `primary-action` and specific IDs, others used only specific IDs
+2. **Missing primary action attributes**: Many buttons lacked the combined `data-testid="primary-action create-{resource}-btn"` pattern
 3. **Inconsistent button text**: Mixed usage of "Add" vs "Create" inconsistently
 4. **UX compliance validation gaps**: The validation logic had issues with button identification
 
@@ -13,8 +13,8 @@
 
 | Component | Button | data-testid | Text | Status |
 |-----------|--------|-------------|------|--------|
-| WorkflowsTab | Main | `create-workflow-btn` | "Create Workflow" | ✅ Good |
-| WorkflowsTab | Empty State | `primary-action` | "Create Workflow" | ⚠️ Inconsistent |
+| WorkflowsTab | Main | `create-workflow-btn` | "Create Workflow" | ⚠️ Missing primary-action |
+| WorkflowsTab | Empty State | `primary-action` | "Create Workflow" | ⚠️ Missing specific ID |
 | ConnectionsTab | Main | `create-connection-btn` | "Add Connection" | ⚠️ Missing primary-action |
 | ConnectionsTab | Empty State | None | "Add Connection" | ❌ Missing both |
 | SecretsTab | Main | `create-secret-btn` | "Create Secret" | ⚠️ Missing primary-action |
@@ -56,6 +56,7 @@ This combines both the UX compliance requirement (`primary-action`) and the spec
 
 #### ✅ SecretsTab.tsx
 - Added `data-testid="primary-action create-secret-btn"` to both main and empty state buttons
+- Added `data-testid="primary-action create-secret-btn-empty-state"` for empty state button
 - Fixed color scheme to indigo (was yellow in empty state)
 - Consistent "Create Secret" text
 
@@ -72,7 +73,7 @@ This combines both the UX compliance requirement (`primary-action`) and the spec
 ### 4. Updated UX Compliance Validation
 
 #### Fixed Validation Logic
-- Now looks for `[data-testid*="primary-action"]` pattern
+- Now looks for `[data-testid*="primary-action"]` pattern in combined test IDs
 - Validates specific button text patterns
 - Ensures buttons are visible and enabled
 - Excludes utility/navigation buttons
@@ -136,8 +137,7 @@ Created `tests/e2e/ui/primary-action-patterns.test.ts` to validate:
 
 ## Success Criteria Met
 
-- [x] All primary action buttons have `data-testid="primary-action"`
-- [x] All primary action buttons have specific `data-testid="create-{resource}-btn"`
+- [x] All primary action buttons have combined `data-testid="primary-action create-{resource}-btn"`
 - [x] Button text matches standardized patterns
 - [x] Styling is consistent across all primary actions
 - [x] UX compliance validation passes for all pages

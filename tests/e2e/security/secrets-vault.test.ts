@@ -135,7 +135,7 @@ test.describe('Secrets Vault E2E Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Verify we're on the secrets tab and create button is visible
-    await expect(page.locator('[data-testid="create-secret-btn"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="primary-action create-secret-btn"]')).toBeVisible({ timeout: 10000 });
   });
 
   test.describe('UX Compliance - Page Structure & Accessibility', () => {
@@ -156,7 +156,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       await expect(page.locator('[role="button"], [role="tab"], [role="alert"]').first()).toBeVisible();
       
       // Open form to test required field indicators
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       
       // Test required field indicators
       await expect(page.locator('[aria-required="true"]').first()).toBeVisible();
@@ -198,7 +198,7 @@ test.describe('Secrets Vault E2E Tests', () => {
   test.describe('UX Compliance - Form Validation & Error Handling', () => {
     test('should show accessible error messages for validation failures', async ({ page }) => {
       // Click create secret button
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       
       // Debug: Check if form is visible
       await expect(page.locator('[data-testid="secret-name-input"]')).toBeVisible();
@@ -228,7 +228,7 @@ test.describe('Secrets Vault E2E Tests', () => {
 
     test('should show loading states during form submission', async ({ page }) => {
       // Click create secret button
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       
       // Fill valid form data
       await page.fill('[data-testid="secret-name-input"]', 'Loading Test Secret');
@@ -251,7 +251,7 @@ test.describe('Secrets Vault E2E Tests', () => {
 
     test('should provide clear feedback for required fields', async ({ page }) => {
       // Click create secret button
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       
       // Check required field indicators
       await expect(page.locator('[data-testid="secret-name-input"]')).toHaveAttribute('aria-required', 'true');
@@ -285,7 +285,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       }
       
       // Test form inputs are touch-friendly
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       await expect(page.locator('[data-testid="secret-name-input"]')).toBeVisible();
       await expect(page.locator('[data-testid="secret-value-input"]')).toBeVisible();
     });
@@ -295,7 +295,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       await page.setViewportSize({ width: 375, height: 667 });
       
       // Test touch interactions with form elements using click instead of tap
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       await page.click('[data-testid="secret-name-input"]');
       await page.fill('[data-testid="secret-name-input"]', 'Touch Test Secret');
       
@@ -309,10 +309,10 @@ test.describe('Secrets Vault E2E Tests', () => {
   test.describe('Encrypted Secrets Storage', () => {
     test('should create encrypted API credential with proper UX feedback', async ({ page }) => {
       // Click create secret button
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       
       // Validate form structure and accessibility
-      await expect(page.locator('[data-testid="create-secret-btn"]')).toBeVisible();
+      await expect(page.locator('[data-testid="primary-action create-secret-btn"]')).toBeVisible();
       await expect(page.locator('[data-testid="secret-name-input"]')).toHaveAttribute('aria-required', 'true');
       
       // Generate realistic test data
@@ -348,7 +348,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       await page.request.post('/api/test/reset-rate-limits');
       
       // Click create secret button
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       
       // Generate realistic OAuth2 token data
       const testData = generateRealisticSecretData('oauth2_token');
@@ -385,7 +385,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       await page.request.post('/api/test/reset-rate-limits');
       
       // Click create secret button
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       
       // Generate realistic database credential data
       const testData = generateRealisticSecretData('database_password');
@@ -592,7 +592,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       
       // Test UI shows rate limit message by trying to create another secret via form
       await page.reload();
-      await page.click('[data-testid="create-secret-btn"]');
+      await page.click('[data-testid="primary-action create-secret-btn"]');
       await page.fill('[data-testid="secret-name-input"]', 'Rate Limited Secret');
       await page.click('[data-testid="secret-type-select"]');
       await page.click('[data-testid="secret-type-option"]:has-text("API Key")');

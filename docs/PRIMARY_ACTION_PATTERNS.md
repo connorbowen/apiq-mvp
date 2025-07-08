@@ -16,9 +16,8 @@ A **primary action** is the main call-to-action that moves users forward in thei
 
 ### 1. Data Test ID Pattern
 ```typescript
-// Primary action buttons MUST have both:
-data-testid="primary-action"                    // For UX compliance validation
-data-testid="create-{resource}-btn"             // For specific functionality testing
+// Primary action buttons MUST use combined test ID pattern:
+data-testid="primary-action create-{resource}-btn"  // Combines UX compliance + functionality testing
 ```
 
 ### 2. Button Text Standards
@@ -51,8 +50,7 @@ className="px-4 py-2 bg-{color}-600 text-white rounded-md hover:bg-{color}-700 f
 ### Workflow Creation Button
 ```tsx
 <button
-  data-testid="primary-action"
-  data-testid="create-workflow-btn"
+  data-testid="primary-action create-workflow-btn"
   className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px]"
 >
   Create Workflow
@@ -62,8 +60,7 @@ className="px-4 py-2 bg-{color}-600 text-white rounded-md hover:bg-{color}-700 f
 ### Connection Creation Button
 ```tsx
 <button
-  data-testid="primary-action"
-  data-testid="create-connection-btn"
+  data-testid="primary-action create-connection-btn"
   className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px]"
 >
   Add Connection
@@ -73,8 +70,7 @@ className="px-4 py-2 bg-{color}-600 text-white rounded-md hover:bg-{color}-700 f
 ### Secret Creation Button
 ```tsx
 <button
-  data-testid="primary-action"
-  data-testid="create-secret-btn"
+  data-testid="primary-action create-secret-btn"
   className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px]"
 >
   Create Secret
@@ -84,8 +80,7 @@ className="px-4 py-2 bg-{color}-600 text-white rounded-md hover:bg-{color}-700 f
 ### Authentication Buttons
 ```tsx
 <button
-  data-testid="primary-action"
-  data-testid="signin-submit"
+  data-testid="primary-action signin-submit"
   className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px]"
 >
   Sign in
@@ -113,7 +108,7 @@ The following buttons are NOT primary actions and should NOT have `data-testid="
 
 The `UXComplianceHelper.validateActivationFirstUX()` method validates primary actions by:
 
-1. Looking for `data-testid="primary-action"` attributes
+1. Looking for `data-testid="primary-action"` attributes (as part of combined test ID)
 2. Checking button text matches primary action patterns
 3. Excluding utility/navigation buttons
 4. Ensuring at least one primary action exists per page
@@ -122,9 +117,9 @@ The `UXComplianceHelper.validateActivationFirstUX()` method validates primary ac
 
 ### Components to Update
 
+- [x] `src/components/dashboard/SecretsTab.tsx` ✅ **COMPLETED**
 - [ ] `src/components/dashboard/WorkflowsTab.tsx`
 - [ ] `src/components/dashboard/ConnectionsTab.tsx` 
-- [ ] `src/components/dashboard/SecretsTab.tsx`
 - [ ] `src/app/login/page.tsx`
 - [ ] `src/app/signup/page.tsx`
 - [ ] `src/app/workflows/create/page.tsx`
@@ -132,10 +127,10 @@ The `UXComplianceHelper.validateActivationFirstUX()` method validates primary ac
 
 ### Required Changes
 
-1. **Add `data-testid="primary-action"`** to all primary action buttons
+1. **Use combined `data-testid="primary-action create-{resource}-btn"`** for all primary action buttons
 2. **Ensure consistent button text** matches the standards above
 3. **Apply consistent styling** with proper color schemes
-4. **Update tests** to use the new data-testid patterns
+4. **Update tests** to use the new combined data-testid patterns
 5. **Verify UX compliance** validation passes
 
 ## Testing Guidelines
@@ -143,18 +138,16 @@ The `UXComplianceHelper.validateActivationFirstUX()` method validates primary ac
 ### Unit Tests
 ```typescript
 // Test primary action presence
-expect(screen.getByTestId('primary-action')).toBeInTheDocument();
-expect(screen.getByTestId('create-workflow-btn')).toBeInTheDocument();
+expect(screen.getByTestId('primary-action create-workflow-btn')).toBeInTheDocument();
 
 // Test button text
-expect(screen.getByTestId('primary-action')).toHaveTextContent('Create Workflow');
+expect(screen.getByTestId('primary-action create-workflow-btn')).toHaveTextContent('Create Workflow');
 ```
 
 ### E2E Tests
 ```typescript
 // Test primary action functionality
-await page.getByTestId('primary-action').click();
-await page.getByTestId('create-workflow-btn').click();
+await page.getByTestId('primary-action create-workflow-btn').click();
 
 // Test UX compliance
 await uxHelper.validateActivationFirstUX();
@@ -162,12 +155,11 @@ await uxHelper.validateActivationFirstUX();
 
 ## Success Criteria
 
-- [ ] All primary action buttons have `data-testid="primary-action"`
-- [ ] All primary action buttons have specific `data-testid="create-{resource}-btn"`
+- [ ] All primary action buttons have combined `data-testid="primary-action create-{resource}-btn"`
 - [ ] Button text matches standardized patterns
 - [ ] Styling is consistent across all primary actions
 - [ ] UX compliance validation passes for all pages
-- [ ] All tests pass with new data-testid patterns
+- [ ] All tests pass with new combined data-testid patterns
 - [ ] No utility/navigation buttons have `primary-action` attributes
 
 ## Maintenance
