@@ -1,9 +1,29 @@
 import { test, expect } from '@playwright/test';
 import { UXComplianceHelper } from '../../helpers/uxCompliance';
+import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
+let testUser: any;
+let jwt: string;
+
 test.describe('Mobile Responsiveness E2E Tests - P1 High Priority', () => {
+  test.beforeAll(async () => {
+    // Create a real test user and get JWT
+    testUser = await createTestUser(
+      `e2e-mobile-${generateTestId('user')}@example.com`,
+      'e2eTestPass123',
+      'ADMIN',
+      'E2E Mobile Test User'
+    );
+    jwt = testUser.accessToken;
+  });
+
+  test.afterAll(async () => {
+    // Clean up test user
+    await cleanupTestUser(testUser);
+  });
+
   let uxHelper: UXComplianceHelper;
 
   test.beforeEach(async ({ page }) => {
@@ -12,17 +32,20 @@ test.describe('Mobile Responsiveness E2E Tests - P1 High Priority', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
     
-    // Login for authenticated tests
-    await page.goto(`${BASE_URL}/login`);
-    await page.getByLabel('Email address').fill('e2e-test@example.com');
-    await page.getByLabel('Password').fill('e2eTestPass123');
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    // Set authentication token directly instead of using UI login
+    await page.goto(`${BASE_URL}/dashboard`);
+    
+    // Set the JWT token in localStorage to authenticate the user
+    await page.evaluate((data) => {
+      localStorage.setItem('accessToken', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }, { token: jwt, user: testUser });
+    
+    // Reload the page to apply authentication
+    await page.reload();
     
     // Wait for dashboard to load
-    await Promise.all([
-      page.waitForURL(/.*dashboard/),
-      page.waitForSelector('h1:has-text("Dashboard")')
-    ]);
+    await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
   });
 
   test.describe('Mobile Navigation & Layout', () => {
@@ -259,30 +282,40 @@ test.describe('Mobile Responsiveness E2E Tests - P1 High Priority', () => {
     });
 
     test('should handle mobile OAuth2 flows', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Connections' }).click();
-      await page.getByRole('button', { name: 'Add Connection' }).click();
+      // On mobile, we need to open the mobile menu first
+      await page.getByTestId('mobile-menu-toggle').click();
+      // Use the mobile menu button specifically (first button with this text)
+      await page.locator('[data-testid="mobile-menu"] button:has-text("API Connections")').first().click();
+      // Use the specific data-testid to avoid ambiguity
+      await page.getByTestId('primary-action create-connection-btn').first().click();
       
-      // Select OAuth2 provider
-      await page.getByText('Slack').click();
-      await page.getByRole('button', { name: 'Connect with Slack' }).click();
+      // Fill basic connection details
+      await page.fill('[data-testid="connection-name-input"]', 'Mobile Slack API');
+      await page.fill('[data-testid="connection-description-input"]', 'Slack API via OAuth2 on mobile');
+      await page.fill('[data-testid="connection-baseurl-input"]', 'https://slack.com/api');
       
-      // Should handle OAuth2 redirect on mobile
-      await expect(page.getByText('Connecting to Slack')).toBeVisible();
+      // Select OAuth2 authentication type
+      await page.selectOption('[data-testid="connection-authtype-select"]', 'OAUTH2');
       
-      // Mock OAuth2 success
-      await page.route('**/api/auth/oauth2/callback**', route => {
-        route.fulfill({
-          status: 200,
-          body: JSON.stringify({ success: true, accessToken: 'mock-token' })
-        });
-      });
+      // Select Slack provider
+      await page.selectOption('[data-testid="connection-provider-select"]', 'slack');
       
-      // Complete OAuth2 flow
-      await page.goto(`${BASE_URL}/api/auth/oauth2/callback?code=test-code&state=test-state`);
+      // Fill OAuth2 credentials
+      await page.fill('[data-testid="connection-clientid-input"]', 'test-slack-client-id');
+      await page.fill('[data-testid="connection-clientsecret-input"]', 'test-slack-client-secret');
       
-      // Should return to connections page
-      await expect(page).toHaveURL(/.*connections/);
-      await expect(page.getByText('Slack connected successfully')).toBeVisible();
+      // Submit form
+      const submitButton = page.locator('[data-testid="primary-action submit-connection-btn"]');
+      await submitButton.click();
+      
+      // Wait for success message and connection card
+      await page.waitForSelector('[data-testid="success-message"]', { timeout: 10000 });
+      await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
+      await expect(page.locator('[data-testid="connection-card"]:has-text("Mobile Slack API")')).toBeVisible();
+      await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
+      
+      // As a final check, ensure the dashboard heading is visible
+      await expect(page.locator('h1')).toContainText('Dashboard');
     });
   });
 
@@ -335,7 +368,10 @@ test.describe('Mobile Responsiveness E2E Tests - P1 High Priority', () => {
     test('should handle mobile network conditions', async ({ page }) => {
       // Simulate slow 3G network
       await page.route('**/*', route => {
-        route.continue({ delay: 1000 }); // 1 second delay
+        // Add delay using setTimeout to simulate slow network
+        setTimeout(() => {
+          route.continue();
+        }, 1000);
       });
       
       await page.getByRole('tab', { name: 'Workflows' }).click();

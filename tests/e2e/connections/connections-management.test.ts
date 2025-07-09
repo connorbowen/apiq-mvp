@@ -1,5 +1,7 @@
 import { test, expect } from '../../helpers/serverHealthCheck';
 import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
+// TODO: Add UXComplianceHelper import for comprehensive UX validation
+// import { UXComplianceHelper } from '../../helpers/uxCompliance';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -34,20 +36,37 @@ test.describe('Connections Management E2E Tests', () => {
     await cleanupTestUser(testUser);
   });
 
-
-
   test.beforeEach(async ({ page }) => {
+    // TODO: Initialize UXComplianceHelper for comprehensive UX validation
+    // const uxHelper = new UXComplianceHelper(page);
+    
     // Login before each test
     await page.goto(`${BASE_URL}/login`);
+    
+    // TODO: Add UX compliance validation for login page
+    // await uxHelper.validatePageTitle('APIQ');
+    // await uxHelper.validateHeadingHierarchy(['Sign in to APIQ']);
+    // await uxHelper.validateFormAccessibility();
+    
     await page.fill('input[name="email"]', testUser.email);
     await page.fill('input[name="password"]', 'e2eTestPass123');
+    
+    // TODO: Fix primary action data-testid pattern for login
+    // await page.getByTestId('primary-action signin-btn').click();
     await page.click('button[type="submit"]');
     
     // Wait for successful login and redirect to dashboard
     await expect(page).toHaveURL(/.*dashboard/);
     
+    // TODO: Add UX compliance validation for dashboard
+    // await uxHelper.validateHeadingHierarchy(['Dashboard']);
+    
     // Navigate to connections tab
     await page.click('[data-testid="tab-connections"]');
+    
+    // TODO: Add comprehensive UX compliance validation
+    // await uxHelper.validateHeadingHierarchy(['Dashboard', 'API Connections']);
+    // await uxHelper.validateFormAccessibility();
     
     // Validate UX compliance - heading hierarchy
     await expect(page.locator('h1')).toHaveText('Dashboard');
@@ -58,12 +77,18 @@ test.describe('Connections Management E2E Tests', () => {
     await page.click('[data-testid="tab-connections"]');
   });
 
-
-
   test.describe('Connection CRUD Operations', () => {
     test('should create a new API connection with UX compliance', async ({ page }) => {
+      // TODO: Initialize UXComplianceHelper for this test
+      // const uxHelper = new UXComplianceHelper(page);
+      
       // Click create connection button
       await page.click('[data-testid="primary-action create-connection-btn"]');
+      
+      // TODO: Add comprehensive UX compliance validation
+      // await uxHelper.validateHeadingHierarchy(['Add API Connection']);
+      // await uxHelper.validateFormAccessibility();
+      // await uxHelper.validatePrimaryActionPresence('submit-connection-btn');
       
       // Validate UX compliance - heading hierarchy for create form
       await expect(page.locator('h3:has-text("Add API Connection")')).toBeVisible();
@@ -91,6 +116,9 @@ test.describe('Connections Management E2E Tests', () => {
       // Validate UX compliance - descriptive button text
       await expect(page.locator('[data-testid="primary-action submit-connection-btn"]')).toHaveText('Create Connection');
       
+      // TODO: Add loading state validation
+      // await uxHelper.validateLoadingState('[data-testid="primary-action submit-connection-btn"]');
+      
       // Submit form
       await page.click('[data-testid="primary-action submit-connection-btn"]');
       
@@ -100,6 +128,9 @@ test.describe('Connections Management E2E Tests', () => {
       
       // Wait for form processing
       await page.waitForTimeout(2000);
+      
+      // TODO: Add comprehensive success message validation
+      // await uxHelper.validateSuccessContainer('Connection created successfully');
       
       // Validate UX compliance - success message in accessible container
       await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
@@ -218,9 +249,16 @@ test.describe('Connections Management E2E Tests', () => {
 
   test.describe('UX Compliance & Accessibility', () => {
     test('should have accessible form fields and keyboard navigation', async ({ page }) => {
-      // TODO: Keyboard navigation and focus management needs improvement
+      // TODO: Initialize UXComplianceHelper for this test
+      // const uxHelper = new UXComplianceHelper(page);
+      
+      // TODO: Add comprehensive keyboard navigation testing
       // Click create connection button
       await page.click('[data-testid="primary-action create-connection-btn"]');
+      
+      // TODO: Add comprehensive UX compliance validation
+      // await uxHelper.validateHeadingHierarchy(['Add API Connection']);
+      // await uxHelper.validateFormAccessibility();
       
       // Validate UX compliance - heading hierarchy
       await expect(page.locator('h3:has-text("Add API Connection")')).toBeVisible();
@@ -229,10 +267,17 @@ test.describe('Connections Management E2E Tests', () => {
       const nameInput = page.locator('[data-testid="connection-name-input"]');
       await expect(nameInput).toBeFocused();
       
+      // TODO: Add comprehensive keyboard navigation testing
       // Test keyboard navigation - Tab should move to next element
       await page.keyboard.press('Tab');
       const descriptionInput = page.locator('[data-testid="connection-description-input"]');
       await expect(descriptionInput).toBeFocused();
+      
+      // TODO: Add complete keyboard navigation through entire form
+      // await page.keyboard.press('Tab');
+      // await expect(page.locator('[data-testid="connection-baseurl-input"]')).toBeFocused();
+      // await page.keyboard.press('Tab');
+      // await expect(page.locator('[data-testid="connection-authtype-select"]')).toBeFocused();
       
       // Test form field accessibility
       await expect(nameInput).toHaveAttribute('aria-required', 'true');
@@ -241,20 +286,34 @@ test.describe('Connections Management E2E Tests', () => {
       // Test ARIA labels
       await expect(descriptionInput).toHaveAttribute('aria-label');
       
+      // TODO: Add comprehensive ARIA attribute validation
+      // await expect(page.locator('[data-testid="connection-baseurl-input"]')).toHaveAttribute('aria-required', 'true');
+      // await expect(page.locator('form')).toHaveAttribute('role', 'form');
+      
       // Test form validation accessibility
       await nameInput.fill('');
       await page.keyboard.press('Tab');
       await expect(page.locator('[role="alert"]')).toBeVisible();
+      
+      // TODO: Add escape key testing for modal closure
+      // await page.keyboard.press('Escape');
+      // await expect(page.locator('[data-testid="primary-action create-connection-btn"]')).toBeVisible();
     });
 
       test('should handle form validation errors with accessible messaging', async ({ page }) => {
-    // Form validation error handling has been improved with ARIA attributes and field-level errors
+      // TODO: Initialize UXComplianceHelper for this test
+      // const uxHelper = new UXComplianceHelper(page);
+      
+      // Form validation error handling has been improved with ARIA attributes and field-level errors
       // Click create connection button
       await page.click('[data-testid="primary-action create-connection-btn"]');
       
       // Try to submit empty form
       await page.click('[data-testid="primary-action submit-connection-btn"]');
       await page.pause(); // Pause to inspect DOM in Playwright Inspector
+      
+      // TODO: Add comprehensive error container validation
+      // await uxHelper.validateErrorContainer(/required|fill in/i);
       
       // Validate UX compliance - accessible error containers
       await expect(page.locator('[role="alert"]').first()).toBeVisible();
@@ -265,21 +324,119 @@ test.describe('Connections Management E2E Tests', () => {
     });
 
     test('should have mobile responsive design', async ({ page }) => {
+      // TODO: Initialize UXComplianceHelper for this test
+      // const uxHelper = new UXComplianceHelper(page);
+      
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
       
       // Click create connection button
       await page.click('[data-testid="primary-action create-connection-btn"]');
       
+      // TODO: Add comprehensive mobile responsiveness validation
+      // await uxHelper.validateMobileResponsiveness();
+      // await uxHelper.validateMobileAccessibility();
+      
       // Validate mobile layout
       await expect(page.locator('[data-testid="connection-name-input"]')).toBeVisible();
       await expect(page.locator('[data-testid="primary-action submit-connection-btn"]')).toBeVisible();
+      
+      // TODO: Add touch target size validation
+      // const submitBtn = page.locator('[data-testid="primary-action submit-connection-btn"]');
+      // const box = await submitBtn.boundingBox();
+      // expect(box!.width).toBeGreaterThanOrEqual(44);
+      // expect(box!.height).toBeGreaterThanOrEqual(44);
       
       // Test mobile form interaction
       await page.locator('[data-testid="connection-name-input"]').fill('Mobile Test Connection');
       await expect(page.locator('[data-testid="connection-name-input"]')).toHaveValue('Mobile Test Connection');
     });
   });
+
+  // TODO: Add security edge case tests
+  // test.describe('Security Edge Cases', () => {
+  //   test('should validate input sanitization', async ({ page }) => {
+  //     const uxHelper = new UXComplianceHelper(page);
+  //     
+  //     await page.click('[data-testid="primary-action create-connection-btn"]');
+  //     
+  //     // Test XSS attempt in connection name
+  //     await page.fill('[data-testid="connection-name-input"]', '<script>alert("xss")</script>');
+  //     await page.click('[data-testid="primary-action submit-connection-btn"]');
+  //     
+  //     // Should handle malicious input gracefully
+  //     await uxHelper.validateErrorContainer(/invalid|unsafe/i);
+  //   });
+
+  //   test('should handle rate limiting', async ({ page }) => {
+  //     // Test multiple rapid connection creation attempts
+  //     for (let i = 0; i < 5; i++) {
+  //       await page.click('[data-testid="primary-action create-connection-btn"]');
+  //       // Fill form and submit
+  //     }
+  //     
+  //     // Should show rate limit error
+  //     await uxHelper.validateErrorContainer(/rate limit|too many requests/i);
+  //   });
+
+  //   test('should validate HTTPS requirements', async ({ page }) => {
+  //     // Test HTTP URL (should be rejected)
+  //     await page.click('[data-testid="primary-action create-connection-btn"]');
+  //     await page.fill('[data-testid="connection-baseurl-input"]', 'http://insecure-api.example.com');
+  //     
+  //     // Should show security error
+  //     await uxHelper.validateErrorContainer(/https|secure/i);
+  //   });
+  // });
+
+  // TODO: Add performance validation tests
+  // test.describe('Performance Validation', () => {
+  //   test('should meet page load performance requirements', async ({ page }) => {
+  //     const startTime = Date.now();
+  //     await page.goto(`${BASE_URL}/dashboard`);
+  //     await page.click('[data-testid="tab-connections"]');
+  //     const loadTime = Date.now() - startTime;
+  //     expect(loadTime).toBeLessThan(3000);
+  //   });
+
+  //   test('should handle concurrent connection creation', async ({ page, context }) => {
+  //     // Test multiple concurrent connection creation requests
+  //     const promises = [];
+  //     for (let i = 0; i < 3; i++) {
+  //       const newPage = await context.newPage();
+  //       promises.push(
+  //         newPage.click('[data-testid="primary-action create-connection-btn"]').then(() => {
+  //           return newPage.fill('[data-testid="connection-name-input"]', `Test API ${i}`);
+  //         })
+  //       );
+  //     }
+  //     
+  //     await Promise.all(promises);
+  //     // Should handle concurrent requests without errors
+  //   });
+  // });
+
+  // TODO: Add comprehensive accessibility tests
+  // test.describe('Accessibility Compliance', () => {
+  //   test('should have proper ARIA attributes', async ({ page }) => {
+  //     await page.click('[data-testid="primary-action create-connection-btn"]');
+  //     
+  //     // Test ARIA attributes
+  //     await expect(page.locator('[data-testid="connection-name-input"]')).toHaveAttribute('aria-required', 'true');
+  //     await expect(page.locator('[data-testid="connection-baseurl-input"]')).toHaveAttribute('aria-required', 'true');
+  //     
+  //     // Test form labels
+  //     await expect(page.locator('label[for="connection-name"]')).toContainText('Connection Name');
+  //   });
+
+  //   test('should support screen readers', async ({ page }) => {
+  //     await page.click('[data-testid="primary-action create-connection-btn"]');
+  //     
+  //     // Test semantic HTML structure
+  //     await expect(page.locator('form')).toHaveAttribute('role', 'form');
+  //     await expect(page.locator('[data-testid="connection-name-input"]')).toHaveAttribute('aria-label');
+  //   });
+  // });
 
   test.describe('OAuth2 Connection Management', () => {
     test('should create OAuth2 connection with GitHub provider', async ({ page }) => {

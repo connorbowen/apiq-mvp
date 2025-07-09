@@ -13,8 +13,8 @@ export interface TestData {
  * after global setup truncates tables
  */
 export async function createCommonTestData(): Promise<TestData> {
-  // Create test user
-  const user = await createTestUser();
+  // Create test user with ADMIN role for integration tests
+  const user = await createTestUser(undefined, undefined, 'ADMIN');
   
   return { user };
 }
@@ -23,7 +23,7 @@ export async function createCommonTestData(): Promise<TestData> {
  * Creates test data for API connection tests
  */
 export async function createConnectionTestData(): Promise<TestData> {
-  const user = await createTestUser();
+  const user = await createTestUser(undefined, undefined, 'ADMIN');
   
   const connection = await prisma.apiConnection.create({
     data: {
@@ -47,7 +47,7 @@ export async function createConnectionTestData(): Promise<TestData> {
  * Creates test data for workflow tests
  */
 export async function createWorkflowTestData(): Promise<TestData> {
-  const user = await createTestUser();
+  const user = await createTestUser(undefined, undefined, 'ADMIN');
   
   const workflow = await prisma.workflow.create({
     data: {
@@ -66,7 +66,7 @@ export async function createWorkflowTestData(): Promise<TestData> {
  * Creates test data for OAuth2 tests
  */
 export async function createOAuth2TestData(): Promise<TestData> {
-  const user = await createTestUser();
+  const user = await createTestUser(undefined, undefined, 'ADMIN');
   
   const connection = await prisma.apiConnection.create({
     data: {

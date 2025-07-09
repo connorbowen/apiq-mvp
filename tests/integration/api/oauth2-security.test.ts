@@ -22,22 +22,14 @@ describe('OAuth2 Security Integration Tests (Real)', () => {
 
   const createAuthenticatedRequest = (method: string, user: any, options: any = {}) => {
     const { createMocks } = require('node-mocks-http');
-    const { generateToken } = require('../../../src/lib/auth/session');
     const { req, res } = createMocks({
       method,
       ...options
     });
-    // Create real JWT token for authentication
-    const token = generateToken({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      isActive: user.isActive
-    });
+    // Use the real access token from the user object (obtained via real login)
     req.headers = {
       ...req.headers,
-      authorization: `Bearer ${token}`,
+      authorization: `Bearer ${user.accessToken}`,
       ...options.headers
     };
     return { req, res };
@@ -153,8 +145,8 @@ describe('OAuth2 Security Integration Tests (Real)', () => {
 
   describe('Authorization Validation', () => {
     it('should validate API connection ownership', async () => {
-      // Create another user using helper function
-      const otherUser = await createTestUser(undefined, 'test-password-123');
+      // Create another user using helper function (non-admin to test access control)
+      const otherUser = await createTestUser(undefined, 'test-password-123', 'USER');
       const { req, res } = createAuthenticatedRequest('GET', otherUser, {
         query: {
           apiConnectionId: testApiConnection.id, // Belongs to testUser, not otherUser

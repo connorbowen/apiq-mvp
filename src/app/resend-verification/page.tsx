@@ -78,7 +78,12 @@ export default function ResendVerificationPage() {
 
         {/* Success Message */}
         {success && (
-          <div className="rounded-md bg-green-50 p-4" role="alert">
+          <div 
+            className="rounded-md bg-green-50 p-4" 
+            role="alert"
+            // TODO: Add aria-live for dynamic content accessibility
+            // aria-live="polite"
+          >
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -94,7 +99,12 @@ export default function ResendVerificationPage() {
 
         {/* Error Messages - Single accessible container for all errors */}
         {hasErrors && (
-          <div className="rounded-md bg-red-50 p-4" role="alert">
+          <div 
+            className="rounded-md bg-red-50 p-4" 
+            role="alert"
+            // TODO: Add aria-live for dynamic content accessibility
+            // aria-live="assertive"
+          >
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -136,6 +146,8 @@ export default function ResendVerificationPage() {
           </div>
 
           <button
+            // TODO: Fix primary action data-testid pattern to use combined pattern
+            // Add: data-testid="primary-action resend-verification-btn"
             type="submit"
             disabled={isLoading}
             className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"

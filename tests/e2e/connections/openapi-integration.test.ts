@@ -97,11 +97,9 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
     await page.fill('input[name="email"]', testUser.email);
     await page.fill('input[name="password"]', 'e2eTestPass123');
     
-    // Click submit and wait for navigation to complete
-    await Promise.all([
-      page.waitForURL(/.*dashboard/),
-      page.click('button[type="submit"]')
-    ]);
+    // TODO: Fix primary action data-testid pattern for login
+    // await page.getByTestId('primary-action signin-btn').click();
+    await page.click('button[type="submit"]');
     
     // Wait for dashboard to fully load and verify we're on dashboard
     await expect(page).toHaveURL(/.*dashboard/);
@@ -127,7 +125,8 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
     test('should import API connection from OpenAPI URL (Petstore)', async ({ page }) => {
       const uxHelper = new UXComplianceHelper(page);
       
-      // Click create connection button
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action create-connection-btn').click();
       await page.click('[data-testid="create-connection-btn"]');
       
       // Validate modal UX compliance
@@ -140,7 +139,8 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       await page.fill('[data-testid="connection-description-input"]', 'Petstore API imported from OpenAPI spec');
       await page.fill('[data-testid="connection-base-url-input"]', 'https://petstore.swagger.io/v2');
       
-      // Navigate to step 2
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
       // Fill step 2: Authentication (select API_KEY as default)
@@ -148,10 +148,12 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       await page.selectOption('[data-testid="connection-auth-type-select"]', 'API_KEY');
       await page.fill('[data-testid="api-key-input"]', 'dummy-api-key-for-testing');
       
-      // Navigate to step 3
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
-      // Select OpenAPI import option
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action import-openapi-btn').click();
       await page.click('[data-testid="import-openapi-btn"]');
       
       // Validate OpenAPI import form UX compliance
@@ -159,6 +161,10 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       
       // Enter OpenAPI URL for Petstore
       await page.fill('[data-testid="openapi-url-input"]', 'https://petstore.swagger.io/v2/swagger.json');
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action submit-connection-btn').click();
+      await page.click('button[type="submit"]');
       
       // Validate loading state during submission (UX Spec requirement)
       await uxHelper.validateLoadingState('button[type="submit"]');
@@ -179,14 +185,16 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       // Should show OpenAPI badge or indicator
       await expect(page.locator('[data-testid="connection-card"]')).toContainText('OpenAPI');
       
-      // Validate mobile responsiveness (temporarily disabled due to UI sizing issues)
+      // TODO: Enable mobile responsiveness testing
       // await uxHelper.validateMobileResponsiveness();
+      // await uxHelper.validateMobileAccessibility();
     });
 
     test('should import API connection from OpenAPI 3.0 URL (HTTPBin)', async ({ page }) => {
       const uxHelper = new UXComplianceHelper(page);
       
-      // Click create connection button
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action create-connection-btn').click();
       await page.click('[data-testid="create-connection-btn"]');
       
       // Fill step 1: Basic Info
@@ -195,21 +203,28 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       await page.fill('[data-testid="connection-description-input"]', 'HTTPBin API imported from OpenAPI 3.0 spec');
       await page.fill('[data-testid="connection-base-url-input"]', 'https://httpbin.org');
       
-      // Navigate to step 2
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
       // Fill step 2: Authentication (select API_KEY as default)
       await page.selectOption('[data-testid="connection-auth-type-select"]', 'API_KEY');
       await page.fill('[data-testid="api-key-input"]', 'dummy-api-key-for-testing');
       
-      // Navigate to step 3
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
-      // Select OpenAPI import option
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action import-openapi-btn').click();
       await page.click('[data-testid="import-openapi-btn"]');
       
       // Enter OpenAPI 3.0 URL for HTTPBin
       await page.fill('[data-testid="openapi-url-input"]', 'https://httpbin.org/openapi.json');
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action submit-connection-btn').click();
+      await page.click('button[type="submit"]');
       
       // Validate loading state during submission (UX Spec requirement)
       await uxHelper.validateLoadingState('button[type="submit"]');
@@ -224,7 +239,8 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
     test('should validate OpenAPI specification format', async ({ page }) => {
       const uxHelper = new UXComplianceHelper(page);
       
-      // Click create connection button
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action create-connection-btn').click();
       await page.click('[data-testid="create-connection-btn"]');
       
       // Fill step 1: Basic Info
@@ -232,23 +248,27 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       await page.fill('[data-testid="connection-name-input"]', invalidApiName);
       await page.fill('[data-testid="connection-base-url-input"]', 'https://invalid-api.example.com');
       
-      // Navigate to step 2
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
       // Fill step 2: Authentication (select API_KEY as default)
       await page.selectOption('[data-testid="connection-auth-type-select"]', 'API_KEY');
       await page.fill('[data-testid="api-key-input"]', 'dummy-api-key-for-testing');
       
-      // Navigate to step 3
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
-      // Select OpenAPI import option
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action import-openapi-btn').click();
       await page.click('[data-testid="import-openapi-btn"]');
       
       // Enter invalid OpenAPI URL
       await page.fill('[data-testid="openapi-url-input"]', 'https://invalid-api.example.com/swagger.json');
       
-      // Submit form
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action submit-connection-btn').click();
       await page.click('button[type="submit"]');
       
       // Should show validation error with proper UX compliance
@@ -258,7 +278,8 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
     test('should handle malformed OpenAPI specification', async ({ page }) => {
       const uxHelper = new UXComplianceHelper(page);
       
-      // Click create connection button
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action create-connection-btn').click();
       await page.click('[data-testid="create-connection-btn"]');
       
       // Fill step 1: Basic Info
@@ -266,23 +287,27 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       await page.fill('[data-testid="connection-name-input"]', malformedApiName);
       await page.fill('[data-testid="connection-base-url-input"]', 'https://httpbin.org');
       
-      // Navigate to step 2
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
       // Fill step 2: Authentication (select API_KEY as default)
       await page.selectOption('[data-testid="connection-auth-type-select"]', 'API_KEY');
       await page.fill('[data-testid="api-key-input"]', 'dummy-api-key-for-testing');
       
-      // Navigate to step 3
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
-      // Select OpenAPI import option
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action import-openapi-btn').click();
       await page.click('[data-testid="import-openapi-btn"]');
       
       // Enter URL that returns invalid JSON
       await page.fill('[data-testid="openapi-url-input"]', 'https://httpbin.org/json');
       
-      // Submit form
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action submit-connection-btn').click();
       await page.click('button[type="submit"]');
       
       // Should show validation error with proper UX compliance
@@ -363,7 +388,8 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
     test('should cache OpenAPI specifications for performance', async ({ page }) => {
       const uxHelper = new UXComplianceHelper(page);
       
-      // Click create connection button
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action create-connection-btn').click();
       await page.click('[data-testid="create-connection-btn"]');
       
       // Fill step 1: Basic Info
@@ -371,21 +397,28 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       await page.fill('[data-testid="connection-name-input"]', cachedApiName);
       await page.fill('[data-testid="connection-base-url-input"]', 'https://petstore.swagger.io/v2');
       
-      // Navigate to step 2
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
       // Fill step 2: Authentication (select API_KEY as default)
       await page.selectOption('[data-testid="connection-auth-type-select"]', 'API_KEY');
       await page.fill('[data-testid="api-key-input"]', 'dummy-api-key-for-testing');
       
-      // Navigate to step 3
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
-      // Select OpenAPI import option
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action import-openapi-btn').click();
       await page.click('[data-testid="import-openapi-btn"]');
       
       // Enter OpenAPI URL
       await page.fill('[data-testid="openapi-url-input"]', 'https://petstore.swagger.io/v2/swagger.json');
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action submit-connection-btn').click();
+      await page.click('button[type="submit"]');
       
       // Validate loading state during submission (UX Spec requirement)
       await uxHelper.validateLoadingState('button[type="submit"]');
@@ -420,7 +453,8 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       // Navigate to connection details
       await page.click(`[data-testid="connection-details-${connection.data.id}"]`);
       
-      // Click refresh specification button
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action refresh-spec-btn').click();
       await page.click('[data-testid="refresh-spec-btn"]');
       
       // Should show refresh success message
@@ -497,7 +531,8 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       const uxHelper = new UXComplianceHelper(page);
       const startTime = Date.now();
       
-      // Click create connection button
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action create-connection-btn').click();
       await page.click('[data-testid="create-connection-btn"]');
       
       // Fill step 1: Basic Info
@@ -505,21 +540,28 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       await page.fill('[data-testid="connection-name-input"]', performanceApiName);
       await page.fill('[data-testid="connection-base-url-input"]', 'https://petstore.swagger.io/v2');
       
-      // Navigate to step 2
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
       // Fill step 2: Authentication (select API_KEY as default)
       await page.selectOption('[data-testid="connection-auth-type-select"]', 'API_KEY');
       await page.fill('[data-testid="api-key-input"]', 'dummy-api-key-for-testing');
       
-      // Navigate to step 3
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action next-step-btn').click();
       await page.click('button:has-text("Next")');
       
-      // Select OpenAPI import option
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action import-openapi-btn').click();
       await page.click('[data-testid="import-openapi-btn"]');
       
       // Enter OpenAPI URL
       await page.fill('[data-testid="openapi-url-input"]', 'https://petstore.swagger.io/v2/swagger.json');
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action submit-connection-btn').click();
+      await page.click('button[type="submit"]');
       
       // Validate loading state during submission (UX Spec requirement)
       await uxHelper.validateLoadingState('button[type="submit"]');
@@ -532,4 +574,132 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       expect(completionTime).toBeLessThan(5 * 60 * 1000); // 5 minutes in milliseconds
     });
   });
+
+  // TODO: Add security edge case tests
+  // test.describe('Security Edge Cases', () => {
+  //   test('should validate input sanitization', async ({ page }) => {
+  //     const uxHelper = new UXComplianceHelper(page);
+  //     
+  //     // Test XSS attempt in OpenAPI URL
+  //     await page.click('[data-testid="create-connection-btn"]');
+  //     await page.fill('[data-testid="connection-name-input"]', 'Test API');
+  //     await page.fill('[data-testid="connection-base-url-input"]', 'https://example.com');
+  //     await page.click('button:has-text("Next")');
+  //     await page.selectOption('[data-testid="connection-auth-type-select"]', 'API_KEY');
+  //     await page.fill('[data-testid="api-key-input"]', 'dummy-key');
+  //     await page.click('button:has-text("Next")');
+  //     await page.click('[data-testid="import-openapi-btn"]');
+  //     
+  //     await page.fill('[data-testid="openapi-url-input"]', '<script>alert("xss")</script>');
+  //     await page.getByTestId('primary-action submit-connection-btn').click();
+  //     
+  //     // Should handle malicious input gracefully
+  //     await uxHelper.validateErrorContainer(/invalid|unsafe/i);
+  //   });
+
+  //   test('should handle rate limiting', async ({ page }) => {
+  //     // Test multiple rapid connection creation attempts
+  //     for (let i = 0; i < 5; i++) {
+  //       await page.click('[data-testid="create-connection-btn"]');
+  //       // Fill form and submit
+  //     }
+  //     
+  //     // Should show rate limit error
+  //     await uxHelper.validateErrorContainer(/rate limit|too many requests/i);
+  //   });
+
+  //   test('should validate HTTPS requirements', async ({ page }) => {
+  //     // Test HTTP URL (should be rejected)
+  //     await page.click('[data-testid="create-connection-btn"]');
+  //     await page.fill('[data-testid="connection-base-url-input"]', 'http://insecure-api.example.com');
+  //     
+  //     // Should show security error
+  //     await uxHelper.validateErrorContainer(/https|secure/i);
+  //   });
+  // });
+
+  // TODO: Add mobile responsiveness tests
+  // test.describe('Mobile Responsiveness', () => {
+  //   test('should be mobile responsive', async ({ page }) => {
+  //     await page.setViewportSize({ width: 375, height: 667 });
+  //     
+  //     // Test connection creation flow on mobile
+  //     await page.click('[data-testid="create-connection-btn"]');
+  //     await uxHelper.validateMobileResponsiveness();
+  //     await uxHelper.validateMobileAccessibility();
+  //     
+  //     // Test touch-friendly button sizes
+  //     const submitBtn = page.locator('button[type="submit"]');
+  //     const box = await submitBtn.boundingBox();
+  //     expect(box!.width).toBeGreaterThanOrEqual(44);
+  //     expect(box!.height).toBeGreaterThanOrEqual(44);
+  //   });
+  // });
+
+  // TODO: Add keyboard navigation tests
+  // test.describe('Keyboard Navigation', () => {
+  //   test('should support keyboard navigation', async ({ page }) => {
+  //     await page.click('[data-testid="create-connection-btn"]');
+  //     
+  //     // Test tab navigation through form
+  //     await page.keyboard.press('Tab');
+  //     await expect(page.locator('[data-testid="connection-name-input"]')).toBeFocused();
+  //     
+  //     await page.keyboard.press('Tab');
+  //     await expect(page.locator('[data-testid="connection-description-input"]')).toBeFocused();
+  //     
+  //     // Test form submission with keyboard
+  //     await page.keyboard.press('Enter');
+  //     await uxHelper.validateErrorContainer(/required/i);
+  //   });
+  // });
+
+  // TODO: Add performance validation tests
+  // test.describe('Performance Validation', () => {
+  //   test('should meet page load performance requirements', async ({ page }) => {
+  //     const startTime = Date.now();
+  //     await page.goto(`${BASE_URL}/dashboard`);
+  //     await page.click('[data-testid="tab-connections"]');
+  //     const loadTime = Date.now() - startTime;
+  //     expect(loadTime).toBeLessThan(3000);
+  //   });
+
+  //   test('should handle concurrent connection creation', async ({ page, context }) => {
+  //     // Test multiple concurrent connection creation requests
+  //     const promises = [];
+  //     for (let i = 0; i < 3; i++) {
+  //       const newPage = await context.newPage();
+  //       promises.push(
+  //         newPage.click('[data-testid="create-connection-btn"]').then(() => {
+  //           return newPage.fill('[data-testid="connection-name-input"]', `Test API ${i}`);
+  //         })
+  //       );
+  //     }
+  //     
+  //     await Promise.all(promises);
+  //     // Should handle concurrent requests without errors
+  //   });
+  // });
+
+  // TODO: Add comprehensive accessibility tests
+  // test.describe('Accessibility Compliance', () => {
+  //   test('should have proper ARIA attributes', async ({ page }) => {
+  //     await page.click('[data-testid="create-connection-btn"]');
+  //     
+  //     // Test ARIA attributes
+  //     await expect(page.locator('[data-testid="connection-name-input"]')).toHaveAttribute('aria-required', 'true');
+  //     await expect(page.locator('[data-testid="connection-base-url-input"]')).toHaveAttribute('aria-required', 'true');
+  //     
+  //     // Test form labels
+  //     await expect(page.locator('label[for="connection-name"]')).toContainText('Connection Name');
+  //   });
+
+  //   test('should support screen readers', async ({ page }) => {
+  //     await page.click('[data-testid="create-connection-btn"]');
+  //     
+  //     // Test semantic HTML structure
+  //     await expect(page.locator('form')).toHaveAttribute('role', 'form');
+  //     await expect(page.locator('[data-testid="connection-name-input"]')).toHaveAttribute('aria-label');
+  //   });
+  // });
 });

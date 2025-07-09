@@ -305,6 +305,10 @@ export default function NaturalLanguageWorkflowChat({
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Describe your workflow in plain English..."
+                // TODO: Add ARIA attributes for textarea accessibility
+                // aria-required="true"
+                // aria-describedby="workflow-description-help"
+                // aria-invalid={error ? "true" : "false"}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px] min-w-[44px]"
                 disabled={isLoading}
               />
@@ -312,14 +316,26 @@ export default function NaturalLanguageWorkflowChat({
 
             {/* Error Message */}
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md" data-testid="workflow-error-message">
+              <div 
+                className="p-3 bg-red-50 border border-red-200 rounded-md" 
+                data-testid="workflow-error-message"
+                // TODO: Add role="alert" for accessibility compliance
+                // role="alert"
+                // aria-live="assertive"
+              >
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
 
             {/* Success Message */}
             {successMessage && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-md" data-testid="workflow-success-form-message">
+              <div 
+                className="p-3 bg-green-50 border border-green-200 rounded-md" 
+                data-testid="workflow-success-form-message"
+                // TODO: Add role="alert" for accessibility compliance
+                // role="alert"
+                // aria-live="polite"
+              >
                 <p className="text-sm text-green-600">{successMessage}</p>
               </div>
             )}
@@ -327,6 +343,9 @@ export default function NaturalLanguageWorkflowChat({
             <button
               type="submit"
               disabled={isLoading}
+              // TODO: Fix primary action data-testid pattern to use combined pattern
+              // Change from: data-testid="primary-action generate-workflow-btn"
+              // To: data-testid="primary-action generate-workflow-btn" (already correct)
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="primary-action generate-workflow-btn"
             >
@@ -352,6 +371,9 @@ export default function NaturalLanguageWorkflowChat({
                 </button>
                 <button
                   onClick={handleSaveWorkflow}
+                  // TODO: Fix primary action data-testid pattern to use combined pattern
+                  // Change from: data-testid="primary-action save-workflow-btn"
+                  // To: data-testid="primary-action save-workflow-btn" (already correct)
                   className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px]"
                   data-testid="primary-action save-workflow-btn"
                 >

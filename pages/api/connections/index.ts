@@ -9,14 +9,14 @@ import { logInfo, logError } from '../../../src/utils/logger';
 import { CreateApiConnectionRequest } from '../../../src/types';
 import { parseOpenApiSpecData, ParseError } from '../../../src/lib/api/parser';
 import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
-import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
+import { requireAdmin, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { openApiService } from '../../../src/services/openApiService';
 import { ConnectionStatus } from '../../../src/generated/prisma';
 
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
-    // Require authentication for all operations
-    const user = await requireAuth(req, res);
+    // Require admin authentication for all operations
+    const user = await requireAdmin(req, res);
 
     if (req.method === 'GET') {
       // Get all API connections for the authenticated user
@@ -85,6 +85,41 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           error: 'Invalid auth type. Must be one of: NONE, API_KEY, BEARER_TOKEN, BASIC_AUTH, OAUTH2, CUSTOM',
           code: 'VALIDATION_ERROR'
         });
+      }
+
+      // Validate OAuth2-specific requirements
+      if (connectionData.authType === 'OAUTH2') {
+        if (!connectionData.authConfig) {
+          return res.status(400).json({
+            success: false,
+            error: 'OAuth2 configuration is required for OAuth2 authentication type',
+            code: 'VALIDATION_ERROR'
+          });
+        }
+
+        const oauth2Config = connectionData.authConfig;
+        const requiredFields = ['clientId', 'clientSecret', 'redirectUri'];
+        const missingFields = requiredFields.filter(field => !oauth2Config[field]);
+
+        if (missingFields.length > 0) {
+          return res.status(400).json({
+            success: false,
+            error: `Missing required OAuth2 fields: ${missingFields.join(', ')}`,
+            code: 'VALIDATION_ERROR'
+          });
+        }
+
+        // Validate OAuth2 provider if specified
+        if (oauth2Config.oauth2Provider) {
+          const validProviders = ['GITHUB', 'GOOGLE', 'SLACK', 'CUSTOM'];
+          if (!validProviders.includes(oauth2Config.oauth2Provider)) {
+            return res.status(400).json({
+              success: false,
+              error: `Invalid OAuth2 provider. Must be one of: ${validProviders.join(', ')}`,
+              code: 'VALIDATION_ERROR'
+            });
+          }
+        }
       }
 
       // Check if connection with same name already exists for this user

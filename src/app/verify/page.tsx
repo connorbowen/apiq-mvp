@@ -99,7 +99,12 @@ export default function VerifyPage() {
 
         {/* Success Message */}
         {success && (
-          <div className="rounded-md bg-green-50 p-4" role="alert">
+          <div 
+            className="rounded-md bg-green-50 p-4" 
+            role="alert"
+            // TODO: Add aria-live for dynamic content accessibility
+            // aria-live="polite"
+          >
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -118,7 +123,12 @@ export default function VerifyPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="rounded-md bg-red-50 p-4" role="alert">
+          <div 
+            className="rounded-md bg-red-50 p-4" 
+            role="alert"
+            // TODO: Add aria-live for dynamic content accessibility
+            // aria-live="assertive"
+          >
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

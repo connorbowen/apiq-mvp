@@ -201,9 +201,8 @@ describe('Authentication Flow Testing - Phase 2.3', () => {
           authConfig: {
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',
-            authorizationUrl: 'https://github.com/login/oauth/authorize',
-            tokenUrl: 'https://github.com/login/oauth/access_token',
-            scopes: ['repo', 'user']
+            redirectUri: 'http://localhost:3000/api/oauth/callback',
+            oauth2Provider: 'GITHUB'
           }
         }
       });

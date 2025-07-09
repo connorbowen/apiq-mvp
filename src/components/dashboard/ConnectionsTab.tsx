@@ -112,14 +112,14 @@ export default function ConnectionsTab({
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
-        <div className="sm:w-48">
+        <div className="sm:w-48 min-w-[200px]">
           <label htmlFor="filter-select" className="sr-only">Filter by type</label>
           <select
             id="filter-select"
             data-testid="filter-dropdown"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full min-w-[200px] px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="all">All Types</option>
             <option value="API_KEY">API Key</option>

@@ -55,6 +55,58 @@ export default function OAuth2SetupPage() {
     loadProviders();
   }, [connectionId, checkAuth, loadConnection, loadProviders]);
 
+  // Handle URL parameters for success/error messages
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+    const successParam = urlParams.get('success');
+    const detailsParam = urlParams.get('details');
+    const providerParam = urlParams.get('provider');
+
+    if (errorParam) {
+      let errorMessage = 'An error occurred during OAuth2 authorization';
+      
+      switch (errorParam) {
+        case 'oauth2_provider_error':
+          errorMessage = `OAuth2 provider error: ${detailsParam || 'Unknown error'}`;
+          break;
+        case 'missing_code_or_state':
+          errorMessage = 'Missing authorization code or state parameter';
+          break;
+        case 'token_exchange_failed':
+          errorMessage = `Token exchange failed: ${detailsParam || 'Unknown error'}`;
+          break;
+        case 'oauth2_failed':
+          errorMessage = `OAuth2 authorization failed: ${detailsParam || 'Unknown error'}`;
+          break;
+        case 'oauth2_callback_error':
+          errorMessage = 'OAuth2 callback processing error';
+          break;
+        default:
+          errorMessage = detailsParam || errorMessage;
+      }
+      
+      setError(errorMessage);
+      
+      // Clear URL parameters
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('error');
+      newUrl.searchParams.delete('details');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+
+    if (successParam === 'oauth2_authorized') {
+      const providerName = providerParam || 'OAuth2 provider';
+      setSuccess(`Successfully authorized with ${providerName}! Your connection is now ready to use.`);
+      
+      // Clear URL parameters
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('success');
+      newUrl.searchParams.delete('provider');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, []);
+
   const initiateOAuth2Flow = async (provider: string) => {
     setIsAuthorizing(true);
     setError('');

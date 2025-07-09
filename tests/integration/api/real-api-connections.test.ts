@@ -41,9 +41,6 @@ describe('Real API Connections Integration Tests', () => {
     beforeEach(async () => {
     // Recreate test data after global setup truncates tables
     const testData = await createCommonTestData();
-    
-    
-    
     testUser = testData.user;
   });
 

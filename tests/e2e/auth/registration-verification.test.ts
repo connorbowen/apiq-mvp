@@ -1,10 +1,19 @@
 import { test, expect } from '@playwright/test';
 import { generateTestId } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
+// TODO: Add UXComplianceHelper import for comprehensive UX validation
+// import { UXComplianceHelper } from '../../helpers/uxCompliance';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+// TODO: Add UXComplianceHelper instance for each test
+// let uxHelper: UXComplianceHelper;
 
 test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => {
+  // TODO: Add beforeEach to initialize UXComplianceHelper
+  // test.beforeEach(async ({ page }) => {
+  //   uxHelper = new UXComplianceHelper(page);
+  // });
+
   test('should debug registration form submission', async ({ page }) => {
     const testEmail = `e2e-debug-${generateTestId('user')}@example.com`;
     const testPassword = 'SecurePass123!';
@@ -22,6 +31,9 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
       response.url().includes('/api/auth/register') && response.request().method() === 'POST'
     );
 
+    // TODO: Fix primary action data-testid pattern
+    // await page.getByTestId('primary-action signup-btn').click();
+    
     // Submit form
     await page.getByRole('button', { name: 'Create account' }).click();
 
@@ -55,6 +67,12 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     const testName = 'E2E Test User';
 
     await page.goto(`${BASE_URL}/signup`);
+    
+    // TODO: Add UXComplianceHelper validation calls
+    // await uxHelper.validateActivationFirstUX();
+    // await uxHelper.validateFormAccessibility();
+    // await uxHelper.validateMobileResponsiveness();
+    // await uxHelper.validateKeyboardNavigation();
 
     // 1. CLEAR HEADING HIERARCHY (Activation)
     await expect(page.locator('h2')).toHaveText('Create your APIQ account');
@@ -77,6 +95,12 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await expect(passwordInput).toHaveAttribute('required', '');
     await expect(confirmPasswordInput).toHaveAttribute('required', '');
 
+    // TODO: Add ARIA attributes validation
+    // await expect(nameInput).toHaveAttribute('aria-required', 'true');
+    // await expect(emailInput).toHaveAttribute('aria-required', 'true');
+    // await expect(passwordInput).toHaveAttribute('aria-required', 'true');
+    // await expect(confirmPasswordInput).toHaveAttribute('aria-required', 'true');
+
     // Check input types and autocomplete
     await expect(emailInput).toHaveAttribute('type', 'email');
     await expect(passwordInput).toHaveAttribute('type', 'password');
@@ -92,6 +116,8 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await expect(confirmPasswordInput).toHaveAttribute('placeholder', 'Confirm your password');
 
     // 4. DESCRIPTIVE BUTTON TEXT (Activation)
+    // TODO: Fix primary action data-testid pattern - use combined pattern
+    // await expect(page.getByTestId('primary-action signup-btn')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Create account' })).toBeVisible();
 
     // 5. HELPFUL NAVIGATION LINKS (Adoption)
@@ -105,6 +131,8 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await confirmPasswordInput.fill(testPassword);
 
     // 7. SUBMIT AND VERIFY LOADING STATE
+    // TODO: Fix primary action data-testid pattern
+    // const submitButton = page.getByTestId('primary-action signup-btn');
     const submitButton = page.locator('[data-testid="primary-action signup-submit"]');
     await submitButton.click();
     await expect(submitButton).toBeDisabled();
@@ -125,19 +153,32 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await page.goto(`${BASE_URL}/signup`);
 
     // Try to submit empty form
+    // TODO: Fix primary action data-testid pattern
+    // await page.getByTestId('primary-action signup-btn').click();
     await page.getByRole('button', { name: 'Create account' }).click();
 
+    // TODO: Fix error container validation to use UXComplianceHelper
+    // await uxHelper.validateErrorContainer(/required|fill in/);
+    
     // Should show validation errors in accessible containers
     await expect(page.locator('.bg-red-50')).toBeVisible();
     await expect(page.locator('.text-red-800')).toContainText(/required|fill in/i);
+
+    // TODO: Add role="alert" validation for error containers
+    // await expect(page.locator('[role="alert"]')).toBeVisible();
 
     // Try with invalid email
     await page.getByLabel('Full name').fill('Test User');
     await page.getByLabel('Email address').fill('invalid-email');
     await page.locator('#password').fill('password123');
     await page.locator('#confirmPassword').fill('password123');
+    // TODO: Fix primary action data-testid pattern
+    // await page.getByTestId('primary-action signup-btn').click();
     await page.getByRole('button', { name: 'Create account' }).click();
 
+    // TODO: Fix error container validation to use UXComplianceHelper
+    // await uxHelper.validateErrorContainer(/valid email|email format/);
+    
     // Should show email validation error
     await expect(page.locator('.bg-red-50')).toBeVisible();
     await expect(page.locator('.text-red-800')).toContainText(/valid email|email format/i);
@@ -146,8 +187,13 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await page.getByLabel('Email address').fill('test@example.com');
     await page.locator('#password').fill('password123');
     await page.locator('#confirmPassword').fill('different123');
+    // TODO: Fix primary action data-testid pattern
+    // await page.getByTestId('primary-action signup-btn').click();
     await page.getByRole('button', { name: 'Create account' }).click();
 
+    // TODO: Fix error container validation to use UXComplianceHelper
+    // await uxHelper.validateErrorContainer(/match|same password/);
+    
     // Should show password mismatch error
     await expect(page.locator('.bg-red-50')).toBeVisible();
     await expect(page.locator('.text-red-800')).toContainText(/match|same password/i);
@@ -163,6 +209,8 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await page.getByLabel('Email address').fill(existingEmail);
     await page.locator('#password').fill('ValidPass123');
     await page.locator('#confirmPassword').fill('ValidPass123');
+    // TODO: Fix primary action data-testid pattern
+    // const submitButton = page.getByTestId('primary-action signup-btn');
     const submitButton2 = page.locator('[data-testid="primary-action signup-submit"]');
     await submitButton2.click();
     await expect(submitButton2).toBeDisabled();
@@ -170,6 +218,10 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     // Wait for error to appear (button re-enabled after error)
     await expect(submitButton2).toBeVisible();
     await expect(submitButton2).not.toBeDisabled();
+    
+    // TODO: Fix error container validation to use UXComplianceHelper
+    // await uxHelper.validateErrorContainer(/already exists|already registered/);
+    
     await expect(page.locator('.bg-red-50')).toBeVisible();
     await expect(page.locator('.text-red-800')).toContainText(/already exists|already registered/i);
 
@@ -196,12 +248,54 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     // Test weak password
     await passwordInput.fill('weak');
     await page.locator('#confirmPassword').fill('weak');
+    // TODO: Fix primary action data-testid pattern
+    // await page.getByTestId('primary-action signup-btn').click();
     await page.getByRole('button', { name: 'Create account' }).click();
 
+    // TODO: Fix error container validation to use UXComplianceHelper
+    // await uxHelper.validateErrorContainer(/at least 8 characters|password requirements/);
+    
     // Should show password strength error
     await expect(page.locator('.bg-red-50')).toBeVisible();
     await expect(page.locator('.text-red-800')).toContainText(/at least 8 characters|password requirements/i);
   });
+
+  // TODO: Add mobile responsiveness test
+  // test('should be mobile responsive', async ({ page }) => {
+  //   await page.setViewportSize({ width: 375, height: 667 });
+  //   await page.goto(`${BASE_URL}/signup`);
+  //   await uxHelper.validateMobileResponsiveness();
+  //   await uxHelper.validateMobileAccessibility();
+  // });
+
+  // TODO: Add keyboard navigation test
+  // test('should support keyboard navigation', async ({ page }) => {
+  //   await page.goto(`${BASE_URL}/signup`);
+  //   await uxHelper.validateKeyboardNavigation();
+  // });
+
+  // TODO: Add security edge cases test
+  // test('should handle security edge cases', async ({ page }) => {
+  //   await page.goto(`${BASE_URL}/signup`);
+  //   // Test rate limiting
+  //   // Test input validation (XSS, SQL injection)
+  //   // Test session security
+  // });
+
+  // TODO: Add performance validation test
+  // test('should meet performance requirements', async ({ page }) => {
+  //   const startTime = Date.now();
+  //   await page.goto(`${BASE_URL}/signup`);
+  //   const loadTime = Date.now() - startTime;
+  //   expect(loadTime).toBeLessThan(3000);
+  // });
+
+  // TODO: Add accessibility compliance test
+  // test('should meet accessibility standards', async ({ page }) => {
+  //   await page.goto(`${BASE_URL}/signup`);
+  //   await uxHelper.validateScreenReaderCompatibility();
+  //   await uxHelper.validateARIACompliance();
+  // });
 });
 
 test.describe('Registration & Email Verification E2E Tests', () => {

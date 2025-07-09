@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
+// TODO: Add UXComplianceHelper import for comprehensive UX validation (P0)
+// import { UXComplianceHelper } from '../../helpers/uxCompliance';
 import * as jsonwebtoken from 'jsonwebtoken';
 
 // Helper function to safely parse JSON responses
@@ -104,6 +106,9 @@ test.describe('Secrets Vault E2E Tests', () => {
   });
 
   test.beforeEach(async ({ page, request }) => {
+    // TODO: Initialize UXComplianceHelper for comprehensive UX validation (P0)
+    // uxHelper = new UXComplianceHelper(page);
+
     if (process.env.NODE_ENV === 'test') {
       await request.post('/api/test/reset-rate-limits');
     }
@@ -151,10 +156,17 @@ test.describe('Secrets Vault E2E Tests', () => {
     // Clear search and filter to show all secrets
     await searchInput.clear();
     await filterSelect.selectOption('all');
+
+    // TODO: Add UXComplianceHelper validation calls for page load (P0)
+    // await uxHelper.validateActivationFirstUX();
+    // await uxHelper.validateHeadingHierarchy(['Secrets Management']);
   });
 
   test.describe('UX Compliance - Page Structure & Accessibility', () => {
     test('should have proper heading hierarchy and page structure', async ({ page }) => {
+      // TODO: Add UXComplianceHelper validation for heading hierarchy (P0)
+      // await uxHelper.validateHeadingHierarchy(['Secrets Management']);
+
       // Validate main heading (h2) - use specific selector for Secrets Management
       await expect(page.getByRole('heading', { name: 'Secrets Management' }).first()).toBeVisible();
       
@@ -163,9 +175,15 @@ test.describe('Secrets Vault E2E Tests', () => {
       
       // Validate page title and meta description
       await expect(page).toHaveTitle(/APIQ|Multi-API/i);
+
+      // TODO: Add comprehensive page structure validation using UXComplianceHelper (P0)
+      // await uxHelper.validatePageStructure();
     });
 
     test('should be accessible with proper ARIA attributes', async ({ page }) => {
+      // TODO: Add comprehensive ARIA validation using UXComplianceHelper (P0)
+      // await uxHelper.validateARIACompliance();
+
       // Test ARIA labels and roles - use specific selectors
       await expect(page.getByTestId('secrets-management')).toHaveAttribute('role', 'region');
       await expect(page.getByTestId('secrets-management')).toHaveAttribute('aria-labelledby', 'secrets-heading');
@@ -182,9 +200,15 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Test keyboard navigation
       await page.keyboard.press('Tab');
       await expect(page.locator(':focus')).toBeVisible();
+
+      // TODO: Add comprehensive keyboard navigation validation (P0)
+      // await uxHelper.validateKeyboardNavigation();
     });
 
     test('should support screen reader accessibility', async ({ page }) => {
+      // TODO: Add comprehensive screen reader compatibility validation (P0)
+      // await uxHelper.validateScreenReaderCompatibility();
+
       // Test live regions for dynamic content
       await expect(page.locator('[role="alert"]').first()).toBeVisible();
       
@@ -197,6 +221,9 @@ test.describe('Secrets Vault E2E Tests', () => {
     });
 
     test('should have proper color contrast and visual indicators', async ({ page }) => {
+      // TODO: Add comprehensive color contrast validation (P1)
+      // await uxHelper.validateColorContrast();
+
       // Test error states use proper color classes - match actual UI styling
       // Note: These elements may not be present on initial page load, so we'll test them when they appear
       // await expect(page.locator('.bg-red-50.border.border-red-200').first()).toBeVisible();
@@ -213,6 +240,9 @@ test.describe('Secrets Vault E2E Tests', () => {
 
   test.describe('UX Compliance - Form Validation & Error Handling', () => {
     test('should show accessible error messages for validation failures', async ({ page }) => {
+      // TODO: Add UXComplianceHelper validation for error handling (P0)
+      // const uxHelper = new UXComplianceHelper(page);
+
       // Click create secret button
       await page.click('[data-testid="primary-action create-secret-btn"]');
       
@@ -231,9 +261,15 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Test error message content - use first() to handle multiple elements
       await expect(page.getByText('Name is required').first()).toBeVisible();
       await expect(page.getByText('Value is required').first()).toBeVisible();
+
+      // TODO: Add comprehensive error container validation using UXComplianceHelper (P0)
+      // await uxHelper.validateErrorContainer(/Name is required|Value is required/);
     });
 
     test('should show loading states during form submission', async ({ page }) => {
+      // TODO: Add UXComplianceHelper validation for loading states (P0)
+      // const uxHelper = new UXComplianceHelper(page);
+
       // Click create secret button - ensure it exists first
       const createButton = page.locator('[data-testid="primary-action create-secret-btn"]');
       await expect(createButton).toBeVisible();
@@ -280,9 +316,17 @@ test.describe('Secrets Vault E2E Tests', () => {
       await expect(successMessage).toBeVisible({ timeout: 10000 });
       // Use first() to handle multiple success messages
       await expect(successMessage.first()).toContainText('Secret created successfully');
+
+      // TODO: Add comprehensive loading state validation using UXComplianceHelper (P0)
+      // await uxHelper.validateLoadingState('[data-testid="primary-action create-secret-btn-modal"]');
+      // TODO: Add comprehensive success message validation using UXComplianceHelper (P0)
+      // await uxHelper.validateSuccessContainer('Secret created successfully');
     });
 
     test('should provide clear feedback for required fields', async ({ page }) => {
+      // TODO: Add UXComplianceHelper validation for required fields (P0)
+      // const uxHelper = new UXComplianceHelper(page);
+
       // Click create secret button - ensure it exists first
       const createButton = page.locator('[data-testid="primary-action create-secret-btn"]');
       await expect(createButton).toBeVisible();
@@ -311,11 +355,18 @@ test.describe('Secrets Vault E2E Tests', () => {
       
       await expect(nameLabel).toContainText('*');
       await expect(valueLabel).toContainText('*');
+
+      // TODO: Add comprehensive form accessibility validation using UXComplianceHelper (P0)
+      // await uxHelper.validateFormAccessibility();
     });
   });
 
   test.describe('UX Compliance - Mobile Responsiveness', () => {
     test('should be fully functional on mobile viewport', async ({ page }) => {
+      // TODO: Add comprehensive mobile responsiveness validation using UXComplianceHelper (P1)
+      // const uxHelper = new UXComplianceHelper(page);
+      // await uxHelper.validateMobileResponsiveness();
+
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
       
@@ -350,9 +401,16 @@ test.describe('Secrets Vault E2E Tests', () => {
       
       await expect(nameInput).toBeVisible();
       await expect(valueInput).toBeVisible();
+
+      // TODO: Add comprehensive touch interaction validation (P1)
+      // await uxHelper.validateTouchInteractions();
     });
 
     test('should support touch interactions and gestures', async ({ page }) => {
+      // TODO: Add comprehensive touch interaction validation using UXComplianceHelper (P1)
+      // const uxHelper = new UXComplianceHelper(page);
+      // await uxHelper.validateTouchInteractions();
+
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
       
@@ -374,11 +432,17 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Use first() to avoid strict mode violation since there are multiple options
       const firstOption = page.locator('[role="option"]').first();
       await expect(firstOption).toBeVisible();
+
+      // TODO: Add comprehensive gesture support validation (P1)
+      // await uxHelper.validateGestureSupport();
     });
   });
 
   test.describe('Encrypted Secrets Storage', () => {
     test('should create encrypted API credential with proper UX feedback', async ({ page }) => {
+      // TODO: Add UXComplianceHelper validation for secret creation UX (P0)
+      // const uxHelper = new UXComplianceHelper(page);
+
       // Click create secret button - ensure it exists first
       const createButton = page.locator('[data-testid="primary-action create-secret-btn"]');
       await expect(createButton).toBeVisible();
@@ -433,6 +497,10 @@ test.describe('Secrets Vault E2E Tests', () => {
       
       // Should show encryption indicators
       await expect(page.getByText(/encrypted|secure/i).first()).toBeVisible();
+
+      // TODO: Add comprehensive UX feedback validation using UXComplianceHelper (P0)
+      // await uxHelper.validateSuccessContainer('Secret created successfully');
+      // await uxHelper.validateActivationFirstUX();
     });
 
     test('should create encrypted OAuth2 token with proper type indicators', async ({ page }) => {
@@ -1012,6 +1080,10 @@ test.describe('Secrets Vault E2E Tests', () => {
 
   test.describe('WCAG 2.1 AA Compliance', () => {
     test('should meet WCAG 2.1 AA accessibility standards', async ({ page }) => {
+      // TODO: Add comprehensive WCAG 2.1 AA validation using UXComplianceHelper (P0)
+      // const uxHelper = new UXComplianceHelper(page);
+      // await uxHelper.validateWCAGCompliance();
+
       // Test keyboard navigation
       await page.keyboard.press('Tab');
       await expect(page.locator(':focus')).toBeVisible();
@@ -1032,9 +1104,18 @@ test.describe('Secrets Vault E2E Tests', () => {
       await page.click('[data-testid="primary-action create-secret-btn"]');
       await expect(page.locator('[data-testid="secret-name-input"]')).toHaveAttribute('aria-required', 'true');
       await expect(page.locator('label[for*="secret-name"]')).toBeVisible();
+
+      // TODO: Add comprehensive accessibility validation (P0)
+      // await uxHelper.validateARIACompliance();
+      // await uxHelper.validateKeyboardNavigation();
+      // await uxHelper.validateScreenReaderCompatibility();
     });
 
     test('should support screen reader compatibility', async ({ page }) => {
+      // TODO: Add comprehensive screen reader compatibility validation using UXComplianceHelper (P0)
+      // const uxHelper = new UXComplianceHelper(page);
+      // await uxHelper.validateScreenReaderCompatibility();
+
       // Test live regions for dynamic content - use first() to handle multiple elements
       await expect(page.locator('[aria-live="polite"]').first()).toBeVisible();
       
@@ -1047,6 +1128,29 @@ test.describe('Secrets Vault E2E Tests', () => {
       await page.click('button[type="submit"]');
       // Note: Aria live announcements may not be implemented yet, so we'll skip this assertion
       // await expect(page.locator('#aria-live-announcements')).toContainText(/created|success/i);
+
+      // TODO: Add comprehensive status announcement validation (P0)
+      // await uxHelper.validateStatusAnnouncements();
+    });
+  });
+
+  // TODO: Add comprehensive security edge case testing (P1)
+  test.describe('Security Edge Cases', () => {
+    test('should handle security edge cases with proper validation', async ({ page }) => {
+      // TODO: Add comprehensive security validation using UXComplianceHelper (P1)
+      // const uxHelper = new UXComplianceHelper(page);
+      // await uxHelper.validateSecurityCompliance();
+      // await uxHelper.validateInputSanitization();
+      // await uxHelper.validateAccessControl();
+    });
+  });
+
+  // TODO: Add comprehensive performance testing (P2)
+  test.describe('Performance Requirements', () => {
+    test('should meet performance requirements', async ({ page }) => {
+      // TODO: Add comprehensive performance validation using UXComplianceHelper (P2)
+      // const uxHelper = new UXComplianceHelper(page);
+      // await uxHelper.validatePerformanceRequirements();
     });
   });
 

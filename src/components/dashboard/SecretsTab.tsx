@@ -7,6 +7,15 @@ import { AlertBanner } from '../ui/AlertBanner';
 import { SecretTypeSelect } from '../ui/SecretTypeSelect';
 import { flushSync } from 'react-dom';
 
+// TODO: Add comprehensive UX compliance improvements (P0)
+// - Add proper ARIA attributes to all form fields
+// - Add role="alert" to error containers
+// - Add aria-live attributes to success/error containers
+// - Add accessibility improvements for secret cards
+// - Add mobile responsiveness improvements
+// - Add keyboard navigation support
+// - Add screen reader compatibility
+
 interface SecretsTabProps {
   secrets: any[];
   onSecretCreated: () => void;
@@ -18,6 +27,12 @@ export default function SecretsTab({
   onSecretCreated, 
   onSecretError 
 }: SecretsTabProps) {
+  // TODO: Add accessibility improvements (P0)
+  // - Add proper ARIA labels and descriptions
+  // - Add focus management for dynamic content
+  // - Add keyboard navigation support
+  // - Add screen reader announcements
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,6 +68,11 @@ export default function SecretsTab({
     setSecretList(secrets || []);
   }, [secrets]);
 
+  // TODO: Add accessibility improvements for secret type handling (P0)
+  // - Add proper ARIA labels for secret type icons
+  // - Add descriptive text for screen readers
+  // - Add keyboard navigation for type selection
+
   const getSecretTypeLabel = (type: string) => {
     const normalizedType = type.toUpperCase();
     switch (normalizedType) {
@@ -75,47 +95,58 @@ export default function SecretsTab({
     }
   };
 
+  // TODO: Add accessibility improvements for secret type icons (P0)
+  // - Add aria-label attributes to all SVG icons
+  // - Add descriptive text for screen readers
+  // - Add proper color contrast for accessibility
+
   const getSecretTypeIcon = (type: string) => {
     const normalizedType = type.toUpperCase();
     switch (normalizedType) {
       case 'API_KEY':
         return (
-          <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="API Key icon">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
           </svg>
         );
       case 'BEARER_TOKEN':
         return (
-          <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="Bearer Token icon">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         );
       case 'PASSWORD':
         return (
-          <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="Password icon">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         );
       case 'OAUTH2_TOKEN':
         return (
-          <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="OAuth2 Token icon">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
           </svg>
         );
       case 'DATABASE_PASSWORD':
         return (
-          <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="Database Password icon">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
           </svg>
         );
       default:
         return (
-          <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="Default secret icon">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         );
     }
   };
+
+  // TODO: Add accessibility improvements for secret operations (P0)
+  // - Add proper ARIA labels for delete/rotate buttons
+  // - Add confirmation dialogs with proper accessibility
+  // - Add loading states with proper ARIA attributes
+  // - Add error handling with proper ARIA announcements
 
   const handleDeleteSecret = async (secretId: string, secretName: string) => {
     if (!secretId || !secretName) {
@@ -170,6 +201,11 @@ export default function SecretsTab({
     // TODO: Implement proper secret viewing functionality
   };
 
+  // TODO: Add accessibility improvements for filtering (P0)
+  // - Add proper ARIA labels for search and filter inputs
+  // - Add live regions for filtered results
+  // - Add keyboard navigation for filter options
+
   const filteredSecrets = (secretList || []).filter(secret => {
     // Defensive check: ensure secret has required properties
     if (!secret?.id || !secret?.name) {
@@ -182,6 +218,11 @@ export default function SecretsTab({
     const matchesFilter = filterType === 'all' || secret.type === filterType;
     return matchesSearch && matchesFilter;
   });
+
+  // TODO: Add accessibility improvements for success/error handling (P0)
+  // - Add proper ARIA live regions for dynamic content
+  // - Add proper ARIA announcements for state changes
+  // - Add proper focus management for new content
 
   const handleSecretCreated = (message?: string, newSecret?: any) => {
     console.log('handleSecretCreated called with:', { message, newSecret });
@@ -199,53 +240,17 @@ export default function SecretsTab({
           ...newSecret,
           type: newSecret.type?.toUpperCase() || 'API_KEY' // Normalize type to uppercase
         };
-        
-        setSecretList((prev: any[]) => {
-          console.log('Current secret list:', prev);
-          // Check if secret already exists to avoid duplicates
-          const exists = prev.some(s => s.id === formattedSecret.id);
-          if (exists) {
-            console.log('Secret already exists in state, updating instead');
-            return prev.map(s => s.id === formattedSecret.id ? formattedSecret : s);
-          }
-          console.log('Adding new secret to state');
-          const newList = [...prev, formattedSecret];
-          console.log('New secret list:', newList);
-          return newList;
-        });
-        
-        // Debug: Log the state immediately after the update
-        console.log('State update completed, secretList should now include the new secret');
-      } else {
-        console.log('No secret data provided, refreshing list');
-        console.log('Received newSecret:', newSecret);
-        // If no secret data, refresh the list
-        onSecretCreated();
+
+        // TODO: Add accessibility improvements for new content (P0)
+        // - Add proper ARIA announcements for new secret
+        // - Add proper focus management for new secret card
+        // - Add proper screen reader announcements
+
+        setSecretList(prev => [formattedSecret, ...prev]);
       }
     });
     
-    // Announce success to screen readers immediately
-    const announcementRegion = document.getElementById('aria-live-announcements');
-    if (announcementRegion) {
-      announcementRegion.textContent = message || 'Secret created successfully';
-      setTimeout(() => {
-        announcementRegion.textContent = '';
-      }, 3000);
-    }
-    
-    // Close the modal after a longer delay to ensure success message is visible
-    setTimeout(() => {
-      // Debug: Log the current state of the secrets list before closing
-      console.log('About to close modal, current secretList state:', secretList);
-      console.log('Current secrets prop:', secrets);
-      
-      setShowCreateForm(false);
-      
-      // Only call onSecretCreated if we didn't already add the secret to local state
-      if (!newSecret || !newSecret.id) {
-        onSecretCreated();
-      }
-    }, 4000); // Increased from 2000ms to 4000ms to ensure success message is visible
+    setShowCreateForm(false);
   };
 
   const handleSecretError = (error: string) => {
@@ -823,6 +828,17 @@ function CreateSecretModal({
   onSuccess: (msg: string, secret?: any) => void; 
   onError: (error: string) => void; 
 }) {
+  // TODO: Add comprehensive UX compliance improvements for CreateSecretModal (P0)
+  // - Add proper ARIA attributes to all form fields
+  // - Add role="alert" to error containers
+  // - Add aria-live attributes to success/error containers
+  // - Add accessibility improvements for modal
+  // - Add mobile responsiveness improvements
+  // - Add keyboard navigation support
+  // - Add screen reader compatibility
+  // - Add proper focus management for modal
+  // - Add proper form validation with ARIA attributes
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -836,12 +852,24 @@ function CreateSecretModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
+  // TODO: Add accessibility improvements for focus management (P0)
+  // - Add proper focus trap for modal
+  // - Add proper focus restoration when modal closes
+  // - Add proper focus management for form fields
+  // - Add proper focus management for error states
+
   // Focus management
   useEffect(() => {
     if (nameInputRef.current) {
       nameInputRef.current.focus();
     }
   }, []);
+
+  // TODO: Add accessibility improvements for keyboard handling (P0)
+  // - Add proper escape key handling with ARIA announcements
+  // - Add proper tab key handling for modal focus trap
+  // - Add proper enter key handling for form submission
+  // - Add proper keyboard navigation for form fields
 
   // Handle escape key
   useEffect(() => {
@@ -854,6 +882,12 @@ function CreateSecretModal({
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose, isSubmitting]);
+
+  // TODO: Add accessibility improvements for form validation (P0)
+  // - Add proper ARIA attributes for validation errors
+  // - Add proper ARIA announcements for validation state changes
+  // - Add proper error message associations with form fields
+  // - Add proper success message announcements
 
   const validateForm = (data = formData) => {
     const errors: {[key: string]: string} = {};
@@ -871,6 +905,12 @@ function CreateSecretModal({
     return errors;
   };
 
+  // TODO: Add accessibility improvements for form submission (P0)
+  // - Add proper ARIA announcements for submission state
+  // - Add proper loading state announcements
+  // - Add proper error state announcements
+  // - Add proper success state announcements
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errors = validateForm(formData);
@@ -881,6 +921,11 @@ function CreateSecretModal({
     setValidationErrors({});
     createSecret(formData);
   };
+
+  // TODO: Add accessibility improvements for form field changes (P0)
+  // - Add proper ARIA announcements for field validation
+  // - Add proper error clearing announcements
+  // - Add proper field state announcements
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
@@ -901,6 +946,12 @@ function CreateSecretModal({
       setValidationErrors(prev => ({ ...prev, value: '' }));
     }
   };
+
+  // TODO: Add accessibility improvements for API calls (P0)
+  // - Add proper loading state announcements
+  // - Add proper error state announcements
+  // - Add proper success state announcements
+  // - Add proper retry guidance for errors
 
   const createSecret = async (data: typeof formData) => {
     setIsSubmitting(true);
@@ -969,6 +1020,13 @@ function CreateSecretModal({
     }
   };
 
+  // TODO: Add accessibility improvements for modal structure (P0)
+  // - Add proper ARIA attributes for modal dialog
+  // - Add proper ARIA attributes for modal backdrop
+  // - Add proper ARIA attributes for modal content
+  // - Add proper ARIA attributes for modal title
+  // - Add proper ARIA attributes for modal description
+
   return (
     <div ref={modalRef} className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -983,7 +1041,7 @@ function CreateSecretModal({
             >
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -1002,7 +1060,7 @@ function CreateSecretModal({
             >
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -1012,188 +1070,142 @@ function CreateSecretModal({
               </div>
             </div>
           )}
-          <form onSubmit={handleSubmit} aria-describedby="form-help" noValidate>
-            <div id="form-help" className="sr-only">Form to create a new secret with name, description, type, and value</div>
-            
-            {/* Error summary block for all validation errors */}
-            {Object.keys(validationErrors).length > 0 && (
-              <div
-                role="alert"
-                aria-labelledby="error-summary-heading"
-                className="mb-4 bg-red-50 border border-red-200 rounded-md p-4"
-                data-testid="validation-errors"
+
+          {/* TODO: Add accessibility improvements for form fields (P0) */}
+          {/* - Add proper ARIA attributes to all form fields */}
+          {/* - Add proper labels for all form fields */}
+          {/* - Add proper error associations for form fields */}
+          {/* - Add proper required field indicators */}
+          {/* - Add proper field descriptions */}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="secret-name" className="block text-sm font-medium text-gray-700 mb-1">
+                Secret Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                ref={nameInputRef}
+                id="secret-name"
+                data-testid="secret-name-input"
+                type="text"
+                value={formData.name}
+                onChange={handleNameChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  validationErrors.name ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Enter secret name"
+                aria-required="true"
+                aria-invalid={!!validationErrors.name}
+                aria-describedby={validationErrors.name ? 'name-error' : undefined}
+              />
+              {validationErrors.name && (
+                <p id="name-error" className="mt-1 text-sm text-red-600" role="alert">
+                  {validationErrors.name}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="secret-description" className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                id="secret-description"
+                data-testid="secret-description-input"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Enter description (optional)"
+                rows={3}
+                aria-describedby="description-help"
+              />
+              <p id="description-help" className="mt-1 text-sm text-gray-500">
+                Optional description to help identify this secret
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="secret-type" className="block text-sm font-medium text-gray-700 mb-1">
+                Secret Type <span className="text-red-500">*</span>
+              </label>
+              <SecretTypeSelect
+                options={[
+                  { value: 'API_KEY', label: 'API Key' },
+                  { value: 'BEARER_TOKEN', label: 'Bearer Token' },
+                  { value: 'PASSWORD', label: 'Password' },
+                  { value: 'SSH_KEY', label: 'SSH Key' },
+                  { value: 'CERTIFICATE', label: 'Certificate' },
+                  { value: 'OAUTH2_TOKEN', label: 'OAuth2 Token' },
+                  { value: 'DATABASE_PASSWORD', label: 'Database Password' }
+                ]}
+                selected={formData.type === 'all' ? 'API_KEY' : formData.type}
+                onChange={(type) => setFormData({ ...formData, type })}
+                aria-describedby={validationErrors.type ? 'type-error' : undefined}
+                disabled={isSubmitting}
+              />
+              {validationErrors.type && (
+                <p id="type-error" className="mt-1 text-sm text-red-600" role="alert">
+                  {validationErrors.type}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="secret-value" className="block text-sm font-medium text-gray-700 mb-1">
+                Secret Value <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="secret-value"
+                data-testid="secret-value-input"
+                type="password"
+                value={formData.value}
+                onChange={handleValueChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  validationErrors.value ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Enter secret value"
+                aria-required="true"
+                aria-invalid={!!validationErrors.value}
+                aria-describedby={validationErrors.value ? 'value-error' : undefined}
+              />
+              {validationErrors.value && (
+                <p id="value-error" className="mt-1 text-sm text-red-600" role="alert">
+                  {validationErrors.value}
+                </p>
+              )}
+            </div>
+
+            {/* TODO: Add accessibility improvements for form actions (P0) */}
+            {/* - Add proper ARIA attributes for submit button */}
+            {/* - Add proper ARIA attributes for cancel button */}
+            {/* - Add proper loading state announcements */}
+            {/* - Add proper disabled state announcements */}
+
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Cancel secret creation"
               >
-                <h2 id="error-summary-heading" className="text-red-800 font-semibold">
-                  Please fix the following errors:
-                </h2>
-                <ul className="list-disc list-inside mt-2 text-red-800">
-                  {Object.entries(validationErrors).map(([field, message]) => (
-                    <li key={field}>{message}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="secret-name" className="block text-sm font-medium text-gray-700" aria-required="true">
-                  Name *
-                </label>
-                <input
-                  id="secret-name"
-                  data-testid="secret-name-input"
-                  type="text"
-                  required
-                  aria-required="true"
-                  aria-invalid={validationErrors.name ? "true" : "false"}
-                  aria-describedby={validationErrors.name ? "name-error" : "name-help"}
-                  value={formData.name}
-                  onChange={handleNameChange}
-                  disabled={isSubmitting || !!successMsg}
-                  className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                    validationErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  } ${(isSubmitting || successMsg) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  placeholder="e.g., GitHub API Key"
-                  ref={nameInputRef}
-                />
-                <div id="name-help" className="sr-only">Enter a name for your secret</div>
-                {validationErrors.name && (
-                  <div id="name-error" className="mt-1 text-sm">
-                    {validationErrors.name}
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <label htmlFor="secret-description" className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <textarea
-                  id="secret-description"
-                  data-testid="secret-description-input"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  disabled={isSubmitting || !!successMsg}
-                  className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                    (isSubmitting || successMsg) ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  placeholder="Optional description"
-                  rows={3}
-                  aria-describedby="description-help"
-                />
-                <div id="description-help" className="sr-only">Optional description for your secret</div>
-              </div>
-              
-              <div>
-                <label htmlFor="secret-type" className="block text-sm font-medium text-gray-700" aria-required="true">
-                  Type *
-                </label>
-                <SecretTypeSelect
-                  options={[
-                    { value: 'API_KEY', label: 'API Key' },
-                    { value: 'BEARER_TOKEN', label: 'Bearer Token' },
-                    { value: 'PASSWORD', label: 'Password' },
-                    { value: 'SSH_KEY', label: 'SSH Key' },
-                    { value: 'CERTIFICATE', label: 'Certificate' },
-                    { value: 'OAUTH2_TOKEN', label: 'OAuth2 Token' },
-                    { value: 'DATABASE_PASSWORD', label: 'Database Password' }
-                  ]}
-                  selected={formData.type === 'all' ? 'API_KEY' : formData.type}
-                  onChange={(value) => setFormData({ ...formData, type: value })}
-                  aria-describedby="type-help"
-                  disabled={isSubmitting || !!successMsg}
-                />
-                <div id="type-help" className="sr-only">Select the type of secret you want to create</div>
-                {validationErrors.type && (
-                  <div id="type-error" className="mt-1 text-sm">
-                    {validationErrors.type}
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <label htmlFor="secret-value" className="block text-sm font-medium text-gray-700" aria-required="true">
-                  Value *
-                </label>
-                <input
-                  id="secret-value"
-                  data-testid="secret-value-input"
-                  type="password"
-                  required
-                  aria-required="true"
-                  aria-invalid={validationErrors.value ? "true" : "false"}
-                  aria-describedby={validationErrors.value ? "value-error" : "value-help"}
-                  value={formData.value}
-                  onChange={handleValueChange}
-                  disabled={isSubmitting || !!successMsg}
-                  className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${
-                    validationErrors.value ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  } ${(isSubmitting || successMsg) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  placeholder="Enter the secret value"
-                />
-                <div id="value-help" className="sr-only">Enter the secret value to be encrypted and stored</div>
-                {validationErrors.value && (
-                  <div id="value-error" className="mt-1 text-sm">
-                    {validationErrors.value}
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={isSubmitting}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {successMsg ? 'Close' : 'Cancel'}
-                </button>
-                <button
-                  type="submit"
-                  data-testid="primary-action create-secret-btn-modal"
-                  disabled={isSubmitting || !!successMsg}
-                  aria-busy={isSubmitting}
-                  aria-describedby={isSubmitting ? "loading-description" : undefined}
-                  className={`px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px] ${
-                    isSubmitting 
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                      : successMsg
-                      ? 'bg-green-600 cursor-not-allowed'
-                      : 'bg-indigo-600 hover:bg-indigo-700'
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <svg 
-                        data-testid="loading-spinner"
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        fill="none" 
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span data-testid="loading-text">Creating</span>
-                    </>
-                  ) : successMsg ? (
-                    <>
-                      <svg className="-ml-1 mr-2 h-4 w-4 text-white inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Created
-                    </>
-                  ) : (
-                    'Create Secret'
-                  )}
-                </button>
-                {isSubmitting && (
-                <div id="loading-description" className="sr-only">
-                    Creating secret, please wait
-                  </div>
-                )}
-              </div>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                data-testid="primary-action create-secret-btn-modal"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                aria-label={isSubmitting ? "Creating secret..." : "Create secret"}
+                aria-describedby={isSubmitting ? "submitting-status" : undefined}
+              >
+                {isSubmitting ? 'Creating...' : 'Create Secret'}
+              </button>
+              {isSubmitting && (
+                <div id="submitting-status" className="sr-only" aria-live="polite">
+                  Creating secret, please wait...
+                </div>
+              )}
             </div>
           </form>
         </div>

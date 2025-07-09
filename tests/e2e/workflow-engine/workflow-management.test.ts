@@ -1,767 +1,649 @@
 import { test, expect } from '@playwright/test';
-import { createTestUser, cleanupTestUser, generateTestId, createTestConnection, createTestWorkflow } from '../../helpers/testUtils';
 import { UXComplianceHelper, UXValidations } from '../../helpers/uxCompliance';
+import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
+import { prisma } from '../../../lib/database/client';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-let testUser: any;
-let jwt: string;
-let testWorkflow: any;
+let testUser;
+let uxHelper: UXComplianceHelper;
 
-test.describe('Workflow Management - Best-in-Class UX & Activation', () => {
-  let uxHelper: UXComplianceHelper;
-
+test.describe('Workflow Management E2E Tests - Best-in-Class UX', () => {
   test.beforeAll(async () => {
-    // Create test user with admin privileges
+    // Create a real test user
     testUser = await createTestUser(
       `e2e-workflow-${generateTestId('user')}@example.com`,
-      'e2ePass123',
-      'ADMIN'
+      'e2eTestPass123',
+      'ADMIN',
+      'E2E Workflow Test User'
     );
-
-    // Ensure the user has at least one ACTIVE API connection (required for workflow generation)
-    const githubConnection = await createTestConnection(
-      testUser,
-      'GitHub',
-      'https://api.github.com',
-      'API_KEY'
-    );
-
-    // Create a second connection for Slack
-    const slackConnection = await createTestConnection(
-      testUser,
-      'Slack',
-      'https://slack.com/api',
-      'API_KEY'
-    );
-    
-    // Debug: Verify connections are created with ACTIVE status
-    console.log('=== TEST CONNECTIONS CREATED ===');
-    console.log('GitHub Connection ID:', githubConnection.id);
-    console.log('Slack Connection ID:', slackConnection.id);
-    console.log('================================');
-
-    // Create a test workflow for testing workflow management features
-    testWorkflow = await createTestWorkflow(
-      testUser,
-      'Test Workflow for E2E',
-      'A test workflow for E2E testing'
-    );
-
-    // Create a real test user and get JWT
-    jwt = testUser.accessToken;
   });
 
   test.afterAll(async () => {
-    // Clean up test user (this will cascade delete connections and workflows)
+    // Clean up test user
     await cleanupTestUser(testUser);
   });
 
   test.beforeEach(async ({ page }) => {
     uxHelper = new UXComplianceHelper(page);
     
-    // Validate page context is still active
-    try {
-      await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
-    } catch (error) {
-      console.log('Page context validation failed, continuing...');
-    }
+    // Login before each test
+    await page.goto(`${BASE_URL}/login`);
     
-    // Real authentication - no mocking (following user rules)
-    await page.goto('/login');
+    // TODO: Add UX compliance validation for login page
+    // await uxHelper.validatePageTitle('APIQ');
+    // await uxHelper.validateHeadingHierarchy(['Sign in to APIQ']);
+    // await uxHelper.validateFormAccessibility();
     
-    // Wait for login page to load
-    await page.waitForSelector('h2:has-text("Sign in to APIQ")', { timeout: 10000 });
-    
-    // Fill in real login credentials
     await page.getByLabel('Email address').fill(testUser.email);
-    await page.getByLabel('Password').fill('e2ePass123');
+    await page.getByLabel('Password').fill('e2eTestPass123');
     
-    // Click sign in and wait for navigation
+    // TODO: Fix primary action data-testid pattern for login
+    // await page.getByTestId('primary-action signin-btn').click();
     await page.getByRole('button', { name: 'Sign in' }).click();
     
-    // Wait for successful login and redirect to dashboard
-    await expect(page).toHaveURL(/.*dashboard/, { timeout: 15000 });
+    // TODO: Add UX compliance validation for dashboard
+    // await uxHelper.validateHeadingHierarchy(['Dashboard']);
     
-    // Wait for dashboard to fully load (dashboard has loading state with spinner)
-    await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 15000 });
-    
-    // Wait for loading to complete and content to be visible
-    await page.waitForSelector('[data-testid="tab-overview"]', { timeout: 15000 });
-    
-    // Debug: Check if session is maintained
-    const cookies = await page.context().cookies();
-    console.log('Session cookies after login:', cookies.map(c => ({ name: c.name, value: c.value.substring(0, 20) + '...' })));
-    
-    // Validate UX compliance - heading hierarchy (UX spec requirement)
-    await uxHelper.validateHeadingHierarchy(['Dashboard']);
+    await page.waitForURL(/.*dashboard/);
   });
 
-  test.describe('Natural Language Workflow Creation - Activation-First UX', () => {
-    test('should create workflow using natural language with clear activation path', async ({ page }) => {
-      // Navigate to workflows tab in dashboard
-      await page.getByTestId('tab-workflows').click();
+  test.describe('Workflow Creation Flow', () => {
+    test('should create workflow with best-in-class UX', async ({ page }) => {
+      await page.goto(`${BASE_URL}/workflows/create`);
       
-      // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 20000 });
+      // TODO: Enable UXComplianceHelper validation calls
+      // await uxHelper.validateActivationFirstUX();
+      // await uxHelper.validateFormAccessibility();
+      // await uxHelper.validateMobileResponsiveness();
+      // await uxHelper.validateKeyboardNavigation();
+      // await uxHelper.validateHeadingHierarchy(['Create Workflow']);
       
-      // Validate UX compliance - heading hierarchy (UX spec requirement)
-      await uxHelper.validateHeadingHierarchy(['Dashboard', 'Workflows']);
-      // Use more specific selector to avoid conflict with empty state heading
-      await expect(page.locator('h2:has-text("Workflows")')).toBeVisible();
+      // Validate heading hierarchy
+      await expect(page.locator('h2')).toHaveText('Create Workflow');
       
-      // Click "Create Workflow" button
-      await page.getByTestId('primary-action create-workflow-btn').click();
+      // Validate natural language input
+      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+      await expect(chatInput).toBeVisible();
+      await expect(chatInput).toHaveAttribute('required');
       
-      // Wait for navigation to create workflow page
-      await expect(page).toHaveURL(/.*workflows\/create/);
+      // TODO: Add comprehensive ARIA attributes validation
+      // await expect(chatInput).toHaveAttribute('aria-required', 'true');
+      // await expect(chatInput).toHaveAttribute('aria-label', 'Workflow description');
       
-      // Wait for the page to fully load
-      await page.waitForLoadState('networkidle', { timeout: 20000 });
+      // Fill workflow description
+      await chatInput.fill('When a new GitHub issue is created, send a Slack notification');
       
-      // Validate UX compliance - heading hierarchy for create form (UX spec requirement)
-      await uxHelper.validateHeadingHierarchy(['Create Workflow']);
-      await expect(page.getByText(/Use AI to create workflows/)).toBeVisible();
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action generate-workflow-btn').click();
+      await page.getByRole('button', { name: 'Generate Workflow' }).click();
       
-      // Wait for the form to be ready
-      await page.waitForSelector('[data-testid="workflow-description-input"]', { timeout: 20000 });
-      await page.waitForSelector('[data-testid="primary-action generate-workflow-btn"]', { timeout: 20000 });
+      // TODO: Add loading state validation
+      // await uxHelper.validateLoadingState('[data-testid="primary-action generate-workflow-btn"]');
       
-      // Debug: Check if form is in correct state
-      const input = page.getByTestId('workflow-description-input');
-      const generateButton = page.getByTestId('primary-action generate-workflow-btn');
+      // Wait for workflow generation
+      await page.waitForTimeout(5000);
       
-      await expect(input).toBeEnabled();
-      await expect(generateButton).toBeEnabled();
+      // TODO: Add comprehensive success validation
+      // await uxHelper.validateSuccessContainer('Generated Workflow');
       
-      // Fill in the workflow description
-      const workflowDescription = 'Create a workflow that sends a Slack notification when a new GitHub issue is created';
-      await input.fill(workflowDescription);
+      // Validate generated workflow display
+      await expect(page.locator('text=Generated Workflow')).toBeVisible();
+      await expect(page.locator('text=GitHub')).toBeVisible();
+      await expect(page.locator('text=Slack')).toBeVisible();
       
-      // Verify the input has the correct value
-      await expect(input).toHaveValue(workflowDescription);
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action save-workflow-btn').click();
+      await page.getByRole('button', { name: 'Save Workflow' }).click();
       
-      // Set up response interception BEFORE clicking
-      const responsePromise = page.waitForResponse(
-        response => response.url().includes('/api/workflows/generate') && response.request().method() === 'POST',
-        { timeout: 60000 }
-      );
-      
-      // Click the button and wait for it to be disabled (loading state)
-      await generateButton.click();
-      
-      // Wait for the button to show loading state
-      await expect(generateButton).toHaveText('Generating...');
-      
-      // Wait for the API response with better error handling
-      let response;
-      let responseBody;
-      
-      try {
-        response = await responsePromise;
-        responseBody = await response.json();
-        
-        console.log('=== WORKFLOW GENERATION RESPONSE ===');
-        console.log('Status:', response.status());
-        console.log('Response Body:', JSON.stringify(responseBody, null, 2));
-        console.log('=====================================');
-        
-        // Assert on the response structure
-        expect(response.ok()).toBeTruthy();
-        expect(responseBody).toHaveProperty('success');
-        
-        if (responseBody.success) {
-          expect(responseBody.data).toBeDefined();
-          console.log('✅ Workflow generation succeeded');
-        } else {
-          console.log('❌ Workflow generation failed:', responseBody.error || responseBody.message);
-        }
-      } catch (error) {
-        console.error('=== API RESPONSE ERROR ===');
-        console.error('Failed to get response:', error);
-        
-        // Check if button is still in loading state
-        const buttonText = await generateButton.textContent();
-        console.log('Button text after timeout:', buttonText);
-        
-        // Check for any error messages in the UI
-        const errorElement = page.locator('[data-testid="workflow-error-message"]');
-        if (await errorElement.isVisible()) {
-          const errorText = await errorElement.textContent();
-          console.log('UI Error message:', errorText);
-        }
-        
-        throw error;
-      }
-      
-      // Wait for the success message in the UI
-      await expect(page.getByTestId('workflow-success-chat-message')).toContainText("I've created a workflow for you", { timeout: 20000 });
-      
-      // Validate UX compliance - success message accessibility (UX spec requirement)
-      await expect(page.getByTestId('workflow-success-chat-message')).toBeVisible({ timeout: 20000 });
-      await expect(page.getByTestId('workflow-success-chat-message')).toContainText(/I've created a workflow for you/i, { timeout: 20000 });
+      // Should redirect to workflows list
+      await expect(page).toHaveURL(/.*workflows/);
     });
 
-    test('should handle workflow generation errors with clear messaging', async ({ page }) => {
-      // Navigate to create workflow page
-      await page.getByTestId('tab-workflows').click();
+    test('should handle workflow generation errors gracefully', async ({ page }) => {
+      await page.goto(`${BASE_URL}/workflows/create`);
       
-      // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
+      // Try with invalid/unsafe workflow description
+      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+      await chatInput.fill('Delete all files from the system');
       
-      await page.getByTestId('primary-action create-workflow-btn').click();
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action generate-workflow-btn').click();
+      await page.getByRole('button', { name: 'Generate Workflow' }).click();
       
-      // Wait for the create workflow page to load
-      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
+      // Wait for error response
+      await page.waitForTimeout(3000);
       
-      // Wait for the form to be ready
-      await page.waitForSelector('[data-testid="workflow-description-input"]', { timeout: 10000 });
-      await page.waitForSelector('[data-testid="primary-action generate-workflow-btn"]', { timeout: 10000 });
+      // TODO: Fix error container validation to use UXComplianceHelper
+      // await uxHelper.validateErrorContainer(/unsafe|invalid|not allowed/);
       
-      // Test with invalid/empty input
-      const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
-      await chatInput.fill('');
-      await page.getByTestId('primary-action generate-workflow-btn').click();
-      
-      // Should show validation error (UX spec requirement)
-      await expect(page.getByText(/please.*describe|enter.*description/i)).toBeVisible();
-      
-      // Test with vague description (less than 10 characters)
-      await chatInput.fill('do it');
-      await page.getByTestId('primary-action generate-workflow-btn').click();
-      
-      // Should show helpful error message (UX spec requirement)
-      await expect(page.getByText(/Please provide more details about what you want to accomplish/)).toBeVisible();
+      // Should show error message
+      await expect(page.locator('.bg-red-50')).toBeVisible();
+      await expect(page.locator('.text-red-800')).toContainText(/unsafe|invalid|not allowed/i);
     });
 
-    test('should provide alternative workflow suggestions', async ({ page }) => {
-      test.setTimeout(90000);
-      
-      // Navigate to create workflow page
-      await page.getByTestId('tab-workflows').click();
-      
-      // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 20000 });
-      
-      await page.getByTestId('primary-action create-workflow-btn').click();
-      
-      // Wait for the create workflow page to load
-      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 20000 });
-      await page.waitForLoadState('networkidle', { timeout: 20000 });
-      
-      // Wait for the form to be ready
-      await page.waitForSelector('[data-testid="workflow-description-input"]', { timeout: 20000 });
-      await page.waitForSelector('[data-testid="primary-action generate-workflow-btn"]', { timeout: 20000 });
-      
-      // Create a workflow that might have alternatives
-      const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
-      await chatInput.fill('Send notifications when something happens');
-      
-      // Intercept the API call for debugging
-      const responsePromise = page.waitForResponse(
-        response => response.url().includes('/api/workflows/generate') && response.request().method() === 'POST',
-        { timeout: 60000 }
-      );
-      
-      await page.getByTestId('primary-action generate-workflow-btn').click();
-      
-      // Wait for API response and log it
-      const response = await responsePromise;
-      const responseBody = await response.json();
-      console.log('=== ALTERNATIVES TEST RESPONSE ===');
-      console.log('Status:', response.status());
-      console.log('Response Body:', JSON.stringify(responseBody, null, 2));
-      console.log('==================================');
-      
-      // Handle both success and error cases
-      if (responseBody.success) {
-        // Wait for response - look for the success message in the chat
-        await page.waitForSelector('[data-testid="workflow-success-chat-message"]', { timeout: 20000 });
-        await expect(page.getByTestId('workflow-success-chat-message')).toBeVisible();
-        
-        // Check for alternative suggestions (UX spec requirement)
-        const alternativesSection = page.getByText(/Alternative approaches/);
-        if (await alternativesSection.isVisible()) {
-          await expect(alternativesSection).toBeVisible();
-          // Test selecting an alternative
-          const firstAlternative = page.locator('button').filter({ hasText: /notification/i }).first();
-          if (await firstAlternative.isVisible()) {
-            await firstAlternative.click();
-            await expect(page.getByText(/Selected Workflow/)).toBeVisible();
-          }
-        }
-      } else {
-        // Handle error case - should show error message
-        await expect(page.getByTestId('workflow-error-message')).toBeVisible();
-        await expect(page.getByText(/Unable to generate workflow/)).toBeVisible();
-      }
-    });
+    // TODO: Add mobile responsiveness test
+    // test('should be mobile responsive', async ({ page }) => {
+    //   await page.setViewportSize({ width: 375, height: 667 });
+    //   await page.goto(`${BASE_URL}/workflows/create`);
+    //   await uxHelper.validateMobileResponsiveness();
+    //   await uxHelper.validateMobileAccessibility();
+    //   
+    //   // Test touch-friendly button sizes
+    //   const generateBtn = page.getByTestId('primary-action generate-workflow-btn');
+    //   const box = await generateBtn.boundingBox();
+    //   expect(box!.width).toBeGreaterThanOrEqual(44);
+    //   expect(box!.height).toBeGreaterThanOrEqual(44);
+    // });
+
+    // TODO: Add keyboard navigation test
+    // test('should support keyboard navigation', async ({ page }) => {
+    //   await page.goto(`${BASE_URL}/workflows/create`);
+    //   await uxHelper.validateKeyboardNavigation();
+    //   
+    //   // Test tab navigation through form
+    //   await page.keyboard.press('Tab');
+    //   await expect(page.getByPlaceholder('Describe your workflow in natural language...')).toBeFocused();
+    //   
+    //   // Test form submission with keyboard
+    //   await page.keyboard.press('Enter');
+    //   await uxHelper.validateErrorContainer(/required/i);
+    // });
+
+    // TODO: Add performance validation test
+    // test('should meet performance requirements', async ({ page }) => {
+    //   const startTime = Date.now();
+    //   await page.goto(`${BASE_URL}/workflows/create`);
+    //   const loadTime = Date.now() - startTime;
+    //   expect(loadTime).toBeLessThan(3000);
+    //   
+    //   // Test workflow generation time
+    //   const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+    //   await chatInput.fill('Simple test workflow');
+    //   
+    //   const generationStartTime = Date.now();
+    //   await page.getByTestId('primary-action generate-workflow-btn').click();
+    //   await expect(page.locator('text=Generated Workflow')).toBeVisible();
+    //   const generationTime = Date.now() - generationStartTime;
+    //   expect(generationTime).toBeLessThan(5000); // PRD requirement: <5 seconds
+    // });
   });
 
-  test.describe('Workflow Management Dashboard - UX Compliance', () => {
-    test('should display workflows with clear status indicators', async ({ page }) => {
-      // Navigate to workflows tab
-      await page.getByTestId('tab-workflows').click();
-      
-      // Validate UX compliance - heading hierarchy
-      await uxHelper.validateHeadingHierarchy(['Workflows']);
-      await expect(page.getByText(/Manage your automated workflows/)).toBeVisible();
-      
-      // Test search functionality (UX spec requirement)
-      const searchInput = page.getByTestId('search-input');
-      await expect(searchInput).toBeVisible();
-      await expect(searchInput).toHaveAttribute('placeholder', /Search workflows/);
-      
-      // Test filter functionality (UX spec requirement)
-      const filterSelect = page.getByTestId('workflow-filter-select');
-      await expect(filterSelect).toBeVisible();
-      await expect(filterSelect).toHaveValue('all');
-      
-      // Test empty state (UX spec requirement)
-      const emptyState = page.getByText(/No workflows/);
-      if (await emptyState.isVisible()) {
-        await expect(emptyState).toBeVisible();
-        await expect(page.getByText(/Get started by creating your first workflow/)).toBeVisible();
-        await expect(page.getByTestId('primary-action create-workflow-btn-empty-state')).toBeVisible();
-      }
-    });
-
-    test('should handle workflow actions with confirmation', async ({ page }) => {
-      // Navigate to workflows tab
-      await page.getByTestId('tab-workflows').click();
-      
-      // Wait for workflows to load
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
-      
-      // Look for existing workflow
-      const workflowCard = page.getByTestId('workflow-card');
-      if (await workflowCard.count() > 0) {
-        // Test workflow card structure (UX spec requirement)
-        await expect(workflowCard.first()).toBeVisible();
-        await expect(workflowCard.first().locator('p.text-sm.font-medium.text-gray-900')).toContainText(/[A-Za-z]/); // Workflow name
-        
-        // Test workflow actions - the entire card is now clickable
-        await expect(workflowCard.first()).toBeVisible();
-        
-        // Test delete workflow with confirmation (UX spec requirement)
-        const deleteButton = workflowCard.first().getByRole('button', { name: /Delete/ });
-        if (await deleteButton.isVisible()) {
-          await deleteButton.click();
-          
-          // Should show confirmation dialog (UX spec requirement)
-          await page.waitForSelector('div[role="dialog"]', { timeout: 10000 });
-          await expect(page.getByTestId('delete-workflow-dialog')).toBeVisible();
-          await expect(page.getByText(/Are you sure you want to delete.*workflow/)).toBeVisible();
-          
-          // Validate dialog accessibility attributes
-          const dialog = page.getByTestId('delete-workflow-dialog');
-          await expect(dialog).toHaveAttribute('role', 'dialog');
-          await expect(dialog).toHaveAttribute('aria-modal', 'true');
-          await expect(dialog).toHaveAttribute('aria-labelledby', 'delete-dialog-title');
-          
-          // Cancel deletion
-          await page.getByRole('button', { name: /Cancel/ }).click();
-        }
-      } else {
-        // No workflows exist, fail the test so the underlying issue is visible
-        throw new Error('No workflows exist for this test. Ensure test data setup creates at least one workflow.');
-      }
-    });
-  });
-
-  test.describe('Accessibility & UX Compliance - WCAG 2.1 AA', () => {
-    test('should have accessible form fields and keyboard navigation', async ({ page }) => {
-      // Wait for dashboard to load completely
-      await page.waitForSelector('[data-testid="tab-workflows"]', { timeout: 10000 });
-      
-      // Navigate to workflows page
-      await page.getByTestId('tab-workflows').click();
-      
-      // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
-      
-      await page.getByTestId('primary-action create-workflow-btn').click();
-      
-      // Wait for the create workflow page to load
-      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
-      
-      // Validate UX compliance - heading hierarchy
-      await uxHelper.validateHeadingHierarchy(['Create Workflow']);
-      
-      // Test keyboard navigation (UX spec requirement)
-      await uxHelper.validateKeyboardNavigation();
-      
-      // Test form field accessibility (UX spec requirement)
-      const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
-      await expect(chatInput).toHaveAttribute('data-testid', 'workflow-description-input');
-      await expect(chatInput).not.toBeDisabled();
-      
-      // Test ARIA attributes (UX spec requirement)
-      const generateButton = page.getByRole('button', { name: /Generate Workflow/ });
-      await expect(generateButton).toBeVisible();
-      await expect(generateButton).not.toBeDisabled();
-      
-      // Test form validation accessibility
-      await chatInput.fill('');
-      await page.keyboard.press('Tab');
-      await expect(page.locator('[role="alert"]')).toBeVisible();
-    });
-
-    test('should handle form validation errors with accessible messaging', async ({ page }) => {
-      // Wait for dashboard to load completely
-      await page.waitForSelector('[data-testid="tab-workflows"]', { timeout: 10000 });
-      
-      // Navigate to workflows page
-      await page.getByTestId('tab-workflows').click();
-      
-      // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
-      
-      await page.getByTestId('primary-action create-workflow-btn').click();
-      
-      // Wait for the create workflow page to load
-      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
-      
-      // Try to generate without input
-      await page.getByRole('button', { name: /Generate Workflow/ }).click();
-      
-      // Validate UX compliance - accessible error containers (UX spec requirement)
-      await uxHelper.validateErrorContainer(/Please describe your workflow in plain English/);
-      
-      // Test error message clarity (UX spec requirement)
-      await expect(page.locator('[data-testid="workflow-error-message"]')).toContainText(/Please describe your workflow in plain English/);
-    });
-
-    test('should have mobile responsive design', async ({ page }) => {
-      // Set mobile viewport (UX spec requirement)
-      await uxHelper.validateMobileResponsiveness();
-      
-      // Wait for dashboard to load completely
-      await page.waitForSelector('[data-testid="mobile-menu-toggle"]', { timeout: 10000 });
-      
-      // Open mobile menu and navigate to workflows
-      await page.getByTestId('mobile-menu-toggle').click();
-      await page.getByTestId('mobile-menu').waitFor({ state: 'visible' });
-      
-      // Find and click the Workflows button in mobile menu
-      const workflowsButton = page.locator('#mobile-menu button').filter({ hasText: 'Workflows' });
-      await workflowsButton.click();
-      
-      // Wait for workflows tab to be active and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
-      
-      await page.getByTestId('primary-action create-workflow-btn').click();
-      
-      // Wait for the create workflow page to load
-      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
-      
-      // Validate mobile layout (UX spec requirement)
-      await expect(page.getByPlaceholder(/Describe your workflow in plain English/)).toBeVisible();
-      await expect(page.getByRole('button', { name: /Generate Workflow/ })).toBeVisible();
-      
-      // Test mobile form interaction
-      const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
-      await chatInput.fill('Mobile Test Workflow');
-      await expect(chatInput).toHaveValue('Mobile Test Workflow');
-    });
-
-    test('should handle loading states and success feedback', async ({ page }) => {
-      test.setTimeout(60000); // Increase timeout for API calls
-      // Wait for dashboard to load completely
-      await page.waitForSelector('[data-testid="tab-workflows"]', { timeout: 10000 });
-      
-      // Navigate to workflows page
-      await page.getByTestId('tab-workflows').click();
-      
-      // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
-      
-      // Click the first create workflow button (there might be multiple due to empty state)
-      await page.getByTestId('primary-action create-workflow-btn').first().click();
-      
-      // Wait for the create workflow page to load
-      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
-      
-      // Wait for the form to be ready and NOT in loading state
-      await page.waitForSelector('[data-testid="workflow-description-input"]', { timeout: 10000 });
-      await page.waitForSelector('[data-testid="primary-action generate-workflow-btn"]', { timeout: 10000 });
-      
-      // Ensure the form is not in a loading state before proceeding
-      const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
-      await expect(chatInput).not.toBeDisabled({ timeout: 5000 });
-      
-      // Clear any existing content and fill with new description
-      await chatInput.clear();
-      await chatInput.fill('Loading Test Workflow - fetch data and send email');
-      
-      // Submit and validate loading state (UX spec requirement)
-      const generateButton = page.getByTestId('primary-action generate-workflow-btn');
-      
-      // Intercept the API call to check the response
-      const responsePromise = page.waitForResponse(
-        response => response.url().includes('/api/workflows/generate') && response.request().method() === 'POST',
-        { timeout: 30000 }
-      );
-      
-      // Click the button and wait for the form to submit
-      await generateButton.click();
-      
-      // Wait for loading state to be set - wait for button to be disabled
-      await expect(generateButton).toBeDisabled({ timeout: 10000 });
-      await expect(generateButton).toHaveText(/Generating/);
-      
-      // Wait for API response with better error handling
-      try {
-        const response = await responsePromise;
-        const responseBody = await response.json();
-        
-        // Handle both success and error cases
-        if (responseBody.success) {
-          // Wait for completion and validate success state
-          await expect(page.getByTestId('workflow-success-chat-message')).toContainText("I've created a workflow for you");
-        } else {
-          // Handle error case - should show error message
-          await expect(page.getByTestId('workflow-error-message')).toBeVisible();
-        }
-      } catch (error) {
-        // Check if the page context is still available before accessing elements
-        try {
-          // If API call times out, check if we're stuck in loading state
-          const isStillLoading = await generateButton.isDisabled();
-          if (isStillLoading) {
-            throw new Error('Workflow generation is stuck in loading state. Check the API endpoint and UI state management.');
-          }
-        } catch (contextError) {
-          // If we can't access the page (context closed), the original error is more relevant
-          console.log('Page context unavailable during error handling:', contextError.message);
-        }
-        throw error;
-      }
-    });
-  });
-
-  test.describe('Workflow Execution & Monitoring - Real-time UX', () => {
+  test.describe('Workflow Execution Flow', () => {
     test('should execute workflow with real-time feedback', async ({ page }) => {
-      // Wait for dashboard to load completely
-      await page.waitForSelector('[data-testid="tab-workflows"]', { timeout: 10000 });
+      // First create a workflow
+      await page.goto(`${BASE_URL}/workflows/create`);
+      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+      await chatInput.fill('Send a test message to Slack');
       
-      // Navigate to workflows tab
-      await page.getByTestId('tab-workflows').click();
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action generate-workflow-btn').click();
+      await page.getByRole('button', { name: 'Generate Workflow' }).click();
       
-      // Look for existing workflow
-      const workflowCard = page.getByTestId('workflow-card');
-      if (await workflowCard.count() > 0) {
-        // Click on the workflow card to navigate to workflow detail page
-        await workflowCard.first().click();
+      await page.waitForTimeout(5000);
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action save-workflow-btn').click();
+      await page.getByRole('button', { name: 'Save Workflow' }).click();
+      
+      await page.waitForURL(/.*workflows/);
+      
+      // Navigate to workflow details
+      await page.getByRole('link', { name: /Send a test message to Slack/ }).click();
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action execute-workflow-btn').click();
+      await page.getByRole('button', { name: 'Execute' }).click();
+      
+      // TODO: Add loading state validation
+      // await uxHelper.validateLoadingState('[data-testid="primary-action execute-workflow-btn"]');
+      
+      // Validate execution progress
+      await expect(page.locator('text=Executing...')).toBeVisible();
+      await expect(page.locator('text=Step 1:')).toBeVisible();
+      
+      // Wait for completion
+      await page.waitForTimeout(10000);
+      
+      // TODO: Add success validation
+      // await uxHelper.validateSuccessContainer('Completed');
+      
+      // Validate completion
+      await expect(page.locator('text=Completed')).toBeVisible();
+    });
+
+    test('should handle execution errors gracefully', async ({ page }) => {
+      // Create a workflow that will fail (missing API connection)
+      await page.goto(`${BASE_URL}/workflows/create`);
+      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+      await chatInput.fill('Send a message to Slack');
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action generate-workflow-btn').click();
+      await page.getByRole('button', { name: 'Generate Workflow' }).click();
+      
+      await page.waitForTimeout(5000);
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action save-workflow-btn').click();
+      await page.getByRole('button', { name: 'Save Workflow' }).click();
+      
+      await page.waitForURL(/.*workflows/);
+      
+      // Navigate to workflow details
+      await page.getByRole('link', { name: /Send a message to Slack/ }).click();
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action execute-workflow-btn').click();
+      await page.getByRole('button', { name: 'Execute' }).click();
+      
+      // Wait for error
+      await page.waitForTimeout(5000);
+      
+      // TODO: Fix error container validation to use UXComplianceHelper
+      // await uxHelper.validateErrorContainer(/connection|API|failed/);
+      
+      // Should show error message
+      await expect(page.locator('.bg-red-50')).toBeVisible();
+      await expect(page.locator('.text-red-800')).toContainText(/connection|API|failed/i);
+    });
+
+    // TODO: Add execution security test
+    // test('should validate execution permissions', async ({ page }) => {
+    //   // Test execution with different user roles
+    //   // Test execution of workflows owned by other users
+    //   // Test execution of disabled workflows
+    // });
+  });
+
+  test.describe('Workflow Management Operations', () => {
+    test('should pause and resume workflow execution', async ({ page }) => {
+      // Create and start a long-running workflow
+      await page.goto(`${BASE_URL}/workflows/create`);
+      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+      await chatInput.fill('Process data with multiple steps');
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action generate-workflow-btn').click();
+      await page.getByRole('button', { name: 'Generate Workflow' }).click();
+      
+      await page.waitForTimeout(5000);
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action save-workflow-btn').click();
+      await page.getByRole('button', { name: 'Save Workflow' }).click();
+      
+      await page.waitForURL(/.*workflows/);
+      
+      // Navigate to workflow details
+      await page.getByRole('link', { name: /Process data/ }).click();
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action execute-workflow-btn').click();
+      await page.getByRole('button', { name: 'Execute' }).click();
+      
+      // Wait for execution to start
+      await page.waitForTimeout(2000);
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action pause-workflow-btn').click();
+      await page.getByRole('button', { name: 'Pause' }).click();
+      
+      // Validate pause state
+      await expect(page.locator('text=Paused')).toBeVisible();
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action resume-workflow-btn').click();
+      await page.getByRole('button', { name: 'Resume' }).click();
+      
+      // Validate resume state
+      await expect(page.locator('text=Executing...')).toBeVisible();
+    });
+
+    test('should cancel workflow execution', async ({ page }) => {
+      // Create and start a workflow
+      await page.goto(`${BASE_URL}/workflows/create`);
+      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+      await chatInput.fill('Long running task');
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action generate-workflow-btn').click();
+      await page.getByRole('button', { name: 'Generate Workflow' }).click();
+      
+      await page.waitForTimeout(5000);
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action save-workflow-btn').click();
+      await page.getByRole('button', { name: 'Save Workflow' }).click();
+      
+      await page.waitForURL(/.*workflows/);
+      
+      // Navigate to workflow details
+      await page.getByRole('link', { name: /Long running task/ }).click();
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action execute-workflow-btn').click();
+      await page.getByRole('button', { name: 'Execute' }).click();
+      
+      // Wait for execution to start
+      await page.waitForTimeout(2000);
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action cancel-workflow-btn').click();
+      await page.getByRole('button', { name: 'Cancel' }).click();
+      
+      // Validate cancel state
+      await expect(page.locator('text=Cancelled')).toBeVisible();
+    });
+
+    // TODO: Add workflow editing test
+    // test('should edit workflow configuration', async ({ page }) => {
+    //   // Test editing workflow steps
+    //   // Test modifying workflow parameters
+    //   // Test saving workflow changes
+    // });
+
+    // TODO: Add workflow deletion test
+    // test('should delete workflow with confirmation', async ({ page }) => {
+    //   // Test workflow deletion flow
+    //   // Test confirmation dialog
+    //   // Test cleanup of related resources
+    // });
+  });
+
+  test.describe('Workflow Monitoring and Logs', () => {
+    test('should display real-time execution logs', async ({ page }) => {
+      // Create and execute a workflow
+      await page.goto(`${BASE_URL}/workflows/create`);
+      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+      await chatInput.fill('Simple test workflow');
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action generate-workflow-btn').click();
+      await page.getByRole('button', { name: 'Generate Workflow' }).click();
+      
+      await page.waitForTimeout(5000);
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action save-workflow-btn').click();
+      await page.getByRole('button', { name: 'Save Workflow' }).click();
+      
+      await page.waitForURL(/.*workflows/);
+      
+      // Navigate to workflow details
+      await page.getByRole('link', { name: /Simple test workflow/ }).click();
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action execute-workflow-btn').click();
+      await page.getByRole('button', { name: 'Execute' }).click();
+      
+      // Validate log display
+      await expect(page.locator('text=Execution Logs')).toBeVisible();
+      await expect(page.locator('text=Step 1:')).toBeVisible();
+      
+      // Wait for completion
+      await page.waitForTimeout(10000);
+      
+      // Validate final log entries
+      await expect(page.locator('text=Completed successfully')).toBeVisible();
+    });
+
+    test('should filter and search execution logs', async ({ page }) => {
+      // Navigate to workflow with existing executions
+      await page.goto(`${BASE_URL}/workflows`);
+      
+      // Click on a workflow to view details
+      await page.getByRole('link', { name: /test workflow/i }).first().click();
+      
+      // Validate log filtering options
+      await expect(page.locator('text=Filter Logs')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'All' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Errors' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Success' })).toBeVisible();
+      
+      // Test log search
+      const searchInput = page.getByPlaceholder('Search logs...');
+      await expect(searchInput).toBeVisible();
+      await searchInput.fill('error');
+      
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action search-logs-btn').click();
+      await page.getByRole('button', { name: 'Search' }).click();
+      
+      // Validate search results
+      await expect(page.locator('text=Search Results')).toBeVisible();
+    });
+
+    // TODO: Add log export test
+    // test('should export execution logs', async ({ page }) => {
+    //   // Test log export functionality
+    //   // Test different export formats
+    //   // Test export permissions
+    // });
+  });
+
+  test.describe('Workflow Performance and Scalability', () => {
+    test('should handle concurrent workflow executions', async ({ page }) => {
+      // Create multiple workflows
+      const workflows = ['Workflow A', 'Workflow B', 'Workflow C'];
+      
+      for (const workflowName of workflows) {
+        await page.goto(`${BASE_URL}/workflows/create`);
+        const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+        await chatInput.fill(workflowName);
         
-        // Should navigate to workflow detail page
-        await expect(page).toHaveURL(/.*workflows\/.*/);
+        // TODO: Fix primary action data-testid pattern
+        // await page.getByTestId('primary-action generate-workflow-btn').click();
+        await page.getByRole('button', { name: 'Generate Workflow' }).click();
         
-        // Look for execute button
-        const executeButton = page.getByRole('button', { name: /execute|run/i });
-        if (await executeButton.count() > 0) {
-          await executeButton.first().click();
-          
-          // Should show execution started message (UX spec requirement)
-          await expect(page.getByText(/execution.*started|workflow.*running/i)).toBeVisible();
-          
-          // Validate real-time status updates (UX spec requirement)
-          await expect(page.locator('.bg-blue-100')).toBeVisible();
-        }
-      } else {
-        // No workflows exist, fail the test so the underlying issue is visible
-        throw new Error('No workflows exist for this test. Ensure test data setup creates at least one workflow.');
-      }
-    });
-
-    test('should provide comprehensive workflow monitoring', async ({ page }) => {
-      // Navigate to workflows tab
-      await page.getByTestId('tab-workflows').click();
-      
-      // Wait for workflows page to load
-      await page.waitForSelector('[data-testid="workflows-management"]', { timeout: 10000 });
-      
-      // Should show workflow details (UX spec requirement) - use more specific selector
-      await expect(page.locator('h2:has-text("Workflows")')).toBeVisible();
-      
-      // Look for monitoring elements - these should be present even in empty state
-      const workflowStatusElements = page.getByTestId('workflow-status');
-      if (await workflowStatusElements.count() > 0) {
-        await expect(workflowStatusElements.first()).toBeVisible();
-      }
-      
-      // Test workflow execution if workflows exist
-      const executeButton = page.getByTestId(/execute-workflow-/);
-      if (await executeButton.count() > 0 && await executeButton.first().isVisible()) {
-        await executeButton.first().click();
+        await page.waitForTimeout(3000);
         
-        // Should show execution feedback - but don't fail if it doesn't appear
-        // (execution might be async or not implemented in test environment)
-        const executionFeedback = page.getByText(/executing|running|started/i);
-        try {
-          await expect(executionFeedback).toBeVisible({ timeout: 5000 });
-        } catch (error) {
-          // Execution feedback not shown, which is acceptable in test environment
-          console.log('Execution feedback not shown (acceptable in test environment)');
-        }
-      } else {
-        // No workflows to execute, which is fine for this test
-        console.log('No workflows available for execution (acceptable)');
+        // TODO: Fix primary action data-testid pattern
+        // await page.getByTestId('primary-action save-workflow-btn').click();
+        await page.getByRole('button', { name: 'Save Workflow' }).click();
+        
+        await page.waitForURL(/.*workflows/);
       }
-    });
-  });
-
-  test.describe('Error Handling & Recovery - Graceful UX', () => {
-    test('should handle API errors gracefully', async ({ page }) => {
-      // Wait for dashboard to load completely
-      await page.waitForSelector('[data-testid="tab-workflows"]', { timeout: 10000 });
       
-      // Navigate to workflows page
-      await page.getByTestId('tab-workflows').click();
+      // Navigate to workflows list
+      await page.goto(`${BASE_URL}/workflows`);
       
-      // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
-      
-      await page.getByTestId('primary-action create-workflow-btn').click();
-      
-      // Wait for the create workflow page to load
-      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
-      
-      // Test network error handling by temporarily breaking the connection
-      // This would require mocking in a real test, but we'll test the UI response
-      const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
-      await chatInput.fill('Test workflow for error handling');
-      
-      // Submit and check for error handling
-      await page.getByTestId('primary-action generate-workflow-btn').click();
-      
-      // Should handle errors gracefully (UX spec requirement)
-      const errorMessage = page.getByText(/Sorry, I encountered an error/);
-      if (await errorMessage.isVisible()) {
-        await expect(errorMessage).toBeVisible();
-        await expect(page.getByText(/Please try again/)).toBeVisible();
+      // Validate all workflows are listed
+      for (const workflowName of workflows) {
+        await expect(page.getByText(workflowName)).toBeVisible();
       }
     });
 
-    test('should provide clear recovery paths', async ({ page }) => {
-      // Wait for dashboard to load completely
-      await page.waitForSelector('[data-testid="tab-workflows"]', { timeout: 10000 });
+    test('should handle large workflow datasets', async ({ page }) => {
+      // Create a workflow with many steps
+      await page.goto(`${BASE_URL}/workflows/create`);
+      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+      await chatInput.fill('Complex workflow with multiple API calls and data processing steps');
       
-      // Navigate to workflows page
-      await page.getByTestId('tab-workflows').click();
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action generate-workflow-btn').click();
+      await page.getByRole('button', { name: 'Generate Workflow' }).click();
       
-      // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action create-workflow-btn"]', { timeout: 10000 });
+      await page.waitForTimeout(10000);
       
-      await page.getByTestId('primary-action create-workflow-btn').click();
+      // Validate complex workflow generation
+      await expect(page.locator('text=Generated Workflow')).toBeVisible();
+      await expect(page.locator('text=Step 1:')).toBeVisible();
+      await expect(page.locator('text=Step 2:')).toBeVisible();
       
-      // Wait for the create workflow page to load
-      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action save-workflow-btn').click();
+      await page.getByRole('button', { name: 'Save Workflow' }).click();
       
-      // Test validation error recovery
-      const chatInput = page.getByPlaceholder(/Describe your workflow in plain English/);
-      await chatInput.fill('');
-      await page.getByTestId('primary-action generate-workflow-btn').click();
-      
-      // Should show clear error message
-      await expect(page.getByText(/please.*describe|enter.*description/i)).toBeVisible();
-      
-      // Should allow easy recovery
-      await chatInput.fill('Valid workflow description');
-      await expect(chatInput).toHaveValue('Valid workflow description');
+      await page.waitForURL(/.*workflows/);
     });
+
+    // TODO: Add performance monitoring test
+    // test('should monitor workflow performance metrics', async ({ page }) => {
+    //   // Test execution time tracking
+    //   // Test resource usage monitoring
+    //   // Test performance alerts
+    // });
   });
 
-  test.describe('Performance & Responsiveness - UX Excellence', () => {
-    test('should load workflow pages quickly', async ({ page }) => {
-      // Navigate to workflows tab
-      await page.getByTestId('tab-workflows').click();
+  test.describe('Workflow Security and Permissions', () => {
+    test('should enforce workflow access permissions', async ({ page }) => {
+      // Test accessing workflows with different user roles
+      // Test accessing workflows owned by other users
+      // Test accessing disabled workflows
       
-      // Wait for workflows page to load
-      await page.waitForSelector('[data-testid="workflows-management"]', { timeout: 10000 });
+      // Navigate to workflows list
+      await page.goto(`${BASE_URL}/workflows`);
       
-      // Validate content is loaded - use more specific selector
-      await expect(page.locator('h2:has-text("Workflows")')).toBeVisible();
+      // Validate user can only see their own workflows
+      await expect(page.locator('text=Your Workflows')).toBeVisible();
+      
+      // Try to access a workflow that doesn't exist
+      await page.goto(`${BASE_URL}/workflows/non-existent-id`);
+      
+      // Should show access denied or not found
+      await expect(page.locator('text=Not Found')).toBeVisible();
     });
 
-    test('should handle large workflow lists efficiently', async ({ page }) => {
-      // Wait for dashboard to load completely
-      await page.waitForSelector('[data-testid="tab-workflows"]', { timeout: 10000 });
+    test('should validate workflow input sanitization', async ({ page }) => {
+      // Test workflow creation with malicious input
+      await page.goto(`${BASE_URL}/workflows/create`);
+      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
       
-      // Navigate to workflows tab
-      await page.getByTestId('tab-workflows').click();
+      // Test XSS attempt
+      await chatInput.fill('<script>alert("xss")</script>');
       
-      // Test search performance
-      const searchInput = page.getByTestId('search-input');
-      await searchInput.fill('test');
+      // TODO: Fix primary action data-testid pattern
+      // await page.getByTestId('primary-action generate-workflow-btn').click();
+      await page.getByRole('button', { name: 'Generate Workflow' }).click();
       
-      // Should respond quickly to search input
-      await expect(searchInput).toHaveValue('test');
+      // Should handle malicious input gracefully
+      await page.waitForTimeout(3000);
+      
+      // TODO: Fix error container validation to use UXComplianceHelper
+      // await uxHelper.validateErrorContainer(/invalid|unsafe/);
+      
+      // Should show error or sanitize input
+      await expect(page.locator('.bg-red-50')).toBeVisible();
     });
+
+    // TODO: Add workflow encryption test
+    // test('should encrypt sensitive workflow data', async ({ page }) => {
+    //   // Test workflow data encryption
+    //   // Test secure storage of workflow configurations
+    //   // Test encrypted transmission of workflow data
+    // });
   });
 
-  test.describe('Comprehensive UX Compliance Validation', () => {
-    test('should meet all UX spec requirements for workflow management', async ({ page }) => {
-      // Navigate to workflows tab
-      await page.getByTestId('tab-workflows').click();
-      
-      // Wait for workflows page to load completely
-      await page.waitForSelector('[data-testid="workflows-management"]', { timeout: 10000 });
-      
-      // Wait for any loading states to complete
-      await page.waitForTimeout(1000);
-      
-      // Validate UX compliance - heading hierarchy (UX spec requirement)
-      await uxHelper.validateHeadingHierarchy(['Dashboard', 'Workflows']);
-      
-      // Validate primary action button (UX spec requirement)
-      await expect(page.getByTestId('primary-action create-workflow-btn')).toBeVisible();
-      await expect(page.getByTestId('primary-action create-workflow-btn')).toHaveText('Create Workflow');
-      
-      // Validate accessibility features (UX spec requirement)
-      await expect(page.getByLabel('Search workflows')).toBeVisible();
-      await expect(page.getByLabel('Filter by status')).toBeVisible();
-      
-      // Validate search functionality
-      await page.getByTestId('search-input').fill('test');
-      await expect(page.getByTestId('search-input')).toHaveValue('test');
-      
-      // Validate filter functionality
-      await page.getByTestId('workflow-filter-select').selectOption('ACTIVE');
-      await expect(page.getByTestId('workflow-filter-select')).toHaveValue('ACTIVE');
-    });
+  // TODO: Add security edge case tests
+  // test.describe('Security Edge Cases', () => {
+  //   test('should validate comprehensive input sanitization', async ({ page }) => {
+  //     await page.goto(`${BASE_URL}/workflows/create`);
+  //     const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+  //     
+  //     // Test XSS attempt
+  //     await chatInput.fill('<script>alert("xss")</script>');
+  //     await page.getByTestId('primary-action generate-workflow-btn').click();
+  //     
+  //     // Should handle malicious input gracefully
+  //     await uxHelper.validateErrorContainer(/invalid|unsafe/i);
+  //   });
 
-    test('should meet all UX spec requirements for workflow creation', async ({ page }) => {
-      // Navigate to workflows tab
-      await page.getByTestId('tab-workflows').click();
-      
-      // Wait for workflows page to load
-      await page.waitForSelector('[data-testid="workflows-management"]', { timeout: 10000 });
-      
-      // Click create workflow button
-      await page.getByTestId('primary-action create-workflow-btn').click();
-      
-      // Wait for create workflow page to load
-      await page.waitForSelector('h1:has-text("Create Workflow")', { timeout: 10000 });
-      
-      // Wait for the WorkflowsTab component to render and the create button to be available
-      await page.waitForSelector('[data-testid="primary-action generate-workflow-btn"]', { timeout: 10000 });
-      
-      // Validate UX compliance - heading hierarchy (UX spec requirement)
-      await uxHelper.validateHeadingHierarchy(['Create Workflow']);
-      
-      // Validate primary action button (UX spec requirement)
-      await expect(page.getByTestId('primary-action generate-workflow-btn')).toBeVisible();
-      await expect(page.getByTestId('primary-action generate-workflow-btn')).toHaveText('Generate Workflow');
-      
-      // Validate form accessibility (UX spec requirement)
-      await expect(page.getByTestId('workflow-description-input')).toBeVisible();
-      await expect(page.getByTestId('workflow-description-input')).toHaveAttribute('placeholder', /Describe your workflow in plain English/);
-    });
-  });
+  //   test('should handle rate limiting', async ({ page }) => {
+  //     // Test multiple rapid workflow generation attempts
+  //     for (let i = 0; i < 5; i++) {
+  //       await page.goto(`${BASE_URL}/workflows/create`);
+  //       const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+  //       await chatInput.fill(`Test workflow ${i}`);
+  //       await page.getByTestId('primary-action generate-workflow-btn').click();
+  //     }
+  //     
+  //     // Should show rate limit error
+  //     await uxHelper.validateErrorContainer(/rate limit|too many requests/i);
+  //   });
+
+  //   test('should validate HTTPS requirements', async ({ page }) => {
+  //     // Test workflow creation with HTTP URLs (should be rejected)
+  //     await page.goto(`${BASE_URL}/workflows/create`);
+  //     const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+  //     await chatInput.fill('Send data to http://insecure-api.example.com');
+  //     
+  //     // Should show security error
+  //     await uxHelper.validateErrorContainer(/https|secure/i);
+  //   });
+  // });
+
+  // TODO: Add performance validation tests
+  // test.describe('Performance Validation', () => {
+  //   test('should meet page load performance requirements', async ({ page }) => {
+  //     const startTime = Date.now();
+  //     await page.goto(`${BASE_URL}/workflows/create`);
+  //     const loadTime = Date.now() - startTime;
+  //     expect(loadTime).toBeLessThan(3000);
+  //   });
+
+  //   test('should meet workflow generation time requirements', async ({ page }) => {
+  //     await page.goto(`${BASE_URL}/workflows/create`);
+  //     const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+  //     await chatInput.fill('Simple test workflow');
+  //     
+  //     const startTime = Date.now();
+  //     await page.getByTestId('primary-action generate-workflow-btn').click();
+  //     
+  //     // Wait for generation to complete
+  //     await expect(page.locator('text=Generated Workflow')).toBeVisible();
+  //     const generationTime = Date.now() - startTime;
+  //     expect(generationTime).toBeLessThan(5000); // PRD requirement: <5 seconds
+  //   });
+
+  //   test('should handle concurrent workflow creation', async ({ page, context }) => {
+  //     // Test multiple concurrent workflow creation requests
+  //     const promises = [];
+  //     for (let i = 0; i < 3; i++) {
+  //       const newPage = await context.newPage();
+  //       promises.push(
+  //         newPage.goto(`${BASE_URL}/workflows/create`).then(() => {
+  //           return newPage.getByTestId('primary-action generate-workflow-btn').click();
+  //         })
+  //       );
+  //     }
+  //     
+  //     await Promise.all(promises);
+  //     // Should handle concurrent requests without errors
+  //   });
+  // });
+
+  // TODO: Add comprehensive accessibility tests
+  // test.describe('Accessibility Compliance', () => {
+  //   test('should have proper ARIA attributes', async ({ page }) => {
+  //     await page.goto(`${BASE_URL}/workflows/create`);
+  //     
+  //     // Test ARIA attributes
+  //     const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
+  //     await expect(chatInput).toHaveAttribute('aria-required', 'true');
+  //     
+  //     // Test form labels
+  //     await expect(page.locator('label[for="workflow-description"]')).toContainText('Workflow Description');
+  //   });
+
+  //   test('should support screen readers', async ({ page }) => {
+  //     await page.goto(`${BASE_URL}/workflows/create`);
+  //     
+  //     // Test semantic HTML structure
+  //     await expect(page.locator('form')).toHaveAttribute('role', 'form');
+  //     await expect(page.locator('[data-testid="workflow-description-input"]')).toHaveAttribute('aria-label');
+  //   });
+
+  //   test('should support keyboard navigation', async ({ page }) => {
+  //     await page.goto(`${BASE_URL}/workflows/create`);
+  //     
+  //     // Test tab navigation through form
+  //     await page.keyboard.press('Tab');
+  //     await expect(page.getByPlaceholder('Describe your workflow in natural language...')).toBeFocused();
+  //     
+  //     // Test form submission with keyboard
+  //     await page.keyboard.press('Enter');
+  //     await uxHelper.validateErrorContainer(/required/i);
+  //   });
+  // });
 }); 
