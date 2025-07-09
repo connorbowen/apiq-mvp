@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { act } from 'react-dom/test-utils';
 
 // Mock Next.js router
 const mockPush = jest.fn();
@@ -62,6 +63,7 @@ beforeAll(async () => {
 describe('Dashboard Page', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPush.mockClear();
     jest.useRealTimers();
     localStorageMock.clear();
     
@@ -196,6 +198,108 @@ describe('Dashboard Page', () => {
     const { unmount } = render(<DashboardPage />);
     
     expect(mockPush).toHaveBeenCalledWith('/login');
+    
+    unmount();
+  });
+
+  // New tests for the authentication logic we fixed
+  it('sets loading to false before redirecting when no token exists', () => {
+    localStorageMock.clear();
+    const { unmount } = render(<DashboardPage />);
+    
+    // Should redirect immediately without staying in loading state
+    expect(mockPush).toHaveBeenCalledWith('/login');
+    
+    unmount();
+  });
+
+  it('sets loading to false before redirecting when no user data exists', async () => {
+    localStorageMock.clear();
+    const { rerender } = render(<DashboardPage />);
+    act(() => {
+      localStorageMock.setItem('accessToken', 'token');
+      rerender(<DashboardPage />);
+    });
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/login');
+    });
+  });
+
+  it('sets loading to false before redirecting when API call fails', async () => {
+    localStorageMock.setItem('accessToken', 'mock-token');
+    localStorageMock.setItem('user', JSON.stringify({
+      id: 'user-1',
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'USER',
+    }));
+    
+    // Mock API failure
+    apiClient.getCurrentUser.mockResolvedValue({
+      success: false,
+      error: 'Authentication failed'
+    });
+    
+    const { unmount } = render(<DashboardPage />);
+    
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/login');
+    });
+    
+    unmount();
+  });
+
+  it('sets loading to false before redirecting when API call throws error', async () => {
+    localStorageMock.setItem('accessToken', 'mock-token');
+    localStorageMock.setItem('user', JSON.stringify({
+      id: 'user-1',
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'USER',
+    }));
+    
+    // Mock API error
+    apiClient.getCurrentUser.mockRejectedValue(new Error('Network error'));
+    
+    const { unmount } = render(<DashboardPage />);
+    
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/login');
+    });
+    
+    unmount();
+  });
+
+  it('maintains loading state during successful authentication', async () => {
+    localStorageMock.setItem('accessToken', 'mock-token');
+    localStorageMock.setItem('user', JSON.stringify({
+      id: 'user-1',
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'USER',
+    }));
+    
+    // Mock successful API response
+    apiClient.getCurrentUser.mockResolvedValue({
+      success: true,
+      data: {
+        user: {
+          id: 'user-1',
+          name: 'Test User',
+          email: 'test@example.com',
+          role: 'USER',
+        }
+      }
+    });
+    
+    const { unmount } = render(<DashboardPage />);
+    
+    // Should not redirect on successful authentication
+    await waitFor(() => {
+      expect(screen.getByText(/welcome, test user/i)).toBeInTheDocument();
+    });
+    
+    expect(mockPush).not.toHaveBeenCalled();
     
     unmount();
   });

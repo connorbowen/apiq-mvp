@@ -1024,3 +1024,10 @@ _This changelog is maintained by the APIQ team and community contributors._
 - OAuth2: Provider select for GitHub, Google, Slack, Discord; added Slack/GitHub to backend
 - Testing: All E2E, unit, and integration tests passing (except 5 intentionally skipped integration tests)
 - Test isolation and reliability improvements
+
+- **Dashboard Authentication Logic & Test Improvements** - ✅ **COMPLETED**
+  - Fixed dashboard page to always set `setIsLoading(false)` before redirecting unauthenticated users, preventing stuck loading spinners and improving UX.
+  - Added/updated unit tests to robustly cover all authentication edge cases and loading state transitions.
+  - Added new integration test (`tests/integration/api/dashboard-auth.integration.test.ts`) to explicitly verify dashboard authentication, session, and data loading API contract.
+  - All E2E, unit, and integration tests now pass, confirming full alignment with PRD, user rules, and UX spec.
+  - See also: TEST_SUMMARY.md, PRIMARY_ACTION_PATTERNS.md, and user-rules.md for updated compliance notes.

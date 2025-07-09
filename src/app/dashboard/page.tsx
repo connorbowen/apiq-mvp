@@ -35,16 +35,12 @@ export default function DashboardPage() {
   const [auditRefreshTrigger, setAuditRefreshTrigger] = useState(0); // Trigger for audit log refresh
   const router = useRouter();
 
-  // Debug connections state changes
-  useEffect(() => {
-    console.log('Connections state updated:', connections);
-  }, [connections]);
-
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const userData = localStorage.getItem('user');
     
     if (!token || !userData) {
+      setIsLoading(false); // Stop loading before redirect
       router.push('/login');
       return;
     }
@@ -56,10 +52,12 @@ export default function DashboardPage() {
           setUser(userResponse.data.user);
           setIsLoading(false);
         } else {
+          setIsLoading(false); // Stop loading before redirect
           router.push('/login');
         }
-              } catch (error: unknown) {
-          console.error('Failed to load user:', error);
+      } catch (error: unknown) {
+        console.error('Failed to load user:', error);
+        setIsLoading(false); // Stop loading before redirect
         router.push('/login');
       }
     };

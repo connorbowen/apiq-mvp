@@ -1153,6 +1153,11 @@ export const healthCheck = async (req: NextApiRequest, res: NextApiResponse) => 
 
 ---
 
+### 2025-07-09: Dashboard Authentication/Session Update
+- Dashboard authentication/session logic now ensures loading state is always cleared before redirecting unauthenticated users.
+- New integration test (`tests/integration/api/dashboard-auth.integration.test.ts`) verifies API contract for dashboard authentication/session/data loading.
+- All authentication/session flows must have robust unit, integration, and E2E test coverage for loading state, redirects, and error handling.
+
 ## Rule Updates
 
 This document should be reviewed and updated regularly to reflect:

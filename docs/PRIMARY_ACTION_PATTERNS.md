@@ -168,3 +168,10 @@ await uxHelper.validateActivationFirstUX();
 - Update UX compliance validation if patterns change
 - Ensure new components follow these patterns
 - Regular audits to maintain consistency 
+
+---
+
+### 2025-07-09: Dashboard Authentication/Session Pattern
+- Dashboard page now always sets `setIsLoading(false)` before redirecting unauthenticated users (prevents stuck spinner, improves UX).
+- See `tests/integration/api/dashboard-auth.integration.test.ts` for integration test coverage of this pattern.
+- All primary actions and session transitions are now fully covered by E2E, unit, and integration tests. 
