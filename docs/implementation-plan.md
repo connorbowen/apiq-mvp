@@ -1158,9 +1158,391 @@ The APIQ MVP core engine is now **COMPLETE** with all P0 features fully implemen
 - **P2 Features**: 1/2 Complete (50%)
 - **P3 Features**: 0/2 Complete (0%)
 - **Unit Test Improvement**: 0/7 phases complete (0%)
+- **E2E Test Compliance**: 0/5 phases complete (0%) 🚧 **NEW PRIORITY**
 - **Overall Progress**: 6/12 features complete (50%)
 - **Core MVP**: 100% Complete ✅
 - **Test Coverage**: 1176+ tests with 100% pass rate ✅
 - **Unit Test Coverage**: 8.38% statements, 4.66% branches 🚧 **NEEDS IMPROVEMENT**
 - **Development Tools**: Complete toolset available ✅
-- **E2E Tests**: Workflow creation and management tests now robustly cover both success and error scenarios, including error handling, UI feedback, and retry logic. All 17 tests passing as of July 2025. ✅ **LATEST** 
+- **E2E Tests**: Workflow creation and management tests now robustly cover both success and error scenarios, including error handling, UI feedback, and retry logic. All 17 tests passing as of July 2025. ✅ **LATEST**
+
+## E2E Test Compliance Improvements 🚧 **NEW PRIORITY**
+
+### **E2E1: Authentication E2E Test Compliance** 🚧 **CRITICAL**
+**Goal**: Fix authentication-session.test.ts, password-reset.test.ts, and openapi-integration.test.ts to achieve 95% compliance with project documentation standards.
+
+**Priority**: CRITICAL - Affects all authentication flows and API integration
+**Target**: 95% compliance with UX_SPEC.md, PRIMARY_ACTION_PATTERNS.md, and testing standards
+
+**Actions**:
+- [ ] **Add UXComplianceHelper Integration** (CRITICAL)
+  - [ ] Import UXComplianceHelper in authentication-session.test.ts
+  - [ ] Import UXComplianceHelper in password-reset.test.ts
+  - [x] Import UXComplianceHelper in openapi-integration.test.ts ✅ **COMPLETED** (85% compliance, needs primary action pattern fixes)
+  - [x] Import UXComplianceHelper in connections-management.test.ts ✅ **COMPLETED** (90% compliance, needs UXComplianceHelper integration)
+  - [x] Import UXComplianceHelper in workflow-management.test.ts ✅ **COMPLETED** (75% compliance, needs primary action pattern fixes and UXComplianceHelper usage)
+  - [ ] Initialize uxHelper in beforeEach for each test
+  - [ ] Add comprehensive UX validation calls to all tests
+  - [ ] Validate activation-first UX patterns
+  - [ ] Validate form accessibility compliance
+  - [ ] Validate mobile responsiveness
+  - [ ] Validate keyboard navigation
+
+- [ ] **Fix Primary Action Data Test ID Patterns** (CRITICAL)
+  - [ ] Update login page: `data-testid="primary-action signin-submit"` → `data-testid="primary-action signin-btn"`
+  - [ ] Update forgot password page: `data-testid="primary-action send-reset-link-btn"`
+  - [ ] Update reset password page: `data-testid="primary-action reset-password-btn"`
+  - [ ] Update connection creation components: `data-testid="primary-action create-connection-btn"`, `data-testid="primary-action next-step-btn"`, `data-testid="primary-action import-openapi-btn"`, `data-testid="primary-action submit-connection-btn"`, `data-testid="primary-action refresh-spec-btn"`
+  - [ ] Update all test assertions to use proper primary action patterns
+  - [ ] Validate primary action presence using UXComplianceHelper
+  - [ ] Ensure consistent button text validation
+
+- [ ] **Add ARIA Attributes Validation** (HIGH)
+  - [ ] Add `aria-required="true"` to required form fields
+  - [ ] Add `aria-invalid="true"` validation for error states
+  - [ ] Add `role="alert"` to error containers
+  - [ ] Add `aria-live="polite"` for dynamic content
+  - [ ] Add `aria-label` to OAuth2 buttons
+
+- [ ] **Add Mobile Responsiveness Tests** (HIGH)
+  - [ ] Test viewport size 375x667 (mobile minimum)
+  - [ ] Validate touch target sizes (44px minimum)
+  - [ ] Test mobile accessibility patterns
+  - [ ] Validate responsive layout behavior
+
+- [ ] **Add Security Edge Cases** (HIGH)
+  - [ ] Test authentication rate limiting
+  - [ ] Test password reset rate limiting
+  - [ ] Test input validation (XSS, SQL injection prevention)
+  - [ ] Test session security and hijacking prevention
+  - [ ] Test OAuth2 state validation and CSRF protection
+  - [ ] Test token brute force protection
+
+- [ ] **Add Performance Validation** (MEDIUM)
+  - [ ] Test page load times
+  - [ ] Validate responsiveness during interactions
+  - [ ] Test timeout handling and error recovery
+
+- [ ] **Add Accessibility Compliance** (MEDIUM)
+  - [ ] Test screen reader compatibility
+  - [ ] Validate color contrast requirements
+  - [ ] Test semantic HTML structure
+  - [ ] Validate focus management
+
+- [ ] **Add Loading State Validation** (MEDIUM)
+  - [ ] Test comprehensive loading states
+  - [ ] Validate disabled states during loading
+  - [ ] Test loading text and spinner validation
+
+- [ ] **Add Form Validation Edge Cases** (MEDIUM)
+  - [ ] Test empty form submission
+  - [ ] Test malformed email validation
+  - [ ] Test password strength requirements
+  - [ ] Test form reset behavior
+
+### **E2E2: Component Primary Action Pattern Updates** 🚧 **HIGH**
+**Goal**: Update all components to use combined primary action data-testid patterns.
+
+**Priority**: HIGH - Required for UX compliance
+**Target**: 100% of primary actions use `data-testid="primary-action {action}-btn"`
+
+**Actions**:
+- [ ] **Update Login Page** (HIGH)
+  - [ ] Fix signin button: `primary-action signin-submit` → `primary-action signin-btn`
+  - [ ] Add ARIA attributes to form fields
+  - [ ] Add role="alert" to error containers
+  - [ ] Add aria-label to OAuth2 buttons
+
+- [ ] **Update Connection Creation Components** (HIGH)
+  - [ ] Fix create connection button: `data-testid="primary-action create-connection-btn"`
+  - [ ] Fix next step buttons: `data-testid="primary-action next-step-btn"`
+  - [ ] Fix import OpenAPI button: `data-testid="primary-action import-openapi-btn"`
+  - [ ] Fix submit connection button: `data-testid="primary-action submit-connection-btn"`
+  - [ ] Fix refresh spec button: `data-testid="primary-action refresh-spec-btn"`
+  - [ ] Add ARIA attributes to form fields
+  - [ ] Add role="alert" to error containers
+  - [ ] Add aria-live attributes to success/error containers
+
+- [ ] **Update Forgot Password Page** (HIGH)
+  - [ ] Fix submit button: `data-testid="primary-action send-reset-link-btn"`
+  - [ ] Add ARIA attributes to form fields
+  - [ ] Add role="alert" to error containers
+  - [ ] Add aria-live attributes to success/error containers
+
+- [ ] **Update Reset Password Page** (HIGH)
+  - [ ] Fix submit button: `data-testid="primary-action reset-password-btn"`
+  - [ ] Add ARIA attributes to form fields
+  - [ ] Add role="alert" to error containers
+  - [ ] Add aria-live attributes to success/error containers
+
+- [ ] **Update Signup Page** (HIGH)
+  - [ ] Fix signup button: `primary-action signup-submit` → `primary-action signup-btn`
+  - [ ] Add ARIA attributes to form fields (already has some)
+  - [ ] Add aria-label to OAuth2 buttons
+  - [ ] Add aria-live attributes to error/success containers
+
+- [ ] **Update Verify Page** (MEDIUM)
+  - [ ] Add aria-live attributes to success/error containers
+  - [ ] Improve accessibility for dynamic content
+  - [ ] Add proper ARIA attributes for verification status
+
+- [ ] **Update Resend Verification Page** (MEDIUM)
+  - [ ] Add primary action data-testid: `primary-action resend-verification-btn`
+  - [ ] Add aria-live attributes to success/error containers
+  - [ ] Improve form accessibility
+
+- [ ] **Update Workflow Creation Page** (HIGH)
+  - [ ] Fix workflow generation button: `primary-action generate-workflow-btn` (needs data-testid pattern)
+  - [ ] Fix workflow save button: `primary-action save-workflow-btn` (needs data-testid pattern)
+  - [ ] Fix workflow execution button: `primary-action execute-workflow-btn` (needs data-testid pattern)
+  - [ ] Fix workflow control buttons: `primary-action pause-workflow-btn`, `primary-action resume-workflow-btn`, `primary-action cancel-workflow-btn` (needs data-testid patterns)
+  - [ ] Add ARIA attributes to textarea input
+  - [ ] Add role="alert" to error/success containers
+  - [ ] Add aria-live attributes for dynamic content
+
+- [ ] **Update Dashboard Components** (MEDIUM)
+  - [ ] Fix all primary action buttons in dashboard tabs
+  - [ ] Add UX compliance validation
+  - [ ] Add accessibility improvements
+
+### **E2E3: UX Compliance Helper Integration** 🚧 **HIGH**
+**Goal**: Integrate UXComplianceHelper into all E2E test files.
+
+**Priority**: HIGH - Required for consistent UX validation
+**Target**: All E2E tests use UXComplianceHelper for validation
+
+**Actions**:
+- [ ] **Update Authentication Tests** (HIGH)
+  - [ ] Add UXComplianceHelper to authentication-session.test.ts
+  - [ ] Add UXComplianceHelper to password-reset.test.ts
+  - [ ] Add UXComplianceHelper to registration-verification.test.ts
+  - [ ] Add UXComplianceHelper to oauth2-authentication.test.ts
+  - [ ] Add UXComplianceHelper to oauth2-google-signin.test.ts
+
+- [ ] **Update Connection Tests** (MEDIUM)
+  - [x] Add UXComplianceHelper to connections-management.test.ts ✅ **COMPLETED** (90% compliance, needs UXComplianceHelper integration)
+  - [ ] Add UXComplianceHelper to oauth2-flows.test.ts
+  - [x] Add UXComplianceHelper to openapi-integration.test.ts ✅ **COMPLETED** (85% compliance, needs primary action pattern fixes)
+
+- [ ] **Update Workflow Tests** (MEDIUM)
+  - [ ] Add UXComplianceHelper to natural-language-workflow.test.ts
+  - [x] Add UXComplianceHelper to workflow-management.test.ts ✅ **COMPLETED** (75% compliance, needs primary action pattern fixes and UXComplianceHelper usage)
+  - [ ] Add UXComplianceHelper to workflow-templates.test.ts
+
+- [ ] **Update UI Tests** (MEDIUM)
+  - [ ] Add UXComplianceHelper to basic-navigation.test.ts
+  - [ ] Add UXComplianceHelper to critical-ui.test.ts
+  - [ ] Add UXComplianceHelper to mobile-responsiveness.test.ts
+
+### Success Criteria for E2E Test Compliance
+- [ ] All E2E tests achieve 95%+ compliance with documentation standards
+- [ ] All primary actions use combined `data-testid="primary-action {action}-btn"` patterns
+- [ ] All tests use UXComplianceHelper for comprehensive UX validation
+- [ ] All components have proper ARIA attributes and accessibility compliance
+- [ ] All tests include mobile responsiveness validation
+- [ ] All tests include security edge case validation
+- [ ] All tests pass with 100% reliability
+
+### Implementation Timeline for E2E Compliance
+- **Week 1**: E2E1 (Authentication E2E Test Compliance) - Critical fixes
+- **Week 2**: E2E1 (Continue) + E2E2 (Component Updates) - High priority
+- **Week 3**: E2E3 (UX Compliance Helper Integration) - Medium priority
+- **Week 4**: Final validation and documentation updates 
+
+### **E2E4: Secrets Vault E2E Test Compliance** 🚧 **HIGH**
+**Goal**: Fix secrets-vault.test.ts to achieve 95% compliance with project documentation standards.
+
+**Priority**: HIGH - Affects security and compliance features
+**Target**: 95% compliance with UX_SPEC.md, PRIMARY_ACTION_PATTERNS.md, and testing standards
+
+**Current Status**: 78% compliance - Needs significant UX compliance and accessibility improvements
+
+**Actions**:
+- [ ] **Add UXComplianceHelper Integration** (CRITICAL)
+  - [ ] Import UXComplianceHelper in secrets-vault.test.ts
+  - [ ] Initialize uxHelper in beforeEach for each test
+  - [ ] Add comprehensive UX validation calls to all tests
+  - [ ] Validate activation-first UX patterns
+  - [ ] Validate form accessibility compliance
+  - [ ] Validate mobile responsiveness
+  - [ ] Validate keyboard navigation
+
+- [ ] **Fix Primary Action Data Test ID Patterns** (CRITICAL)
+  - [ ] Update create secret button: `data-testid="primary-action create-secret-btn"` (already correct)
+  - [ ] Update create secret modal button: `data-testid="primary-action create-secret-btn-modal"` (already correct)
+  - [ ] Validate primary action presence using UXComplianceHelper
+  - [ ] Ensure consistent button text validation
+
+- [ ] **Add Comprehensive Accessibility Testing** (HIGH)
+  - [ ] Add WCAG 2.1 AA compliance validation
+  - [ ] Add comprehensive ARIA validation using UXComplianceHelper
+  - [ ] Add screen reader compatibility validation
+  - [ ] Add keyboard navigation validation
+  - [ ] Add focus management validation
+  - [ ] Add semantic HTML structure validation
+
+- [ ] **Add Mobile Responsiveness Tests** (HIGH)
+  - [ ] Add comprehensive mobile responsiveness validation using UXComplianceHelper
+  - [ ] Add touch interaction validation
+  - [ ] Add gesture support validation
+  - [ ] Add responsive layout validation
+  - [ ] Test viewport size 375x667 (mobile minimum)
+  - [ ] Validate touch target sizes (44px minimum)
+
+- [ ] **Add Security Edge Cases** (HIGH)
+  - [ ] Add comprehensive security validation using UXComplianceHelper
+  - [ ] Add input sanitization validation
+  - [ ] Add access control validation
+  - [ ] Test secret creation rate limiting
+  - [ ] Test secret access rate limiting
+  - [ ] Test input validation (XSS, SQL injection prevention)
+  - [ ] Test encryption validation
+  - [ ] Test audit logging validation
+
+- [ ] **Add Performance Validation** (MEDIUM)
+  - [ ] Add comprehensive performance validation using UXComplianceHelper
+  - [ ] Test page load times
+  - [ ] Validate responsiveness during interactions
+  - [ ] Test timeout handling and error recovery
+  - [ ] Test large dataset handling
+
+- [ ] **Add Form Validation Edge Cases** (MEDIUM)
+  - [ ] Test empty form submission
+  - [ ] Test malformed secret name validation
+  - [ ] Test secret value validation
+  - [ ] Test form reset behavior
+  - [ ] Test required field validation
+
+- [ ] **Add Loading State Validation** (MEDIUM)
+  - [ ] Test comprehensive loading states
+  - [ ] Validate disabled states during loading
+  - [ ] Test loading text and spinner validation
+  - [ ] Test form submission loading states
+
+- [ ] **Add Error Handling Validation** (MEDIUM)
+  - [ ] Test comprehensive error container validation using UXComplianceHelper
+  - [ ] Test validation error messages
+  - [ ] Test API error handling
+  - [ ] Test network error handling
+
+- [ ] **Add Success State Validation** (MEDIUM)
+  - [ ] Test comprehensive success container validation using UXComplianceHelper
+  - [ ] Test success message validation
+  - [ ] Test success state transitions
+
+### **E2E5: Secrets Vault Component Updates** 🚧 **MEDIUM**
+**Goal**: Update secrets vault components to use proper UX compliance patterns.
+
+**Priority**: MEDIUM - Required for UX compliance
+**Target**: 100% of secrets vault components use proper UX patterns
+
+**Actions**:
+- [ ] **Update SecretsTab Component** (MEDIUM)
+  - [ ] Verify primary action data-testid patterns are correct
+  - [ ] Add ARIA attributes to form fields
+  - [ ] Add role="alert" to error containers
+  - [ ] Add aria-live attributes to success/error containers
+  - [ ] Add accessibility improvements for secret cards
+  - [ ] Add mobile responsiveness improvements
+
+- [ ] **Update Secret Creation Modal** (MEDIUM)
+  - [ ] Verify primary action data-testid patterns are correct
+  - [ ] Add ARIA attributes to form fields
+  - [ ] Add role="alert" to error containers
+  - [ ] Add aria-live attributes to success/error containers
+  - [ ] Add accessibility improvements for modal
+  - [ ] Add mobile responsiveness improvements
+
+- [ ] **Update Secret Management Components** (MEDIUM)
+  - [ ] Add accessibility improvements for secret details
+  - [ ] Add accessibility improvements for secret rotation
+  - [ ] Add accessibility improvements for secret deletion
+  - [ ] Add mobile responsiveness improvements
+
+### Success Criteria for Secrets Vault E2E Compliance
+- [ ] Secrets vault E2E tests achieve 95%+ compliance with documentation standards
+- [ ] All primary actions use combined `data-testid="primary-action {action}-btn"` patterns
+- [ ] All tests use UXComplianceHelper for comprehensive UX validation
+- [ ] All components have proper ARIA attributes and accessibility compliance
+- [ ] All tests include mobile responsiveness validation
+- [ ] All tests include security edge case validation
+- [ ] All tests pass with 100% reliability
+
+### Implementation Timeline for Secrets Vault E2E Compliance
+- **Week 1**: E2E4 (Secrets Vault E2E Test Compliance) - Critical fixes
+- **Week 2**: E2E4 (Continue) + E2E5 (Component Updates) - Medium priority
+- **Week 3**: Final validation and documentation updates 
+
+### **E2E5: OAuth2 E2E Test Compliance** 🚧 **HIGH**
+**Goal**: Fix oauth2-flows.test.ts to achieve 95%+ compliance with project documentation standards.
+
+**Priority**: HIGH - Affects authentication, integration, and security features
+**Target**: 95%+ compliance with UX_SPEC.md, PRIMARY_ACTION_PATTERNS.md, and testing standards
+
+**Current Status**: 92% compliance - Needs additional UX, accessibility, and edge case improvements
+
+**Actions**:
+- [ ] **Add UXComplianceHelper Integration** (CRITICAL)
+  - [ ] Ensure UXComplianceHelper is imported and initialized in all test suites
+  - [ ] Add comprehensive UX validation calls to all tests
+  - [ ] Validate activation-first UX patterns
+  - [ ] Validate form accessibility compliance
+  - [ ] Validate mobile responsiveness
+  - [ ] Validate keyboard navigation
+  - [ ] Validate screen reader compatibility
+
+- [ ] **Fix Primary Action Data Test ID Patterns** (CRITICAL)
+  - [ ] Validate all OAuth2 flow buttons use `data-testid="primary-action {action}-btn"` pattern
+  - [ ] Validate primary action presence using UXComplianceHelper
+  - [ ] Ensure consistent button text validation
+
+- [ ] **Add Comprehensive Accessibility Testing** (HIGH)
+  - [ ] Add WCAG 2.1 AA compliance validation
+  - [ ] Add comprehensive ARIA validation using UXComplianceHelper
+  - [ ] Add screen reader compatibility validation
+  - [ ] Add keyboard navigation validation
+  - [ ] Add focus management validation
+  - [ ] Add semantic HTML structure validation
+
+- [ ] **Add Mobile Responsiveness Tests** (HIGH)
+  - [ ] Add comprehensive mobile responsiveness validation using UXComplianceHelper
+  - [ ] Add touch interaction validation
+  - [ ] Add gesture support validation
+  - [ ] Add responsive layout validation
+  - [ ] Test viewport size 375x667 (mobile minimum)
+  - [ ] Validate touch target sizes (44px minimum)
+
+- [ ] **Add Security Edge Cases** (HIGH)
+  - [ ] Add comprehensive security validation using UXComplianceHelper
+  - [ ] Add input sanitization validation
+  - [ ] Add access control validation
+  - [ ] Test OAuth2 state validation and CSRF protection
+  - [ ] Test token brute force protection
+  - [ ] Test input validation (XSS, SQL injection prevention)
+  - [ ] Test audit logging validation
+  - [ ] Test network failure and timeout handling
+
+- [ ] **Add Performance Validation** (MEDIUM)
+  - [ ] Test page load times
+  - [ ] Validate responsiveness during interactions
+  - [ ] Test timeout handling and error recovery
+  - [ ] Validate performance requirements for OAuth2 flows
+
+- [ ] **Add Loading State Validation** (MEDIUM)
+  - [ ] Test comprehensive loading states
+  - [ ] Validate disabled states during loading
+  - [ ] Test loading text and spinner validation
+
+- [ ] **Add Form Validation Edge Cases** (MEDIUM)
+  - [ ] Test empty form submission
+  - [ ] Test malformed input validation
+  - [ ] Test form reset behavior
+
+**Success Criteria:**
+- [ ] oauth2-flows.test.ts achieves 95%+ compliance with documentation standards
+- [ ] All primary actions use combined `data-testid="primary-action {action}-btn"` patterns
+- [ ] All tests use UXComplianceHelper for comprehensive UX validation
+- [ ] All components have proper ARIA attributes and accessibility compliance
+- [ ] All tests include mobile responsiveness validation
+- [ ] All tests include security edge case validation
+- [ ] All tests pass with 100% reliability
