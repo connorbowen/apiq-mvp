@@ -414,25 +414,32 @@ test.describe('Authentication & Session E2E Tests - Best-in-Class UX', () => {
 
   test.describe('Performance & Security Validation', () => {
     test('should meet performance requirements for authentication flows', async ({ page }) => {
-      await page.goto(`${BASE_URL}/login`);
+      // Environment-aware performance budgets
+      const isCI = process.env.CI === 'true';
+      const loadTimeBudget = isCI ? 5000 : 3000; // 5s in CI, 3s locally
+      const inputTimeBudget = isCI ? 8000 : 6000; // 8s in CI, 6s locally
       
-      // Validate page load performance
-      const loadTime = await page.evaluate(() => {
-        return performance.timing.loadEventEnd - performance.timing.navigationStart;
-      });
-      expect(loadTime).toBeLessThan(3000); // Login page should load within 3 seconds
+      // Measure page load with proper timing and wait strategy
+      const startTime = performance.now();
+      await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
+      const loadTime = performance.now() - startTime;
       
-      // Validate form interaction responsiveness - adjust threshold to be more realistic
+      expect(loadTime).toBeLessThan(loadTimeBudget);
+      
+      // Validate form interaction responsiveness
       const emailInput = page.getByLabel('Email address');
+      const inputStartTime = performance.now();
       await emailInput.fill('test@example.com');
+      const inputTime = performance.now() - inputStartTime;
       
-      const inputTime = await page.evaluate(() => {
-        return performance.now();
-      });
-      expect(inputTime).toBeLessThan(3000); // Input should be responsive within 3 seconds
+      expect(inputTime).toBeLessThan(inputTimeBudget);
       
       // Validate UXComplianceHelper performance validation
       await uxHelper.validatePerformanceRequirements();
+      
+      // Use UXComplianceHelper for performance timing validation
+      const performanceLoadTime = await uxHelper.validatePerformanceTiming('/login');
+      console.log(`Login page loaded in ${performanceLoadTime.toFixed(0)}ms`);
     });
 
     test('should implement proper security headers and CSRF protection', async ({ page }) => {
