@@ -310,14 +310,19 @@ BASE_URL=http://localhost:3001 node scripts/check-server-health.js
 ```bash
 # Run performance tests for health endpoints
 ./scripts/run-performance-test.sh
+
+# Run E2E performance tests with environment-aware budgets
+npm run test:e2e:performance-area
 ```
-**Purpose**: Tests the performance and reliability of health endpoints under load.
+**Purpose**: Tests the performance and reliability of health endpoints and UI pages under load.
 
 **Features**:
-- Load tests health endpoints
-- Measures response times
+- Load tests health endpoints and UI pages
+- Measures response times with high-precision timing
+- Uses environment-aware performance budgets (3s local, 5s CI)
 - Identifies performance bottlenecks
 - Generates performance reports
+- Follows Playwright best practices for performance testing
 
 ### Database & Infrastructure Tools
 

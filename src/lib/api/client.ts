@@ -228,19 +228,10 @@ class ApiClient {
    * ```
    */
   async requestPasswordReset(email: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await this.request<{ message: string }>('/api/auth/reset-password', {
+    return this.request<{ message: string }>('/api/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
-    
-    // Handle the nested data structure from the API
-    if (response.success && response.data) {
-      return {
-        success: true,
-        data: response.data
-      };
-    }
-    return response;
   }
 
   /**

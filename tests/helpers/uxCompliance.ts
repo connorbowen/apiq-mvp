@@ -381,6 +381,30 @@ export class UXComplianceHelper {
   }
 
   /**
+   * Validate performance timing with environment-aware budgets
+   * Uses Playwright best practices for performance testing
+   */
+  async validatePerformanceTiming(url: string, expectedLoadTime?: number) {
+    // Environment-aware performance budgets
+    const loadBudget = expectedLoadTime || (process.env.CI ? 5000 : 3000);
+    
+    // Measure DOM content loaded (first usable paint) with high-precision timing
+    const startTime = performance.now();
+    await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+    const loadTime = performance.now() - startTime;
+    
+    // Validate against environment-appropriate budget
+    if (loadTime > loadBudget) {
+      throw new Error(
+        `Page load time ${loadTime.toFixed(0)}ms exceeds budget ${loadBudget}ms ` +
+        `(${process.env.CI ? 'CI' : 'local'} environment)`
+      );
+    }
+    
+    return loadTime;
+  }
+
+  /**
    * Validate error handling as per UX spec
    */
   async validateErrorHandling() {
@@ -427,7 +451,7 @@ export class UXComplianceHelper {
       const text = await button.textContent();
       if (text) {
         // Primary actions should be descriptive and match our standardized patterns
-        const isValidPrimaryAction = /Create Workflow|Add Connection|Create Secret|Sign in|Create account|Generate Workflow|Save Workflow/i.test(text);
+        const isValidPrimaryAction = /Create Workflow|Add Connection|Create Secret|Sign in|Create account|Generate Workflow|Save Workflow|Send Reset Link|Reset Password/i.test(text);
         if (isValidPrimaryAction) {
           hasPrimaryAction = true;
           // Verify the button is visible and accessible

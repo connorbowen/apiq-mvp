@@ -117,7 +117,14 @@ export default function ResetPasswordPage() {
         // Redirect to login page after a short delay
         setTimeout(() => router.push("/login"), 1000);
       } else {
-        setError(response.error || "Failed to reset password");
+        // Handle specific error codes
+        if (response.code === 'TOKEN_BRUTE_FORCE_DETECTED') {
+          setError("Too many invalid token attempts. Please try again later.");
+        } else if (response.code === 'RATE_LIMIT_EXCEEDED') {
+          setError("Rate limit exceeded. Please try again later.");
+        } else {
+          setError(response.error || "Failed to reset password");
+        }
         setIsLoading(false);
       }
     } catch {

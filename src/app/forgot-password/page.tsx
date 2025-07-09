@@ -51,39 +51,56 @@ export default function ForgotPasswordPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('🔍 [FORGOT-PASSWORD] Form submit triggered');
     e.preventDefault();
+    
+    // Set loading state immediately to prevent multiple submissions
+    if (isLoading) {
+      console.log('🔍 [FORGOT-PASSWORD] Already loading, preventing duplicate submission');
+      return;
+    }
+    
+    console.log('🔍 [FORGOT-PASSWORD] Form submit prevented, setting loading state');
+    setIsLoading(true);
     setError("");
     setValidationError("");
-    
-    console.log('[DEBUG] Form submitted with email:', email);
     
     // Client-side validation
     const emailError = validateEmail(email);
     if (emailError) {
       setValidationError(emailError);
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
     try {
-      console.log('[DEBUG] Making API call to requestPasswordReset...');
+      console.log('🔍 [FORGOT-PASSWORD] Submitting email:', email);
       const response = await apiClient.requestPasswordReset(email);
-      console.log('[DEBUG] API response:', response);
+      console.log('🔍 [FORGOT-PASSWORD] API response:', response);
       
-      if (response.success) {
-        console.log('[DEBUG] API call successful, redirecting...');
-        // Keep loading state during redirect for better UX
-        // Redirect to success page with email parameter
-        router.push(`/forgot-password-success?email=${encodeURIComponent(email)}`);
+      if (response && response.success) {
+        console.log('🔍 [FORGOT-PASSWORD] Success! Navigating to success page...');
+        // Keep loading state true during navigation to prevent button re-enabling
+        await router.replace(`/forgot-password-success?email=${encodeURIComponent(email)}`);
+        return; // Stop here to prevent finally block from running
+      }
+      
+      console.log('🔍 [FORGOT-PASSWORD] API returned error:', response?.error);
+      // Handle error response from API - including rate limiting
+      if (response?.code === 'RATE_LIMIT_EXCEEDED') {
+        setError('Too many password reset requests. Please try again later.');
       } else {
-        console.log('[DEBUG] API call failed:', response.error);
-        setError(response.error || "Failed to send reset email");
+        setError(response?.error || 'Unexpected response.');
+      }
+    } catch (err: any) {
+      console.log('🔍 [FORGOT-PASSWORD] Exception caught:', err);
+      setError(err?.response?.data?.message ?? err.message ?? 'Password reset failed.');
+    } finally {
+      // Only reset loading state if we're still on this page (not on successful navigation)
+      // Check if we're still on the forgot password page
+      if (window.location.pathname === '/forgot-password') {
         setIsLoading(false);
       }
-    } catch (error) {
-      console.log('[DEBUG] API call threw error:', error);
-      setError("Network error. Please try again.");
-      setIsLoading(false);
     }
   };
 
@@ -94,14 +111,14 @@ export default function ForgotPasswordPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Forgot your password?</h2>
           <p className="mt-2 text-center text-sm text-gray-600">Enter your email to receive a password reset link.</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit} role="form">
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} role="form" data-testid="forgot-password-form">
           {error && (
-            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert">
+            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert" data-testid="alert-error">
               {error}
             </div>
           )}
           {validationError && (
-            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert">
+            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert" data-testid="alert-validation-error">
               {validationError}
             </div>
           )}
@@ -133,6 +150,10 @@ export default function ForgotPasswordPage() {
           >
             {isLoading ? "Sending..." : "Send Reset Link"}
           </button>
+          {/* Debug info */}
+          <div data-testid="debug-info" style={{display: 'none'}}>
+            Loading: {isLoading.toString()}
+          </div>
         </form>
       </div>
     </div>

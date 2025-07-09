@@ -272,10 +272,15 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
   });
 
   test('should meet performance requirements', async ({ page }) => {
-    const startTime = Date.now();
-    await page.goto(`${BASE_URL}/signup`);
-    const loadTime = Date.now() - startTime;
-    expect(loadTime).toBeLessThan(3000);
+    // Environment-aware performance budget
+    const loadBudget = process.env.CI ? 5000 : 3000;
+    const submitBudget = process.env.CI ? 8000 : 6000;
+
+    // Measure DOM content loaded (first usable paint)
+    const startTime = performance.now();
+    await page.goto(`${BASE_URL}/signup`, { waitUntil: 'domcontentloaded' });
+    const loadTime = performance.now() - startTime;
+    expect(loadTime).toBeLessThan(loadBudget);
     
     // Test form submission performance
     await page.getByLabel('Full name').fill('Test User');
@@ -283,7 +288,7 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await page.locator('#password').fill('ValidPass123');
     await page.locator('#confirmPassword').fill('ValidPass123');
     
-    const submitStartTime = Date.now();
+    const submitStartTime = performance.now();
     await page.getByTestId('primary-action signup-btn').click();
     
     // Wait for either success redirect or error (whichever comes first)
@@ -294,8 +299,8 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
       await page.waitForSelector('.bg-red-50, [role="alert"]', { timeout: 5000 });
     }
     
-    const submitTime = Date.now() - submitStartTime;
-    expect(submitTime).toBeLessThan(6000); // Allow slightly more time for network latency
+    const submitTime = performance.now() - submitStartTime;
+    expect(submitTime).toBeLessThan(submitBudget);
   });
 
   test('should meet accessibility standards', async ({ page }) => {

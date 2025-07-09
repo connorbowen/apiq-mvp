@@ -152,6 +152,12 @@ npm run test:e2e:performance-area
 **Tests**: Load testing, performance monitoring, scalability testing
 **When to use**: When working on performance optimization, load testing
 
+**Performance Testing Best Practices**:
+- **Environment-Aware Budgets**: Tests use different performance budgets for local (3s) vs CI (5s) environments
+- **High-Precision Timing**: Uses `performance.now()` for microsecond accuracy
+- **Proper Wait Strategy**: Measures first usable paint with `waitUntil: 'domcontentloaded'`
+- **Realistic Expectations**: Accounts for development overhead while catching genuine regressions
+
 ## ⚡ **Quick Test Commands**
 
 ### **Fast Feedback** (Under 30 seconds)

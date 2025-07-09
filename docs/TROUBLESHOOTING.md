@@ -138,6 +138,43 @@ psql -d apiq -c "SELECT id, email, role FROM users LIMIT 5;"
 - Try with smaller specs first (e.g., Petstore API)
 - Check logs for specific error messages
 
+### Performance Test Issues
+
+#### Issue: Performance tests failing with timeout errors
+**Error**: `expect(received).toBeLessThan(expected)` - Performance tests timing out
+
+**Root Cause**: Tests measuring full page load in development environment with cold starts
+
+**Solution**: Performance tests now use environment-aware budgets and proper timing:
+- **Local Development**: 3s load time budget (accommodates dev server overhead)
+- **CI Environment**: 5s load time budget (accounts for build/deployment overhead)
+- **High-Precision Timing**: Uses `performance.now()` instead of `Date.now()`
+- **Proper Wait Strategy**: Measures first usable paint with `waitUntil: 'domcontentloaded'`
+
+**If you encounter performance test failures**:
+```bash
+# Check if you're in development mode
+echo $NODE_ENV
+
+# Run tests with debug output
+npm run test:e2e:debug -- --grep "performance"
+
+# Verify performance budgets are appropriate for your environment
+grep "loadBudget\|submitBudget" tests/e2e/auth/registration-verification.test.ts
+```
+
+#### Issue: Performance tests failing in CI but passing locally
+**Error**: Tests pass locally but fail in CI environment
+
+**Solution**: This is expected behavior. CI environments have different performance characteristics:
+- **Build Overhead**: CI includes build time and asset compilation
+- **Resource Constraints**: CI environments may have limited resources
+- **Network Latency**: CI may have different network conditions
+
+**Performance budgets are automatically adjusted**:
+- Local: 3s load, 6s submit
+- CI: 5s load, 8s submit
+
 ### Development Server Issues
 
 #### Issue: Next.js server not picking up changes

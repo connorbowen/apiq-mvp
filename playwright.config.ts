@@ -48,6 +48,10 @@ export default defineConfig({
       ENCRYPTION_MASTER_KEY: 'test-master-key-32-chars-long-for-secrets',
       NODE_ENV: 'test',
       JWT_SECRET: 'test-jwt-secret-key-for-testing-only',
+      TEST_MODE: 'true',
+      PLAYWRIGHT_TEST: 'true',
+      // Rate limiting is enabled by default for security
+      // Set DISABLE_RATE_LIMITING=true for fast testing
     }
   },
 }); 

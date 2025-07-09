@@ -123,18 +123,24 @@ test.describe('Error Handling & Recovery - Graceful UX', () => {
 ```typescript
 test.describe('Performance & Responsiveness - UX Excellence', () => {
   test('should load workflow pages quickly', async ({ page }) => {
-    // Tests performance as per UX spec
-    // Validates response times
-    // Ensures efficient interactions
+    const uxHelper = new UXComplianceHelper(page);
+    
+    // Test performance timing with environment-aware budgets
+    const loadTime = await uxHelper.validatePerformanceTiming('/workflows');
+    console.log(`Workflow page loaded in ${loadTime.toFixed(0)}ms`);
+    
+    // Validate performance requirements (loading states, skeleton screens)
+    await uxHelper.validatePerformanceRequirements();
   });
 });
 ```
 
 **UX Spec Compliance:**
-- ✅ Page load times under 3 seconds
-- ✅ Responsive interactions
-- ✅ Efficient search and filtering
-- ✅ Optimized workflow lists
+- ✅ Environment-aware performance budgets (3s local, 5s CI)
+- ✅ High-precision timing with `performance.now()`
+- ✅ Proper wait strategy with `waitUntil: 'domcontentloaded'`
+- ✅ Responsive interactions and efficient search/filtering
+- ✅ Optimized workflow lists with loading states
 
 ### Secrets Vault Tests 🆕
 
@@ -312,7 +318,11 @@ await uxHelper.validateRealTimeFeedback();
 await uxHelper.validateErrorRecovery();
 
 // Validate performance
-await uxHelper.validatePerformance();
+await uxHelper.validatePerformanceRequirements();
+
+// Validate performance timing with environment-aware budgets
+const loadTime = await uxHelper.validatePerformanceTiming('/dashboard');
+console.log(`Page loaded in ${loadTime.toFixed(0)}ms`);
 
 // Validate mobile responsiveness
 await uxHelper.validateMobileResponsiveness();
