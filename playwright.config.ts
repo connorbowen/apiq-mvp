@@ -50,8 +50,7 @@ export default defineConfig({
       JWT_SECRET: 'test-jwt-secret-key-for-testing-only',
       TEST_MODE: 'true',
       PLAYWRIGHT_TEST: 'true',
-      // Rate limiting is enabled by default for security
-      // Set DISABLE_RATE_LIMITING=true for fast testing
+      DISABLE_RATE_LIMITING: 'true', // Disable rate limiting for fast E2E testing
     }
   },
 }); 
