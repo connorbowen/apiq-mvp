@@ -117,11 +117,16 @@ export default function NaturalLanguageWorkflowChat({
         const successText = "I've created a workflow for you based on your description. You can now review and activate it.";
         setSuccessMessage(successText);
         setInputValue('');
-        // Always add a chat message so the test can find the .text-green-800 bubble
+        
+        // Add a chat message with the workflow object if available
         addMessage({
           type: 'assistant',
-          content: successText
+          content: successText,
+          workflow: data.data?.workflow || undefined,
+          validation: data.data?.validation || undefined,
+          alternatives: data.data?.alternatives || undefined
         });
+        
         if (onWorkflowCreated) {
           onWorkflowCreated();
         }
@@ -304,7 +309,8 @@ export default function NaturalLanguageWorkflowChat({
                 data-testid="workflow-description-input"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Describe your workflow in plain English..."
+                placeholder="Describe your workflow..."
+                required
                 // TODO: Add ARIA attributes for textarea accessibility
                 // aria-required="true"
                 // aria-describedby="workflow-description-help"

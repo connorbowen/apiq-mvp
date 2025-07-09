@@ -163,6 +163,168 @@ describe('User Registration Integration Tests', () => {
 
       expect(res._getStatusCode()).toBe(405);
     });
+
+    it('should reject names with invalid characters', async () => {
+      const registerHandler = require('../../../pages/api/auth/register').default;
+      const testEmail = `test-invalid-name-${generateTestId()}@example.com`;
+      
+      const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
+        method: 'POST',
+        body: {
+          email: testEmail,
+          name: '<script>alert("xss")</script>',
+          password: 'testpass123'
+        }
+      });
+
+      await registerHandler(req, res);
+
+      expect(res._getStatusCode()).toBe(400);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('Name contains invalid characters');
+      expect(data.code).toBe('INVALID_NAME');
+    });
+
+    it('should accept names with valid characters', async () => {
+      const registerHandler = require('../../../pages/api/auth/register').default;
+      const testEmail = `test-valid-name-${generateTestId()}@example.com`;
+      
+      const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
+        method: 'POST',
+        body: {
+          email: testEmail,
+          name: 'John Doe',
+          password: 'testpass123'
+        }
+      });
+
+      await registerHandler(req, res);
+
+      expect(res._getStatusCode()).toBe(201);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(true);
+      expect(data.data.message).toContain('Registration successful');
+    });
+
+    it('should reject names that are too short', async () => {
+      const registerHandler = require('../../../pages/api/auth/register').default;
+      const testEmail = `test-short-name-${generateTestId()}@example.com`;
+      
+      const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
+        method: 'POST',
+        body: {
+          email: testEmail,
+          name: 'A',
+          password: 'testpass123'
+        }
+      });
+
+      await registerHandler(req, res);
+
+      expect(res._getStatusCode()).toBe(400);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('Name contains invalid characters');
+      expect(data.code).toBe('INVALID_NAME');
+    });
+
+    it('should reject names that are too long', async () => {
+      const registerHandler = require('../../../pages/api/auth/register').default;
+      const testEmail = `test-long-name-${generateTestId()}@example.com`;
+      
+      const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
+        method: 'POST',
+        body: {
+          email: testEmail,
+          name: 'A'.repeat(51), // 51 characters
+          password: 'testpass123'
+        }
+      });
+
+      await registerHandler(req, res);
+
+      expect(res._getStatusCode()).toBe(400);
+      const data = JSON.parse(res._getData());
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('Name contains invalid characters');
+      expect(data.code).toBe('INVALID_NAME');
+    });
+
+    it('should reject names with special characters', async () => {
+      const registerHandler = require('../../../pages/api/auth/register').default;
+      const testEmail = `test-special-chars-${generateTestId()}@example.com`;
+      
+      const invalidNames = [
+        'John@Doe',
+        'Mary#Jane',
+        'Dr$Smith',
+        'Test%User',
+        'Name&Co',
+        'User*Name',
+        'Test+User',
+        'Name=Value',
+        'User|Name',
+        'Test\\User',
+        'Name/User',
+        'Test{User}',
+        'Name[User]',
+        'Test`User`',
+        'Name~User'
+      ];
+      
+      for (const name of invalidNames) {
+        const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
+          method: 'POST',
+          body: {
+            email: `${testEmail}-${name.replace(/[^a-zA-Z0-9]/g, '')}`,
+            name: name,
+            password: 'testpass123'
+          }
+        });
+
+        await registerHandler(req, res);
+
+        expect(res._getStatusCode()).toBe(400);
+        const data = JSON.parse(res._getData());
+        expect(data.success).toBe(false);
+        expect(data.error).toBe('Name contains invalid characters');
+        expect(data.code).toBe('INVALID_NAME');
+      }
+    });
+
+    it('should accept names with allowed special characters', async () => {
+      const registerHandler = require('../../../pages/api/auth/register').default;
+      const testEmail = `test-allowed-chars-${generateTestId()}@example.com`;
+      
+      const validNames = [
+        'John Doe',
+        'Mary-Jane O\'Connor',
+        'Dr. Smith Jr.',
+        'Test User 123',
+        'José García',
+        'O\'Reilly',
+        'Smith-Jones'
+      ];
+      
+      for (const name of validNames) {
+        const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
+          method: 'POST',
+          body: {
+            email: `${testEmail}-${name.replace(/[^a-zA-Z0-9]/g, '')}`,
+            name: name,
+            password: 'testpass123'
+          }
+        });
+
+        await registerHandler(req, res);
+
+        expect(res._getStatusCode()).toBe(201);
+        const data = JSON.parse(res._getData());
+        expect(data.success).toBe(true);
+        expect(data.data.message).toContain('Registration successful');
+      }
+    });
   });
 
   describe('POST /api/auth/verify', () => {

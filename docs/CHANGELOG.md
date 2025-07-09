@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Enhanced Name Validation Security** - ✅ **COMPLETED**
+  - **Security Enhancement**: Added comprehensive name validation to prevent XSS and injection attacks
+    - **Backend Validation**: Added regex validation `/^[a-zA-ZÀ-ÿ0-9\s\-'.]{2,50}$/` to registration API
+    - **Frontend Validation**: Matching validation in signup form with real-time feedback
+    - **Character Whitelist**: Only allows letters (including accented), numbers, spaces, hyphens, apostrophes, and periods
+    - **Length Limits**: Enforces 2-50 character limits to prevent buffer overflow attacks
+    - **Error Handling**: Returns neutral "Name contains invalid characters" message with `INVALID_NAME` error code
+  - **Test Coverage**: Added comprehensive test suite for name validation
+    - **Frontend Unit Tests**: 5 new tests covering invalid characters, valid names, length validation, and special character rejection
+    - **Backend Integration Tests**: 6 new tests covering API validation, error responses, and security edge cases
+    - **E2E Tests**: Updated security edge case test to validate XSS prevention
+    - **Test Results**: All 16 frontend tests, 20 backend tests, and 25 E2E tests passing (100% success rate)
+  - **Security Features**:
+    - **XSS Prevention**: Blocks `<script>` tags and other dangerous HTML constructs
+    - **SQL Injection Prevention**: Blocks characters that could be used in SQL injection attacks
+    - **International Support**: Supports accented characters (é, í, ñ, etc.) for global user base
+    - **Defense-in-Depth**: Validation at both frontend and backend layers
+  - **User Experience**: Maintains user-friendly experience while enhancing security
+    - **Clear Error Messages**: Users receive specific feedback about invalid characters
+    - **Real-time Validation**: Frontend provides immediate feedback during form entry
+    - **International Names**: Supports common international name formats and characters
+    - **Consistent Behavior**: Same validation rules across all registration flows
+
 ### Fixed
 
 - **Password Reset Flow Improvements** - ✅ **COMPLETED**

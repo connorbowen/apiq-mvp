@@ -133,10 +133,10 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Should show success message in UX-compliant container on dashboard
       await uxHelper.validateSuccessContainer('Connection created successfully');
-      
-      // Should show the new connection in the list
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('GitHub API');
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
+        
+        // Should show the new connection in the list
+        await expect(page.locator('[data-testid="connection-card"]')).toContainText('GitHub API');
+        await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
       
       // TODO: Add comprehensive mobile responsiveness validation (P1)
       // await uxHelper.validateMobileResponsiveness();
@@ -234,10 +234,10 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Should show success message in UX-compliant container on dashboard
       await uxHelper.validateSuccessContainer('Connection created successfully');
-      
-      // Should show the new connection in the list
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('Google Calendar API');
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
+        
+        // Should show the new connection in the list
+        await expect(page.locator('[data-testid="connection-card"]')).toContainText('Google Calendar API');
+        await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
       
       // TODO: Add comprehensive keyboard navigation validation (P0)
       // await uxHelper.validateKeyboardNavigation();
@@ -302,10 +302,10 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Should show success message in UX-compliant container on dashboard
       await uxHelper.validateSuccessContainer('Connection created successfully');
-      
-      // Should show the new connection in the list
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('Slack API');
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
+        
+        // Should show the new connection in the list
+        await expect(page.locator('[data-testid="connection-card"]')).toContainText('Slack API');
+        await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
       
       // TODO: Add comprehensive screen reader compatibility validation (P0)
       // await uxHelper.validateScreenReaderCompatibility();
@@ -886,10 +886,10 @@ test.describe('OAuth2 Flow E2E Tests', () => {
             clientId: 'test_client_id_2',
             clientSecret: 'test_client_secret_2'
           },
-          headers: {
-            'Authorization': `Bearer ${jwt}`,
-            'Content-Type': 'application/json'
-          }
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        }
         })
       ]);
       

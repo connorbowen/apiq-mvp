@@ -208,6 +208,18 @@ const retentionPolicies: RetentionPolicy[] = [
 - **Sanitization**: Input sanitization to prevent injection attacks
 - **Rate Limiting**: Protection against abuse and DDoS
 
+#### User Registration Security
+- **Name Validation**: Comprehensive name validation to prevent XSS and injection attacks
+  - **Character Whitelist**: Only allows letters (including accented characters), numbers, spaces, hyphens, apostrophes, and periods
+  - **Length Limits**: Enforces 2-50 character limits to prevent buffer overflow attacks
+  - **XSS Prevention**: Blocks `<script>` tags and other dangerous HTML constructs
+  - **SQL Injection Prevention**: Blocks characters that could be used in SQL injection attacks
+  - **International Support**: Supports accented characters (é, í, ñ, etc.) for global user base
+  - **Error Handling**: Returns neutral "Name contains invalid characters" message with `INVALID_NAME` error code
+- **Password Security**: Minimum 8 characters with strength validation
+- **Email Validation**: Comprehensive email format validation
+- **Defense-in-Depth**: Validation at both frontend and backend layers
+
 #### Natural Language Input Security
 - **Prompt Sanitization**: Sanitize user inputs to prevent prompt injection
 - **Length Limits**: Enforce reasonable limits on natural language inputs

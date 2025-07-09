@@ -214,4 +214,133 @@ describe('SignupPage', () => {
     
     expect(screen.getByText(/back to home/i)).toBeInTheDocument();
   });
+
+  it('should show validation error for name with invalid characters', async () => {
+    render(<SignupPage />);
+    
+    const nameInput = screen.getByLabelText(/full name/i);
+    const emailInput = screen.getByLabelText(/email address/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
+    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const submitButton = screen.getByRole('button', { name: /create account/i });
+    
+    fireEvent.change(nameInput, { target: { value: '<script>alert("xss")</script>' } });
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
+    fireEvent.click(submitButton);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Name contains invalid characters')).toBeInTheDocument();
+    });
+  });
+
+  it('should accept names with valid characters', async () => {
+    render(<SignupPage />);
+    
+    const nameInput = screen.getByLabelText(/full name/i);
+    const emailInput = screen.getByLabelText(/email address/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
+    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const submitButton = screen.getByRole('button', { name: /create account/i });
+    
+    // Test various valid name formats
+    const validNames = [
+      'John Doe',
+      'Mary-Jane O\'Connor',
+      'Dr. Smith Jr.',
+      'José García',
+      'Test User 123'
+    ];
+    
+    for (const name of validNames) {
+      fireEvent.change(nameInput, { target: { value: name } });
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
+      
+      // Should not show validation error for valid names
+      expect(screen.queryByText('Name contains invalid characters')).not.toBeInTheDocument();
+    }
+  });
+
+  it('should reject names that are too short', async () => {
+    render(<SignupPage />);
+    
+    const nameInput = screen.getByLabelText(/full name/i);
+    const emailInput = screen.getByLabelText(/email address/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
+    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const submitButton = screen.getByRole('button', { name: /create account/i });
+    
+    fireEvent.change(nameInput, { target: { value: 'A' } });
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
+    fireEvent.click(submitButton);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Full name must be at least 2 characters')).toBeInTheDocument();
+    });
+  });
+
+  it('should reject names that are too long', async () => {
+    render(<SignupPage />);
+    
+    const nameInput = screen.getByLabelText(/full name/i);
+    const emailInput = screen.getByLabelText(/email address/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
+    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const submitButton = screen.getByRole('button', { name: /create account/i });
+    
+    fireEvent.change(nameInput, { target: { value: 'A'.repeat(51) } }); // 51 characters
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
+    fireEvent.click(submitButton);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Name contains invalid characters')).toBeInTheDocument();
+    });
+  });
+
+  it('should reject names with special characters', async () => {
+    render(<SignupPage />);
+    
+    const nameInput = screen.getByLabelText(/full name/i);
+    const emailInput = screen.getByLabelText(/email address/i);
+    const passwordInput = screen.getByLabelText(/^password\s*\*/i);
+    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const submitButton = screen.getByRole('button', { name: /create account/i });
+    
+    const invalidNames = [
+      'John@Doe',
+      'Mary#Jane',
+      'Dr$Smith',
+      'Test%User',
+      'Name&Co',
+      'User*Name',
+      'Test+User',
+      'Name=Value',
+      'User|Name',
+      'Test\\User',
+      'Name/User',
+      'Test{User}',
+      'Name[User]',
+      'Test`User`',
+      'Name~User'
+    ];
+    
+    for (const name of invalidNames) {
+      fireEvent.change(nameInput, { target: { value: name } });
+      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
+      fireEvent.click(submitButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Name contains invalid characters')).toBeInTheDocument();
+      });
+    }
+  });
 }); 

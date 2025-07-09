@@ -30,6 +30,9 @@ export default function SignupPage() {
       case 'name':
         if (!value.trim()) return 'name is required';
         if (value.trim().length < 2) return 'Full name must be at least 2 characters';
+        // Validate name format - allow letters, numbers, spaces, basic punctuation
+            const nameRegex = /^[a-zA-ZÀ-ÿ0-9\s\-'.]{2,50}$/;
+    if (!nameRegex.test(value.trim())) return 'Name contains invalid characters';
         return '';
       case 'email':
         if (!value.trim()) return 'email is required';
@@ -293,10 +296,7 @@ export default function SignupPage() {
 
           <div>
             <button
-              // TODO: Fix primary action data-testid pattern to use combined pattern
-              // Change from: data-testid="primary-action signup-submit"
-              // To: data-testid="primary-action signup-btn"
-              data-testid="primary-action signup-submit"
+              data-testid="primary-action signup-btn"
               type="submit"
               disabled={isSubmitting}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] primary-action"

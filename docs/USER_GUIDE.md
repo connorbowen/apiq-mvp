@@ -24,7 +24,8 @@ APIQ is a powerful, AI-driven platform that helps you orchestrate complex workfl
 1. **Create Your Account**
    - Visit the APIQ application
    - Click "Sign Up" to create a new account
-   - Enter your email address and choose a secure password
+   - Enter your full name (2-50 characters, letters, numbers, spaces, hyphens, apostrophes, and periods only)
+   - Enter your email address and choose a secure password (minimum 8 characters)
    - Verify your email address (check your inbox)
 
 2. **Complete Your Profile**

@@ -31,17 +31,57 @@ Register a new user account.
 }
 ```
 
+**Validation Rules:**
+- **Email**: Must be a valid email format
+- **Password**: Must be at least 8 characters long
+- **Name**: Must be 2-50 characters and contain only letters (including accented characters), numbers, spaces, hyphens, apostrophes, and periods
+
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Registration successful. Please check your email to verify your account.",
-  "user": {
-    "id": "user_123",
-    "email": "user@example.com",
-    "name": "John Doe",
-    "verified": false
+  "data": {
+    "message": "Registration successful. Please check your email to verify your account.",
+    "userId": "user_123"
   }
+}
+```
+
+**Error Responses:**
+
+**Invalid Name (400):**
+```json
+{
+  "success": false,
+  "error": "Name contains invalid characters",
+  "code": "INVALID_NAME"
+}
+```
+
+**Weak Password (400):**
+```json
+{
+  "success": false,
+  "error": "Password must be at least 8 characters long",
+  "code": "WEAK_PASSWORD"
+}
+```
+
+**Invalid Email (400):**
+```json
+{
+  "success": false,
+  "error": "Invalid email format",
+  "code": "INVALID_EMAIL"
+}
+```
+
+**User Already Exists (409):**
+```json
+{
+  "success": false,
+  "error": "User with this email already exists",
+  "code": "USER_EXISTS"
 }
 ```
 

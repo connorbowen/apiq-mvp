@@ -111,9 +111,8 @@ export default function LoginPage() {
           <button
             onClick={() => handleOAuth2Login('google')}
             disabled={isLoading}
-            // TODO: Add ARIA attributes for OAuth2 button accessibility
-            // aria-label="Continue with Google"
-            // aria-describedby="oauth2-description"
+            aria-label="Continue with Google"
+            aria-describedby="oauth2-description"
             className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
@@ -140,9 +139,8 @@ export default function LoginPage() {
           {error && (
             <div 
               className="rounded-md bg-red-50 p-4"
-              // TODO: Add role="alert" for accessibility compliance
-              // role="alert"
-              // aria-live="polite"
+              role="alert"
+              aria-live="polite"
             >
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -170,10 +168,9 @@ export default function LoginPage() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                // TODO: Add ARIA attributes for form field accessibility
-                // aria-required="true"
-                // aria-invalid={error ? "true" : "false"}
-                // aria-describedby={error ? "email-error" : undefined}
+                aria-required="true"
+                aria-invalid={error ? "true" : "false"}
+                aria-describedby={error ? "email-error" : undefined}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Enter your email"
               />
@@ -190,10 +187,9 @@ export default function LoginPage() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                // TODO: Add ARIA attributes for password field accessibility
-                // aria-required="true"
-                // aria-invalid={error ? "true" : "false"}
-                // aria-describedby={error ? "password-error" : undefined}
+                aria-required="true"
+                aria-invalid={error ? "true" : "false"}
+                aria-describedby={error ? "password-error" : undefined}
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Enter your password"
               />
@@ -207,10 +203,7 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              // TODO: Fix primary action data-testid pattern to use combined pattern
-              // Change from: data-testid="primary-action signin-submit"
-              // To: data-testid="primary-action signin-btn"
-              data-testid="primary-action signin-submit"
+              data-testid="primary-action signin-btn"
               disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px]"
             >

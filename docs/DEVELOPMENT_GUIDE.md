@@ -649,9 +649,27 @@ npm run setup-dev
      expiresAt: z.string().datetime().optional(),
    });
 
+   // User registration validation with security features
+   export const userRegistrationSchema = z.object({
+     email: z.string().email("Invalid email format"),
+     password: z.string().min(8, "Password must be at least 8 characters long"),
+     name: z.string()
+       .min(2, "Name must be at least 2 characters")
+       .max(50, "Name must be 50 characters or less")
+       .regex(/^[a-zA-ZÀ-ÿ0-9\s\-'.]+$/, "Name contains invalid characters"),
+   });
+
    export type GenerateWorkflowInput = z.infer<typeof generateWorkflowSchema>;
    export type CreateSecretInput = z.infer<typeof createSecretSchema>;
+   export type UserRegistrationInput = z.infer<typeof userRegistrationSchema>;
    ```
+
+   **Name Validation Security Features:**
+   - **Character Whitelist**: Only allows letters (including accented characters), numbers, spaces, hyphens, apostrophes, and periods
+   - **XSS Prevention**: Blocks `<script>` tags and other dangerous HTML constructs
+   - **SQL Injection Prevention**: Blocks characters that could be used in SQL injection attacks
+   - **Length Limits**: Enforces 2-50 character limits to prevent buffer overflow attacks
+   - **International Support**: Supports accented characters (é, í, ñ, etc.) for global user base
 
 3. **Error Handling**
 

@@ -34,6 +34,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new ApplicationError('Password must be at least 8 characters long', 400, 'WEAK_PASSWORD');
     }
 
+    // Validate name format - allow letters (including accented), numbers, spaces, basic punctuation
+    const nameRegex = /^[a-zA-ZÀ-ÿ0-9\s\-'.]{2,50}$/;
+    if (!nameRegex.test(name)) {
+      throw new ApplicationError('Name contains invalid characters', 400, 'INVALID_NAME');
+    }
+
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() }

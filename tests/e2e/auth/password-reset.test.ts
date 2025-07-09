@@ -3,15 +3,17 @@ import { generateTestId } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
 import bcrypt from 'bcryptjs';
 import { INVALID_TOKEN_PREFIX, TEST_TOKEN_PREFIX } from '../../../src/app/reset-password/page';
-// TODO: Add UXComplianceHelper import for UX validation
-// import { UXComplianceHelper } from '../../helpers/uxCompliance';
+import { UXComplianceHelper } from '../../helpers/uxCompliance';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-// TODO: Add UXComplianceHelper instance for UX validation
-// let uxHelper: UXComplianceHelper;
+let uxHelper: UXComplianceHelper;
 
 test.describe('Password Reset E2E Tests - Complete Flow', () => {
+  test.beforeEach(async ({ page }) => {
+    uxHelper = new UXComplianceHelper(page);
+  });
+
   test.describe('Real Email Password Reset Flow', () => {
     test('should complete full password reset flow with real email', async ({ page }) => {
       test.setTimeout(30000); // 30 seconds for complex password reset flow
@@ -19,8 +21,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
       const originalPassword = 'OriginalPass123!';
       const newPassword = 'NewSecurePass456!';
 
-      // TODO: Initialize UXComplianceHelper for UX validation
-      // uxHelper = new UXComplianceHelper(page);
+      // Initialize UXComplianceHelper for UX validation
+      uxHelper = new UXComplianceHelper(page);
 
       // Create a test user with known password
       const hashedPassword = await bcrypt.hash(originalPassword, 12);
@@ -38,18 +40,17 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         // Step 1: Request password reset
         await page.goto(`${BASE_URL}/forgot-password`);
         
-        // TODO: Add UXComplianceHelper validation calls
-        // await uxHelper.validateActivationFirstUX();
-        // await uxHelper.validateFormAccessibility();
-        // await uxHelper.validateMobileResponsiveness();
-        // await uxHelper.validateKeyboardNavigation();
+        // Add UXComplianceHelper validation calls
+        await uxHelper.validateActivationFirstUX();
+        await uxHelper.validateFormAccessibility();
+        await uxHelper.validateMobileResponsiveness();
+        await uxHelper.validateKeyboardNavigation();
         
         // Fill and submit the form
         await page.fill('input[name="email"]', testEmail);
         
-        // TODO: Fix primary action data-testid pattern
-        // await page.getByTestId('primary-action send-reset-link-btn').click();
-        await page.click('button[type="submit"]');
+        // Fix primary action data-testid pattern
+        await page.getByTestId('primary-action send-reset-link-btn').click();
         
         // Wait for success page
         await expect(page).toHaveURL(/.*forgot-password-success/);
@@ -73,9 +74,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         await page.fill('input[name="password"]', newPassword);
         await page.fill('input[name="confirmPassword"]', newPassword);
         
-        // TODO: Fix primary action data-testid pattern
-        // await page.getByTestId('primary-action reset-password-btn').click();
-        await page.click('button[type="submit"]');
+        // Fix primary action data-testid pattern
+        await page.getByTestId('primary-action reset-password-btn').click();
         
         // Wait for success message
         await expect(page.locator('.bg-green-50')).toContainText('Password reset successful!');
@@ -91,9 +91,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         await page.fill('input[name="email"]', testEmail);
         await page.fill('input[name="password"]', originalPassword);
         
-        // TODO: Fix primary action data-testid pattern for login
-        // await page.getByTestId('primary-action signin-submit').click();
-        await page.click('button[type="submit"]');
+        // Fix primary action data-testid pattern for login
+        await page.getByTestId('primary-action signin-btn').click();
         
         // Wait for loading to complete and error to appear
         await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
@@ -106,9 +105,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         // Step 5: Verify new password works
         await page.fill('input[name="password"]', newPassword);
         
-        // TODO: Fix primary action data-testid pattern for login
-        // await page.getByTestId('primary-action signin-submit').click();
-        await page.click('button[type="submit"]');
+        // Fix primary action data-testid pattern for login
+        await page.getByTestId('primary-action signin-btn').click();
         
         // Should successfully login and redirect to dashboard
         await expect(page).toHaveURL(/.*dashboard/);
@@ -147,8 +145,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
     test('should handle expired reset token', async ({ page }) => {
       const testEmail = `e2e-expired-${generateTestId('user')}@example.com`;
 
-      // TODO: Initialize UXComplianceHelper for UX validation
-      // uxHelper = new UXComplianceHelper(page);
+      // Initialize UXComplianceHelper for UX validation
+      uxHelper = new UXComplianceHelper(page);
 
       // Create a test user
       const hashedPassword = await bcrypt.hash('OriginalPass123!', 12);
@@ -167,9 +165,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         await page.goto(`${BASE_URL}/forgot-password`);
         await page.fill('input[name="email"]', testEmail);
         
-        // TODO: Fix primary action data-testid pattern
-        // await page.getByTestId('primary-action send-reset-link-btn').click();
-        await page.click('button[type="submit"]');
+        // Fix primary action data-testid pattern
+        await page.getByTestId('primary-action send-reset-link-btn').click();
         
         await expect(page).toHaveURL(/.*forgot-password-success/);
         
@@ -192,9 +189,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         await page.fill('input[name="password"]', 'NewPassword123!');
         await page.fill('input[name="confirmPassword"]', 'NewPassword123!');
         
-        // TODO: Fix primary action data-testid pattern
-        // await page.getByTestId('primary-action reset-password-btn').click();
-        await page.click('button[type="submit"]');
+        // Fix primary action data-testid pattern
+        await page.getByTestId('primary-action reset-password-btn').click();
         
         // Should show error for expired token
         await expect(page.locator('.bg-red-50')).toContainText(/expired|invalid/i);
@@ -236,9 +232,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
       await page.goto(`${BASE_URL}/forgot-password`);
       await page.fill('input[name="email"]', nonExistentEmail);
       
-      // TODO: Fix primary action data-testid pattern
-      // await page.getByTestId('primary-action send-reset-link-btn').click();
-      await page.click('button[type="submit"]');
+      // Fix primary action data-testid pattern
+      await page.getByTestId('primary-action send-reset-link-btn').click();
       
       // Should still show success page (security: don't reveal if user exists)
       await expect(page).toHaveURL(/.*forgot-password-success/);
@@ -255,8 +250,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
       test.setTimeout(30000); // 30 seconds for complex multiple reset flow
       const testEmail = `e2e-multiple-${generateTestId('user')}@example.com`;
 
-      // TODO: Initialize UXComplianceHelper for UX validation
-      // uxHelper = new UXComplianceHelper(page);
+      // Initialize UXComplianceHelper for UX validation
+      uxHelper = new UXComplianceHelper(page);
 
       // Create a test user
       const hashedPassword = await bcrypt.hash('OriginalPass123!', 12);
@@ -275,9 +270,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         await page.goto(`${BASE_URL}/forgot-password`);
         await page.fill('input[name="email"]', testEmail);
         
-        // TODO: Fix primary action data-testid pattern
-        // await page.getByTestId('primary-action send-reset-link-btn').click();
-        await page.click('button[type="submit"]');
+        // Fix primary action data-testid pattern
+        await page.getByTestId('primary-action send-reset-link-btn').click();
         
         await expect(page).toHaveURL(/.*forgot-password-success/);
         
@@ -291,9 +285,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         await page.goto(`${BASE_URL}/forgot-password`);
         await page.fill('input[name="email"]', testEmail);
         
-        // TODO: Fix primary action data-testid pattern
-        // await page.getByTestId('primary-action send-reset-link-btn').click();
-        await page.click('button[type="submit"]');
+        // Fix primary action data-testid pattern
+        await page.getByTestId('primary-action send-reset-link-btn').click();
         
         await expect(page).toHaveURL(/.*forgot-password-success/);
         
@@ -315,9 +308,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         await page.fill('input[name="password"]', 'NewPassword123!');
         await page.fill('input[name="confirmPassword"]', 'NewPassword123!');
         
-        // TODO: Fix primary action data-testid pattern
-        // await page.getByTestId('primary-action reset-password-btn').click();
-        await page.click('button[type="submit"]');
+        // Fix primary action data-testid pattern
+        await page.getByTestId('primary-action reset-password-btn').click();
         
         // Should succeed
         await expect(page.locator('.bg-green-50')).toContainText('Password reset successful!');
@@ -342,17 +334,17 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should complete forgot password flow with UX compliance', async ({ page }) => {
       const testEmail = `e2e-reset-${generateTestId('user')}@example.com`;
 
-      // TODO: Initialize UXComplianceHelper for UX validation
-      // uxHelper = new UXComplianceHelper(page);
+      // Initialize UXComplianceHelper for UX validation
+      uxHelper = new UXComplianceHelper(page);
 
       // Navigate to forgot password page
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // TODO: Add UXComplianceHelper validation calls
-      // await uxHelper.validateActivationFirstUX();
-      // await uxHelper.validateFormAccessibility();
-      // await uxHelper.validateMobileResponsiveness();
-      // await uxHelper.validateKeyboardNavigation();
+      // Add UXComplianceHelper validation calls
+      await uxHelper.validateActivationFirstUX();
+      await uxHelper.validateFormAccessibility();
+      await uxHelper.validateMobileResponsiveness();
+      await uxHelper.validateKeyboardNavigation();
       
       // Verify UX compliance - heading hierarchy (UX spec: use h2)
       await expect(page).toHaveTitle(/APIQ/);
@@ -363,8 +355,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await expect(page.locator('input[name="email"]')).toHaveAttribute('type', 'email');
       await expect(page.locator('input[name="email"]')).toHaveAttribute('required');
       
-      // TODO: Add ARIA attributes validation
-      // await expect(page.locator('input[name="email"]')).toHaveAttribute('aria-required', 'true');
+      // Add ARIA attributes validation
+      await expect(page.locator('input[name="email"]')).toHaveAttribute('aria-required', 'true');
       
       // Verify UX compliance - descriptive button text
       await expect(page.locator('button[type="submit"]')).toContainText('Send Reset Link');
@@ -409,18 +401,17 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should handle forgot password validation errors with UX compliance', async ({ page }) => {
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // TODO: Initialize UXComplianceHelper for UX validation
-      // uxHelper = new UXComplianceHelper(page);
+      // Initialize UXComplianceHelper for UX validation
+      uxHelper = new UXComplianceHelper(page);
       
       // Test invalid email
       await page.fill('input[name="email"]', 'invalid-email');
       
-      // TODO: Fix primary action data-testid pattern
-      // await page.getByTestId('primary-action send-reset-link-btn').click();
-      await page.click('button[type="submit"]');
+      // Fix primary action data-testid pattern
+      await page.getByTestId('primary-action send-reset-link-btn').click();
       
-      // TODO: Fix error container validation to use UXComplianceHelper
-      // await uxHelper.validateErrorContainer(/invalid|valid email/i);
+      // Fix error container validation to use UXComplianceHelper
+      await uxHelper.validateErrorContainer(/invalid|valid email/i);
       
       // Verify UX compliance - accessible error container (UX spec: .bg-red-50)
       await page.waitForTimeout(1000);
@@ -429,9 +420,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       // Test missing email
       await page.fill('input[name="email"]', '');
       
-      // TODO: Fix primary action data-testid pattern
-      // await page.getByTestId('primary-action send-reset-link-btn').click();
-      await page.click('button[type="submit"]');
+      // Fix primary action data-testid pattern
+      await page.getByTestId('primary-action send-reset-link-btn').click();
       await expect(page.locator('.bg-red-50')).toBeVisible();
     });
 
@@ -446,8 +436,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await expect(emailInput).toHaveAttribute('required');
       await expect(emailInput).toHaveAttribute('placeholder', 'Enter your email');
       
-      // TODO: Add ARIA attributes validation
-      // await expect(emailInput).toHaveAttribute('aria-required', 'true');
+      // Add ARIA attributes validation
+      await expect(emailInput).toHaveAttribute('aria-required', 'true');
     });
 
     test('should handle loading states during password reset request with UX compliance', async ({ page }) => {
@@ -480,12 +470,11 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       // Test invalid email format
       await page.fill('input[name="email"]', 'invalid-email');
       
-      // TODO: Fix primary action data-testid pattern
-      // await page.getByTestId('primary-action send-reset-link-btn').click();
-      await page.click('button[type="submit"]');
+      // Fix primary action data-testid pattern
+      await page.getByTestId('primary-action send-reset-link-btn').click();
       
-      // TODO: Fix error container validation to use UXComplianceHelper
-      // await uxHelper.validateErrorContainer(/invalid|valid email/i);
+      // Fix error container validation to use UXComplianceHelper
+      await uxHelper.validateErrorContainer(/invalid|valid email/i);
       
       // Verify UX compliance - accessible error container (UX spec: .bg-red-50)
       await page.waitForTimeout(1000);
@@ -500,16 +489,16 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       const testToken = `${TEST_TOKEN_PREFIX}-${generateTestId()}`;
       const newPassword = `newPassword${generateTestId()}`;
       
-      // TODO: Initialize UXComplianceHelper for UX validation
-      // uxHelper = new UXComplianceHelper(page);
+      // Initialize UXComplianceHelper for UX validation
+      uxHelper = new UXComplianceHelper(page);
       
       await page.goto(`${BASE_URL}/reset-password?token=${testToken}`);
       
-      // TODO: Add UXComplianceHelper validation calls
-      // await uxHelper.validateActivationFirstUX();
-      // await uxHelper.validateFormAccessibility();
-      // await uxHelper.validateMobileResponsiveness();
-      // await uxHelper.validateKeyboardNavigation();
+      // Add UXComplianceHelper validation calls
+      await uxHelper.validateActivationFirstUX();
+      await uxHelper.validateFormAccessibility();
+      await uxHelper.validateMobileResponsiveness();
+      await uxHelper.validateKeyboardNavigation();
       
       // Verify UX compliance - heading hierarchy (UX spec: use h2)
       await expect(page).toHaveTitle(/APIQ/);
@@ -522,9 +511,9 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await expect(page.locator('input[name="password"]')).toHaveAttribute('type', 'password');
       await expect(page.locator('input[name="confirmPassword"]')).toHaveAttribute('type', 'password');
       
-      // TODO: Add ARIA attributes validation
-      // await expect(page.locator('input[name="password"]')).toHaveAttribute('aria-required', 'true');
-      // await expect(page.locator('input[name="confirmPassword"]')).toHaveAttribute('aria-required', 'true');
+      // Add ARIA attributes validation
+      await expect(page.locator('input[name="password"]')).toHaveAttribute('aria-required', 'true');
+      await expect(page.locator('input[name="confirmPassword"]')).toHaveAttribute('aria-required', 'true');
       
       // Fill password form
       await page.fill('input[name="password"]', newPassword);
@@ -573,9 +562,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await page.fill('[data-testid="password-input"]', 'password123');
       await page.fill('[data-testid="confirm-password-input"]', 'differentpassword');
       
-      // TODO: Fix primary action data-testid pattern
-      // await page.getByTestId('primary-action reset-password-btn').click();
-      await page.click('[data-testid="submit-reset-btn"]');
+      // Fix primary action data-testid pattern
+      await page.getByTestId('primary-action reset-password-btn').click();
       
       // Assert error container and specific error
       await expect(page.getByTestId('validation-errors').filter({ hasText: 'Passwords do not match.' })).toBeVisible();
@@ -586,9 +574,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await page.fill('[data-testid="password-input"]', '123');
       await page.fill('[data-testid="confirm-password-input"]', '123');
       
-      // TODO: Fix primary action data-testid pattern
-      // await page.getByTestId('primary-action reset-password-btn').click();
-      await page.click('[data-testid="submit-reset-btn"]');
+      // Fix primary action data-testid pattern
+      await page.getByTestId('primary-action reset-password-btn').click();
       
       await expect(page.getByTestId('validation-errors')).toBeVisible();
       await expect(page.getByTestId('password-input')).toHaveAttribute('aria-invalid', 'true');
@@ -599,9 +586,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await page.fill('[data-testid="password-input"]', '');
       await page.fill('[data-testid="confirm-password-input"]', '');
       
-      // TODO: Fix primary action data-testid pattern
-      // await page.getByTestId('primary-action reset-password-btn').click();
-      await page.click('[data-testid="submit-reset-btn"]');
+      // Fix primary action data-testid pattern
+      await page.getByTestId('primary-action reset-password-btn').click();
       
       await expect(page.getByTestId('validation-errors')).toBeVisible();
       await expect(page.getByTestId('password-input')).toHaveAttribute('aria-invalid', 'true');
@@ -625,9 +611,9 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await expect(passwordInput).toHaveAttribute('required');
       await expect(confirmPasswordInput).toHaveAttribute('required');
       
-      // TODO: Add ARIA attributes validation
-      // await expect(passwordInput).toHaveAttribute('aria-required', 'true');
-      // await expect(confirmPasswordInput).toHaveAttribute('aria-required', 'true');
+      // Add ARIA attributes validation
+      await expect(passwordInput).toHaveAttribute('aria-required', 'true');
+      await expect(confirmPasswordInput).toHaveAttribute('aria-required', 'true');
     });
 
     test('should handle loading states during password reset with UX compliance', async ({ page }) => {
@@ -660,14 +646,14 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       const testEmail = 'test@example.com';
       await page.goto(`${BASE_URL}/forgot-password-success?email=${encodeURIComponent(testEmail)}`);
       
-      // TODO: Initialize UXComplianceHelper for UX validation
-      // uxHelper = new UXComplianceHelper(page);
+      // Initialize UXComplianceHelper for UX validation
+      uxHelper = new UXComplianceHelper(page);
       
-      // TODO: Add UXComplianceHelper validation calls
-      // await uxHelper.validateActivationFirstUX();
-      // await uxHelper.validateFormAccessibility();
-      // await uxHelper.validateMobileResponsiveness();
-      // await uxHelper.validateKeyboardNavigation();
+      // Add UXComplianceHelper validation calls
+      await uxHelper.validateActivationFirstUX();
+      await uxHelper.validateFormAccessibility();
+      await uxHelper.validateMobileResponsiveness();
+      await uxHelper.validateKeyboardNavigation();
       
       // Should show success page
       await expect(page).toHaveURL(/.*forgot-password-success/);
@@ -713,11 +699,11 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should support keyboard navigation', async ({ page }) => {
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // TODO: Initialize UXComplianceHelper for UX validation
-      // uxHelper = new UXComplianceHelper(page);
+      // Initialize UXComplianceHelper for UX validation
+      uxHelper = new UXComplianceHelper(page);
       
-      // TODO: Add UXComplianceHelper keyboard navigation validation
-      // await uxHelper.validateKeyboardNavigation();
+      // Add UXComplianceHelper keyboard navigation validation
+      await uxHelper.validateKeyboardNavigation();
       
       // First verify the email input exists and is focusable
       const emailInput = page.locator('input[type="email"]');
@@ -741,8 +727,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should have proper ARIA attributes', async ({ page }) => {
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // TODO: Add comprehensive ARIA validation using UXComplianceHelper
-      // await uxHelper.validateARIACompliance();
+      // Add comprehensive ARIA validation using UXComplianceHelper
+      await uxHelper.validateARIACompliance();
       
       // Test form accessibility - focus on valid ARIA attributes
       await expect(page.locator('input[name="email"]')).toHaveAttribute('aria-required', 'true');
@@ -752,16 +738,16 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should be mobile responsive', async ({ page }) => {
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // TODO: Add comprehensive mobile responsiveness validation using UXComplianceHelper
-      // await uxHelper.validateMobileResponsiveness();
-      // await uxHelper.validateMobileAccessibility();
+      // Add comprehensive mobile responsiveness validation using UXComplianceHelper
+      await uxHelper.validateMobileResponsiveness();
+      await uxHelper.validateMobileAccessibility();
       
       // Test mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
       await expect(page.locator('h2')).toBeVisible();
       await expect(page.locator('button[type="submit"]')).toBeVisible();
       
-      // TODO: Add touch-friendly button size validation
+      // Add touch-friendly button size validation
       // const submitBtn = page.locator('button[type="submit"]');
       // const box = await submitBtn.boundingBox();
       // expect(box!.width).toBeGreaterThanOrEqual(44);

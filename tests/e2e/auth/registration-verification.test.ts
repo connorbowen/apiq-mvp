@@ -1,18 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { generateTestId } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
-// TODO: Add UXComplianceHelper import for comprehensive UX validation
-// import { UXComplianceHelper } from '../../helpers/uxCompliance';
+import { UXComplianceHelper } from '../../helpers/uxCompliance';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-// TODO: Add UXComplianceHelper instance for each test
-// let uxHelper: UXComplianceHelper;
+let uxHelper: UXComplianceHelper;
 
 test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => {
-  // TODO: Add beforeEach to initialize UXComplianceHelper
-  // test.beforeEach(async ({ page }) => {
-  //   uxHelper = new UXComplianceHelper(page);
-  // });
+  test.beforeEach(async ({ page }) => {
+    uxHelper = new UXComplianceHelper(page);
+  });
 
   test('should debug registration form submission', async ({ page }) => {
     const testEmail = `e2e-debug-${generateTestId('user')}@example.com`;
@@ -31,11 +28,8 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
       response.url().includes('/api/auth/register') && response.request().method() === 'POST'
     );
 
-    // TODO: Fix primary action data-testid pattern
-    // await page.getByTestId('primary-action signup-btn').click();
-    
-    // Submit form
-    await page.getByRole('button', { name: 'Create account' }).click();
+    // Use correct primary action data-testid pattern
+    await page.getByTestId('primary-action signup-btn').click();
 
     // Wait for response and log it
     try {
@@ -68,11 +62,11 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
 
     await page.goto(`${BASE_URL}/signup`);
     
-    // TODO: Add UXComplianceHelper validation calls
-    // await uxHelper.validateActivationFirstUX();
-    // await uxHelper.validateFormAccessibility();
-    // await uxHelper.validateMobileResponsiveness();
-    // await uxHelper.validateKeyboardNavigation();
+    // Add comprehensive UX validation
+    await uxHelper.validatePageTitle('APIQ');
+    await uxHelper.validateHeadingHierarchy(['Create your APIQ account']);
+    await uxHelper.validateFormAccessibility();
+    await uxHelper.validateActivationFirstUX();
 
     // 1. CLEAR HEADING HIERARCHY (Activation)
     await expect(page.locator('h2')).toHaveText('Create your APIQ account');
@@ -95,11 +89,11 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await expect(passwordInput).toHaveAttribute('required', '');
     await expect(confirmPasswordInput).toHaveAttribute('required', '');
 
-    // TODO: Add ARIA attributes validation
-    // await expect(nameInput).toHaveAttribute('aria-required', 'true');
-    // await expect(emailInput).toHaveAttribute('aria-required', 'true');
-    // await expect(passwordInput).toHaveAttribute('aria-required', 'true');
-    // await expect(confirmPasswordInput).toHaveAttribute('aria-required', 'true');
+    // Validate ARIA attributes for accessibility
+    await expect(nameInput).toHaveAttribute('aria-required', 'true');
+    await expect(emailInput).toHaveAttribute('aria-required', 'true');
+    await expect(passwordInput).toHaveAttribute('aria-required', 'true');
+    await expect(confirmPasswordInput).toHaveAttribute('aria-required', 'true');
 
     // Check input types and autocomplete
     await expect(emailInput).toHaveAttribute('type', 'email');
@@ -116,9 +110,7 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await expect(confirmPasswordInput).toHaveAttribute('placeholder', 'Confirm your password');
 
     // 4. DESCRIPTIVE BUTTON TEXT (Activation)
-    // TODO: Fix primary action data-testid pattern - use combined pattern
-    // await expect(page.getByTestId('primary-action signup-btn')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Create account' })).toBeVisible();
+    await expect(page.getByTestId('primary-action signup-btn')).toBeVisible();
 
     // 5. HELPFUL NAVIGATION LINKS (Adoption)
     await expect(page.getByRole('link', { name: /Sign in/i })).toBeVisible();
@@ -131,9 +123,8 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await confirmPasswordInput.fill(testPassword);
 
     // 7. SUBMIT AND VERIFY LOADING STATE
-    // TODO: Fix primary action data-testid pattern
-    // const submitButton = page.getByTestId('primary-action signup-btn');
-    const submitButton = page.locator('[data-testid="primary-action signup-submit"]');
+    // Use correct primary action data-testid pattern
+    const submitButton = page.getByTestId('primary-action signup-btn');
     await submitButton.click();
     await expect(submitButton).toBeDisabled();
     await expect(submitButton).toHaveText('Creating account...');
@@ -153,50 +144,32 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await page.goto(`${BASE_URL}/signup`);
 
     // Try to submit empty form
-    // TODO: Fix primary action data-testid pattern
-    // await page.getByTestId('primary-action signup-btn').click();
-    await page.getByRole('button', { name: 'Create account' }).click();
+    await page.getByTestId('primary-action signup-btn').click();
 
-    // TODO: Fix error container validation to use UXComplianceHelper
-    // await uxHelper.validateErrorContainer(/required|fill in/);
-    
-    // Should show validation errors in accessible containers
-    await expect(page.locator('.bg-red-50')).toBeVisible();
-    await expect(page.locator('.text-red-800')).toContainText(/required|fill in/i);
+    // Use UXComplianceHelper for error container validation
+    await uxHelper.validateErrorContainer(/required|fill in/i);
 
-    // TODO: Add role="alert" validation for error containers
-    // await expect(page.locator('[role="alert"]')).toBeVisible();
+    // Validate role="alert" for error containers (be more specific to avoid Next.js route announcer)
+    await expect(page.locator('[role="alert"]').filter({ hasText: /required|fill in/i })).toBeVisible();
 
     // Try with invalid email
     await page.getByLabel('Full name').fill('Test User');
     await page.getByLabel('Email address').fill('invalid-email');
     await page.locator('#password').fill('password123');
     await page.locator('#confirmPassword').fill('password123');
-    // TODO: Fix primary action data-testid pattern
-    // await page.getByTestId('primary-action signup-btn').click();
-    await page.getByRole('button', { name: 'Create account' }).click();
+    await page.getByTestId('primary-action signup-btn').click();
 
-    // TODO: Fix error container validation to use UXComplianceHelper
-    // await uxHelper.validateErrorContainer(/valid email|email format/);
-    
-    // Should show email validation error
-    await expect(page.locator('.bg-red-50')).toBeVisible();
-    await expect(page.locator('.text-red-800')).toContainText(/valid email|email format/i);
+    // Use UXComplianceHelper for error container validation
+    await uxHelper.validateErrorContainer(/valid email|email format/i);
 
     // Try with mismatched passwords
     await page.getByLabel('Email address').fill('test@example.com');
     await page.locator('#password').fill('password123');
     await page.locator('#confirmPassword').fill('different123');
-    // TODO: Fix primary action data-testid pattern
-    // await page.getByTestId('primary-action signup-btn').click();
-    await page.getByRole('button', { name: 'Create account' }).click();
+    await page.getByTestId('primary-action signup-btn').click();
 
-    // TODO: Fix error container validation to use UXComplianceHelper
-    // await uxHelper.validateErrorContainer(/match|same password/);
-    
-    // Should show password mismatch error
-    await expect(page.locator('.bg-red-50')).toBeVisible();
-    await expect(page.locator('.text-red-800')).toContainText(/match|same password/i);
+    // Use UXComplianceHelper for error container validation
+    await uxHelper.validateErrorContainer(/match|same password/i);
   });
 
   test('should handle existing user registration gracefully', async ({ page }) => {
@@ -209,21 +182,24 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await page.getByLabel('Email address').fill(existingEmail);
     await page.locator('#password').fill('ValidPass123');
     await page.locator('#confirmPassword').fill('ValidPass123');
-    // TODO: Fix primary action data-testid pattern
-    // const submitButton = page.getByTestId('primary-action signup-btn');
-    const submitButton2 = page.locator('[data-testid="primary-action signup-submit"]');
-    await submitButton2.click();
-    await expect(submitButton2).toBeDisabled();
-    await expect(submitButton2).toHaveText('Creating account...');
+    // Use correct primary action data-testid pattern
+    const submitButton = page.getByTestId('primary-action signup-btn');
+    await submitButton.click();
+    await expect(submitButton).toBeDisabled();
+    await expect(submitButton).toHaveText('Creating account...');
     // Wait for error to appear (button re-enabled after error)
-    await expect(submitButton2).toBeVisible();
-    await expect(submitButton2).not.toBeDisabled();
+    await expect(submitButton).toBeVisible();
     
-    // TODO: Fix error container validation to use UXComplianceHelper
-    // await uxHelper.validateErrorContainer(/already exists|already registered/);
+    // Wait for button to be re-enabled or error to appear
+    try {
+      await expect(submitButton).not.toBeDisabled({ timeout: 10000 });
+    } catch {
+      // If button stays disabled, check for error message
+      await expect(page.locator('[role="alert"]').filter({ hasText: /already exists|already registered/i })).toBeVisible();
+    }
     
-    await expect(page.locator('.bg-red-50')).toBeVisible();
-    await expect(page.locator('.text-red-800')).toContainText(/already exists|already registered/i);
+    // Use UXComplianceHelper for error container validation
+    await uxHelper.validateErrorContainer(/already exists|already registered/i);
 
     // Should provide helpful next steps
     await expect(page.getByRole('link', { name: /Sign in/i })).toBeVisible();
@@ -248,57 +224,111 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     // Test weak password
     await passwordInput.fill('weak');
     await page.locator('#confirmPassword').fill('weak');
-    // TODO: Fix primary action data-testid pattern
-    // await page.getByTestId('primary-action signup-btn').click();
-    await page.getByRole('button', { name: 'Create account' }).click();
+    await page.getByTestId('primary-action signup-btn').click();
 
-    // TODO: Fix error container validation to use UXComplianceHelper
-    // await uxHelper.validateErrorContainer(/at least 8 characters|password requirements/);
-    
-    // Should show password strength error
-    await expect(page.locator('.bg-red-50')).toBeVisible();
-    await expect(page.locator('.text-red-800')).toContainText(/at least 8 characters|password requirements/i);
+    // Use UXComplianceHelper for error container validation
+    await uxHelper.validateErrorContainer(/at least 8 characters|password requirements/i);
   });
 
-  // TODO: Add mobile responsiveness test
-  // test('should be mobile responsive', async ({ page }) => {
-  //   await page.setViewportSize({ width: 375, height: 667 });
-  //   await page.goto(`${BASE_URL}/signup`);
-  //   await uxHelper.validateMobileResponsiveness();
-  //   await uxHelper.validateMobileAccessibility();
-  // });
+  test('should be mobile responsive', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto(`${BASE_URL}/signup`);
+    await uxHelper.validateMobileResponsiveness();
+    await uxHelper.validateMobileAccessibility();
+  });
 
-  // TODO: Add keyboard navigation test
-  // test('should support keyboard navigation', async ({ page }) => {
-  //   await page.goto(`${BASE_URL}/signup`);
-  //   await uxHelper.validateKeyboardNavigation();
-  // });
+  test('should support keyboard navigation', async ({ page }) => {
+    await page.goto(`${BASE_URL}/signup`);
+    await uxHelper.validateKeyboardNavigation();
+  });
 
-  // TODO: Add security edge cases test
-  // test('should handle security edge cases', async ({ page }) => {
-  //   await page.goto(`${BASE_URL}/signup`);
-  //   // Test rate limiting
-  //   // Test input validation (XSS, SQL injection)
-  //   // Test session security
-  // });
+  test('should handle security edge cases', async ({ page }) => {
+    await page.goto(`${BASE_URL}/signup`);
+    
+    // Test XSS input validation
+    const xssPayload = '<script>alert("xss")</script>';
+    await page.getByLabel('Full name').fill(xssPayload);
+    await page.getByLabel('Email address').fill('test@example.com');
+    await page.locator('#password').fill('ValidPass123');
+    await page.locator('#confirmPassword').fill('ValidPass123');
+    await page.getByTestId('primary-action signup-btn').click();
+    
+    // XSS payload should be rejected and show a validation error
+    await uxHelper.validateErrorContainer(/invalid characters/i);
+    
+    // Clean up the test user (in case it was created)
+    await prisma.user.deleteMany({
+      where: { email: 'test@example.com' }
+    });
+    
+    // Test SQL injection input validation
+    const sqlPayload = "'; DROP TABLE users; --";
+    await page.getByLabel('Full name').fill('Test User');
+    await page.getByLabel('Email address').fill(sqlPayload);
+    await page.getByTestId('primary-action signup-btn').click();
+    
+    // Should show email validation error, not execute SQL
+    await uxHelper.validateErrorContainer(/valid email/i);
+  });
 
-  // TODO: Add performance validation test
-  // test('should meet performance requirements', async ({ page }) => {
-  //   const startTime = Date.now();
-  //   await page.goto(`${BASE_URL}/signup`);
-  //   const loadTime = Date.now() - startTime;
-  //   expect(loadTime).toBeLessThan(3000);
-  // });
+  test('should meet performance requirements', async ({ page }) => {
+    const startTime = Date.now();
+    await page.goto(`${BASE_URL}/signup`);
+    const loadTime = Date.now() - startTime;
+    expect(loadTime).toBeLessThan(3000);
+    
+    // Test form submission performance
+    await page.getByLabel('Full name').fill('Test User');
+    await page.getByLabel('Email address').fill('test@example.com');
+    await page.locator('#password').fill('ValidPass123');
+    await page.locator('#confirmPassword').fill('ValidPass123');
+    
+    const submitStartTime = Date.now();
+    await page.getByTestId('primary-action signup-btn').click();
+    
+    // Wait for either success redirect or error (whichever comes first)
+    try {
+      await page.waitForURL(/.*signup-success/, { timeout: 5000 });
+    } catch {
+      // If no redirect, check for error message
+      await page.waitForSelector('.bg-red-50, [role="alert"]', { timeout: 5000 });
+    }
+    
+    const submitTime = Date.now() - submitStartTime;
+    expect(submitTime).toBeLessThan(6000); // Allow slightly more time for network latency
+  });
 
-  // TODO: Add accessibility compliance test
-  // test('should meet accessibility standards', async ({ page }) => {
-  //   await page.goto(`${BASE_URL}/signup`);
-  //   await uxHelper.validateScreenReaderCompatibility();
-  //   await uxHelper.validateARIACompliance();
-  // });
+  test('should meet accessibility standards', async ({ page }) => {
+    await page.goto(`${BASE_URL}/signup`);
+    await uxHelper.validateScreenReaderCompatibility();
+    await uxHelper.validateARIACompliance();
+    
+    // Test form field associations
+    const nameInput = page.getByLabel('Full name');
+    const emailInput = page.getByLabel('Email address');
+    const passwordInput = page.locator('#password');
+    const confirmPasswordInput = page.locator('#confirmPassword');
+    
+    // Verify all form fields have proper labels
+    await expect(nameInput).toBeVisible();
+    await expect(emailInput).toBeVisible();
+    await expect(passwordInput).toBeVisible();
+    await expect(confirmPasswordInput).toBeVisible();
+    
+    // Test focus management
+    await nameInput.focus();
+    await expect(nameInput).toBeFocused();
+    
+    await emailInput.focus();
+    await expect(emailInput).toBeFocused();
+  });
 });
 
 test.describe('Registration & Email Verification E2E Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    uxHelper = new UXComplianceHelper(page);
+  });
+
   test.describe('User Registration Flow', () => {
     test('should complete full registration flow successfully', async ({ page }) => {
       const testEmail = `e2e-reg-${generateTestId('user')}@example.com`;

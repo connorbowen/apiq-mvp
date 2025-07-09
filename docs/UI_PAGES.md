@@ -10,9 +10,10 @@ This document describes all the user-facing pages in the APIQ application, their
 
 **User Experience**:
 1. User fills out registration form (email, name, password)
-2. Form validates input (email format, password strength, matching passwords)
-3. On successful registration, user is redirected to `/signup-success?email=...`
-4. If registration fails, error message is shown with recovery options
+2. Form validates input (email format, password strength, matching passwords, name validation)
+3. Name validation: 2-50 characters, letters, numbers, spaces, hyphens, apostrophes, and periods only
+4. On successful registration, user is redirected to `/signup-success?email=...`
+5. If registration fails, error message is shown with recovery options
 
 **Features**:
 - Client-side validation
