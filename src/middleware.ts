@@ -13,6 +13,7 @@ const publicRoutes = [
   '/login',
   '/signup',
   '/forgot-password',
+  '/forgot-password-success',
   '/reset-password',
   '/verify',
   '/oauth/callback',

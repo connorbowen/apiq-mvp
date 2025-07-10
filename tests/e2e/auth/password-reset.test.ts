@@ -335,6 +335,11 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
       try {
         // First password reset request
         await page.goto(`${BASE_URL}/forgot-password`);
+        
+        // Wait for the page to be fully loaded and the email input to be available
+        await page.waitForLoadState('networkidle');
+        await page.waitForSelector('input[name="email"]', { timeout: 15000 });
+        
         await page.fill('input[name="email"]', testEmail);
         
         // Wait for button to be enabled and click
@@ -357,6 +362,11 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
         
         // Second password reset request (should invalidate first)
         await page.goto(`${BASE_URL}/forgot-password`);
+        
+        // Wait for the page to be fully loaded and the email input to be available
+        await page.waitForLoadState('networkidle');
+        await page.waitForSelector('input[name="email"]', { timeout: 15000 });
+        
         await page.fill('input[name="email"]', testEmail);
         
         // Wait for button to be enabled and click
@@ -759,13 +769,27 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     });
 
     test('should handle missing email parameter gracefully with UX compliance', async ({ page }) => {
-      await page.goto(`${BASE_URL}/forgot-password-success`);
+      // Add timeout and better error handling for this specific test
+      test.setTimeout(20000); // 20 seconds for this test
+      
+      // Navigate to the success page without email parameter
+      await page.goto(`${BASE_URL}/forgot-password-success`, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 15000 
+      });
       
       // Should still show success page
       await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 10000 });
       
       // Verify UX compliance - heading hierarchy (UX spec: use h2)
       await expect(page.locator('h2')).toContainText('Reset Link Sent!');
+      
+      // Verify the page handles missing email gracefully
+      // The email field should be empty but the page should still render
+      const emailDisplay = page.locator('p.font-medium');
+      if (await emailDisplay.isVisible()) {
+        await expect(emailDisplay).toHaveText('');
+      }
     });
 
     test('should provide navigation options with UX compliance', async ({ page }) => {
