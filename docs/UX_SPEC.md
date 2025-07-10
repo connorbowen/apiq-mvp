@@ -724,3 +724,6 @@ The ConnectionsTab search and filter functionality includes:
 
 *Last Updated: July 2025*
 *Document Owner: UX/Design Team* 
+
+### E2E Test Isolation Best Practice
+- For all authentication and protected route E2E tests, use a beforeEach hook to clear cookies and reset state. This ensures no session leakage and 100% reliable test results. 

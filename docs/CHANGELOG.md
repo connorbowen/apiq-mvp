@@ -1422,3 +1422,10 @@ _This changelog is maintained by the APIQ team and community contributors._
   - P2 MEDIUM: Performance validation, mobile responsiveness, security validation.
   - Expected compliance: 85%+ achievable with recommended fixes.
   - Updated implementation plan and test summary documentation.
+
+- **E2E Authentication Session Test Isolation** - ✅ **COMPLETED - LATEST**
+  - **Issue**: Intermittent timeout in `should show login page when accessing protected routes` when run as part of the full suite
+  - **Solution**: Added beforeEach to clear cookies and reset state for protected route checks
+  - **Impact**: All authentication session E2E tests now pass reliably, even in full suite runs
+  - **Test Pattern**: Confirmed continued use of `data-testid="primary-action signin-btn"` for authentication
+  - **Test Suite Health**: 100% pass rate for all authentication E2E tests

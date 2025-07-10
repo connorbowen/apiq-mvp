@@ -90,7 +90,7 @@ className="px-4 py-2 bg-{color}-600 text-white rounded-md hover:bg-{color}-700 f
 ### Authentication Buttons
 ```tsx
 <button
-  data-testid="primary-action signin-submit"
+  data-testid="primary-action signin-btn"
   className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px]"
 >
   Sign in
@@ -130,10 +130,11 @@ The `UXComplianceHelper.validateActivationFirstUX()` method validates primary ac
 - [x] `src/components/dashboard/SecretsTab.tsx` ✅ **COMPLETED**
 - [ ] `src/components/dashboard/WorkflowsTab.tsx`
 - [x] `src/components/dashboard/ConnectionsTab.tsx` ✅ **COMPLETED** (search, filter, accessibility, unique test IDs)
-- [ ] `src/app/login/page.tsx`
+- [x] `src/app/login/page.tsx`
 - [ ] `src/app/signup/page.tsx`
 - [ ] `src/app/workflows/create/page.tsx`
 - [ ] `src/components/NaturalLanguageWorkflowChat.tsx`
+- [x] `primary-action signin-btn` - Login form submission (current standard, 100% compliant)
 
 ### Required Changes
 

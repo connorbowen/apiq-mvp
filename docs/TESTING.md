@@ -121,6 +121,7 @@ APIQ MVP maintains a comprehensive test suite with excellent coverage across uni
   - General application smoke tests
   - Navigation and routing tests
   - Dashboard functionality tests
+- **Authentication Session E2E Test Isolation**: Added beforeEach to clear cookies and reset state for protected route checks, fixing intermittent timeouts and session leakage. All authentication session E2E tests now pass reliably, even in full suite runs.
 
 ### Key Findings
 

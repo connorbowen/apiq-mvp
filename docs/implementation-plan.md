@@ -1239,7 +1239,7 @@ The APIQ MVP core engine is now **COMPLETE** with all P0 features fully implemen
   - [ ] Validate keyboard navigation
 
 - [ ] **Fix Primary Action Data Test ID Patterns** (CRITICAL)
-  - [ ] Update login page: `data-testid="primary-action signin-submit"` → `data-testid="primary-action signin-btn"`
+  - [ ] Update login page: `data-testid="primary-action signin-submit"` → `data-testid="primary-action signin-btn"` ✅ **COMPLETED**
   - [ ] Update forgot password page: `data-testid="primary-action send-reset-link-btn"`
   - [ ] Update reset password page: `data-testid="primary-action reset-password-btn"`
   - [x] Update connection creation components: `data-testid="primary-action create-connection-header-btn"` and `data-testid="primary-action create-connection-empty-btn"`, `data-testid="primary-action next-step-btn"`, `data-testid="primary-action import-openapi-btn"`, `data-testid="primary-action submit-connection-btn"`, `data-testid="primary-action refresh-spec-btn"` ✅ **COMPLETED**

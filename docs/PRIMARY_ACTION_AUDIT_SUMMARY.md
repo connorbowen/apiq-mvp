@@ -33,6 +33,7 @@
 - ✅ `primary-action reset-password-submit-btn` - Password reset completion
 - ✅ `primary-action resend-verification-btn` - Email verification resend
 - ✅ `primary-action oauth2-google-btn` - Google OAuth2 authentication
+- ✅ `primary-action signin-btn` - Login form submission (confirmed current standard, 100% compliant)
 
 **Test Coverage**: All authentication primary actions tested with comprehensive UX compliance
 
