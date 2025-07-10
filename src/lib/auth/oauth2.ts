@@ -66,6 +66,13 @@ export class OAuth2Service {
         scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.modify',
         userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo'
       }],
+      ['slack', {
+        name: 'Slack',
+        authorizationUrl: 'https://slack.com/oauth/v2/authorize',
+        tokenUrl: 'https://slack.com/api/oauth.v2.access',
+        scope: 'chat:write channels:read',
+        userInfoUrl: 'https://slack.com/api/users.info'
+      }],
       ['test', {
         name: 'Test OAuth2 Provider',
         authorizationUrl: 'http://localhost:3000/api/test-oauth2/authorize',
@@ -76,34 +83,7 @@ export class OAuth2Service {
     ]);
   }
 
-  private initializeProviders(): void {
-    // Google OAuth2
-    this.providers.set('google', {
-      name: 'Google',
-      authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-      tokenUrl: 'https://oauth2.googleapis.com/token',
-      scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
-      userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo'
-    });
 
-    // GitHub OAuth2
-    this.providers.set('github', {
-      name: 'GitHub',
-      authorizationUrl: 'https://github.com/login/oauth/authorize',
-      tokenUrl: 'https://github.com/login/oauth/access_token',
-      scope: 'repo user',
-      userInfoUrl: 'https://api.github.com/user'
-    });
-
-    // Slack OAuth2
-    this.providers.set('slack', {
-      name: 'Slack',
-      authorizationUrl: 'https://slack.com/oauth/v2/authorize',
-      tokenUrl: 'https://slack.com/api/oauth.v2.access',
-      scope: 'chat:write channels:read',
-      userInfoUrl: 'https://slack.com/api/users.info'
-    });
-  }
 
   /**
    * Generate OAuth2 authorization URL
