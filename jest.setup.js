@@ -68,6 +68,8 @@ process.env.ENCRYPTION_KEY = 'test-encryption-key-32-chars-long'
 process.env.ENCRYPTION_MASTER_KEY = 'test-master-key-32-chars-long-for-secrets'
 // process.env.JWT_SECRET = 'your-super-secret-jwt-key-change-this-in-production'
 process.env.JWT_EXPIRES_IN = '24h'
+process.env.ENABLE_TEST_OAUTH2 = 'true'
+process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
 
 // Mock scrollIntoView for jsdom
 Element.prototype.scrollIntoView = jest.fn()

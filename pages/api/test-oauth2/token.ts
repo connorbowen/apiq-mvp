@@ -1,69 +1,100 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+// Only allow this endpoint in test environment or when explicitly enabled
+if (process.env.NODE_ENV !== 'test' && process.env.ENABLE_TEST_OAUTH2 !== 'true') {
+  throw new Error('Test OAuth2 endpoints are only available in test environment');
+}
+
+// Type declaration for global test OAuth2 codes
+declare global {
+  var testOAuth2Codes: Map<string, any> | undefined;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Parse the request body (OAuth2 token requests are typically form-encoded)
-    const body = req.body;
-    
+    const { 
+      grant_type, 
+      code, 
+      redirect_uri, 
+      client_id, 
+      client_secret 
+    } = req.body;
+
     console.log('🔍 Test OAuth2 Provider - Token request:', {
-      grant_type: body.grant_type,
-      code: body.code ? '***' : undefined,
-      client_id: body.client_id ? '***' : undefined,
-      redirect_uri: body.redirect_uri
+      grant_type,
+      code: code ? '***' : undefined,
+      redirect_uri,
+      client_id: client_id ? '***' : undefined,
+      client_secret: client_secret ? '***' : undefined
     });
 
     // Validate required parameters
-    if (!body.grant_type || body.grant_type !== 'authorization_code') {
+    if (grant_type !== 'authorization_code') {
       return res.status(400).json({ 
-        error: 'invalid_grant',
-        error_description: 'grant_type must be authorization_code'
+        error: 'unsupported_grant_type',
+        error_description: 'Only authorization_code grant type is supported'
       });
     }
 
-    if (!body.code || typeof body.code !== 'string') {
+    if (!code) {
       return res.status(400).json({ 
         error: 'invalid_request',
         error_description: 'code is required'
       });
     }
 
-    if (!body.client_id || typeof body.client_id !== 'string') {
-      return res.status(400).json({ 
-        error: 'invalid_request',
-        error_description: 'client_id is required'
-      });
-    }
-
-    if (!body.redirect_uri || typeof body.redirect_uri !== 'string') {
+    if (!redirect_uri) {
       return res.status(400).json({ 
         error: 'invalid_request',
         error_description: 'redirect_uri is required'
       });
     }
 
-    // For test purposes, we'll accept any authorization code that starts with 'test_auth_code_'
-    if (!body.code.startsWith('test_auth_code_')) {
+    // Validate authorization code
+    if (!global.testOAuth2Codes || !global.testOAuth2Codes.has(code)) {
       return res.status(400).json({ 
         error: 'invalid_grant',
         error_description: 'Invalid authorization code'
       });
     }
 
-    // Generate mock tokens
-    const accessToken = `test_access_token_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-    const refreshToken = `test_refresh_token_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    const authData = global.testOAuth2Codes.get(code);
     
-    // Return the tokens in the standard OAuth2 format
+    // Check if code has expired
+    if (authData.expires_at < Date.now()) {
+      global.testOAuth2Codes.delete(code);
+      return res.status(400).json({ 
+        error: 'invalid_grant',
+        error_description: 'Authorization code has expired'
+      });
+    }
+
+    // Validate redirect_uri matches
+    if (authData.redirect_uri !== redirect_uri) {
+      return res.status(400).json({ 
+        error: 'invalid_grant',
+        error_description: 'redirect_uri does not match'
+      });
+    }
+
+    // Generate access token
+    const accessToken = `test_access_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const refreshToken = `test_refresh_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Clean up the authorization code
+    global.testOAuth2Codes.delete(code);
+
+    // Return token response
     const tokenResponse = {
       access_token: accessToken,
       token_type: 'Bearer',
       expires_in: 3600, // 1 hour
       refresh_token: refreshToken,
-      scope: body.scope || 'read write'
+      scope: authData.scope || 'read write'
     };
 
     console.log('✅ Test OAuth2 Provider - Token exchange successful');

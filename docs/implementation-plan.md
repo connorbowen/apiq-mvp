@@ -1361,8 +1361,8 @@ The APIQ MVP core engine is now **COMPLETE** with all P0 features fully implemen
   - [ ] Add UXComplianceHelper to authentication-session.test.ts
   - [ ] Add UXComplianceHelper to password-reset.test.ts
   - [ ] Add UXComplianceHelper to registration-verification.test.ts
-  - [ ] Add UXComplianceHelper to oauth2-authentication.test.ts
-  - [ ] Add UXComplianceHelper to oauth2-google-signin.test.ts
+  - [x] Add UXComplianceHelper to oauth2-authentication.test.ts ✅ **COMPLETED** (45% compliance, TODO comments added for P0/P1/P2 fixes)
+  - [x] Add UXComplianceHelper to oauth2-google-signin.test.ts ✅ **COMPLETED** (25% compliance, TODO comments added for P0/P1/P2 fixes)
 
 - [ ] **Update Connection Tests** (MEDIUM)
   - [x] Add UXComplianceHelper to connections-management.test.ts ✅ **COMPLETED** (90% compliance, needs UXComplianceHelper integration)

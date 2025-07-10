@@ -281,6 +281,9 @@ npm run test:e2e
 
 # Run OAuth2 tests specifically
 npm test -- tests/unit/lib/auth/oauth2.test.ts
+
+# Run Google OAuth2 E2E tests (25% compliance, TODO comments added for P0/P1/P2 fixes)
+npm test -- tests/e2e/auth/oauth2-google-signin.test.ts
 ```
 
 > **Note:** Google OAuth2 E2E and unit tests require valid `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in your `.env.local` or `.env.test` file. See below for details.

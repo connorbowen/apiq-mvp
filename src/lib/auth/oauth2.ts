@@ -72,15 +72,19 @@ export class OAuth2Service {
         tokenUrl: 'https://slack.com/api/oauth.v2.access',
         scope: 'chat:write channels:read',
         userInfoUrl: 'https://slack.com/api/users.info'
-      }],
-      ['test', {
-        name: 'Test OAuth2 Provider',
-        authorizationUrl: 'http://localhost:3000/api/test-oauth2/authorize',
-        tokenUrl: 'http://localhost:3000/api/test-oauth2/token',
-        scope: 'read write',
-        userInfoUrl: 'http://localhost:3000/api/test-oauth2/userinfo'
       }]
     ]);
+
+    // Add test provider only in test environment or when explicitly enabled
+    if (process.env.NODE_ENV === 'test' || process.env.ENABLE_TEST_OAUTH2 === 'true') {
+      this.providers.set('test', {
+        name: 'Test OAuth2 Provider',
+        authorizationUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/test-oauth2/authorize`,
+        tokenUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/test-oauth2/token`,
+        scope: 'read write',
+        userInfoUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/test-oauth2/userinfo`
+      });
+    }
   }
 
 

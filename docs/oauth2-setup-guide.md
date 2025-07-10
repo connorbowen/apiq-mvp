@@ -88,6 +88,9 @@ npm test -- tests/integration/api/oauth2-github.test.ts
 
 # Run Slack OAuth2 tests with real credentials
 npm test -- tests/integration/api/oauth2-slack.test.ts
+
+# Run Google OAuth2 E2E tests (25% compliance, TODO comments added for P0/P1/P2 fixes)
+npm test -- tests/e2e/auth/oauth2-google-signin.test.ts
 ```
 
 ## Environment Configuration
