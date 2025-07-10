@@ -54,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       clientSecret: authConfig.clientSecret,
       authorizationUrl: authConfig.authorizationUrl,
       tokenUrl: authConfig.tokenUrl,
-      redirectUri: authConfig.redirectUri || `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/oauth/callback`,
+      redirectUri: authConfig.redirectUri || `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/connections/oauth2/callback`,
       scope: authConfig.scope || '',
       state: oauthState
     };

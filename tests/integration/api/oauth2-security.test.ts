@@ -4,10 +4,10 @@ import { prisma } from '../../../lib/database/client';
 import { createConnectionTestData } from '../../helpers/createTestData';
 
 // Import handlers
-const authorizeHandler = require('../../../pages/api/oauth/authorize').default;
-const callbackHandler = require('../../../pages/api/oauth/callback').default;
-const refreshHandler = require('../../../pages/api/oauth/refresh').default;
-const tokenHandler = require('../../../pages/api/oauth/token').default;
+const authorizeHandler = require('../../../pages/api/connections/oauth2/authorize').default;
+const callbackHandler = require('../../../pages/api/connections/oauth2/callback').default;
+const refreshHandler = require('../../../pages/api/connections/oauth2/refresh').default;
+const tokenHandler = require('../../../pages/api/connections/oauth2/token').default;
 
 describe('OAuth2 Security Integration Tests (Real)', () => {
   let testUser: any;

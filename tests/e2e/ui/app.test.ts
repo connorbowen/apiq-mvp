@@ -217,7 +217,7 @@ test.describe('APIQ Application E2E Tests', () => {
   test.describe('OAuth2 Integration', () => {
     test('should list OAuth2 providers without authentication', async ({ page }) => {
       // Test the OAuth2 providers endpoint (should be public)
-      const response = await page.request.get('/api/oauth/providers')
+      const response = await page.request.get('/api/connections/oauth2/providers')
       expect(response.status()).toBe(200)
       
       const data = await response.json()
@@ -230,7 +230,7 @@ test.describe('APIQ Application E2E Tests', () => {
 
     test('should handle OAuth2 test callback', async ({ page }) => {
       // Test the OAuth2 callback with test parameters
-      const response = await page.request.get('/api/oauth/callback?code=test&state=test')
+      const response = await page.request.get('/api/connections/oauth2/callback?code=test&state=test')
       expect(response.status()).toBe(200)
       
       const data = await response.json()
@@ -241,7 +241,7 @@ test.describe('APIQ Application E2E Tests', () => {
 
     test('should handle OAuth2 callback with missing parameters', async ({ page }) => {
       // Test OAuth2 callback with missing code
-      const response = await page.request.get('/api/oauth/callback?state=test')
+      const response = await page.request.get('/api/connections/oauth2/callback?state=test')
       expect(response.status()).toBe(400)
       
       const data = await response.json()
@@ -251,7 +251,7 @@ test.describe('APIQ Application E2E Tests', () => {
 
     test('should handle OAuth2 callback with missing state', async ({ page }) => {
       // Test OAuth2 callback with missing state
-      const response = await page.request.get('/api/oauth/callback?code=test')
+      const response = await page.request.get('/api/connections/oauth2/callback?code=test')
       expect(response.status()).toBe(400)
       
       const data = await response.json()
@@ -261,7 +261,7 @@ test.describe('APIQ Application E2E Tests', () => {
 
     test('should handle OAuth2 test endpoint', async ({ page }) => {
       // Test the dedicated OAuth2 test endpoint
-      const response = await page.request.get('/api/oauth/test')
+      const response = await page.request.get('/api/connections/oauth2/test')
       expect(response.status()).toBe(200)
       
       const data = await response.json()

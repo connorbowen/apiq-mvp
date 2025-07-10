@@ -1,8 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { oauth2Service } from '../../../src/lib/auth/oauth2';
-import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
-import { prisma } from '../../../lib/database/client';
+import { oauth2Service } from '../../../../src/lib/auth/oauth2';
+import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/session';
+import { ApplicationError } from '../../../../src/middleware/errorHandler';
+import { prisma } from '../../../../lib/database/client';
+
+/**
+ * API Connection OAuth2 Token Refresh Handler
+ * 
+ * This endpoint handles OAuth2 token refresh for API connections to third-party services.
+ * It's separate from the user authentication OAuth2 flow which is handled in /api/auth/sso/.
+ */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -48,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       authorizationUrl: '',
       tokenUrl: '',
-      redirectUri: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/oauth/callback`,
+      redirectUri: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/connections/oauth2/callback`,
       scope: '',
       state: provider
     };

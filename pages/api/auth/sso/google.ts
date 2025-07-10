@@ -1,12 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../../lib/database/client';
-import { generateToken } from '../../../src/lib/auth/session';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
+import { prisma } from '../../../../lib/database/client';
+import { generateToken } from '../../../../src/lib/auth/session';
+import { ApplicationError } from '../../../../src/middleware/errorHandler';
 
-// Google OAuth2 configuration
+// Google SSO OAuth2 configuration for user authentication
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const GOOGLE_REDIRECT_URI = process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/auth/oauth2/callback';
+const GOOGLE_REDIRECT_URI = process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/auth/sso/callback';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {

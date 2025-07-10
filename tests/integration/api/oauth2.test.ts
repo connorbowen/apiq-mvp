@@ -1,9 +1,9 @@
 import { createMocks } from 'node-mocks-http';
-import providersHandler from '../../../pages/api/oauth/providers';
-import authorizeHandler from '../../../pages/api/oauth/authorize';
-import callbackHandler from '../../../pages/api/oauth/callback';
-import refreshHandler from '../../../pages/api/oauth/refresh';
-import tokenHandler from '../../../pages/api/oauth/token';
+import providersHandler from '../../../pages/api/connections/oauth2/providers';
+import authorizeHandler from '../../../pages/api/connections/oauth2/authorize';
+import callbackHandler from '../../../pages/api/connections/oauth2/callback';
+import refreshHandler from '../../../pages/api/connections/oauth2/refresh';
+import tokenHandler from '../../../pages/api/connections/oauth2/token';
 import { NextApiRequest } from 'next';
 import { prisma } from '../../../lib/database/client';
 import { createTestUser, createAuthenticatedRequest, createUnauthenticatedRequest } from '../../helpers/testUtils';

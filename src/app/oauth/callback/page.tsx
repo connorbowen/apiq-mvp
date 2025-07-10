@@ -35,7 +35,7 @@ export default function OAuth2CallbackPage() {
         setError('Missing required OAuth2 parameters');
         return;
       }
-      const response = await fetch(`/api/oauth/callback?code=${code}&state=${state}`);
+      const response = await fetch(`/api/connections/oauth2/callback?code=${code}&state=${state}`);
       const data = await response.json();
       if (data.success) {
         setStatus('success');

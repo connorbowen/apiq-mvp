@@ -1,6 +1,7 @@
 import { createAuthenticatedRequest, createUnauthenticatedRequest, createTestUser } from './testUtils';
 import { prisma } from '../../lib/database/client';
 import { oauth2Service } from '../../src/lib/auth/oauth2';
+import { testOAuth2Server } from './testOAuth2Server';
 
 export interface OAuth2TestState {
   userId: string;
@@ -58,7 +59,7 @@ export function createTestOAuth2Config(provider: string = 'google') {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || 'test-google-client-id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'test-google-client-secret',
-      redirectUri: process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/oauth/callback',
+      redirectUri: process.env.OAUTH2_REDIRECT_URI || 'http://localhost:3000/api/connections/oauth2/callback',
       scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly'
     }
   };
@@ -304,4 +305,23 @@ export async function verifyOAuth2CredentialsEncrypted(
 
   const credential = credentials[0];
   return credential.encryptedData && credential.keyId;
+} 
+
+/**
+ * Generate a test OAuth2 authorization URL for E2E testing
+ */
+export function generateTestOAuth2Url(params: {
+  clientId: string;
+  redirectUri: string;
+  scope: string;
+  state: string;
+}): string {
+  return testOAuth2Server.generateAuthorizationUrl(params);
+}
+
+/**
+ * Clear test OAuth2 server data
+ */
+export function clearTestOAuth2Data(): void {
+  testOAuth2Server.clearTestData();
 } 

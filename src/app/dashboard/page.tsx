@@ -116,6 +116,26 @@ export default function DashboardPage() {
     setAuditRefreshTrigger(prev => prev + 1);
   }, []);
 
+  // Handle OAuth2 success messages from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthSuccess = urlParams.get('oauth_success');
+    const connectionId = urlParams.get('connection_id');
+    
+    if (oauthSuccess === 'true') {
+      setSuccessMessage('OAuth2 authorization completed successfully!');
+      
+      // Reload connections to show updated status
+      loadConnections();
+      
+      // Clear URL parameters
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('oauth_success');
+      newUrl.searchParams.delete('connection_id');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, [loadConnections]);
+
   const handleOAuth2Callback = useCallback(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const oauth2Success = urlParams.get('oauth2_success');
@@ -576,6 +596,17 @@ export default function DashboardPage() {
                 loadConnections();
                 setSuccessMessage('Connection created successfully!');
               }}
+              onConnectionEdited={() => {
+                loadConnections();
+                setSuccessMessage('Connection updated successfully');
+              }}
+              onConnectionDeleted={() => {
+                loadConnections();
+                setSuccessMessage('Connection deleted successfully');
+              }}
+              onConnectionTested={() => {
+                setSuccessMessage('Connection test passed');
+              }}
               onConnectionError={(error) => {
                 setErrorMessage(error);
               }}
@@ -1023,7 +1054,7 @@ function CreateConnectionModal({ onClose, onSuccess, onError }: { onClose: () =>
                       authConfig: { ...formData.authConfig, redirectUri: e.target.value }
                     })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="http://localhost:3000/api/oauth/callback"
+                    placeholder="http://localhost:3000/api/connections/oauth2/callback"
                   />
                   {formData.authType === 'OAUTH2' && !formData.authConfig?.redirectUri && (
                     <div data-testid="redirectUri-error" className="mt-1 text-sm text-red-600">

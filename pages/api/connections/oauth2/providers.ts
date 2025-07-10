@@ -1,6 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { oauth2Service } from '../../../src/lib/auth/oauth2';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
+import { oauth2Service } from '../../../../src/lib/auth/oauth2';
+import { ApplicationError } from '../../../../src/middleware/errorHandler';
+
+/**
+ * API Connection OAuth2 Providers Handler
+ * 
+ * This endpoint provides information about supported OAuth2 providers for API connections.
+ * It's separate from the user authentication OAuth2 flow which is handled in /api/auth/sso/.
+ */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {

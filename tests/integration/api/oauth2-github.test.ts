@@ -5,10 +5,10 @@ import { oauth2Service } from '../../../src/lib/auth/oauth2';
 import { createConnectionTestData } from '../../helpers/createTestData';
 
 // Import handlers
-const authorizeHandler = require('../../../pages/api/oauth/authorize').default;
-const callbackHandler = require('../../../pages/api/oauth/callback').default;
-const refreshHandler = require('../../../pages/api/oauth/refresh').default;
-const tokenHandler = require('../../../pages/api/oauth/token').default;
+const authorizeHandler = require('../../../pages/api/connections/oauth2/authorize').default;
+const callbackHandler = require('../../../pages/api/connections/oauth2/callback').default;
+const refreshHandler = require('../../../pages/api/connections/oauth2/refresh').default;
+const tokenHandler = require('../../../pages/api/connections/oauth2/token').default;
 
 // Real GitHub OAuth2 test credentials (should be in env vars)
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;

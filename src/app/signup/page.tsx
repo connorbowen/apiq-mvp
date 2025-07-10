@@ -122,7 +122,7 @@ export default function SignupPage() {
 
   const handleOAuth2Signup = (provider: string) => {
     // Redirect to OAuth2 provider for signup
-    window.location.href = `/api/auth/oauth2?provider=${provider}&action=signup`;
+            window.location.href = `/api/auth/sso/google?provider=${provider}&action=signup`;
   };
 
   const hasErrors = error || Object.values(fieldErrors).some(err => err);

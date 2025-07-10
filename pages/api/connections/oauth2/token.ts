@@ -1,8 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { oauth2Service } from '../../../src/lib/auth/oauth2';
-import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
-import { prisma } from '../../../lib/database/client';
+import { oauth2Service } from '../../../../src/lib/auth/oauth2';
+import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/session';
+import { ApplicationError } from '../../../../src/middleware/errorHandler';
+import { prisma } from '../../../../lib/database/client';
+
+/**
+ * API Connection OAuth2 Token Handler
+ * 
+ * This endpoint handles OAuth2 token retrieval for API connections to third-party services.
+ * It's separate from the user authentication OAuth2 flow which is handled in /api/auth/sso/.
+ */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {

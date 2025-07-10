@@ -51,8 +51,8 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Initiate OAuth2 flow
-      const response = await fetch(`/api/auth/oauth2?provider=${provider}`, {
+      // Initiate Google SSO OAuth2 flow
+      const response = await fetch(`/api/auth/sso/google?provider=${provider}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

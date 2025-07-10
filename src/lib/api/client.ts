@@ -21,6 +21,7 @@ export interface ApiConnection {
   baseUrl: string;
   authType: 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM';
   status: 'ACTIVE' | 'INACTIVE' | 'ERROR' | 'PENDING';
+  connectionStatus?: 'draft' | 'disconnected' | 'connecting' | 'connected' | 'error' | 'revoked';
   ingestionStatus: 'SUCCEEDED' | 'PENDING' | 'FAILED';
   endpointCount: number;
   lastUsed?: string;
@@ -54,6 +55,14 @@ class ApiClient {
 
   constructor(baseUrl: string = '') {
     this.baseUrl = baseUrl;
+  }
+
+  private getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem('accessToken');
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
   }
 
   private async request<T>(
@@ -96,9 +105,9 @@ class ApiClient {
     }
   }
 
-  // OAuth2 Methods
+  // API Connection OAuth2 Methods
   async getOAuth2Providers(): Promise<ApiResponse<{ providers: OAuth2Provider[]; count: number }>> {
-    return this.request('/api/oauth/providers');
+    return this.request('/api/connections/oauth2/providers');
   }
 
   async initiateOAuth2Flow(
@@ -118,18 +127,91 @@ class ApiClient {
       ...(scope && { scope })
     });
 
-    return `${this.baseUrl}/api/oauth/authorize?${params.toString()}`;
+    // For test provider, we need to handle the redirect differently
+    if (provider === 'test') {
+      // Use XMLHttpRequest instead of fetch to get better control over redirects
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.open('GET', `/api/connections/oauth2/authorize?${params.toString()}`, true);
+        
+        // Set auth headers
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        
+        // Don't follow redirects automatically
+        xhr.responseType = 'text';
+        
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4) {
+            console.log('🔍 API Client Debug - XHR status:', xhr.status);
+            console.log('🔍 API Client Debug - XHR responseURL:', xhr.responseURL);
+            console.log('🔍 API Client Debug - XHR getAllResponseHeaders:', xhr.getAllResponseHeaders());
+            
+            // Check for redirect status codes
+            if (xhr.status >= 300 && xhr.status < 400) {
+              // Try to get location header
+              const location = xhr.getResponseHeader('location');
+              console.log('🔍 API Client Debug - Location header:', location);
+              
+              if (location) {
+                console.log('🔍 API Client Debug - Returning location:', location);
+                resolve(location);
+                return;
+              } else {
+                console.log('🔍 API Client Debug - No location header found');
+              }
+            } else {
+              console.log('🔍 API Client Debug - Not a redirect status');
+            }
+            
+            // If no redirect or no location header, try to parse response
+            try {
+              const response = JSON.parse(xhr.responseText);
+              console.log('🔍 API Client Debug - JSON response:', response);
+              if (response.success && response.data?.redirectUrl) {
+                resolve(response.data.redirectUrl);
+                return;
+              }
+            } catch (e) {
+              console.log('🔍 API Client Debug - JSON parsing failed:', e);
+            }
+            
+            reject(new Error(`Failed to get OAuth2 redirect URL for test provider. Status: ${xhr.status}`));
+          }
+        };
+        
+        xhr.onerror = function() {
+          console.log('🔍 API Client Debug - XHR error');
+          reject(new Error('Network error during OAuth2 initiation'));
+        };
+        
+        xhr.send();
+      });
+    } else {
+      // For non-test providers, use the normal JSON response flow
+      const response = await this.request<{ redirectUrl: string }>(`/api/connections/oauth2/authorize?${params.toString()}`);
+      
+      if (response.success && response.data?.redirectUrl) {
+        return response.data.redirectUrl;
+      }
+      
+      throw new Error(response.error || 'Failed to initiate OAuth2 flow');
+    }
   }
 
   async refreshOAuth2Token(apiConnectionId: string, provider: string): Promise<ApiResponse> {
-    return this.request('/api/oauth/refresh', {
+    return this.request('/api/connections/oauth2/refresh', {
       method: 'POST',
       body: JSON.stringify({ apiConnectionId, provider }),
     });
   }
 
   async getOAuth2Token(apiConnectionId: string): Promise<ApiResponse<{ accessToken: string; tokenType: string }>> {
-    return this.request(`/api/oauth/token?apiConnectionId=${apiConnectionId}`);
+    return this.request(`/api/connections/oauth2/token?apiConnectionId=${apiConnectionId}`);
   }
 
   // API Connection Methods

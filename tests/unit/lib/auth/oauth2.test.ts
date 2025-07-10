@@ -485,7 +485,7 @@ describe('Google OAuth2 Implementation', () => {
   describe('Authorization URL Building', () => {
     it('should build valid Google OAuth2 authorization URL', () => {
       const clientId = 'test-client-id';
-      const redirectUri = 'http://localhost:3000/api/auth/oauth2/callback';
+      const redirectUri = 'http://localhost:3000/api/auth/sso/callback';
       const state = 'test-state';
       
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');

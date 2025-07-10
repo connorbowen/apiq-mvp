@@ -52,7 +52,7 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
         provider,
         authConfig.clientId,
         authConfig.clientSecret,
-        authConfig.redirectUri || `${window.location.origin}/api/oauth/callback`,
+        authConfig.redirectUri || `${window.location.origin}/api/connections/oauth2/callback`,
         authConfig.scope
       );
 

@@ -1,8 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { oauth2Service } from '../../../src/lib/auth/oauth2';
-import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
-import { prisma } from '../../../lib/database/client';
+import { oauth2Service } from '../../../../src/lib/auth/oauth2';
+import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/session';
+import { ApplicationError } from '../../../../src/middleware/errorHandler';
+import { prisma } from '../../../../lib/database/client';
+
+/**
+ * API Connection OAuth2 Authorization Handler
+ * 
+ * This endpoint handles OAuth2 authorization for API connections to third-party services.
+ * It's separate from the user authentication OAuth2 flow which is handled in /api/auth/sso/.
+ */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -23,6 +30,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       redirectUri, 
       scope 
     } = req.query;
+
+    // Add debug logging
+    console.log('🔍 OAuth2 Authorization Debug:', {
+      provider,
+      apiConnectionId,
+      clientId: clientId ? '***' : undefined,
+      redirectUri,
+      scope,
+      userAgent: req.headers['user-agent']
+    });
 
     // Validate required parameters
     if (!apiConnectionId || typeof apiConnectionId !== 'string') {
@@ -108,6 +125,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       config
     );
 
+    // Add debug logging for the generated URL
+    console.log('🔗 Generated OAuth2 Authorization URL:', {
+      provider,
+      authorizationUrl,
+      isTestProvider: provider === 'test'
+    });
+
     // Log the OAuth2 authorization attempt
     await prisma.auditLog.create({
       data: {
@@ -123,17 +147,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    // For testability, send a JSON response with the redirect URL
-    res.status(200).json({
-      success: true,
-      data: {
-        redirectUrl: authorizationUrl
-      }
-    });
-    // In production, you may want to use: res.redirect(authorizationUrl);
+    // For test provider, redirect directly to the test OAuth2 server
+    if (provider === 'test') {
+      console.log('🔄 Redirecting to test OAuth2 provider:', authorizationUrl);
+      res.redirect(authorizationUrl);
+    } else {
+      // For other providers, send a JSON response with the redirect URL
+      console.log('📤 Sending JSON response for non-test provider');
+      res.status(200).json({
+        success: true,
+        data: {
+          redirectUrl: authorizationUrl
+        }
+      });
+    }
 
   } catch (error) {
-    console.error('OAuth2 authorization error:', error);
+    console.error('❌ OAuth2 authorization error:', error);
 
     if (error instanceof ApplicationError) {
       return res.status(error.statusCode).json({
