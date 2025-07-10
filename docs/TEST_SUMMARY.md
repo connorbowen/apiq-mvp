@@ -13,6 +13,22 @@ This document provides a comprehensive summary of the APIQ test suite, including
 - **Test Execution Time**: ~105 seconds total (optimized for fast feedback)
 - **Coverage**: Comprehensive coverage across unit, integration, and E2E tests
 
+### Connections Management Test Status ✅ **LATEST IMPROVEMENTS**
+
+**Current Results**: 16 tests passing, 12 tests failing (significant improvement from 0 passing)
+**Key Issues Resolved**:
+- ✅ **Duplicate Test ID Issues**: Fixed all duplicate `data-testid` attributes
+- ✅ **Modal Overlay Blocking**: Fixed modal closing behavior to prevent overlay blocking interactions
+- ✅ **Edit Functionality**: Implemented complete edit connection functionality with EditConnectionModal
+- ✅ **Success Message Display**: Added proper success message handling for form submissions
+- ✅ **HTTPS Validation**: Fixed form validation to properly display HTTPS requirement errors
+
+**Remaining Issues**:
+- Modal overlay still blocking some delete operations
+- OAuth2 implementation gaps (missing redirects and token handling)
+- Some loading state issues with buttons
+- Missing response time displays and error message containers
+
 ### Test Categories Breakdown
 
 #### Integration Tests: 243/248 passing (98% success rate) ✅ **LATEST**
@@ -154,6 +170,34 @@ This document provides a comprehensive summary of the APIQ test suite, including
   - E2E tests (Playwright, full UX and session flows)
   - Integration tests (API contract, error handling, token edge cases)
 - All tests pass. No regressions. Full compliance with PRD, user rules, and UX spec.
+
+### Connections Management Test Fixes ✅ **LATEST**
+
+**Duplicate Test ID Resolution**:
+- **Issue**: Multiple `data-testid` attributes with same values causing test failures
+- **Solution**: Made all test IDs unique across components
+  - `primary-action create-connection-btn` → `primary-action create-connection-header-btn` (header) and `primary-action create-connection-empty-btn` (empty state)
+  - `test-connection-btn` → `test-connection-list-btn` (list) and `test-connection-modal-btn` (modal)
+- **Impact**: Eliminated test selector conflicts and improved test reliability
+
+**Edit Connection Functionality Implementation**:
+- **New Component**: Created `EditConnectionModal.tsx` with full edit capabilities
+- **Features**: Pre-populated form fields, validation, success/error handling
+- **Security**: Credentials cannot be edited (security best practice)
+- **Integration**: Added to ConnectionsTab with proper state management
+- **Test Coverage**: Uncommented and enabled edit connection test
+
+**Modal Overlay Fixes**:
+- **Issue**: Modal backdrop blocking interactions after successful submissions
+- **Solution**: Added explicit `onClose()` call after successful form submission
+- **Impact**: Prevents modal overlay from blocking subsequent operations
+
+**Form Validation Improvements**:
+- **HTTPS Validation**: Fixed validation to properly display errors when HTTP URLs are entered
+- **Success Messages**: Added proper success message display for form submissions
+- **Error Handling**: Improved error message display and field validation
+
+**Test Results**: Significant improvement from 0 passing tests to 16 passing tests
 
 ### Test Infrastructure Improvements
 

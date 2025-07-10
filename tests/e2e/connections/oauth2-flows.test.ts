@@ -86,7 +86,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       // await uxHelper.validateActivationFirstUX();
       
       // Click create connection button (primary action)
-      await page.click('[data-testid="primary-action create-connection-btn"]');
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
       
       // Validate modal accessibility
       await uxHelper.validateFormAccessibility();
@@ -187,7 +187,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       // await uxHelper.validateActivationFirstUX();
       
       // Click create connection button (primary action)
-      await page.click('[data-testid="primary-action create-connection-btn"]');
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
       
       // Validate modal accessibility
       await uxHelper.validateFormAccessibility();
@@ -255,7 +255,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       // await uxHelper.validateActivationFirstUX();
       
       // Click create connection button (primary action)
-      await page.click('[data-testid="primary-action create-connection-btn"]');
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
       
       // Validate modal accessibility
       await uxHelper.validateFormAccessibility();
@@ -732,7 +732,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
     test('should show error for duplicate connection names with UX compliance', async ({ page }) => {
       
       // Click create connection button
-      await page.click('[data-testid="primary-action create-connection-btn"]');
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
       
       // Fill form with existing connection name
       await page.fill('[data-testid="connection-name-input"]', 'GitHub API'); // Use existing name
@@ -759,7 +759,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
     test('should show error if session expires mid-flow with UX compliance', async ({ page }) => {
       
       // Start OAuth2 flow
-      await page.click('[data-testid="primary-action create-connection-btn"]');
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
       
       // Fill form partially
       await page.fill('[data-testid="connection-name-input"]', 'Session Test');
@@ -786,7 +786,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
     test('should show error for invalid client credentials with UX compliance', async ({ page }) => {
       
       // Click create connection button
-      await page.click('[data-testid="primary-action create-connection-btn"]');
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
       
       // Fill form with invalid credentials
       await page.fill('[data-testid="connection-name-input"]', 'Invalid Credentials Test');
@@ -930,7 +930,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       // await uxHelper.validateResponsiveLayout();
       
       // Test OAuth2 flow on mobile
-      await page.click('[data-testid="primary-action create-connection-btn"]');
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
       
       // TODO: Add mobile form accessibility validation (P1)
       // await uxHelper.validateMobileAccessibility();
@@ -949,7 +949,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       // await uxHelper.validateMobileAccessibility();
       
       // Test OAuth2 flow accessibility
-      await page.click('[data-testid="primary-action create-connection-btn"]');
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
       
       // TODO: Add form accessibility validation (P0)
       // await uxHelper.validateFormAccessibility();
@@ -966,7 +966,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Test OAuth2 flow performance
       const startTime = Date.now();
-      await page.click('[data-testid="primary-action create-connection-btn"]');
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
       
       // TODO: Add response time validation (P1)
       // const loadTime = Date.now() - startTime;

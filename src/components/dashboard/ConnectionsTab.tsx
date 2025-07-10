@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { apiClient, ApiConnection } from '../../lib/api/client';
 import CreateConnectionModal from './CreateConnectionModal';
+import EditConnectionModal from './EditConnectionModal';
 
 interface ConnectionsTabProps {
   connections: ApiConnection[];
@@ -16,9 +17,15 @@ export default function ConnectionsTab({
   onConnectionError 
 }: ConnectionsTabProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingConnection, setEditingConnection] = useState<ApiConnection | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
+    show: boolean;
+    connectionId: string;
+    connectionName: string;
+  }>({ show: false, connectionId: '', connectionName: '' });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -30,6 +37,21 @@ export default function ConnectionsTab({
         return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusDisplayText = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'Active';
+      case 'INACTIVE':
+        return 'Inactive';
+      case 'ERROR':
+        return 'Error';
+      case 'TESTING':
+        return 'Testing';
+      default:
+        return status;
     }
   };
 
@@ -57,10 +79,21 @@ export default function ConnectionsTab({
     onConnectionError(error);
   };
 
+  const handleEditClick = (connection: ApiConnection) => {
+    setEditingConnection(connection);
+  };
+
+  const handleEditSuccess = () => {
+    setEditingConnection(null);
+    onConnectionCreated(); // Refresh the list
+  };
+
+  const handleEditError = (error: string) => {
+    onConnectionError(error);
+  };
+
   const handleDeleteClick = (connectionId: string, connectionName: string) => {
-    if (confirm(`Are you sure you want to delete the connection "${connectionName}"?`)) {
-      handleDeleteConfirm(connectionId);
-    }
+    setDeleteConfirmDialog({ show: true, connectionId, connectionName });
   };
 
   const handleDeleteConfirm = async (connectionId: string) => {
@@ -76,11 +109,12 @@ export default function ConnectionsTab({
       onConnectionError('Network error while deleting connection');
     } finally {
       setIsLoading(false);
+      setDeleteConfirmDialog({ show: false, connectionId: '', connectionName: '' });
     }
   };
 
   const handleDeleteCancel = () => {
-    // Cancel deletion - do nothing
+    setDeleteConfirmDialog({ show: false, connectionId: '', connectionName: '' });
   };
 
   const filteredConnections = connections.filter(connection => {
@@ -129,7 +163,7 @@ export default function ConnectionsTab({
           </select>
         </div>
         <button
-          data-testid="primary-action create-connection-btn"
+          data-testid="primary-action create-connection-header-btn"
           onClick={() => setShowCreateForm(true)}
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px]"
         >
@@ -165,7 +199,7 @@ export default function ConnectionsTab({
             {!searchTerm && filterType === 'all' && (
               <div className="mt-6">
                 <button
-                  data-testid="primary-action create-connection-btn"
+                  data-testid="primary-action create-connection-empty-btn"
                   onClick={() => setShowCreateForm(true)}
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
                 >
@@ -194,8 +228,11 @@ export default function ConnectionsTab({
                       <div className="ml-4">
                         <div className="flex items-center">
                           <p className="text-sm font-medium text-gray-900">{connection.name}</p>
-                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(connection.status)}`}>
-                            {connection.status}
+                          <span 
+                            data-testid="connection-status"
+                            className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(connection.status)}`}
+                          >
+                            {getStatusDisplayText(connection.status)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-500">{connection.description}</p>
@@ -220,19 +257,43 @@ export default function ConnectionsTab({
                       >
                         Details
                       </button>
+                      {connection.authType === 'OAUTH2' && (
+                        <>
+                          <button
+                            data-testid="authorize-oauth2-btn"
+                            onClick={() => {/* TODO: Implement OAuth2 authorization */}}
+                            className="text-green-600 hover:text-green-900 text-sm font-medium disabled:opacity-50"
+                            disabled={isLoading}
+                          >
+                            {isLoading ? 'Authorizing...' : 'Authorize'}
+                          </button>
+                          <button
+                            data-testid="refresh-token-btn"
+                            onClick={() => {/* TODO: Implement token refresh */}}
+                            className="text-blue-600 hover:text-blue-900 text-sm font-medium disabled:opacity-50"
+                            disabled={isLoading}
+                          >
+                            {isLoading ? 'Refreshing...' : 'Refresh'}
+                          </button>
+                        </>
+                      )}
                       <button
+                        data-testid="test-connection-list-btn"
                         onClick={() => {/* TODO: Implement test connection */}}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium disabled:opacity-50"
+                        disabled={isLoading}
                       >
-                        Test
+                        {isLoading ? 'Testing...' : 'Test'}
                       </button>
                       <button
-                        onClick={() => {/* TODO: Implement edit connection */}}
+                        data-testid="edit-connection-btn"
+                        onClick={() => handleEditClick(connection)}
                         className="text-gray-600 hover:text-gray-900 text-sm font-medium"
                       >
                         Edit
                       </button>
                       <button
+                        data-testid="delete-connection-btn"
                         onClick={() => handleDeleteClick(connection.id, connection.name)}
                         className="text-red-600 hover:text-red-900 text-sm font-medium"
                         disabled={isLoading}
@@ -255,6 +316,47 @@ export default function ConnectionsTab({
           onSuccess={handleConnectionSuccess}
           onError={handleConnectionError}
         />
+      )}
+
+      {/* Edit Connection Modal */}
+      {editingConnection && (
+        <EditConnectionModal
+          connection={editingConnection}
+          onClose={() => setEditingConnection(null)}
+          onSuccess={handleEditSuccess}
+          onError={handleEditError}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmDialog.show && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete the connection "{deleteConfirmDialog.connectionName}"?
+              </p>
+              <div className="flex justify-center space-x-4">
+                <button
+                  data-testid="cancel-delete-btn"
+                  onClick={handleDeleteCancel}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  data-testid="primary-action confirm-delete-btn"
+                  onClick={() => handleDeleteConfirm(deleteConfirmDialog.connectionId)}
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  {isLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

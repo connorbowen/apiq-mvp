@@ -287,7 +287,7 @@ test.describe('Mobile Responsiveness E2E Tests - P1 High Priority', () => {
       // Use the mobile menu button specifically (first button with this text)
       await page.locator('[data-testid="mobile-menu"] button:has-text("API Connections")').first().click();
       // Use the specific data-testid to avoid ambiguity
-      await page.getByTestId('primary-action create-connection-btn').first().click();
+      await page.getByTestId('primary-action create-connection-header-btn').first().click();
       
       // Fill basic connection details
       await page.fill('[data-testid="connection-name-input"]', 'Mobile Slack API');

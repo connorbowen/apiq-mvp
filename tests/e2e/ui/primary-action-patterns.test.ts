@@ -40,8 +40,8 @@ test.describe('Primary Action Button Patterns - UX Compliance', () => {
     
     // Test connections tab primary actions
     await page.getByTestId('tab-connections').click();
-    await expect(page.getByTestId('primary-action create-connection-btn')).toBeVisible();
-    await expect(page.getByTestId('primary-action create-connection-btn')).toHaveText('Add Connection');
+    await expect(page.getByTestId('primary-action create-connection-header-btn')).toBeVisible();
+    await expect(page.getByTestId('primary-action create-connection-header-btn')).toHaveText('Add Connection');
     
     // Test secrets tab primary actions
     await page.getByTestId('tab-secrets').click();
@@ -95,7 +95,7 @@ test.describe('Primary Action Button Patterns - UX Compliance', () => {
     
     // Test connections tab button styling
     await page.getByTestId('tab-connections').click();
-    const connectionButton = page.getByTestId('primary-action create-connection-btn');
+    const connectionButton = page.getByTestId('primary-action create-connection-header-btn');
     await expect(connectionButton).toHaveClass(/bg-indigo-600/);
     await expect(connectionButton).toHaveClass(/hover:bg-indigo-700/);
     await expect(connectionButton).toHaveClass(/min-h-\[44px\]/);
@@ -131,7 +131,7 @@ test.describe('Primary Action Button Patterns - UX Compliance', () => {
     if (await connectionCards.count() === 0) {
       // Should show empty state with primary action
       await expect(page.getByText('No connections')).toBeVisible();
-      await expect(page.getByTestId('primary-action create-connection-btn')).toBeVisible();
+      await expect(page.getByTestId('primary-action create-connection-header-btn')).toBeVisible();
     }
     
     // Test empty state for secrets (if no secrets exist)
