@@ -62,7 +62,7 @@ describe('OAuth2Service', () => {
       expect(config?.name).toBe('Google');
       expect(config?.authorizationUrl).toBe('https://accounts.google.com/o/oauth2/v2/auth');
       expect(config?.tokenUrl).toBe('https://oauth2.googleapis.com/token');
-      expect(config?.scope).toBe('https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly');
+      expect(config?.scope).toBe('https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.modify');
     });
 
     it('should return null for unsupported provider', () => {
@@ -116,7 +116,7 @@ describe('OAuth2Service', () => {
         authorizationUrl: '',
         tokenUrl: '',
         redirectUri: 'https://example.com/callback',
-        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
+        scope: '',
         state: 'google'
       };
 
@@ -133,7 +133,7 @@ describe('OAuth2Service', () => {
       expect(url).toContain('response_type=code');
       expect(url).toContain('state=');
       // Accept both %20 and + as valid encodings for the space in the scope parameter
-      expect(url).toMatch(/scope=https%3A%2F%2Fwww\.googleapis\.com%2Fauth%2Fcalendar(%20|\+)https%3A%2F%2Fwww\.googleapis\.com%2Fauth%2Fgmail\.readonly/);
+      expect(url).toMatch(/scope=https%3A%2F%2Fwww\.googleapis\.com%2Fauth%2Fcalendar(%20|\+)https%3A%2F%2Fwww\.googleapis\.com%2Fauth%2Fgmail\.modify/);
     });
 
     it('should throw error for unsupported provider', () => {
@@ -198,7 +198,7 @@ describe('OAuth2Service', () => {
         authorizationUrl: '',
         tokenUrl: '',
         redirectUri: 'https://example.com/callback',
-        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
+        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.modify',
         state: 'google'
       };
 
@@ -235,7 +235,7 @@ describe('OAuth2Service', () => {
         authorizationUrl: '',
         tokenUrl: '',
         redirectUri: 'https://example.com/callback',
-        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
+        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.modify',
         state: 'google'
       };
 

@@ -63,7 +63,7 @@ export class OAuth2Service {
         name: 'Google',
         authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
         tokenUrl: 'https://oauth2.googleapis.com/token',
-        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.readonly',
+        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.modify',
         userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo'
       }],
       ['test', {
