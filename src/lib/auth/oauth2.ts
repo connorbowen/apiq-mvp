@@ -10,6 +10,7 @@ export interface OAuth2Config {
   redirectUri: string;
   scope: string;
   state?: string;
+  provider?: string;
 }
 
 export interface OAuth2TokenResponse {
@@ -50,8 +51,29 @@ export class OAuth2Service {
     this.encryptionService = encryptionService;
     this.generateSecureToken = generateSecureToken;
     this.prismaClient = prismaClient;
-    this.providers = new Map();
-    this.initializeProviders();
+    this.providers = new Map([
+      ['github', {
+        name: 'GitHub',
+        authorizationUrl: 'https://github.com/login/oauth/authorize',
+        tokenUrl: 'https://github.com/login/oauth/access_token',
+        scope: 'repo user',
+        userInfoUrl: 'https://api.github.com/user'
+      }],
+      ['google', {
+        name: 'Google',
+        authorizationUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+        tokenUrl: 'https://oauth2.googleapis.com/token',
+        scope: 'https://www.googleapis.com/auth/calendar',
+        userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo'
+      }],
+      ['test', {
+        name: 'Test OAuth2 Provider',
+        authorizationUrl: 'http://localhost:3000/api/test-oauth2/authorize',
+        tokenUrl: 'http://localhost:3000/api/test-oauth2/token',
+        scope: 'read write',
+        userInfoUrl: 'http://localhost:3000/api/test-oauth2/userinfo'
+      }]
+    ]);
   }
 
   private initializeProviders(): void {
@@ -139,8 +161,14 @@ export class OAuth2Service {
         throw new ApplicationError('State parameter expired', 400, 'EXPIRED_STATE');
       }
 
+      // Create config with provider from decoded state
+      const configWithProvider = {
+        ...config,
+        provider: stateData.provider
+      };
+
       // Exchange authorization code for tokens
-      const tokenResponse = await this.exchangeCodeForTokens(code, config);
+      const tokenResponse = await this.exchangeCodeForTokens(code, configWithProvider);
       if (!tokenResponse) {
         throw new ApplicationError('Failed to exchange code for tokens', 400, 'TOKEN_EXCHANGE_FAILED');
       }
@@ -170,9 +198,10 @@ export class OAuth2Service {
    * Exchange authorization code for access and refresh tokens
    */
   private async exchangeCodeForTokens(code: string, config: OAuth2Config): Promise<OAuth2TokenResponse> {
-    const providerInfo = this.providers.get(config.state || 'generic');
+    const provider = config.provider || config.state || 'generic';
+    const providerInfo = this.providers.get(provider);
     if (!providerInfo) {
-      throw new ApplicationError('Unsupported OAuth2 provider', 400, 'UNSUPPORTED_PROVIDER');
+      throw new ApplicationError(`Unsupported OAuth2 provider: ${provider}`, 400, 'UNSUPPORTED_PROVIDER');
     }
 
     const tokenData = new URLSearchParams();
@@ -213,66 +242,103 @@ export class OAuth2Service {
     provider: string,
     tokenResponse: OAuth2TokenResponse
   ): Promise<void> {
-    // Encrypt tokens before storing
-    const encryptedAccessToken = this.encryptionService.encrypt(tokenResponse.access_token);
-    const encryptedRefreshToken = tokenResponse.refresh_token 
-      ? this.encryptionService.encrypt(tokenResponse.refresh_token)
-      : null;
-
-    // Calculate token expiration
-    const expiresAt = tokenResponse.expires_in 
-      ? new Date(Date.now() + tokenResponse.expires_in * 1000)
-      : null;
-
-    // Store in ApiCredential table
-    await this.prismaClient.apiCredential.upsert({
-      where: {
-        userId_apiConnectionId: {
-          userId,
-          apiConnectionId
-        }
-      },
-      update: {
-        encryptedData: JSON.stringify({
-          accessToken: encryptedAccessToken.encryptedData,
-          refreshToken: encryptedRefreshToken?.encryptedData || null,
-          tokenType: tokenResponse.token_type || 'Bearer',
-          scope: tokenResponse.scope,
-          provider
-        }),
-        keyId: encryptedAccessToken.keyId,
-        expiresAt,
-        updatedAt: new Date()
-      },
-      create: {
+    try {
+      console.log('🔍 OAuth2 Service - Storing tokens for:', {
         userId,
         apiConnectionId,
-        encryptedData: JSON.stringify({
-          accessToken: encryptedAccessToken.encryptedData,
-          refreshToken: encryptedRefreshToken?.encryptedData || null,
-          tokenType: tokenResponse.token_type || 'Bearer',
-          scope: tokenResponse.scope,
-          provider
-        }),
-        keyId: encryptedAccessToken.keyId,
-        expiresAt
-      }
-    });
+        provider,
+        hasAccessToken: !!tokenResponse.access_token,
+        hasRefreshToken: !!tokenResponse.refresh_token
+      });
 
-    // Log the OAuth2 connection
-    await this.prismaClient.auditLog.create({
-      data: {
-        userId,
-        action: 'OAUTH2_CONNECT',
-        resource: 'API_CONNECTION',
-        resourceId: apiConnectionId,
-        details: {
-          provider,
-          scope: tokenResponse.scope,
-          expiresAt
-        }
+      // Encrypt tokens before storing
+      const encryptedAccessToken = this.encryptionService.encrypt(tokenResponse.access_token);
+      const encryptedRefreshToken = tokenResponse.refresh_token 
+        ? this.encryptionService.encrypt(tokenResponse.refresh_token)
+        : null;
+
+      console.log('🔍 OAuth2 Service - Tokens encrypted successfully');
+
+      // Calculate token expiration
+      const expiresAt = tokenResponse.expires_in 
+        ? new Date(Date.now() + tokenResponse.expires_in * 1000)
+        : null;
+
+      console.log('🔍 OAuth2 Service - Storing in ApiCredential table...');
+
+      // Store in ApiCredential table with error handling
+      try {
+        await this.prismaClient.apiCredential.upsert({
+          where: {
+            userId_apiConnectionId: {
+              userId,
+              apiConnectionId
+            }
+          },
+          update: {
+            encryptedData: JSON.stringify({
+              accessToken: encryptedAccessToken.encryptedData,
+              refreshToken: encryptedRefreshToken?.encryptedData || null,
+              tokenType: tokenResponse.token_type || 'Bearer',
+              scope: tokenResponse.scope,
+              provider
+            }),
+            keyId: encryptedAccessToken.keyId,
+            expiresAt,
+            updatedAt: new Date()
+          },
+          create: {
+            userId,
+            apiConnectionId,
+            encryptedData: JSON.stringify({
+              accessToken: encryptedAccessToken.encryptedData,
+              refreshToken: encryptedRefreshToken?.encryptedData || null,
+              tokenType: tokenResponse.token_type || 'Bearer',
+              scope: tokenResponse.scope,
+              provider
+            }),
+            keyId: encryptedAccessToken.keyId,
+            expiresAt
+          }
+        });
+
+        console.log('🔍 OAuth2 Service - Tokens stored successfully in ApiCredential');
+      } catch (dbError) {
+        console.error('🔍 OAuth2 Service - Database error storing tokens:', dbError);
+        throw new ApplicationError(
+          `Failed to store OAuth2 tokens: ${dbError instanceof Error ? dbError.message : 'Unknown database error'}`,
+          500,
+          'TOKEN_STORAGE_FAILED'
+        );
       }
-    });
+
+      // Log the OAuth2 connection with error handling
+      try {
+        await this.prismaClient.auditLog.create({
+          data: {
+            userId,
+            action: 'OAUTH2_CONNECT',
+            resource: 'API_CONNECTION',
+            resourceId: apiConnectionId,
+            details: {
+              provider,
+              scope: tokenResponse.scope,
+              expiresAt
+            }
+          }
+        });
+
+        console.log('🔍 OAuth2 Service - Audit log created successfully');
+      } catch (auditError) {
+        console.error('🔍 OAuth2 Service - Failed to create audit log:', auditError);
+        // Don't throw here - audit logging failure shouldn't break the OAuth2 flow
+      }
+
+      console.log('🔍 OAuth2 Service - Token storage completed successfully');
+    } catch (error) {
+      console.error('🔍 OAuth2 Service - Token storage failed:', error);
+      throw error;
+    }
   }
 
   /**
@@ -329,9 +395,10 @@ export class OAuth2Service {
    * Exchange refresh token for new access token
    */
   private async exchangeRefreshToken(refreshToken: string, config: OAuth2Config): Promise<OAuth2TokenResponse> {
-    const providerInfo = this.providers.get(config.state || 'generic');
+    const provider = config.provider || config.state || 'generic';
+    const providerInfo = this.providers.get(provider);
     if (!providerInfo) {
-      throw new ApplicationError('Unsupported OAuth2 provider', 400, 'UNSUPPORTED_PROVIDER');
+      throw new ApplicationError(`Unsupported OAuth2 provider: ${provider}`, 400, 'UNSUPPORTED_PROVIDER');
     }
 
     const tokenData = new URLSearchParams();
@@ -435,6 +502,18 @@ export class OAuth2Service {
    * Decode state parameter from OAuth2 flow
    */
   private decodeState(stateParam: string): OAuth2State | null {
+    try {
+      const stateString = Buffer.from(stateParam, 'base64url').toString();
+      return JSON.parse(stateString);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Public static method to decode state parameter for OAuth2 flow
+   */
+  public static decodeStateParam(stateParam: string): OAuth2State | null {
     try {
       const stateString = Buffer.from(stateParam, 'base64url').toString();
       return JSON.parse(stateString);

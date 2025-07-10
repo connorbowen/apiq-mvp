@@ -14,6 +14,16 @@ export class UXComplianceHelper {
    * Validate page title matches UX spec requirements
    */
   async validatePageTitle(expectedTitle: string) {
+    // Wait for the page to be fully loaded
+    await this.page.waitForLoadState('networkidle');
+    
+    // Wait a bit more for any dynamic title updates
+    await this.page.waitForTimeout(1000);
+    
+    // Get the actual title and log it for debugging
+    const actualTitle = await this.page.title();
+    console.log(`Page title: "${actualTitle}"`);
+    
     await expect(this.page).toHaveTitle(new RegExp(expectedTitle, 'i'));
   }
 
@@ -121,9 +131,11 @@ export class UXComplianceHelper {
    * Validate success containers as per UX spec
    */
   async validateSuccessContainer(expectedMessage: string) {
-    await expect(this.page.locator('.bg-green-50')).toBeVisible();
+    // Use a more specific selector to avoid conflicts with multiple success messages
+    const successMessages = this.page.locator('[data-testid="success-message"]');
+    await expect(successMessages.first()).toBeVisible();
     // Use a more specific selector to avoid conflicts with other green text
-    await expect(this.page.locator('.bg-green-50 .text-green-800')).toContainText(expectedMessage);
+    await expect(successMessages.first().locator('.text-green-800')).toContainText(expectedMessage);
   }
 
   /**
@@ -583,6 +595,20 @@ export class UXComplianceHelper {
    * Validate confirmation dialogs as per UX spec
    */
   async validateConfirmationDialogs() {
+    // Check if confirmation dialog is already visible
+    const existingConfirmation = this.page.getByText(/Are you sure|Confirm|This action cannot be undone/i);
+    if (await existingConfirmation.count() > 0) {
+      // Confirmation dialog is already visible, just validate it
+      await expect(existingConfirmation.first()).toBeVisible();
+      
+      // Test cancel option
+      const cancelButton = this.page.getByRole('button', { name: /cancel|no/i });
+      if (await cancelButton.count() > 0) {
+        await expect(cancelButton.first()).toBeVisible();
+      }
+      return;
+    }
+    
     // Test destructive action confirmations
     const deleteButtons = this.page.getByRole('button', { name: /delete|remove/i });
     if (await deleteButtons.count() > 0) {

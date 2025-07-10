@@ -39,6 +39,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         authType: connection.authType,
         documentationUrl: connection.documentationUrl,
         status: connection.status,
+        connectionStatus: connection.connectionStatus,
         ingestionStatus: connection.ingestionStatus,
         // Computed fields
         endpointCount: connection.endpoints.length,
@@ -110,9 +111,9 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         }
 
         // Validate OAuth2 provider if specified
-        if (oauth2Config.oauth2Provider) {
-          const validProviders = ['GITHUB', 'GOOGLE', 'SLACK', 'CUSTOM'];
-          if (!validProviders.includes(oauth2Config.oauth2Provider)) {
+        if (oauth2Config.provider) {
+          const validProviders = ['github', 'google', 'slack', 'discord', 'test', 'custom'];
+          if (!validProviders.includes(oauth2Config.provider)) {
             return res.status(400).json({
               success: false,
               error: `Invalid OAuth2 provider. Must be one of: ${validProviders.join(', ')}`,

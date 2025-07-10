@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ApiConnection } from '@/types';
-import { apiClient } from '@/lib/api/client';
+import { ApiConnection } from '../../types';
+import { apiClient } from '../../lib/api/client';
 
 interface EditConnectionModalProps {
   connection: ApiConnection;
@@ -23,7 +23,7 @@ export default function EditConnectionModal({
     description: connection.description || '',
     baseUrl: connection.baseUrl,
     authType: connection.authType,
-    openApiUrl: connection.documentationUrl || '',
+    openApiUrl: (connection as any).documentationUrl || '',
     provider: '',
     credentials: {
       apiKey: '',
@@ -175,6 +175,7 @@ export default function EditConnectionModal({
     return (
       <div 
         id={`${fieldName}-error`}
+        data-testid={`${fieldName}-error`}
         role="alert"
         aria-live="polite"
         className="mt-1 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2"
@@ -377,7 +378,7 @@ export default function EditConnectionModal({
               </button>
               <button
                 type="submit"
-                data-testid="primary-action submit-connection-btn"
+                data-testid="primary-action update-connection-btn"
                 disabled={isSubmitting}
                 className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px]"
               >
