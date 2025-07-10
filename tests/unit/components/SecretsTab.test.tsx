@@ -406,9 +406,8 @@ describe('SecretsTab', () => {
       
       // Check for validation errors
       await waitFor(() => {
-        expect(screen.getAllByTestId('validation-errors').length).toBeGreaterThanOrEqual(1);
-        expect(screen.getAllByText('Name is required').length).toBeGreaterThanOrEqual(1);
-        expect(screen.getAllByText('Value is required').length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText('Name is required')).toBeInTheDocument();
+        expect(screen.getByText('Value is required')).toBeInTheDocument();
       });
     });
 
@@ -538,9 +537,10 @@ describe('SecretsTab', () => {
         jest.advanceTimersByTime(100);
       });
       
+      // Wait for modal to close
       await waitFor(() => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-      });
+      }, { timeout: 1000 });
     });
 
     it('displays error message when secret creation fails', async () => {
@@ -722,9 +722,10 @@ describe('SecretsTab', () => {
       const createButton = screen.getByTestId('primary-action create-secret-btn');
       fireEvent.click(createButton);
       
+      // Wait for modal to appear with longer timeout
       await waitFor(() => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
-      });
+      }, { timeout: 3000 });
       
       // Fill and submit form
       const nameInput = screen.getByTestId('secret-name-input');

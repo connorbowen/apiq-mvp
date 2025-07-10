@@ -77,7 +77,7 @@ class ApiClient {
 
       if (!response.ok) {
         // Handle 401 by redirecting to login, except for login endpoint
-        if (response.status === 401 && !endpoint.includes('/auth/login')) {
+        if (response.status === 401 && !endpoint.includes('/api/auth/login')) {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('user');

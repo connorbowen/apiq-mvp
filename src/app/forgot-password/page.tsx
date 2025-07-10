@@ -65,10 +65,16 @@ export default function ForgotPasswordPage() {
     setError("");
     setValidationError("");
     
-    // Client-side validation
-    const emailError = validateEmail(email);
-    if (emailError) {
-      setValidationError(emailError);
+    const form = e.target as HTMLFormElement;
+    const emailInput = form.elements.namedItem('email') as HTMLInputElement;
+
+    if (!emailInput.value) {
+      setValidationError('Email is required');
+      setIsLoading(false);
+      return;
+    }
+    if (!emailInput.checkValidity()) {
+      setValidationError('Please enter a valid email address');
       setIsLoading(false);
       return;
     }
@@ -78,20 +84,12 @@ export default function ForgotPasswordPage() {
       const response = await apiClient.requestPasswordReset(email);
       console.log('🔍 [FORGOT-PASSWORD] API response:', response);
       
-      if (response && response.success) {
-        console.log('🔍 [FORGOT-PASSWORD] Success! Navigating to success page...');
-        // Keep loading state true during navigation to prevent button re-enabling
-        await router.replace(`/forgot-password-success?email=${encodeURIComponent(email)}`);
-        return; // Stop here to prevent finally block from running
-      }
-      
-      console.log('🔍 [FORGOT-PASSWORD] API returned error:', response?.error);
-      // Handle error response from API - including rate limiting
-      if (response?.code === 'RATE_LIMIT_EXCEEDED') {
-        setError('Too many password reset requests. Please try again later.');
-      } else {
-        setError(response?.error || 'Unexpected response.');
-      }
+      // Always redirect to success page for security reasons
+      // This prevents user enumeration attacks by not revealing whether an email exists
+      console.log('🔍 [FORGOT-PASSWORD] Success! Navigating to success page...');
+      // Keep loading state true during navigation to prevent button re-enabling
+      await router.replace(`/forgot-password-success?email=${encodeURIComponent(email)}`);
+      return; // Stop here to prevent finally block from running
     } catch (err: any) {
       console.log('🔍 [FORGOT-PASSWORD] Exception caught:', err);
       setError(err?.response?.data?.message ?? err.message ?? 'Password reset failed.');
@@ -111,7 +109,7 @@ export default function ForgotPasswordPage() {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Forgot your password?</h2>
           <p className="mt-2 text-center text-sm text-gray-600">Enter your email to receive a password reset link.</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit} role="form" data-testid="forgot-password-form">
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit} role="form" data-testid="forgot-password-form" noValidate>
           {error && (
             <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert" data-testid="alert-error">
               {error}

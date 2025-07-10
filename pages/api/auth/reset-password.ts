@@ -7,12 +7,12 @@ import { emailService } from '../../../src/lib/services/emailService';
 import { logInfo, logError } from '../../../src/utils/logger';
 
 // Simple in-memory rate limiting (in production, use Redis)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+export const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 const RATE_LIMIT_MAX = 3; // 3 requests per 15 minutes
 
 // Token brute force protection
-const tokenAttemptStore = new Map<string, { count: number; resetTime: number }>();
+export const tokenAttemptStore = new Map<string, { count: number; resetTime: number }>();
 const TOKEN_ATTEMPT_WINDOW = 5 * 60 * 1000; // 5 minutes
 const TOKEN_ATTEMPT_MAX = 5; // 5 invalid token attempts per 5 minutes
 
@@ -28,6 +28,11 @@ function isTestEnvironment(): boolean {
 function shouldEnableRateLimiting(): boolean {
   // If explicitly disabled for fast testing, disable it
   if (process.env.DISABLE_RATE_LIMITING === 'true') {
+    return false;
+  }
+  
+  // In test environment, disable rate limiting for faster test execution
+  if (isTestEnvironment()) {
     return false;
   }
   

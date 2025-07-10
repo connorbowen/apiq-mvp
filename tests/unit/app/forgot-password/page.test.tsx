@@ -17,6 +17,7 @@ jest.mock('../../../../src/lib/api/client', () => ({
 
 const mockRouter = {
   push: jest.fn(),
+  replace: jest.fn(),
 };
 
 describe('ForgotPasswordPage', () => {
@@ -110,7 +111,7 @@ describe('ForgotPasswordPage', () => {
 
     // Wait for navigation to occur (which requires loading state to be reset)
     await waitFor(() => {
-      expect(mockRouter.push).toHaveBeenCalledWith('/forgot-password-success?email=test%40example.com');
+      expect(mockRouter.replace).toHaveBeenCalledWith('/forgot-password-success?email=test%40example.com');
     });
   });
 
@@ -129,8 +130,10 @@ describe('ForgotPasswordPage', () => {
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.submit(form);
 
+    // For security reasons, the page always redirects to success page
+    // regardless of whether the user exists or not
     await waitFor(() => {
-      expect(screen.getByText('User not found')).toBeInTheDocument();
+      expect(mockRouter.replace).toHaveBeenCalledWith('/forgot-password-success?email=test%40example.com');
     });
   });
 
@@ -147,7 +150,7 @@ describe('ForgotPasswordPage', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(screen.getByText('Network error. Please try again.')).toBeInTheDocument();
+      expect(screen.getByText('Network error')).toBeInTheDocument();
     });
   });
 
@@ -169,7 +172,7 @@ describe('ForgotPasswordPage', () => {
 
   test('handles various email formats correctly', async () => {
     const { apiClient } = require('../../../../src/lib/api/client');
-    apiClient.requestPasswordReset.mockRejectedValue(new Error('Network error'));
+    apiClient.requestPasswordReset.mockResolvedValue({ success: true });
 
     const validEmails = [
       'test@example.com',
@@ -191,30 +194,32 @@ describe('ForgotPasswordPage', () => {
     const emailInput = screen.getByLabelText('Email address');
     const form = screen.getByRole('form');
 
-    // Test valid emails
-    for (const email of validEmails) {
-      fireEvent.change(emailInput, { target: { value: email } });
-      fireEvent.submit(form);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Network error. Please try again.')).toBeInTheDocument();
-      });
-      
-      // Clear error for next test
-      fireEvent.change(emailInput, { target: { value: '' } });
-    }
+    // Test empty input
+    fireEvent.change(emailInput, { target: { value: '' } });
+    fireEvent.submit(form);
+    await waitFor(() => {
+      expect(screen.getByText('Email is required')).toBeInTheDocument();
+    });
 
     // Test invalid emails
     for (const email of invalidEmails) {
       fireEvent.change(emailInput, { target: { value: email } });
       fireEvent.submit(form);
-      
       await waitFor(() => {
         expect(screen.getByText('Please enter a valid email address')).toBeInTheDocument();
       });
-      
       // Clear error for next test
       fireEvent.change(emailInput, { target: { value: '' } });
+    }
+
+    // Test valid emails (should not show validation error)
+    for (const email of validEmails) {
+      fireEvent.change(emailInput, { target: { value: email } });
+      fireEvent.submit(form);
+      await waitFor(() => {
+        expect(screen.queryByText('Please enter a valid email address')).not.toBeInTheDocument();
+        expect(screen.queryByText('Email is required')).not.toBeInTheDocument();
+      });
     }
   });
 

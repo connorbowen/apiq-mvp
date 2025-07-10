@@ -2,7 +2,64 @@
 
 This guide covers common issues and their solutions when working with the APIQ project.
 
-## �� Common Issues
+## 🔐 Common Issues
+
+### Authentication Issues
+
+#### Issue: Login form not showing error messages for invalid credentials
+**Error**: Login form submits but doesn't display any error message when credentials are wrong
+
+**Root Cause**: API client was redirecting on 401 errors even for the login endpoint, preventing error display
+
+**Solution**: This has been fixed. The API client now properly handles login errors:
+- Updated 401 redirect logic to exclude `/api/auth/login` endpoint
+- Login errors now properly reach frontend components for display
+- Users see clear "Invalid credentials" messages instead of silent failures
+
+**Verification**:
+```bash
+# Test login with invalid credentials
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"invalid@example.com","password":"wrong"}'
+
+# Should return 401 with error message, not redirect
+```
+
+#### Issue: Forgot password form not validating email format
+**Error**: Form submits invalid email formats without showing validation errors
+
+**Root Cause**: Browser's built-in email validation was interfering with custom validation
+
+**Solution**: This has been fixed. The form now properly validates email format:
+- Added `noValidate` to form while keeping `type="email"` for accessibility
+- Implemented custom email validation before API submission
+- Clear error messages for invalid formats: "Please enter a valid email address"
+
+**Verification**:
+```bash
+# Test form validation in browser
+# Try submitting with invalid email like "invalid-email"
+# Should show validation error without making API call
+```
+
+#### Issue: Password reset tests failing due to rate limiting
+**Error**: E2E tests failing with "Too many password reset requests" errors
+
+**Root Cause**: Rate limiting was enabled during tests, causing test failures
+
+**Solution**: This has been fixed. Rate limiting is now disabled in test environment:
+- Rate limiting automatically disabled when `isTestEnvironment()` returns true
+- Test utilities clear rate limit stores between tests
+- Tests now run reliably without hitting rate limits
+
+**Verification**:
+```bash
+# Run password reset tests
+npm run test:e2e -- tests/e2e/auth/password-reset.test.ts
+
+# Should all pass without rate limiting errors
+```
 
 ### Password Reset Issues
 

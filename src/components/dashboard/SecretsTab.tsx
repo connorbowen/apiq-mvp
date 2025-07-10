@@ -250,7 +250,10 @@ export default function SecretsTab({
       }
     });
     
-    setShowCreateForm(false);
+    // Call the parent callback to notify that a secret was created
+    onSecretCreated();
+    
+    // Note: Modal will close automatically after 4 seconds via setTimeout in CreateSecretModal
   };
 
   const handleSecretError = (error: string) => {

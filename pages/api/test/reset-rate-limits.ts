@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { memoryRateLimitStore } from '../../../src/middleware/rateLimiter';
+import { rateLimitStore, tokenAttemptStore } from '../auth/reset-password';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (process.env.NODE_ENV !== 'test') {
@@ -11,7 +12,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Reset the main rate limit store
     await memoryRateLimitStore.resetAll();
+    
+    // Reset password reset rate limit stores
+    rateLimitStore.clear();
+    tokenAttemptStore.clear();
+    
     res.status(200).json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to reset rate limits' });

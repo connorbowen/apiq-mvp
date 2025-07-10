@@ -1773,9 +1773,119 @@ For external services (OpenAI, external APIs), we use mocks in tests but ensure:
 - Error handling is tested
 - Structured logging prevents circular references
 
-## Security Guidelines
+## Authentication Development
 
-### Authentication & Authorization
+### Authentication Flow Best Practices
+
+#### API Client Error Handling
+When developing authentication-related features, ensure proper error handling:
+
+```typescript
+// ✅ Correct: Exclude login endpoint from 401 redirects
+if (response.status === 401 && !endpoint.includes('/api/auth/login')) {
+  // Redirect to login for other endpoints
+  window.location.href = '/login?reason=auth';
+  return { success: false, error: 'Authentication required' };
+}
+
+// ❌ Incorrect: Redirect on all 401 errors
+if (response.status === 401) {
+  // This prevents login errors from being displayed
+  window.location.href = '/login?reason=auth';
+}
+```
+
+#### Form Validation Patterns
+For forms with email validation, use this pattern to maintain accessibility while enabling custom validation:
+
+```typescript
+// ✅ Correct: Maintain email type for accessibility, add noValidate for custom validation
+<form onSubmit={handleSubmit} noValidate>
+  <input
+    type="email"  // Keep for accessibility and mobile UX
+    name="email"
+    value={email}
+    onChange={handleEmailChange}
+    required
+  />
+</form>
+
+// In submit handler, validate before API call
+const handleSubmit = async (e: FormEvent) => {
+  e.preventDefault();
+  
+  // Clear previous errors
+  setValidationError('');
+  
+  // Client-side validation
+  if (!email) {
+    setValidationError('Email is required');
+    return;
+  }
+  
+  // Email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    setValidationError('Please enter a valid email address');
+    return;
+  }
+  
+  // Proceed with API call
+  const response = await apiClient.requestPasswordReset(email);
+  // Handle response...
+};
+```
+
+#### Rate Limiting in Test Environment
+When implementing rate limiting, ensure it's disabled in test environments:
+
+```typescript
+// ✅ Correct: Environment-aware rate limiting
+function shouldEnableRateLimiting(): boolean {
+  // If explicitly disabled for fast testing, disable it
+  if (process.env.DISABLE_RATE_LIMITING === 'true') {
+    return false;
+  }
+  
+  // In test environment, disable rate limiting for faster test execution
+  if (isTestEnvironment()) {
+    return false;
+  }
+  
+  // Otherwise, always enable rate limiting (default secure behavior)
+  return true;
+}
+
+// Helper function to detect test environment
+function isTestEnvironment(): boolean {
+  return (
+    process.env.NODE_ENV === 'test' ||
+    process.env.TEST_MODE === 'true' ||
+    process.env.PLAYWRIGHT_TEST === 'true'
+  );
+}
+```
+
+#### Test Environment Setup
+For authentication tests, ensure proper test isolation:
+
+```typescript
+// ✅ Correct: Clear rate limits between tests
+beforeEach(async () => {
+  // Clear rate limiting state
+  await fetch('/api/test/reset-rate-limits', { method: 'POST' });
+});
+
+// ✅ Correct: Mock router with all required methods
+const mockRouter = {
+  push: jest.fn(),
+  replace: jest.fn(),  // Don't forget this for navigation testing
+  back: jest.fn(),
+  forward: jest.fn(),
+};
+```
+
+### Security Guidelines
 
 1. **Session Management**
 
