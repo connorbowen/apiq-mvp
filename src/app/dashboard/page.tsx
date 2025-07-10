@@ -37,15 +37,6 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const userData = localStorage.getItem('user');
-    
-    if (!token || !userData) {
-      setIsLoading(false); // Stop loading before redirect
-      router.push('/login');
-      return;
-    }
-    
     const loadUser = async () => {
       try {
         const userResponse = await apiClient.getCurrentUser();
@@ -180,10 +171,22 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [loadConnections, loadWorkflows, loadSecrets]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear cookies
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    
+    // Clear any remaining localStorage data
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
+    
     router.push('/login');
   };
 

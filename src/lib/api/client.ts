@@ -69,14 +69,12 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const token = localStorage.getItem('accessToken');
-    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
+      credentials: 'include', // Include cookies in requests
       ...options,
     };
 
@@ -87,10 +85,13 @@ class ApiClient {
       if (!response.ok) {
         // Handle 401 by redirecting to login, except for login endpoint
         if (response.status === 401 && !endpoint.includes('/api/auth/login')) {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          window.location.href = '/login?reason=auth';
+          // Clear any remaining localStorage data
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            window.location.href = '/login?reason=auth';
+          }
           return { success: false, error: 'Authentication required' };
         }
         return { success: false, error: data.error || 'Request failed', code: data.code };

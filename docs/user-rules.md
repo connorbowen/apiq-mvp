@@ -736,7 +736,7 @@ describe('/api/users', () => {
 npm run test:unit && \
 npm run test:integration && \
 npm run test:e2e:ui-critical && \
-npx playwright test tests/e2e/ui/basic-navigation.test.ts
+npx playwright test tests/e2e/ui/navigation.test.ts
 ```
 
 #### **Critical E2E Test Coverage:**

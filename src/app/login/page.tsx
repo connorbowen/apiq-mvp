@@ -15,6 +15,8 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reason = searchParams?.get('reason');
+  const oauth2Error = searchParams?.get('error');
+  const oauth2ErrorDetails = searchParams?.get('details');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,11 +27,10 @@ export default function LoginPage() {
       const response = await apiClient.login(formData.email, formData.password);
 
       if (response.success && response.data) {
-        // Store tokens in localStorage (in production, use httpOnly cookies)
-        localStorage.setItem('accessToken', response.data.accessToken);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
+        // Store user data in localStorage for client-side access
         localStorage.setItem('user', JSON.stringify(response.data.user));
         
+        // Tokens are now stored in HTTP-only cookies by the server
         // Redirect to dashboard
         router.push('/dashboard');
       } else {
@@ -106,11 +107,37 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* OAuth2 error alert */}
+        {oauth2Error && (
+          <div
+            role="alert"
+            className="mb-4 p-4 bg-red-50 border border-red-200 rounded text-red-800"
+            data-testid="oauth2-error-alert"
+          >
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  OAuth2 Error: {oauth2Error}
+                </h3>
+                {oauth2ErrorDetails && (
+                  <p className="text-sm text-red-700 mt-1">{oauth2ErrorDetails}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* OAuth2 Providers */}
         <div className="space-y-3">
           <button
             onClick={() => handleOAuth2Login('google')}
             disabled={isLoading}
+            data-testid="primary-action google-oauth2-btn"
             aria-label="Continue with Google"
             aria-describedby="oauth2-description"
             className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"

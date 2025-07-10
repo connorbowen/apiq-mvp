@@ -55,6 +55,8 @@ SMTP_PASS=psne slba gsea lnhl
 SMTP_FROM=2connorbowen@gmail.com
 ```
 
+**Note**: For OAuth2 E2E testing, we use a dedicated test account (`apiq.testing@gmail.com`) to keep personal and testing environments separate.
+
 ### **3. Authentication Secrets (Auto-Generated)**
 These have been automatically generated for development:
 ```bash

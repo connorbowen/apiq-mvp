@@ -1479,7 +1479,7 @@ To use OAuth2 with an API connection:
 
 #### Network Error Handling
 
-Network errors (e.g., loss of connectivity, server unreachable) are now tested in E2E using Playwright by simulating offline mode and attempting a fetch to an API endpoint. The application is expected to handle these errors gracefully at the UI and API boundary, providing user-friendly error messages and not crashing. See `tests/e2e/app.test.ts` for the latest test implementation.
+Network errors (e.g., loss of connectivity, server unreachable) are now tested in E2E using Playwright by simulating offline mode and attempting a fetch to an API endpoint. The application is expected to handle these errors gracefully at the UI and API boundary, providing user-friendly error messages and not crashing. See `tests/e2e/ui/ui-compliance.test.ts` for the latest test implementation.
 
 ### Password Reset & Verification
 

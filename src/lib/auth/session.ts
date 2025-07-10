@@ -65,16 +65,22 @@ export const verifyToken = (token: string): JWTPayload => {
 };
 
 /**
- * Extract token from request headers
+ * Extract token from request cookies or headers
  */
 export const extractToken = (req: NextApiRequest): string | null => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null;
+  // First try to get token from cookies (preferred for SSR)
+  const cookieToken = req.cookies.accessToken;
+  if (cookieToken) {
+    return cookieToken;
   }
   
-  return authHeader.substring(7);
+  // Fallback to Authorization header for API calls
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  
+  return null;
 };
 
 /**
@@ -238,6 +244,12 @@ export const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => 
     
     const accessToken = generateToken(user, 'access');
     const refreshToken = generateToken(user, 'refresh');
+    
+    // Set secure HTTP-only cookies for tokens
+    res.setHeader('Set-Cookie', [
+      `accessToken=${accessToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${15 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`,
+      `refreshToken=${refreshToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`
+    ]);
     
     return res.status(200).json({
       success: true,
