@@ -3,6 +3,18 @@ import CryptoJS from 'crypto-js';
 /**
  * Encryption utility for securely storing sensitive data
  * Uses AES-256 encryption with environment-based keys
+ * 
+ * TODO: [SECRETS-FIRST-REFACTOR] Phase 10: Encryption Service Updates
+ * - Update encryption to support multiple key versions for rotation
+ * - Add methods to encrypt/decrypt connection-specific secrets
+ * - Add key rotation support for existing encrypted data
+ * - Add connection-secret encryption metadata
+ * - Add encryption key validation for secrets vault
+ * - Add methods to migrate existing encrypted credentials
+ * - Add connection-specific encryption key management
+ * - Add audit logging for encryption operations
+ * - Add encryption performance optimization for secrets
+ * - Consider adding connection-secret encryption validation
  */
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-key-change-in-production';

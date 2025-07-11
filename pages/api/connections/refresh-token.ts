@@ -5,6 +5,18 @@ import { logInfo, logError } from '../../../src/utils/logger';
 import { requireAdmin, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { z } from 'zod';
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 8: Token Refresh API Migration
+// - Update token refresh to use secrets vault instead of direct authConfig
+// - Add methods to retrieve OAuth2 secrets for token refresh
+// - Add connection-secret validation before token refresh
+// - Add secret rotation handling for refreshed tokens
+// - Add connection status updates based on token refresh success/failure
+// - Add audit logging for secret-based token refresh operations
+// - Add error handling for missing or invalid secrets during refresh
+// - Add connection health checks based on token secret status
+// - Add fallback mechanisms for secret retrieval failures
+// - Consider adding connection-secret dependency validation for refresh flows
+
 // Input validation schema
 const refreshTokenSchema = z.object({
   connectionId: z.string().min(1, 'Connection ID is required'),
@@ -71,7 +83,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     if (!connection) {
       return res.status(404).json({
         success: false,
-        error: 'OAuth2 connection not found',
+        error: 'OAuth2 connection not found. Please check your connection settings and try again.',
         code: 'RESOURCE_NOT_FOUND'
       });
     }
@@ -81,7 +93,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     if (!authConfig || !authConfig.oauth2Provider) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid OAuth2 configuration',
+        error: 'OAuth2 configuration is invalid. Please check your connection settings and try again.',
         code: 'VALIDATION_ERROR'
       });
     }
@@ -181,7 +193,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         default:
           return res.status(400).json({
             success: false,
-            error: `Unsupported OAuth2 provider: ${authConfig.oauth2Provider}`,
+            error: `OAuth2 provider '${authConfig.oauth2Provider}' is not supported. Please contact support for assistance.`,
             code: 'VALIDATION_ERROR'
           });
       }
@@ -233,14 +245,14 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           error.message.includes('expired')) {
         return res.status(401).json({
           success: false,
-          error: 'Token revoked or expired - re-authorization required',
+          error: 'Your OAuth2 connection has expired or been revoked. Please reconnect your account to continue.',
           code: 'TOKEN_REVOKED'
         });
       }
 
       return res.status(400).json({
         success: false,
-        error: 'Token refresh failed',
+        error: 'Failed to refresh your OAuth2 connection. Please try again or contact support if the problem persists.',
         code: 'TOKEN_REFRESH_FAILED',
         details: error.message
       });

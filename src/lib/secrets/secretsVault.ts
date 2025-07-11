@@ -6,6 +6,18 @@ import { logError, logInfo } from '../../utils/logger';
 /**
  * Enhanced Secrets Vault with master key rotation
  * Supports multiple encryption keys and automatic key rotation
+ * 
+ * TODO: [SECRETS-FIRST-REFACTOR] Phase 1: Secrets Vault Enhancements
+ * - Add connection reference fields to SecretMetadata interface
+ * - Add methods to link secrets to connections (setConnectionId, getSecretsForConnection)
+ * - Add methods to create secrets from connection data (createSecretFromConnection)
+ * - Add validation to ensure secrets are properly linked to connections
+ * - Add methods to migrate existing connection credentials to secrets
+ * - Add connection-specific secret retrieval methods
+ * - Update encryption to handle connection-specific metadata
+ * - Add audit logging for connection-secret operations
+ * - Add methods to validate secret-connection relationships
+ * - Consider adding connection status tracking in secret metadata
  */
 
 export interface SecretMetadata {

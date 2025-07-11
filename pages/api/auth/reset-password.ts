@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../../../lib/database/client';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
-import { emailService } from '../../../src/lib/services/emailService';
+import { prisma } from '../../../src/lib/singletons/prisma';
+import { EmailService } from '../../../src/lib/services/emailService';
+import { ApplicationError, badRequest, notFound, tooManyRequests, internalServerError } from '../../../src/lib/errors/ApplicationError';
 import { logInfo, logError } from '../../../src/utils/logger';
 
 // Simple in-memory rate limiting (in production, use Redis)
@@ -137,16 +137,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Handle case where only token is provided (missing password)
     if (token && !password && !email) {
-      throw new ApplicationError('Password is required', 400, 'MISSING_PASSWORD');
+      throw badRequest('Password is required', 'MISSING_PASSWORD');
     }
 
     // Handle case where only password is provided (missing token)
     if (password && !token && !email) {
-      throw new ApplicationError('Reset token is required', 400, 'MISSING_TOKEN');
+      throw badRequest('Reset token is required', 'MISSING_TOKEN');
     }
 
     // Invalid request - must provide either email OR token+password
-    throw new ApplicationError('Invalid request. Provide either email (to request reset) or token+password (to reset password)', 400, 'INVALID_REQUEST');
+          throw badRequest('Invalid request. Provide either email (to request reset) or token+password (to reset password)', 'INVALID_REQUEST');
 
   } catch (error) {
     logError('Password reset operation failed', error as Error, {
@@ -155,7 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code
@@ -174,7 +174,7 @@ async function handlePasswordResetRequest(req: NextApiRequest, res: NextApiRespo
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      throw new ApplicationError('Invalid email format', 400, 'INVALID_EMAIL');
+              throw badRequest('Invalid email format', 'INVALID_EMAIL');
     }
 
     // Check rate limit for password reset requests (if enabled)
@@ -182,7 +182,7 @@ async function handlePasswordResetRequest(req: NextApiRequest, res: NextApiRespo
       const ipAddress = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'unknown';
       const rateLimitKey = `password_reset:${ipAddress}`;
       if (!checkRateLimit(rateLimitKey)) {
-        throw new ApplicationError('Too many password reset requests. Please try again later.', 429, 'RATE_LIMIT_EXCEEDED');
+        throw tooManyRequests('Too many password reset requests. Please try again later.', 'RATE_LIMIT_EXCEEDED');
       }
     }
 
@@ -230,6 +230,7 @@ async function handlePasswordResetRequest(req: NextApiRequest, res: NextApiRespo
     });
 
     // Send password reset email
+    const emailService = new EmailService();
     const emailSent = await emailService.sendPasswordResetEmail(
       email.toLowerCase(),
       resetToken,
@@ -249,7 +250,7 @@ async function handlePasswordResetRequest(req: NextApiRequest, res: NextApiRespo
           where: { token: resetToken }
         });
         
-        throw new ApplicationError('Failed to send password reset email', 500, 'EMAIL_SEND_FAILED');
+        throw internalServerError('Failed to send password reset email', 'EMAIL_SEND_FAILED');
       }
     }
 
@@ -286,31 +287,31 @@ async function handlePasswordResetRequest(req: NextApiRequest, res: NextApiRespo
 async function handlePasswordReset(req: NextApiRequest, res: NextApiResponse, token: string, password: string) {
   // Validate password
   if (!password || password.trim() === '') {
-    throw new ApplicationError('Password is required', 400, 'MISSING_PASSWORD');
+    throw badRequest('Password is required', 'MISSING_PASSWORD');
   }
 
   if (password.length < 8) {
-    throw new ApplicationError('Password must be at least 8 characters long', 400, 'WEAK_PASSWORD');
+    throw badRequest('Password must be at least 8 characters long', 'WEAK_PASSWORD');
   }
 
   // Check token brute force protection (if enabled)
   if (shouldEnableRateLimiting()) {
     const ipAddress = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'unknown';
     if (!checkTokenAttemptLimit(ipAddress)) {
-      throw new ApplicationError('Too many invalid token attempts. Rate limit exceeded. Please try again later.', 429, 'TOKEN_BRUTE_FORCE_DETECTED');
+      throw tooManyRequests('Too many invalid token attempts. Rate limit exceeded. Please try again later.', 'TOKEN_BRUTE_FORCE_DETECTED');
     }
   }
 
   // Find the reset token first
   const resetToken = await prisma.passwordResetToken.findUnique({ where: { token } });
   if (!resetToken) {
-    throw new ApplicationError('Invalid or expired reset token', 400, 'INVALID_TOKEN');
+    throw badRequest('Invalid or expired reset token', 'INVALID_TOKEN');
   }
 
   // If expired, delete immediately (outside transaction)
   if (resetToken.expiresAt < new Date()) {
     await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
-    throw new ApplicationError('Reset token has expired', 400, 'EXPIRED_TOKEN');
+    throw badRequest('Reset token has expired', 'EXPIRED_TOKEN');
   }
 
   // Find user by email
@@ -318,7 +319,7 @@ async function handlePasswordReset(req: NextApiRequest, res: NextApiResponse, to
   if (!user) {
     // Clean up orphaned token
     await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
-    throw new ApplicationError('User not found', 404, 'USER_NOT_FOUND');
+    throw notFound('User not found', 'USER_NOT_FOUND');
   }
 
   // Use a transaction for the actual password reset operations

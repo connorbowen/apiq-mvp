@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { logError, handleError } from '../utils/logger';
-import { AppError } from '../types';
+import { ApplicationError } from '../lib/errors';
 
 // Extend NextApiRequest to include session
 interface AuthenticatedRequest extends NextApiRequest {
@@ -11,28 +11,6 @@ interface AuthenticatedRequest extends NextApiRequest {
       role: string;
     };
   };
-}
-
-/**
- * Custom error class for application-specific errors
- */
-export class ApplicationError extends Error implements AppError {
-  public statusCode: number;
-  public code: string;
-  public details?: Record<string, any>;
-
-  constructor(
-    message: string,
-    statusCode: number = 500,
-    code: string = 'INTERNAL_ERROR',
-    details?: Record<string, any>
-  ) {
-    super(message);
-    this.name = 'ApplicationError';
-    this.statusCode = statusCode;
-    this.code = code;
-    this.details = details;
-  }
 }
 
 /**
@@ -100,56 +78,17 @@ export const errorHandler = (
   };
 };
 
-/**
- * Handle API errors and send appropriate responses
- */
-export const handleApiError = (
-  error: unknown,
-  req: NextApiRequest,
-  res: NextApiResponse
-) => {
-  let appError: AppError;
-
-  // Convert different error types to ApplicationError
-  if (error instanceof ApplicationError) {
-    appError = error;
-  } else if (error instanceof Error) {
-    appError = new ApplicationError(
-      error.message,
-      500,
-      'INTERNAL_ERROR',
-      { originalError: error.name }
-    );
+export function handleApiError(err: unknown, _req: NextApiRequest, res: NextApiResponse) {
+  let appError: ApplicationError;
+  if (err instanceof ApplicationError) {
+    appError = err;
+  } else if (err instanceof Error) {
+    appError = new ApplicationError(err.message, 500, 'INTERNAL_ERROR');
   } else {
-    appError = new ApplicationError(
-      'An unexpected error occurred',
-      500,
-      'INTERNAL_ERROR'
-    );
+    appError = new ApplicationError('An unexpected error occurred', 500, 'INTERNAL_ERROR');
   }
-
-  // Log the error with context
-  logError('API Error', appError, {
-    method: req.method,
-    url: req.url || 'unknown',
-    statusCode: appError.statusCode,
-    userAgent: req.headers['user-agent'],
-    ip: (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown'
-  });
-
-  // Send error response
-  const errorResponse = handleError(appError, 'API Request');
-  
-  res.status(appError.statusCode).json({
-    success: false,
-    error: errorResponse.message,
-    code: appError.code,
-    ...(process.env.NODE_ENV !== 'production' && {
-      details: appError.details,
-      stack: appError.stack
-    })
-  });
-};
+  return res.status(appError.status).json({ error: appError.message, code: appError.code });
+}
 
 /**
  * Validation middleware

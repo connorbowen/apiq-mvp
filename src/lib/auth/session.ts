@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { Role } from '../../generated/prisma';
-import { ApplicationError } from '../../middleware/errorHandler';
+import { ApplicationError, unauthenticated, forbidden } from '../errors';
 import { prisma } from '../../../lib/database/client';
 
 // JWT secret (in production, use environment variable)
@@ -60,7 +60,7 @@ export const verifyToken = (token: string): JWTPayload => {
   try {
     return jwt.verify(token, JWT_SECRET) as JWTPayload;
   } catch (error) {
-    throw new ApplicationError('Invalid or expired token', 401, 'INVALID_TOKEN');
+    throw unauthenticated('Please log in again to continue. Your session may have expired.');
   }
 };
 
@@ -92,7 +92,7 @@ export const authenticateUser = async (email: string, password: string): Promise
   });
   
   if (!user || !user.isActive) {
-    throw new ApplicationError('Invalid credentials', 401, 'INVALID_CREDENTIALS');
+    throw unauthenticated('Invalid credentials');
   }
   
   console.log('[DEBUG] Login attempt for user:', {
@@ -107,7 +107,7 @@ export const authenticateUser = async (email: string, password: string): Promise
   console.log('[DEBUG] bcrypt.compare result:', isPasswordValid);
   
   if (!isPasswordValid) {
-    throw new ApplicationError('Invalid credentials', 401, 'INVALID_CREDENTIALS');
+    throw unauthenticated('Invalid credentials');
   }
   
   // Update last login (ignore errors in test environment to avoid race conditions)
@@ -162,20 +162,20 @@ export const requireAuth = async (req: AuthenticatedRequest, res: NextApiRespons
   const token = extractToken(req);
   
   if (!token) {
-    throw new ApplicationError('Authentication required', 401, 'UNAUTHORIZED');
+    throw unauthenticated('Please log in to access this feature. Click the login button to continue.');
   }
   
   try {
     const payload = verifyToken(token);
     
     if (payload.type !== 'access') {
-      throw new ApplicationError('Invalid token type', 401, 'INVALID_TOKEN');
+      throw unauthenticated('Please log in again. Your session token is invalid.');
     }
     
     const user = await getUserById(payload.userId);
     
     if (!user) {
-      throw new ApplicationError('User not found', 401, 'USER_NOT_FOUND');
+      throw unauthenticated('Please log in again. Your account may have been deactivated.');
     }
     
     // Attach user to request
@@ -186,7 +186,7 @@ export const requireAuth = async (req: AuthenticatedRequest, res: NextApiRespons
     if (error instanceof ApplicationError) {
       throw error;
     }
-    throw new ApplicationError('Authentication failed', 401, 'AUTH_FAILED');
+    throw unauthenticated('Please log in again. We encountered an authentication issue.');
   }
 };
 
@@ -198,7 +198,7 @@ export const requireRole = (allowedRoles: Role[]) => {
     const user = await requireAuth(req, res);
     
     if (!allowedRoles.includes(user.role)) {
-      throw new ApplicationError('Insufficient permissions', 403, 'FORBIDDEN');
+      throw forbidden('You don\'t have permission to access this feature. Please contact your administrator for assistance.');
     }
     
     return user;
@@ -270,7 +270,7 @@ export const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => 
     console.error('Login error:', error);
     
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code
@@ -309,13 +309,13 @@ export const handleRefreshToken = async (req: NextApiRequest, res: NextApiRespon
     const payload = verifyToken(refreshToken);
     
     if (payload.type !== 'refresh') {
-      throw new ApplicationError('Invalid token type', 401, 'INVALID_TOKEN');
+      throw unauthenticated('Invalid token type');
     }
     
     const user = await getUserById(payload.userId);
     
     if (!user) {
-      throw new ApplicationError('User not found', 401, 'USER_NOT_FOUND');
+      throw unauthenticated('User not found');
     }
     
     // Add a small delay to ensure the new token has a different timestamp
@@ -333,7 +333,7 @@ export const handleRefreshToken = async (req: NextApiRequest, res: NextApiRespon
     });
   } catch (error) {
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code
@@ -374,7 +374,7 @@ export const handleGetCurrentUser = async (req: AuthenticatedRequest, res: NextA
     });
   } catch (error) {
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code

@@ -1,3 +1,64 @@
+/**
+ * TODO: UX SIMPLIFICATION - NAVIGATION E2E TESTS - @connorbowen 2024-12-19
+ * 
+ * PHASE 1: QUICK WINS TESTING
+ * 
+ * 1.1 Hide non-essential tabs for regular users
+ * - [ ] test('should hide admin/audit tabs for regular users')
+ * - [ ] test('should show admin/audit tabs for admin users')
+ * - [ ] test('should maintain tab functionality for visible tabs')
+ * 
+ * 1.2 Make Chat the default tab
+ * - [ ] test('should load dashboard with chat tab active by default')
+ * - [ ] test('should maintain tab state in URL parameters')
+ * - [ ] test('should handle direct URL access to chat tab')
+ * 
+ * 1.3 Simplify the header - remove breadcrumbs
+ * - [ ] test('should display simplified header without breadcrumbs')
+ * - [ ] test('should maintain logout functionality')
+ * - [ ] test('should display user welcome message')
+ * 
+ * 1.4 Consolidate error/success messages
+ * - [ ] test('should display unified message banner for success')
+ * - [ ] test('should display unified message banner for errors')
+ * - [ ] test('should auto-clear messages after timeout')
+ * 
+ * PHASE 2: CORE SIMPLIFICATION TESTING
+ * 
+ * 2.1 Redesign dashboard layout with 3-tab structure
+ * - [ ] test('should display only 3 tabs: Chat, Workflows, Settings')
+ * - [ ] test('should move connections to settings tab')
+ * - [ ] test('should move secrets to settings tab')
+ * - [ ] test('should maintain tab functionality in new structure')
+ * 
+ * 2.2 Progressive disclosure
+ * - [ ] test('should show limited features for new users')
+ * - [ ] test('should progressively reveal features based on usage')
+ * - [ ] test('should maintain functionality for advanced users')
+ * 
+ * 2.3 Streamline onboarding flow
+ * - [ ] test('should redirect to chat after login')
+ * - [ ] test('should handle simplified registration flow')
+ * - [ ] test('should work without email verification')
+ * 
+ * 2.4 Guided tour
+ * - [ ] test('should start guided tour for new users')
+ * - [ ] test('should allow skipping guided tour')
+ * - [ ] test('should complete tour successfully')
+ * 
+ * PHASE 3: POLISH TESTING
+ * 
+ * 3.1 Mobile-optimized navigation
+ * - [ ] test('should display bottom navigation on mobile')
+ * - [ ] test('should handle mobile tab switching')
+ * - [ ] test('should maintain functionality on small screens')
+ * 
+ * 3.2 Performance optimizations
+ * - [ ] test('should load dashboard within performance budget')
+ * - [ ] test('should handle rapid tab switching smoothly')
+ * - [ ] test('should maintain performance with many workflows')
+ */
+
 import { test, expect } from '@playwright/test';
 import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
 

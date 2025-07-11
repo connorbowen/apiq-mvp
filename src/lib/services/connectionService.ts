@@ -1,6 +1,18 @@
 import { prisma } from '../../../lib/database/client';
 import { ConnectionStatus } from '../../generated/prisma';
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 4: Connection Service Updates
+// - Add methods to validate connection-secret relationships
+// - Add methods to retrieve secrets for connections
+// - Add connection status updates based on secret availability
+// - Add methods to migrate connections to use secrets
+// - Add validation to ensure connections have required secrets
+// - Add connection-secret dependency management
+// - Add methods to handle secret rotation for connections
+// - Add connection status tracking based on secret health
+// - Add methods to validate connection configuration with secrets
+// - Consider adding connection-secret audit logging
+
 /**
  * Mark a connection as connecting and set the OAuth state
  */

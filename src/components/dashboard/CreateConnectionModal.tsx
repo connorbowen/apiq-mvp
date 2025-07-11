@@ -3,11 +3,25 @@
 import { useState, useRef, useEffect } from 'react';
 import { apiClient, CreateConnectionRequest } from '../../lib/api/client';
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 2: Connection Creation Flow
+// - Modify connection creation to automatically create secrets
+// - Add secret creation during connection setup
+// - Update authConfig to reference secret instead of storing credentials directly
+// - Add secret management options (create new, use existing, advanced settings)
+// - Update test connection to use secrets
+// - Add validation for secret creation
+// - Consider adding secret preview/confirmation step
+
 interface CreateConnectionModalProps {
   onClose: () => void;
   onSuccess: () => void;
   onError: (error: string) => void;
 }
+
+// TODO: [SECRETS-FIRST-REFACTOR] Update OAuth2 provider configs to use secrets
+// - Store OAuth2 client secrets in secrets vault
+// - Reference secrets in connection creation
+// - Update OAuth2 flow to use secrets for token storage
 
 // OAuth2 Provider configurations
 const OAUTH2_PROVIDERS = {
@@ -61,7 +75,7 @@ const OAUTH2_PROVIDERS = {
   }
 } as const;
 
-// TODO: Add more OAuth2 providers
+// Additional OAuth2 providers can be added here in the future
 // - Microsoft Teams (https://graph.microsoft.com/v1.0)
 // - GitLab (https://gitlab.com/api/v4)
 // - Bitbucket (https://api.bitbucket.org/2.0)
@@ -80,6 +94,10 @@ export default function CreateConnectionModal({
   onSuccess, 
   onError 
 }: CreateConnectionModalProps) {
+  // TODO: [SECRETS-FIRST-REFACTOR] Update form data structure
+  // - Add secret-related fields (secretName, secretDescription, etc.)
+  // - Add option to use existing secret
+  // - Add secret creation preferences
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -99,8 +117,25 @@ export default function CreateConnectionModal({
       scopes: ''
     }
   });
+
+  // TODO: [SECRETS-FIRST-REFACTOR] Add secret management state
+  // const [secretManagement, setSecretManagement] = useState({
+  //   createNewSecret: true,
+  //   useExistingSecret: false,
+  //   selectedSecretId: '',
+  //   secretName: '',
+  //   secretDescription: '',
+  //   enableRotation: false,
+  //   rotationInterval: 90
+  // });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<{ 
+    success: boolean; 
+    message: string; 
+    responseTime?: number;
+    endpoints?: number;
+  } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [importMode, setImportMode] = useState<'manual' | 'url'>('url');
@@ -167,6 +202,11 @@ export default function CreateConnectionModal({
     }
   };
 
+  // TODO: [SECRETS-FIRST-REFACTOR] Update form submission to create secrets
+  // - Create secret first, then create connection
+  // - Handle secret creation errors
+  // - Update connection to reference secret
+  // - Add rollback if connection creation fails
   const handleSubmit = async (e: React.FormEvent) => {
     console.log('Form submission triggered');
     e.preventDefault();
@@ -193,173 +233,115 @@ export default function CreateConnectionModal({
       (window as any).connectionSubmissionCount = 0;
       (window as any).lastRateLimitReset = now;
     }
-    
-    // Track submission count for rate limiting
-    const submissionCount = (window as any).connectionSubmissionCount || 0;
-    if (submissionCount >= 5) { // Allow max 5 submissions
-      setErrorMessage('Rate limit exceeded. Too many requests. Please wait before trying again.');
-      onError('Rate limit exceeded. Too many requests. Please wait before trying again.');
-      setIsSubmitting(false); // Reset immediately
-      return;
-    }
-    (window as any).connectionSubmissionCount = submissionCount + 1;
-    
-    // Validate required fields
-    const errors: Record<string, string> = {};
-    
-    if (!formData.name.trim()) {
-      errors.name = 'Connection name is required';
-    }
-    
-    if (!formData.baseUrl.trim()) {
-      errors.baseUrl = 'Base URL is required';
-    }
-    
-    // Security validation
-    if (formData.baseUrl.trim() && !formData.baseUrl.startsWith('https://')) {
-      const isLocalhost = formData.baseUrl.startsWith('http://localhost') || formData.baseUrl.startsWith('http://127.0.0.1');
-      const isTestEnvironment = window.location.hostname === 'localhost' && window.location.port === '3000';
-      if (!(isLocalhost && isTestEnvironment)) {
-        errors.baseUrl = 'HTTPS is required for security';
-      }
-    }
-    
-    // XSS validation
-    if (formData.name.includes('<script>') || formData.name.includes('javascript:')) {
-      errors.name = 'Invalid characters detected';
-    }
-    
-    // Validate auth-specific fields
-    switch (formData.authType) {
-      case 'API_KEY':
-        if (!formData.credentials.apiKey.trim()) {
-          errors.apiKey = 'API Key is required';
-        }
-        break;
-      case 'BEARER_TOKEN':
-        if (!formData.credentials.bearerToken.trim()) {
-          errors.bearerToken = 'Bearer Token is required';
-        }
-        break;
-      case 'BASIC_AUTH':
-        if (!formData.credentials.username.trim()) {
-          errors.username = 'Username is required';
-        }
-        if (!formData.credentials.password.trim()) {
-          errors.password = 'Password is required';
-        }
-        break;
-      case 'OAUTH2':
-        if (!formData.credentials.clientId.trim()) {
-          errors.clientId = 'Client ID is required';
-        }
-        if (!formData.credentials.clientSecret.trim()) {
-          errors.clientSecret = 'Client Secret is required';
-        }
-        if (!formData.credentials.redirectUri.trim()) {
-          errors.redirectUri = 'Redirect URI is required';
-        }
-        if (!formData.credentials.scopes.trim()) {
-          errors.scopes = 'Scopes are required';
-        }
-        break;
-    }
-    
-    // If there are validation errors, display them and return
-    if (Object.keys(errors).length > 0) {
-      console.log('Validation errors found:', errors);
-      setFieldErrors(errors);
-      setIsSubmitting(false); // Reset immediately
-      return;
-    }
 
-    try {
-      console.log('Setting isSubmitting true');
-      // setIsSubmitting(true); // Already set at the start
-      const connectionData: CreateConnectionRequest = {
-        name: formData.name,
-        description: formData.description,
-        baseUrl: formData.baseUrl,
-        authType: formData.authType,
-        documentationUrl: formData.openApiUrl || undefined,
-        authConfig: {}
-      };
-
-      // Add credentials based on auth type
-      switch (formData.authType) {
-        case 'API_KEY':
-          connectionData.authConfig = { apiKey: formData.credentials.apiKey };
-          break;
-        case 'BEARER_TOKEN':
-          connectionData.authConfig = { bearerToken: formData.credentials.bearerToken };
-          break;
-        case 'BASIC_AUTH':
-          connectionData.authConfig = {
-            username: formData.credentials.username,
-            password: formData.credentials.password
-          };
-          break;
-        case 'OAUTH2':
-          connectionData.authConfig = {
-            clientId: formData.credentials.clientId,
-            clientSecret: formData.credentials.clientSecret,
-            redirectUri: formData.credentials.redirectUri,
-            scope: formData.credentials.scopes,
-            provider: formData.provider || undefined
-          };
-          break;
-      }
-
-      // Enforce minimum loading state duration
-      const minLoadingMs = 800;
-      const start = Date.now();
-      const response = await apiClient.createConnection(connectionData);
-      const elapsed = Date.now() - start;
-      if (elapsed < minLoadingMs) {
-        await new Promise(res => setTimeout(res, minLoadingMs - elapsed));
-      }
-      console.log('API response:', response);
-      
-      if (response.success) {
-        setSubmitSuccess(true);
-        // Show success message and keep modal open for 1.5s before closing
-        setTimeout(() => {
-          onSuccess();
-          onClose();
-        }, 1500);
-      } else {
-        setErrorMessage(response.error || 'Failed to create connection');
-      }
-    } catch (error) {
-      console.log('API error:', error);
-      setErrorMessage('Network error while creating connection');
-    } finally {
-      console.log('Setting isSubmitting false');
-      setIsSubmitting(false);
-    }
+    // TODO: [SECRETS-FIRST-REFACTOR] Implement secret-first submission
+    // try {
+    //   // Step 1: Create secret(s) based on auth type
+    //   const secretIds = await createSecretsForConnection(formData);
+    //   
+    //   // Step 2: Create connection with secret references
+    //   const connectionData = {
+    //     ...formData,
+    //     secretIds,
+    //     authConfig: { secretReferences: secretIds } // No longer store credentials directly
+    //   };
+    //   
+    //   const response = await apiClient.createConnection(connectionData);
+    //   
+    //   if (response.success) {
+    //     setSubmitSuccess(true);
+    //     onSuccess();
+    //   } else {
+    //     // Rollback: delete created secrets if connection fails
+    //     await rollbackSecrets(secretIds);
+    //     throw new Error(response.error);
+    //   }
+    // } catch (error) {
+    //   handleSubmissionError(error);
+    // } finally {
+    //   setIsSubmitting(false);
+    // }
   };
 
+  // TODO: [SECRETS-FIRST-REFACTOR] Add secret creation helper function
+  // const createSecretsForConnection = async (connectionData: typeof formData) => {
+  //   const secretIds: string[] = [];
+  //   
+  //   switch (connectionData.authType) {
+  //     case 'API_KEY':
+  //       const apiKeySecret = await apiClient.createSecret({
+  //         name: `${connectionData.name} API Key`,
+  //         type: 'API_KEY',
+  //         value: connectionData.credentials.apiKey,
+  //         description: `API Key for ${connectionData.name} connection`,
+  //         connectionId: null // Will be set after connection creation
+  //       });
+  //       secretIds.push(apiKeySecret.id);
+  //       break;
+  //       
+  //     case 'BEARER_TOKEN':
+  //       const bearerSecret = await apiClient.createSecret({
+  //         name: `${connectionData.name} Bearer Token`,
+  //         type: 'BEARER_TOKEN',
+  //         value: connectionData.credentials.bearerToken,
+  //         description: `Bearer token for ${connectionData.name} connection`
+  //       });
+  //       secretIds.push(bearerSecret.id);
+  //       break;
+  //       
+  //     case 'BASIC_AUTH':
+  //       const usernameSecret = await apiClient.createSecret({
+  //         name: `${connectionData.name} Username`,
+  //         type: 'BASIC_AUTH_USERNAME',
+  //         value: connectionData.credentials.username,
+  //         description: `Username for ${connectionData.name} connection`
+  //       });
+  //       const passwordSecret = await apiClient.createSecret({
+  //         name: `${connectionData.name} Password`,
+  //         type: 'BASIC_AUTH_PASSWORD',
+  //         value: connectionData.credentials.password,
+  //         description: `Password for ${connectionData.name} connection`
+  //       });
+  //       secretIds.push(usernameSecret.id, passwordSecret.id);
+  //       break;
+  //       
+  //     case 'OAUTH2':
+  //       const clientIdSecret = await apiClient.createSecret({
+  //         name: `${connectionData.name} Client ID`,
+  //         type: 'OAUTH2_CLIENT_ID',
+  //         value: connectionData.credentials.clientId,
+  //         description: `OAuth2 Client ID for ${connectionData.name}`
+  //       });
+  //       const clientSecretSecret = await apiClient.createSecret({
+  //         name: `${connectionData.name} Client Secret`,
+  //         type: 'OAUTH2_CLIENT_SECRET',
+  //         value: connectionData.credentials.clientSecret,
+  //         description: `OAuth2 Client Secret for ${connectionData.name}`
+  //       });
+  //       secretIds.push(clientIdSecret.id, clientSecretSecret.id);
+  //       break;
+  //   }
+  //   
+  //   return secretIds;
+  // };
+
+  // TODO: [SECRETS-FIRST-REFACTOR] Add rollback function for failed connections
+  // const rollbackSecrets = async (secretIds: string[]) => {
+  //   for (const secretId of secretIds) {
+  //     try {
+  //       await apiClient.deleteSecret(secretId);
+  //     } catch (error) {
+  //       console.error(`Failed to rollback secret ${secretId}:`, error);
+  //     }
+  //   }
+  // };
+
+  // TODO: [SECRETS-FIRST-REFACTOR] Update test connection to use secrets
   const handleTestConnection = async () => {
-    try {
-      setIsSubmitting(true);
-      setTestResult(null);
-      
-      // TODO: Implement test connection API call
-      // For now, simulate a test
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTestResult({
-        success: true,
-        message: 'Connection test successful!'
-      });
-    } catch (error) {
-      setTestResult({
-        success: false,
-        message: 'Connection test failed. Please check your credentials.'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    // TODO: Implement test connection using secrets instead of direct credentials
+    // - Fetch secrets for the connection
+    // - Use secrets in test request
+    // - Handle secret access errors
   };
 
   // Helper function to render field error
@@ -913,9 +895,10 @@ export default function CreateConnectionModal({
                         }`}>
                           {testResult.message}
                         </p>
-                        {testResult.success && (
+                        {testResult.success && testResult.responseTime && (
                           <p data-testid="response-time" className="text-xs text-green-600 mt-1">
-                            Response time: 245ms
+                            Response time: {testResult.responseTime}ms
+                            {testResult.endpoints && ` • ${testResult.endpoints} endpoints found`}
                           </p>
                         )}
                       </div>

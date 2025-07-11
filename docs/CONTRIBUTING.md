@@ -321,25 +321,46 @@ export default async function handler(
 
 **Error Handling**
 ```typescript
-// lib/errors.ts
-export class AppError extends Error {
-  constructor(
-    message: string,
-    public statusCode: number = 500,
-    public code: string = 'INTERNAL_ERROR'
-  ) {
+// src/lib/errors/ApplicationError.ts
+export class ApplicationError extends Error {
+  public readonly status: number;
+  public readonly code?: string;
+
+  constructor(message: string, status = 500, code?: string) {
     super(message);
-    this.name = 'AppError';
+    this.name = 'ApplicationError';
+    this.status = status;
+    this.code = code;
   }
 }
 
-export const handleApiError = (error: unknown): AppError => {
-  if (error instanceof AppError) {
+// Convenience builders for common error types
+export const badRequest = (message: string, code?: string) => 
+  new ApplicationError(message, 400, code);
+
+export const unauthorized = (message: string, code?: string) => 
+  new ApplicationError(message, 401, code);
+
+export const notFound = (message: string, code?: string) => 
+  new ApplicationError(message, 404, code);
+
+export const conflict = (message: string, code?: string) => 
+  new ApplicationError(message, 409, code);
+
+export const tooManyRequests = (message: string, code?: string) => 
+  new ApplicationError(message, 429, code);
+
+export const internalServerError = (message: string, code?: string) => 
+  new ApplicationError(message, 500, code);
+
+// Usage in API endpoints
+export const handleApiError = (error: unknown): ApplicationError => {
+  if (error instanceof ApplicationError) {
     return error;
   }
   
   console.error('Unexpected error:', error);
-  return new AppError('Internal server error', 500);
+  return internalServerError('An unexpected error occurred');
 };
 ```
 

@@ -60,7 +60,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     if (!validationResult.success) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid input data',
+        error: 'Please provide both provider and action information to test rate limits.',
         code: 'VALIDATION_ERROR',
         details: validationResult.error.errors
       });
@@ -74,7 +74,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     if (!rateLimit.allowed) {
       return res.status(429).json({
         success: false,
-        error: 'Rate limit exceeded - too many requests',
+        error: 'You\'ve made too many requests. Please wait a moment and try again.',
         code: 'RATE_LIMIT_EXCEEDED',
         data: {
           remaining: rateLimit.remaining,
@@ -93,7 +93,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         // Simulate GitHub rate limiting (5000 requests per hour)
         if (Math.random() < 0.1) { // 10% chance of rate limit
           providerRateLimited = true;
-          providerError = 'API rate limit exceeded for github.com';
+          providerError = 'GitHub API rate limit exceeded. Please try again later or contact support for assistance.';
         }
         break;
 
@@ -101,7 +101,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         // Simulate Google rate limiting (10000 requests per 100 seconds)
         if (Math.random() < 0.05) { // 5% chance of rate limit
           providerRateLimited = true;
-          providerError = 'Quota exceeded for quota group';
+          providerError = 'Google API quota exceeded. Please try again later or contact support for assistance.';
         }
         break;
 
@@ -109,14 +109,14 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         // Simulate Slack rate limiting (50 requests per minute)
         if (Math.random() < 0.15) { // 15% chance of rate limit
           providerRateLimited = true;
-          providerError = 'Rate limit exceeded';
+          providerError = 'Slack API rate limit exceeded. Please try again later or contact support for assistance.';
         }
         break;
 
       default:
         return res.status(400).json({
           success: false,
-          error: `Unsupported provider: ${provider}`,
+          error: `Provider '${provider}' is not supported. Please contact support for assistance.`,
           code: 'VALIDATION_ERROR'
         });
     }

@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { oauth2Service } from '../../../../src/lib/auth/oauth2';
 import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/session';
-import { ApplicationError } from '../../../../src/middleware/errorHandler';
+import { ApplicationError, badRequest, notFound } from '../../../../src/lib/errors/ApplicationError';
 import { prisma } from '../../../../lib/database/client';
 
 /**
@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validate required parameters
     if (!apiConnectionId || typeof apiConnectionId !== 'string') {
-      throw new ApplicationError('apiConnectionId is required', 400, 'MISSING_PARAMETER');
+      throw badRequest('apiConnectionId is required', 'MISSING_PARAMETER');
     }
 
     // Validate that the API connection belongs to the user
@@ -42,19 +42,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!apiConnection) {
-      throw new ApplicationError('API connection not found', 404, 'NOT_FOUND');
+      throw notFound('API connection not found', 'NOT_FOUND');
     }
 
     // Check if the API connection uses OAuth2
     if (apiConnection.authType !== 'OAUTH2') {
-      throw new ApplicationError('API connection does not use OAuth2 authentication', 400, 'INVALID_AUTH_TYPE');
+      throw badRequest('API connection does not use OAuth2 authentication', 'INVALID_AUTH_TYPE');
     }
 
     // Get the OAuth2 access token
     const accessToken = await oauth2Service.getAccessToken(user.id, apiConnectionId);
 
     if (!accessToken) {
-      throw new ApplicationError('No valid OAuth2 access token found', 404, 'TOKEN_NOT_FOUND');
+      throw notFound('No valid OAuth2 access token found', 'TOKEN_NOT_FOUND');
     }
 
     // Log the token access
@@ -83,7 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('OAuth2 token access error:', error);
 
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code

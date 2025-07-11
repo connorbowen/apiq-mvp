@@ -1,3 +1,27 @@
+/**
+ * TODO: UX SIMPLIFICATION - SIGNUP PAGE PHASE 2.3 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.3: Streamline onboarding flow
+ * - [ ] Simplify form to email + password only (remove name requirement)
+ * - [ ] Make email verification optional (don't block access)
+ * - [ ] Redirect directly to Chat interface after successful registration
+ * - [ ] Remove complex validation for faster signup
+ * - [ ] Add tests: tests/e2e/auth/authentication-session.test.ts - test streamlined signup
+ * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test simplified registration
+ * - [ ] Add tests: tests/unit/app/signup/page.test.tsx - test simplified form validation
+ * 
+ * PHASE 2.4: Guided tour integration
+ * - [ ] Add welcome message after successful signup
+ * - [ ] Redirect to guided tour instead of dashboard
+ * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test signup to tour flow
+ * 
+ * IMPLEMENTATION NOTES:
+ * - Remove name field validation complexity
+ * - Simplify password requirements
+ * - Make email verification non-blocking
+ * - Update success redirect to /dashboard?tab=chat
+ */
+
 'use client';
 
 import { useState } from 'react';

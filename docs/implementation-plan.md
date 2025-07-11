@@ -8,14 +8,14 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 **Key Innovation**: Users can describe workflows in natural language (e.g., "When a new GitHub issue is created, send a Slack notification and create a Trello card"), and the system automatically generates and executes the corresponding multi-step workflow across multiple APIs.
 
-## Current Status: MVP Core Engine Complete ✅
+## Current Status: MVP Core Engine Partially Complete ⚠️
 
 **Test Status**: All tests passing (100% pass rate) ✅ **MAINTAINED**
 **Unit Test Coverage**: 656/657 passing (99.8% success rate) ✅ **IMPROVED**
 **Integration Test Coverage**: 243/248 passing (98% success rate) ✅ **MAINTAINED**
 **E2E Test Coverage**: All E2E tests passing (100% success rate) ✅ **ACHIEVED**
 **Last Updated**: July 11, 2025
-**Next Milestone**: Production deployment and user onboarding
+**Next Milestone**: Complete multi-step workflow generation (P0.1.1)
 **Authentication Flow**: Fixed login error handling and client-side validation ✅ **MAINTAINED**
 **Test Reliability**: Fixed unit test reliability and component callback handling ✅ **MAINTAINED**
 **API Consistency**: Fixed response structure consistency across endpoints ✅ **MAINTAINED**
@@ -29,6 +29,14 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 **E2E Test Suite Robustness**: Enhanced OAuth2 E2E tests to handle real-world OAuth2 flow complexities ✅ **COMPLETED - LATEST**
 **Authentication Middleware Fix**: Fixed public route configuration for `/forgot-password-success` ✅ **COMPLETED - LATEST**
 **E2E Test Suite Completion**: Achieved 100% pass rate (172/172 tests) with comprehensive test fixes ✅ **COMPLETED - LATEST**
+**Unified Error Handling System**: Implemented centralized error handling with user-friendly messages ✅ **COMPLETED - LATEST**
+  - **ApplicationError Class**: Single source of truth for application errors with convenience builders
+  - **API Endpoint Updates**: All 12+ API endpoints updated to use unified error system
+  - **User-Friendly Messages**: Error messages now provide clear, actionable guidance
+  - **Status Code Consistency**: Fixed `statusCode` vs `status` property inconsistencies
+  - **OAuth2 Token Refresh**: Now returns proper 401 status codes instead of 500 errors
+
+**🚨 CRITICAL GAP**: Natural language workflow generation currently only supports single-step workflows, severely limiting the core value proposition. Multi-step workflow generation is required for MVP completion.
 
 **E2E Test Status**: 
 - Authentication & Session tests: ✅ 16/16 passing (100% success rate)
@@ -63,7 +71,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - Development workflow automation: ✅ Complete
 - Unit test coverage analysis: ✅ Complete
 
-**P0.1 Status**: ✅ **COMPLETED** - Natural language workflow creation fully functional
+**P0.1 Status**: ⚠️ **PARTIALLY COMPLETED** - Natural language workflow creation functional (single-step only)
 **P0.2 Status**: ✅ **COMPLETED** - All core execution engine components working
 **P0.3 Status**: ✅ **COMPLETED** - API connection management fully functional
 **P0.4 Status**: ✅ **COMPLETED** - Dashboard UI implementation completed
@@ -73,19 +81,19 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 ### **P0: CORE VALUE PROPOSITION** (Must Have for MVP)
 The fundamental features that deliver the core value proposition and enable the first paying customers.
 
-#### **P0.1: Natural Language Workflow Creation** ✅ **COMPLETED**
+#### **P0.1: Natural Language Workflow Creation** ✅ **PARTIALLY COMPLETED**
 **Business Impact**: This is the core differentiator - the "magic" that makes APIQ unique
-**User Value**: Non-technical users can create complex workflows without coding
+**User Value**: Non-technical users can create workflows without coding
 **Market Position**: Sets us apart from Zapier, Make, n8n
 
 **Requirements**:
 - [x] **OpenAI GPT-4 Integration** - Core AI service for natural language processing ✅ COMPLETED
 - [x] **Function Calling Engine** - Convert OpenAPI specs to GPT function definitions ✅ COMPLETED
 - [x] **Natural Language Parser** - Parse user intent from plain English descriptions ✅ COMPLETED
-- [x] **Workflow Generation Engine** - Generate executable workflows from descriptions ✅ COMPLETED
+- [x] **Basic Workflow Generation Engine** - Generate single-step workflows from descriptions ✅ COMPLETED
 - [x] **User Confirmation Flow** - Show generated workflow and get user approval ✅ COMPLETED
 - [x] **Context-Aware Conversation** - Handle follow-up questions and modifications ✅ COMPLETED
-- [x] **Multi-step Planning** - Break complex requests into executable steps ✅ COMPLETED
+- [ ] **Multi-step Planning** - Break complex requests into executable steps ❌ **NOT IMPLEMENTED**
 - [x] **Test Fixes** - All unit tests for workflow generation passing ✅ COMPLETED
 
 **Success Criteria**:
@@ -95,41 +103,45 @@ The fundamental features that deliver the core value proposition and enable the 
 - [x] Users can modify generated workflows before execution ✅ COMPLETED
 - [x] System provides explanations for workflow steps ✅ COMPLETED
 - [x] All unit tests passing ✅ COMPLETED
+- [ ] System generates multi-step workflows for complex requests ❌ **NOT IMPLEMENTED**
 
 **Implementation Status**:
-- ✅ **Service Layer**: `NaturalLanguageWorkflowService` fully implemented
+- ✅ **Service Layer**: `NaturalLanguageWorkflowService` fully implemented (single-step only)
 - ✅ **API Endpoint**: `/api/workflows/generate` endpoint working
 - ✅ **UI Component**: `NaturalLanguageWorkflowChat` component built
 - ✅ **Page**: `/workflows/create` page implemented
 - ✅ **Unit Tests**: All tests passing (100% pass rate)
 - ✅ **E2E Tests**: Workflow creation tests implemented and passing
+- ❌ **Multi-Step Generation**: Currently only generates single-step workflows
+- ❌ **Data Flow Mapping**: No support for step-to-step data flow
+- ❌ **Complex Workflow Planning**: No workflow decomposition logic
 
-**🚧 CRITICAL IMPROVEMENTS NEEDED** (Based on Debug Analysis):
-- [ ] **Multi-Step Workflow Generation** - Currently only generates single-step workflows
+**🚨 CRITICAL MISSING FUNCTIONALITY** (Core Value Proposition Gaps):
+- [ ] **Multi-Step Workflow Generation** - ❌ **CORE FEATURE MISSING**
   - [ ] Implement workflow planning to break complex requests into multiple steps
   - [ ] Add data flow mapping between steps (output → input)
   - [ ] Support conditional logic and branching
   - [ ] Add step dependencies and ordering
-- [ ] **Function Name Collision Prevention** - Current naming can create conflicts
+- [ ] **Function Name Collision Prevention** - ❌ **QUALITY ISSUE**
   - [ ] Add API prefix to function names (e.g., "GitHub_", "Slack_")
   - [ ] Implement function name uniqueness validation
   - [ ] Add function name conflict resolution
-- [ ] **Parameter Schema Enhancement** - Current schemas are too generic
+- [ ] **Parameter Schema Enhancement** - ❌ **QUALITY ISSUE**
   - [ ] Improve OpenAPI parameter conversion to include examples
   - [ ] Add parameter validation and constraints
   - [ ] Support complex parameter types (arrays, objects, nested structures)
   - [ ] Add parameter descriptions from OpenAPI specs
-- [ ] **Context-Aware Function Filtering** - Send only relevant functions to OpenAI
+- [ ] **Context-Aware Function Filtering** - ❌ **SCALABILITY ISSUE**
   - [ ] Implement API categorization (payment, communication, etc.)
   - [ ] Add function relevance scoring based on user request
   - [ ] Limit function count to prevent token overflow
   - [ ] Add function prioritization (most commonly used first)
-- [ ] **Workflow Validation Enhancement** - Current validation is basic
+- [ ] **Workflow Validation Enhancement** - ❌ **QUALITY ISSUE**
   - [ ] Add workflow step dependency validation
   - [ ] Validate data flow between steps
   - [ ] Check for circular dependencies
   - [ ] Validate parameter compatibility across steps
-- [ ] **Error Handling Improvements** - Better error messages and recovery
+- [ ] **Error Handling Improvements** - ❌ **UX ISSUE**
   - [ ] Add specific error messages for different failure types
   - [ ] Implement workflow generation retry logic
   - [ ] Add fallback workflows when primary generation fails
@@ -626,13 +638,14 @@ Features that provide advanced capabilities for power users.
 
 Based on the detailed analysis of the natural language workflow generation system and debug output, the following critical improvements are needed to enhance the core value proposition:
 
-### **P0.1.1: Multi-Step Workflow Generation** 🚨 **HIGH PRIORITY**
-**Current Issue**: System only generates single-step workflows, limiting complex automation scenarios.
+### **P0.1.1: Multi-Step Workflow Generation** 🚨 **CRITICAL PRIORITY - MVP BLOCKER**
+**Current Issue**: System only generates single-step workflows, severely limiting the core value proposition.
 
 **Debug Evidence**: 
 - Current workflow generation creates only one step per request
 - No support for multi-step orchestration (e.g., "webhook → transform → action")
 - Missing data flow between steps
+- This is a fundamental limitation that prevents the system from delivering its core value proposition
 
 **Implementation Plan**:
 - [ ] **Workflow Planning Engine** - Break complex requests into multiple steps
@@ -813,39 +826,39 @@ Based on the detailed analysis of the natural language workflow generation syste
 
 ## Implementation Timeline for Critical Improvements
 
-### **Phase 1: Immediate Fixes (Week 1-2)**
+### **Phase 1: MVP Blocker (Week 1-2)**
+- [ ] P0.1.1: Multi-Step Workflow Generation 🚨 **CRITICAL - MVP BLOCKER**
+
+### **Phase 2: Quality Improvements (Week 3-4)**
 - [ ] P0.1.2: Function Name Collision Prevention
+- [ ] P0.1.3: Parameter Schema Enhancement
 - [ ] P0.1.6: Error Handling Improvements
 
-### **Phase 2: Core Enhancements (Week 3-4)**
-- [ ] P0.1.3: Parameter Schema Enhancement
+### **Phase 3: Scalability Enhancements (Week 5-6)**
 - [ ] P0.1.4: Context-Aware Function Filtering
-
-### **Phase 3: Advanced Features (Week 5-6)**
-- [ ] P0.1.1: Multi-Step Workflow Generation
 - [ ] P0.1.5: Workflow Validation Enhancement
 
 ## Success Metrics for Critical Improvements
 
 ### **Technical Metrics**
-- **Multi-Step Workflow Rate**: 80%+ of complex requests generate multi-step workflows
-- **Function Name Uniqueness**: 100% unique function names across all APIs
-- **Parameter Schema Quality**: 90%+ of parameters have proper schemas
-- **Token Usage Optimization**: 50%+ reduction in average token usage
-- **Workflow Validation Coverage**: 95%+ of workflow issues caught by validation
-- **Error Resolution Rate**: 80%+ of users can resolve errors independently
+- **Multi-Step Workflow Rate**: 0% → 80%+ of complex requests generate multi-step workflows
+- **Function Name Uniqueness**: 0% → 100% unique function names across all APIs
+- **Parameter Schema Quality**: 0% → 90%+ of parameters have proper schemas
+- **Token Usage Optimization**: 0% → 50%+ reduction in average token usage
+- **Workflow Validation Coverage**: 20% → 95%+ of workflow issues caught by validation
+- **Error Resolution Rate**: 0% → 80%+ of users can resolve errors independently
 
 ### **User Experience Metrics**
 - **Workflow Generation Success Rate**: 95%+ successful generation for valid requests
 - **User Satisfaction**: 4.5+ star rating for workflow generation
 - **Time to First Workflow**: <5 minutes from request to working workflow
-- **Workflow Complexity**: Support for workflows with 2-5 steps
-- **Error Recovery**: 90%+ of users successfully resolve generation errors
+- **Workflow Complexity**: 1 step → Support for workflows with 2-5 steps
+- **Error Recovery**: 0% → 90%+ of users successfully resolve generation errors
 
 ## Implementation Timeline
 
-### Phase 1: Core MVP (P0) ✅ **COMPLETED**
-- **P0.1**: Natural Language Workflow Creation ✅ **COMPLETED**
+### Phase 1: Core MVP (P0) ⚠️ **PARTIALLY COMPLETED**
+- **P0.1**: Natural Language Workflow Creation ⚠️ **PARTIALLY COMPLETED** (single-step only)
 - **P0.2**: Workflow Execution Engine ✅ **COMPLETED**
 - **P0.3**: API Connection Management ✅ **COMPLETED**
 - **P0.4**: Dashboard UI Implementation ✅ **COMPLETED**

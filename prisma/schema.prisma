@@ -1,8 +1,39 @@
+/**
+ * TODO: UX SIMPLIFICATION - PRISMA SCHEMA PHASE 2.2 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.2: Implement progressive disclosure
+ * - [ ] Add onboarding state tracking to User model
+ * - [ ] Add onboardingStage field to track user progress
+ * - [ ] Add onboardingCompletedAt timestamp
+ * - [ ] Add guidedTourCompleted boolean field
+ * - [ ] Add tests: tests/integration/database.test.ts - test onboarding state
+ * - [ ] Add tests: tests/unit/database/init.test.ts - test schema updates
+ * 
+ * PHASE 2.3: Streamline onboarding flow
+ * - [ ] Make email verification optional in User model
+ * - [ ] Set isActive default to true
+ * - [ ] Add tests: tests/integration/database.test.ts - test simplified user creation
+ * 
+ * IMPLEMENTATION NOTES:
+ * - Add onboardingStage enum: 'new_user', 'first_connection', 'first_workflow', 'completed'
+ * - Add onboardingCompletedAt DateTime? field
+ * - Add guidedTourCompleted Boolean @default(false)
+ * - Update User model to support progressive disclosure
+ * - Create migration for new fields
+ */
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 1: Schema Changes
+// - Add secretId field to ApiConnection to reference Secret instead of storing credentials directly
+// - Consider adding secretReference field to ApiCredential for backward compatibility during migration
+// - Add connectionId field to Secret for connection-specific secrets
+// - Consider adding secretType enum for better type safety
+// - Add indexes for performance on secret lookups
 
 generator client {
   provider = "prisma-client-js"
@@ -76,6 +107,22 @@ enum ConnectionStatus {
   revoked
 }
 
+// TODO: [SECRETS-FIRST-REFACTOR] Add SecretType enum for better type safety
+// enum SecretType {
+//   API_KEY
+//   BEARER_TOKEN
+//   BASIC_AUTH_USERNAME
+//   BASIC_AUTH_PASSWORD
+//   OAUTH2_CLIENT_ID
+//   OAUTH2_CLIENT_SECRET
+//   OAUTH2_ACCESS_TOKEN
+//   OAUTH2_REFRESH_TOKEN
+//   WEBHOOK_SECRET
+//   SSH_KEY
+//   CERTIFICATE
+//   CUSTOM
+// }
+
 // User Management
 model User {
   id        String    @id @default(cuid())
@@ -125,6 +172,10 @@ model ApiConnection {
   lastTested       DateTime?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+
+  // TODO: [SECRETS-FIRST-REFACTOR] Add secretId field to reference Secret instead of storing credentials in authConfig
+  // secretId String? // Reference to the primary secret for this connection
+  // secretReference Secret? @relation(fields: [secretId], references: [id])
 
   // Relations
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -315,6 +366,10 @@ model Secret {
   isActive      Boolean   @default(true)
   expiresAt     DateTime?
   metadata      Json? // Additional metadata about the secret
+
+  // TODO: [SECRETS-FIRST-REFACTOR] Add connectionId field to link secrets to connections
+  // connectionId String? // Reference to ApiConnection if this secret is connection-specific
+  // connection   ApiConnection? @relation(fields: [connectionId], references: [id])
 
   // API Key Rotation Fields
   rotationEnabled  Boolean   @default(false) // Whether automatic rotation is enabled

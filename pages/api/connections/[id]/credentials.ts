@@ -6,6 +6,18 @@ import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/sess
 import { encryptionService } from '../../../../src/utils/encryption';
 import { CreateApiCredentialRequest } from '../../../../src/types';
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 3: Credentials API Migration
+// - Deprecate this endpoint in favor of secrets-based approach
+// - Add migration logic to move existing credentials to secrets vault
+// - Update connection creation to use secrets instead of direct credential storage
+// - Add validation to ensure connections reference valid secrets
+// - Add connection-secret relationship validation
+// - Update credential retrieval to fetch from secrets vault
+// - Add connection status updates based on secret availability
+// - Add audit logging for credential-to-secret migrations
+// - Add rollback capabilities for failed migrations
+// - Consider adding connection-secret dependency validation
+
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
     // Require authentication for all operations

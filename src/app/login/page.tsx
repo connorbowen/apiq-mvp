@@ -1,3 +1,25 @@
+/**
+ * TODO: UX SIMPLIFICATION - LOGIN PAGE PHASE 2.3 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.3: Streamline onboarding flow
+ * - [ ] Redirect directly to Chat interface after successful login
+ * - [ ] Remove complex error handling for faster login
+ * - [ ] Simplify OAuth2 error messages
+ * - [ ] Add tests: tests/e2e/auth/authentication-session.test.ts - test streamlined login
+ * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test simplified login
+ * - [ ] Add tests: tests/unit/app/login/page.test.tsx - test simplified error handling
+ * 
+ * PHASE 2.4: Guided tour integration
+ * - [ ] Check if user is new and redirect to guided tour
+ * - [ ] Add welcome back message for returning users
+ * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test login to tour flow
+ * 
+ * IMPLEMENTATION NOTES:
+ * - Update success redirect to /dashboard?tab=chat
+ * - Simplify error message display
+ * - Add onboarding state check
+ */
+
 'use client';
 
 import { useState } from 'react';

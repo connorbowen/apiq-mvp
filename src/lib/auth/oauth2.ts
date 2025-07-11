@@ -1,6 +1,18 @@
 import { prisma } from '../../../lib/database/client';
 import { encryptionService as defaultEncryptionService, generateSecureToken as defaultGenerateSecureToken } from '../../utils/encryption';
-import { ApplicationError } from '../../middleware/errorHandler';
+import { ApplicationError } from '../errors';
+
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 6: OAuth2 Service Migration
+// - Update OAuth2 token storage to use secrets vault instead of ApiCredential table
+// - Add methods to create secrets for OAuth2 tokens during authorization
+// - Add connection-secret linking for OAuth2 flows
+// - Update token refresh to use secrets vault
+// - Add OAuth2-specific secret types and metadata
+// - Add connection status updates based on OAuth2 secret health
+// - Add migration logic to move existing OAuth2 credentials to secrets
+// - Add OAuth2 secret rotation and expiration handling
+// - Add connection-secret validation for OAuth2 flows
+// - Consider adding OAuth2 provider-specific secret management
 
 export interface OAuth2Config {
   clientId: string;

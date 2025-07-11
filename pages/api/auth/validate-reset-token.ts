@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../../lib/database/client';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
+import { prisma } from '../../../src/lib/singletons/prisma';
+import { ApplicationError, badRequest, notFound } from '../../../src/lib/errors/ApplicationError';
 import { logInfo, logError } from '../../../src/utils/logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validate token parameter
     if (!token) {
-      throw new ApplicationError('Reset token is required', 400, 'MISSING_TOKEN');
+      throw badRequest('Reset token is required', 'MISSING_TOKEN');
     }
 
     // Find password reset token
@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!resetToken) {
-      throw new ApplicationError('Invalid or expired reset token', 400, 'INVALID_TOKEN');
+      throw badRequest('Invalid or expired reset token', 'INVALID_TOKEN');
     }
 
     // Check if token is expired
@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { token }
       });
       
-      throw new ApplicationError('Reset token has expired', 400, 'EXPIRED_TOKEN');
+      throw badRequest('Reset token has expired', 'EXPIRED_TOKEN');
     }
 
     // Find user by email to ensure user still exists
@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { token }
       });
       
-      throw new ApplicationError('User not found', 404, 'USER_NOT_FOUND');
+      throw notFound('User not found', 'USER_NOT_FOUND');
     }
 
     // Log the token validation
@@ -90,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code

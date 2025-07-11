@@ -3,6 +3,18 @@ import { logError, logInfo, logDebug, logWorkflowExecution } from '../../utils/l
 import { prisma } from '../../../lib/database/client';
 import { apiClient } from '../api/client';
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 7: Workflow Step Runner Updates
+// - Update API connection authentication to use secrets instead of direct authConfig
+// - Add methods to retrieve secrets for API connections during workflow execution
+// - Add connection-secret validation before API calls
+// - Add error handling for missing or invalid secrets during workflow execution
+// - Add connection status validation based on secret availability
+// - Add secret rotation handling during workflow execution
+// - Add audit logging for secret-based API calls in workflows
+// - Add connection health checks based on secret status
+// - Add fallback mechanisms for secret retrieval failures
+// - Consider adding connection-secret dependency validation in workflow steps
+
 // Step execution context - data passed between steps
 export interface ExecutionContext {
   executionId: string;

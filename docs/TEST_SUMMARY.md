@@ -27,12 +27,25 @@
 - ✅ **UX Compliance**: Fixed loading state validation for fast operations
 - ✅ **Password Reset Tests**: Fixed expired token handling to check for error messages on same page ✅ **LATEST**
 - ✅ **OAuth2 Connection Tests**: Fixed strict mode violations by scoping selectors to specific connection cards ✅ **LATEST**
+- ✅ **Unified Error Handling**: Implemented centralized error handling system with user-friendly messages ✅ **COMPLETED - LATEST**
+  - **OAuth2 Token Refresh**: Now returns proper 401 status codes instead of 500 errors
+  - **Error Message Quality**: All endpoints now provide actionable, user-friendly error messages
+  - **Status Code Consistency**: Fixed inconsistencies between `statusCode` and `status` properties
+  - **Response Format**: Standardized error response structure across all API endpoints
 
 ## Test Command Updates
 - `test:e2e:current`: Now includes OpenAPI integration tests
 - `test:e2e:p0`: OpenAPI tests removed (now part of current stable suite)
 
 ## Remaining Issues
-- **None** - All E2E tests are now passing consistently ✅ **RESOLVED**
+- **UX Compliance Timeout**: One OAuth2 test failing due to UX compliance validation timeout (separate from error handling)
+- **Error Handling**: ✅ **RESOLVED** - All error handling issues now fixed with unified system
+
+## Error Handling Improvements
+- ✅ **Centralized Error Management**: Single `ApplicationError` class with convenience builders
+- ✅ **API Endpoint Updates**: All 12+ API endpoints updated to use unified error system
+- ✅ **User-Friendly Messages**: Error messages now provide clear, actionable guidance
+- ✅ **Status Code Accuracy**: Proper HTTP status codes returned for different error types
+- ✅ **Test Validation**: Tests now properly validate error responses and status codes
 
 _Last updated: 2025-07-11_

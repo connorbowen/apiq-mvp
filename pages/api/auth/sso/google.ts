@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../../../lib/database/client';
+import { prisma } from '../../../../src/lib/singletons/prisma';
 import { generateToken } from '../../../../src/lib/auth/session';
-import { ApplicationError } from '../../../../src/middleware/errorHandler';
+import { ApplicationError } from '../../../../src/lib/errors/ApplicationError';
 
 // Google SSO OAuth2 configuration for user authentication
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;

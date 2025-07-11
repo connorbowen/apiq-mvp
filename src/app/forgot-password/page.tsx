@@ -137,9 +137,7 @@ export default function ForgotPasswordPage() {
               placeholder="Enter your email"
             />
           </div>
-          {/* TODO: Fix primary action data-testid pattern to match UX compliance requirements */}
-          {/* Current: button[type="submit"] */}
-          {/* Required: data-testid="primary-action send-reset-link-btn" */}
+
           <button
             type="submit"
             disabled={isLoading}

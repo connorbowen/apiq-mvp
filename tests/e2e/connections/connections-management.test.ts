@@ -1,3 +1,11 @@
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 6: E2E Test Updates
+// - Update E2E tests to verify secret creation during connection setup
+// - Test secret management UI integration
+// - Verify secret rotation in E2E flows
+// - Test OAuth2 flow with secrets
+// - Add E2E tests for secret-connection relationship
+// - Test rollback scenarios in E2E
+
 import { test, expect } from '../../helpers/serverHealthCheck';
 import { createTestUser, cleanupTestUser, generateTestId, TestUser } from '../../helpers/testUtils';
 import { UXComplianceHelper } from '../../helpers/uxCompliance';

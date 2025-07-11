@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
+import { ApplicationError, badRequest, notFound } from '../../../src/lib/errors/ApplicationError';
 import { logInfo, logError } from '../../../src/utils/logger';
 import jwt from 'jsonwebtoken';
 
@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validate token
     if (!token) {
-      throw new ApplicationError('Verification token is required', 400, 'MISSING_TOKEN');
+      throw badRequest('Verification token is required', 'MISSING_TOKEN');
     }
 
     // Find verification token
@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!verificationToken) {
-      throw new ApplicationError('Invalid verification token', 400, 'INVALID_TOKEN');
+      throw badRequest('Invalid verification token', 'INVALID_TOKEN');
     }
 
     // Check if token is expired
@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { token }
       });
       
-      throw new ApplicationError('Verification token has expired', 400, 'EXPIRED_TOKEN');
+      throw badRequest('Verification token has expired', 'EXPIRED_TOKEN');
     }
 
     // Find user by email
@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { token }
       });
       
-      throw new ApplicationError('User not found', 404, 'USER_NOT_FOUND');
+      throw notFound('User not found', 'USER_NOT_FOUND');
     }
 
     // Check if user is already verified
@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { token }
       });
       
-      throw new ApplicationError('User is already verified', 400, 'ALREADY_VERIFIED');
+      throw badRequest('User is already verified', 'ALREADY_VERIFIED');
     }
 
     // Activate user
@@ -133,7 +133,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code

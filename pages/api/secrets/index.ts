@@ -5,6 +5,18 @@ import { prisma } from '../../../lib/database/client';
 import { logError, logInfo } from '../../../src/utils/logger';
 import { errorHandler } from '../../../src/middleware/errorHandler';
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 2: Secrets API Enhancements
+// - Add connection-specific secret creation endpoints
+// - Add methods to link secrets to connections during creation
+// - Add validation to ensure secrets are properly associated with connections
+// - Add endpoints to retrieve secrets for specific connections
+// - Add connection status tracking in secret responses
+// - Add migration endpoints to move existing connection credentials to secrets
+// - Add bulk operations for connection-secret management
+// - Add connection-specific secret rotation endpoints
+// - Update response schemas to include connection information
+// - Add connection validation before secret creation
+
 // Simple in-memory rate limiting (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes

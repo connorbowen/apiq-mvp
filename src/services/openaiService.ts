@@ -9,6 +9,18 @@ import {
   Workflow 
 } from '../types';
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 5: OpenAI Service Updates
+// - Update API connection handling to use secrets instead of direct credentials
+// - Add methods to retrieve secrets for API connections
+// - Update authentication methods to use secrets vault
+// - Add validation to ensure connections have required secrets
+// - Add connection status validation before API calls
+// - Add secret rotation handling for API connections
+// - Add connection-secret dependency validation
+// - Update error handling for missing or invalid secrets
+// - Add audit logging for secret-based API calls
+// - Consider adding connection health checks based on secret availability
+
 /**
  * OpenAI service for AI-powered workflow generation and execution
  * Uses function calling to generate and execute multi-step API workflows

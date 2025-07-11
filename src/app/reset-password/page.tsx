@@ -220,9 +220,7 @@ export default function ResetPasswordPage() {
               placeholder="Confirm new password"
             />
           </div>
-          {/* TODO: Fix primary action data-testid pattern to match UX compliance requirements */}
-          {/* Current: data-testid="submit-reset-btn" */}
-          {/* Required: data-testid="primary-action reset-password-btn" */}
+
           <button
             type="submit"
             disabled={isLoading || isValidatingToken || !!error}

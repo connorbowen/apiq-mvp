@@ -382,73 +382,33 @@ test.describe('Authentication & Session E2E Tests - Best-in-Class UX', () => {
       // Clear any existing session state to ensure clean test
       await page.context().clearCookies();
       
-      // Test a subset of critical protected routes to avoid timeout issues
-      const criticalProtectedRoutes = [
-        '/dashboard',
-        '/dashboard?tab=connections',
-        '/workflows',
-        '/secrets/test-id'
-      ];
-
-      for (const route of criticalProtectedRoutes) {
-        // Log the route being tested
-        // eslint-disable-next-line no-console
-        console.log(`Testing protected route: ${route}`);
-        
-        try {
-          // Navigate to the protected route with shorter timeout
-          await page.goto(`${BASE_URL}${route}`, { 
-            waitUntil: 'domcontentloaded',
-            timeout: 8000 
-          });
-          
-          // Wait for either login heading, 404 heading, or redirect to login page
-          // Use a more robust waiting strategy
-          const loginHeading = page.locator('h2', { hasText: 'Sign in to APIQ' });
-          const notFoundHeading = page.locator('h1', { hasText: '404' });
-          const notFoundText = page.locator('h2', { hasText: 'This page could not be found.' });
-          
-          // Wait for any of the expected outcomes
-          await Promise.race([
-            loginHeading.waitFor({ timeout: 3000 }),
-            notFoundHeading.waitFor({ timeout: 3000 }),
-            notFoundText.waitFor({ timeout: 3000 }),
-            page.waitForURL(/.*login/, { timeout: 3000 })
-          ]);
-
-          // Check current URL and page content
-          const currentUrl = page.url();
-          
-          if (currentUrl.includes('/login')) {
-            // Successfully redirected to login page
-            await expect(page).toHaveURL(/.*login/);
-            await expect(page.locator('h2')).toHaveText('Sign in to APIQ');
-            await expect(page.getByTestId('primary-action signin-btn')).toBeVisible();
-          } else if (await notFoundHeading.isVisible() || await notFoundText.isVisible()) {
-            // 404 page is acceptable for non-existent routes
-            console.log(`Route ${route} returned 404 (acceptable for protected routes)`);
-          } else if (await loginHeading.isVisible()) {
-            // Login page is visible (good)
-            await expect(page.locator('h2')).toHaveText('Sign in to APIQ');
-            await expect(page.getByTestId('primary-action signin-btn')).toBeVisible();
-          } else {
-            // Unexpected state - log but don't fail the test
-            console.log(`Route ${route} in unexpected state, but continuing test`);
-          }
-          
-          // Small delay between route tests to prevent overwhelming the server
-          await page.waitForTimeout(500);
-          
-        } catch (error) {
-          // Log the error but don't fail the test - some routes may legitimately fail
-          console.log(`Route ${route} navigation failed (acceptable for protected routes):`, error.message);
-        }
-      }
+      // Test only the main dashboard route which should definitely redirect to login
+      const protectedRoute = '/dashboard';
       
-      // Final validation - ensure we can access login page
-      await page.goto(`${BASE_URL}/login`);
+      // Navigate to the protected route
+      await page.goto(`${BASE_URL}${protectedRoute}`, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 10000 
+      });
+      
+      // Wait for redirect to login page
+      await page.waitForURL(/.*login/, { timeout: 10000 });
+      
+      // Should redirect to login page
+      await expect(page).toHaveURL(/.*login/);
       await expect(page.locator('h2')).toHaveText('Sign in to APIQ');
       await expect(page.getByTestId('primary-action signin-btn')).toBeVisible();
+      
+      // Test one more protected route to ensure consistency
+      await page.context().clearCookies();
+      await page.goto(`${BASE_URL}/workflows`, { 
+        waitUntil: 'domcontentloaded',
+        timeout: 10000 
+      });
+      
+      // Should also redirect to login
+      await page.waitForURL(/.*login/, { timeout: 10000 });
+      await expect(page).toHaveURL(/.*login/);
     });
   });
 

@@ -1,3 +1,40 @@
+/**
+ * TODO: UX SIMPLIFICATION - CONNECTIONS TAB PHASE 2.1 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.1: Redesign dashboard layout with 3-tab structure
+ * - [ ] MIGRATE: Move ConnectionsTab to Settings tab as a section
+ * - [ ] Create SettingsTab component that includes Connections section
+ * - [ ] Maintain all existing functionality in new location
+ * - [ ] Update navigation and routing for new structure
+ * - [ ] Add tests: tests/unit/components/dashboard/SettingsTab.test.tsx
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test connections in settings
+ * 
+ * PHASE 2.2: Progressive disclosure
+ * - [ ] Show connection management based on user onboarding stage
+ * - [ ] Hide advanced connection features for new users
+ * - [ ] Progressive reveal of OAuth2 and advanced options
+ * - [ ] Add tests: tests/unit/components/ProgressiveDisclosure.test.tsx
+ * 
+ * PHASE 3.1: Mobile optimization
+ * - [ ] Optimize connection management for mobile screens
+ * - [ ] Improve mobile form interactions
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile connections
+ * 
+ * MIGRATION PLAN:
+ * - Create SettingsTab component
+ * - Move ConnectionsTab as a section within SettingsTab
+ * - Update all navigation references
+ * - Maintain existing API and functionality
+ */
+
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 8: UI Component Updates
+// - Update connections tab to show secret information
+// - Add secret management UI integration
+// - Display secret rotation status
+// - Add secret creation during connection setup
+// - Update connection testing to use secrets
+// - Add secret-connection relationship display
+
 'use client';
 
 import { useState } from 'react';

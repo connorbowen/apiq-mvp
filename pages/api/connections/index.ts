@@ -2,6 +2,18 @@
 // Consider extracting connection creation logic into a service layer to improve maintainability.
 // Priority: Low - not urgent for current functionality.
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 4: Connection API Migration
+// - Update connection creation to use secrets instead of direct authConfig storage
+// - Add secret creation during connection setup
+// - Add connection-secret linking and validation
+// - Add rollback mechanisms for failed secret creation
+// - Update connection retrieval to include secret information
+// - Add connection status updates based on secret health
+// - Add migration logic for existing connections
+// - Add connection-secret dependency validation
+// - Add audit logging for connection-secret operations
+// - Consider adding connection-secret bulk operations
+
 console.log('LOADED /api/connections handler');
 
 import { NextApiRequest, NextApiResponse } from 'next';

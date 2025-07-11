@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 13: Middleware Updates
+// - Add connection-secret validation middleware for protected routes
+// - Add secret health check middleware for connection-dependent routes
+// - Add connection status validation middleware
+// - Add secret rotation notification middleware
+// - Add connection-secret dependency validation
+// - Add secret access audit logging middleware
+// - Add connection health status middleware
+// - Add secret expiration warning middleware
+// - Add connection-secret relationship validation
+// - Consider adding secret-based route protection
+
 // Define protected routes that require authentication
 const protectedRoutes = [
   '/dashboard',

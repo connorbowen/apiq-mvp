@@ -5,21 +5,21 @@ A semi-agentic, low-code web application that enables non-technical users to cre
 ## 🚀 Features
 
 ### Core Functionality
-- **Natural Language Workflow Creation** - Chat-based interface for describing workflows in plain English 🆕
-- **AI-Powered Orchestration** - OpenAI GPT-4 integration for intelligent workflow generation 🆕
-- **Multi-API Integration** - Connect to any API with OpenAPI/Swagger documentation
-- **Conversational Interface** - Friendly, helpful AI responses with clear explanations 🆕
-- **Simplified User Experience** - Streamlined interface focused on workflow creation
-- **Real-time Monitoring** - Live workflow execution monitoring and error handling 🆕
-- **Comprehensive Audit Trails** - Complete logging for compliance and debugging 🆕
+- **Natural Language Workflow Creation** - Chat-based interface for describing workflows in plain English ⚠️ **Single-step workflows only**
+- **AI-Powered Orchestration** - OpenAI GPT-4 integration for intelligent workflow generation ⚠️ **Basic implementation**
+- **Multi-API Integration** - Connect to any API with OpenAPI/Swagger documentation ✅ **Complete**
+- **Conversational Interface** - Friendly, helpful AI responses with clear explanations ✅ **Complete**
+- **Simplified User Experience** - Streamlined interface focused on workflow creation ✅ **Complete**
+- **Real-time Monitoring** - Live workflow execution monitoring and error handling ✅ **Complete**
+- **Comprehensive Audit Trails** - Complete logging for compliance and debugging ✅ **Complete**
 
-### Workflow Management 🆕
-- **Natural Language Generation** - Describe workflows in plain English, AI creates them automatically
-- **Workflow Execution Engine** - Robust execution with pause/resume/cancel capabilities
-- **Real-time Progress Tracking** - Monitor workflow execution step by step
-- **Execution Control** - Pause, resume, or cancel running workflows
-- **Comprehensive Logging** - Detailed execution logs for debugging and monitoring
-- **Alternative Suggestions** - AI suggests alternative approaches when needed
+### Workflow Management
+- **Natural Language Generation** - Describe workflows in plain English, AI creates them automatically ⚠️ **Single-step workflows only**
+- **Workflow Execution Engine** - Robust execution with pause/resume/cancel capabilities ✅ **Complete**
+- **Real-time Progress Tracking** - Monitor workflow execution step by step ✅ **Complete**
+- **Execution Control** - Pause, resume, or cancel running workflows ✅ **Complete**
+- **Comprehensive Logging** - Detailed execution logs for debugging and monitoring ✅ **Complete**
+- **Alternative Suggestions** - AI suggests alternative approaches when needed ⚠️ **Basic implementation**
 
 ### Secrets Management 🆕
 - **Encrypted Secrets Vault** - AES-256 encryption for all sensitive data
@@ -58,6 +58,34 @@ A semi-agentic, low-code web application that enables non-technical users to cre
 - **API Documentation** - Complete API reference documentation
 - **Development Tools** - Hot reloading, linting, and debugging support
 
+## 📊 Current Status
+
+### MVP Completion Status
+- **Overall Progress**: 80% Complete (4/5 P0 items fully implemented)
+- **Core Value Proposition**: ⚠️ **Partially Implemented** (single-step workflows only)
+- **Technical Foundation**: ✅ **Solid** (execution engine, API management, security)
+- **Next Milestone**: Complete multi-step workflow generation (P0.1.1)
+
+### Completed Components ✅
+- **P0.2: Workflow Execution Engine** - Fully functional with pause/resume/cancel
+- **P0.3: API Connection Management** - Complete OpenAPI integration
+- **P0.4: Dashboard UI Implementation** - Full-featured management interface
+- **P2.1: Security & Compliance** - Enterprise-grade security features
+
+### In Progress ⚠️
+- **P0.1: Natural Language Workflow Creation** - Basic implementation (single-step only)
+  - ✅ OpenAI GPT-4 integration working
+  - ✅ Function calling engine implemented
+  - ✅ User confirmation flow complete
+  - ❌ Multi-step workflow generation missing
+  - ❌ Data flow mapping between steps missing
+  - ❌ Complex workflow planning missing
+
+### Development Timeline
+- **Phase 1 (Week 1-2)**: Complete multi-step workflow generation (MVP blocker)
+- **Phase 2 (Week 3-4)**: Quality improvements and error handling
+- **Phase 3 (Week 5-6)**: Scalability enhancements and validation
+
 ## 🎯 Platform Focus
 
 ### Natural Language First
@@ -74,9 +102,14 @@ APIQ has been refactored to prioritize **natural language workflow creation** ov
 Instead of manually configuring API connections and building workflows step-by-step, users can simply describe what they want:
 
 ```
-User: "When a new email arrives, create a calendar event"
+User: "Send a Slack notification" ✅ **Currently Supported**
+AI: "I'll help you create a workflow that sends a Slack notification. Let me set this up for you..."
+
+User: "When a new email arrives, create a calendar event" ⚠️ **Not Yet Supported**
 AI: "I'll help you create a workflow that monitors your email and creates calendar events. Let me set this up for you..."
 ```
+
+**Note**: Multi-step workflow generation is currently in development. The system currently supports single-step workflows only.
 
 ## 🏗️ Architecture
 

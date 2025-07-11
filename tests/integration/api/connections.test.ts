@@ -1,3 +1,11 @@
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 5: Test Updates
+// - Update connection creation tests to verify secret creation
+// - Add tests for secret-connection relationship
+// - Test rollback scenarios when connection creation fails
+// - Update connection testing to use secrets
+// - Add tests for secret rotation in connections
+// - Test OAuth2 flow with secrets
+
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/connections/index';
 import { prisma } from '../../../lib/database/client';

@@ -1,5 +1,95 @@
 'use client';
 
+/**
+ * TODO: UX SIMPLIFICATION PHASES
+ * 
+ * PHASE 1: QUICK WINS (1-2 weeks) - @connorbowen 2024-12-19
+ * 
+ * 1.1 Hide non-essential tabs for regular users
+ * - [ ] Add role-based tab visibility logic
+ * - [ ] Hide Admin/Audit tabs for non-admin users
+ * - [ ] Update tab rendering to filter based on user.role
+ * - [ ] Add tests: tests/unit/app/dashboard/page.test.tsx - test tab visibility by role
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test admin-only tabs hidden for regular users
+ * 
+ * 1.2 Make Chat the default tab
+ * - [ ] Change default activeTab from 'overview' to 'chat'
+ * - [ ] Update URL parameter handling to default to chat
+ * - [ ] Update tab initialization logic
+ * - [ ] Add tests: tests/unit/app/dashboard/page.test.tsx - test default tab is chat
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test dashboard loads with chat tab active
+ * 
+ * 1.3 Simplify the header - remove breadcrumbs
+ * - [ ] Remove breadcrumb navigation section (lines ~350-370)
+ * - [ ] Simplify header to just title and logout button
+ * - [ ] Remove breadcrumb-related state and handlers
+ * - [ ] Add tests: tests/unit/app/dashboard/page.test.tsx - test breadcrumbs removed
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test simplified header layout
+ * 
+ * 1.4 Consolidate error/success messages
+ * - [ ] Create unified MessageBanner component
+ * - [ ] Replace duplicate message sections with single component
+ * - [ ] Consolidate message state management
+ * - [ ] Add tests: tests/unit/components/MessageBanner.test.tsx - test message display
+ * - [ ] Add tests: tests/e2e/ui/ui-compliance.test.ts - test message accessibility
+ * 
+ * PHASE 2: CORE SIMPLIFICATION (2-3 weeks) - @connorbowen 2024-12-19
+ * 
+ * 2.1 Redesign dashboard layout with 3-tab structure
+ * - [ ] Replace 7-tab system with 3-tab system: Chat, Workflows, Settings
+ * - [ ] Create new tab configuration object
+ * - [ ] Update tab rendering logic
+ * - [ ] Move Connections and Secrets to Settings tab
+ * - [ ] Add tests: tests/unit/app/dashboard/page.test.tsx - test 3-tab structure
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test simplified navigation
+ * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test new user flow
+ * 
+ * 2.2 Implement progressive disclosure
+ * - [ ] Add user onboarding state tracking
+ * - [ ] Show features based on user journey stage
+ * - [ ] Create OnboardingContext for state management
+ * - [ ] Add progressive feature unlocking
+ * - [ ] Add tests: tests/unit/components/ProgressiveDisclosure.test.tsx
+ * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test progressive disclosure
+ * 
+ * 2.3 Streamline onboarding flow
+ * - [ ] Simplify registration to email + password only
+ * - [ ] Make email verification optional (don't block access)
+ * - [ ] Redirect directly to Chat interface after login
+ * - [ ] Add tests: tests/e2e/auth/authentication-session.test.ts - test streamlined flow
+ * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test simplified registration
+ * 
+ * 2.4 Add guided tour for new users
+ * - [ ] Create GuidedTour component
+ * - [ ] Add tour steps for Chat, Workflows, Settings
+ * - [ ] Implement tour state management
+ * - [ ] Add skip/resume functionality
+ * - [ ] Add tests: tests/unit/components/GuidedTour.test.tsx
+ * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test guided tour
+ * 
+ * PHASE 3: POLISH (1-2 weeks) - @connorbowen 2024-12-19
+ * 
+ * 3.1 Mobile-optimized navigation
+ * - [ ] Implement bottom navigation bar for mobile
+ * - [ ] Create MobileNavigation component
+ * - [ ] Update responsive design for 3-tab structure
+ * - [ ] Add tests: tests/unit/components/MobileNavigation.test.tsx
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile navigation
+ * 
+ * 3.2 Performance optimizations
+ * - [ ] Implement React.memo for tab components
+ * - [ ] Add lazy loading for non-critical components
+ * - [ ] Optimize re-renders with useMemo/useCallback
+ * - [ ] Add tests: tests/performance/load-testing.test.ts - test performance improvements
+ * 
+ * TESTING STRATEGY:
+ * - Unit tests for all new components and logic changes
+ * - E2E tests for user flows and navigation
+ * - Integration tests for API interactions
+ * - Performance tests for optimization validation
+ * - Accessibility tests for all UI changes
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';

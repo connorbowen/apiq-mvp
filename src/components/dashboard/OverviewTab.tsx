@@ -1,5 +1,29 @@
 'use client';
 
+/**
+ * TODO: UX SIMPLIFICATION - OVERVIEW TAB PHASE 2 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.1: Redesign dashboard layout with 3-tab structure
+ * - [ ] DEPRECATE: This OverviewTab will be removed in favor of Chat-first experience
+ * - [ ] Move key metrics to Chat interface header or sidebar
+ * - [ ] Integrate quick actions into Chat interface
+ * - [ ] Move recent activity to Workflows tab
+ * - [ ] Add tests: tests/unit/components/dashboard/OverviewTab.test.tsx - test deprecation
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test overview content migration
+ * 
+ * PHASE 2.2: Progressive disclosure integration
+ * - [ ] Show metrics based on user onboarding stage
+ * - [ ] Hide advanced metrics for new users
+ * - [ ] Progressive reveal of features as user progresses
+ * - [ ] Add tests: tests/unit/components/ProgressiveDisclosure.test.tsx - test metrics display
+ * 
+ * MIGRATION PLAN:
+ * - Quick Actions → Chat interface quick start buttons
+ * - Metrics Cards → Chat interface status bar
+ * - Recent Activity → Workflows tab activity feed
+ * - Welcome Section → Chat interface welcome message
+ */
+
 import { useState } from 'react';
 import Link from 'next/link';
 

@@ -3,6 +3,18 @@
 import { useState, useEffect } from 'react';
 import { apiClient, OAuth2Provider, ApiConnection } from '../lib/api/client';
 
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 11: OAuth2 Manager Updates
+// - Update OAuth2 manager to use secrets instead of direct authConfig
+// - Add methods to retrieve OAuth2 secrets for connection management
+// - Add connection-secret validation before OAuth2 operations
+// - Add secret rotation handling for OAuth2 tokens
+// - Add connection status updates based on OAuth2 secret health
+// - Add error handling for missing or invalid OAuth2 secrets
+// - Add connection-secret dependency validation
+// - Add audit logging for OAuth2 secret operations
+// - Add connection health checks based on OAuth2 secret status
+// - Consider adding OAuth2 provider-specific secret management
+
 interface OAuth2ManagerProps {
   connection: ApiConnection;
   onSuccess?: () => void;

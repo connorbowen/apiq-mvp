@@ -1,3 +1,30 @@
+/**
+ * TODO: UX SIMPLIFICATION - LANDING PAGE PHASE 2.4 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.4: Guided tour integration
+ * - [ ] Update "Try Chat" button to redirect to guided tour for new users
+ * - [ ] Update "Start Chatting" CTA to include onboarding flow
+ * - [ ] Add onboarding state detection for returning users
+ * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test landing page to tour flow
+ * - [ ] Add tests: tests/unit/app/page.test.tsx - test CTA behavior
+ * 
+ * PHASE 2.3: Streamline onboarding flow
+ * - [ ] Update signup link to use simplified registration
+ * - [ ] Update login link to redirect to Chat interface
+ * - [ ] Add tests: tests/e2e/auth/authentication-session.test.ts - test landing page auth flow
+ * 
+ * PHASE 3.1: Mobile optimization
+ * - [ ] Optimize landing page for mobile screens
+ * - [ ] Improve mobile CTA buttons
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile landing page
+ * 
+ * IMPLEMENTATION NOTES:
+ * - Update "Try Chat" button to check user onboarding state
+ * - Redirect new users to guided tour, returning users to Chat
+ * - Update signup/login links to use streamlined flows
+ * - Ensure mobile responsiveness of all CTAs
+ */
+
 'use client';
 
 import { useState } from 'react';

@@ -17,6 +17,43 @@ interface ChatInterfaceProps {
   onWorkflowGenerated?: (workflow: any, steps: any[]) => void;
 }
 
+/**
+ * TODO: UX SIMPLIFICATION - CHAT INTERFACE PHASE 1 & 2 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 1.2: Make Chat the default tab
+ * - [ ] Enhance welcome message for new users
+ * - [ ] Add quick start examples prominently displayed
+ * - [ ] Improve first-time user experience
+ * - [ ] Add tests: tests/unit/components/ChatInterface.test.tsx - test default tab behavior
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test chat as default landing
+ * 
+ * PHASE 2.1: Redesign dashboard layout with 3-tab structure
+ * - [ ] INTEGRATE: Move quick actions from OverviewTab to Chat header
+ * - [ ] INTEGRATE: Add status metrics from OverviewTab to Chat sidebar
+ * - [ ] INTEGRATE: Show recent workflow activity in Chat interface
+ * - [ ] Create ChatHeader component with integrated metrics
+ * - [ ] Create ChatSidebar component for status and activity
+ * - [ ] Add tests: tests/unit/components/ChatHeader.test.tsx
+ * - [ ] Add tests: tests/unit/components/ChatSidebar.test.tsx
+ * 
+ * PHASE 2.2: Progressive disclosure
+ * - [ ] Show different examples based on user onboarding stage
+ * - [ ] Progressive reveal of advanced features
+ * - [ ] Contextual help based on user progress
+ * - [ ] Add tests: tests/unit/components/ProgressiveDisclosure.test.tsx
+ * 
+ * PHASE 2.4: Guided tour integration
+ * - [ ] Add tour step highlighting for Chat interface
+ * - [ ] Interactive tutorial for first workflow creation
+ * - [ ] Tooltip guidance for new users
+ * - [ ] Add tests: tests/unit/components/GuidedTour.test.tsx - test chat tour steps
+ * 
+ * PHASE 3.1: Mobile optimization
+ * - [ ] Optimize chat interface for mobile screens
+ * - [ ] Implement mobile-friendly input methods
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile chat experience
+ */
+
 export default function ChatInterface({ onWorkflowGenerated }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');

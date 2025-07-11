@@ -350,9 +350,7 @@ export default function NaturalLanguageWorkflowChat({
             <button
               type="submit"
               disabled={isLoading}
-              // TODO: Fix primary action data-testid pattern to use combined pattern
-              // Change from: data-testid="primary-action generate-workflow-btn"
-              // To: data-testid="primary-action generate-workflow-btn" (already correct)
+
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="primary-action generate-workflow-btn"
             >
@@ -378,9 +376,7 @@ export default function NaturalLanguageWorkflowChat({
                 </button>
                 <button
                   onClick={handleSaveWorkflow}
-                  // TODO: Fix primary action data-testid pattern to use combined pattern
-                  // Change from: data-testid="primary-action save-workflow-btn"
-                  // To: data-testid="primary-action save-workflow-btn" (already correct)
+
                   className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px]"
                   data-testid="primary-action save-workflow-btn"
                 >

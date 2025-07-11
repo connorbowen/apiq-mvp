@@ -1,6 +1,36 @@
+/**
+ * TODO: UX SIMPLIFICATION - ADMIN TAB PHASE 1.1 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 1.1: Hide non-essential tabs for regular users
+ * - [ ] HIDE: AdminTab will be hidden for non-admin users
+ * - [ ] Add role-based visibility logic
+ * - [ ] Maintain functionality for admin users
+ * - [ ] Update navigation to filter admin tabs
+ * - [ ] Add tests: tests/unit/components/dashboard/AdminTab.test.tsx - test role-based visibility
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test admin tab hidden for regular users
+ * 
+ * PHASE 2.1: Redesign dashboard layout with 3-tab structure
+ * - [ ] ADMIN OVERRIDE: Admin users see additional admin tab
+ * - [ ] Maintain admin functionality in new structure
+ * - [ ] Update admin navigation and routing
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test admin tab in 3-tab structure
+ * 
+ * PHASE 3.1: Mobile optimization
+ * - [ ] Optimize admin interface for mobile screens
+ * - [ ] Improve mobile admin interactions
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile admin
+ * 
+ * IMPLEMENTATION NOTES:
+ * - Only show for users with role === 'ADMIN'
+ * - Maintain all existing admin functionality
+ * - Update tab filtering logic in dashboard
+ * - Preserve admin audit and management features
+ */
+
 'use client';
 
 import { useState } from 'react';
+import { apiClient } from '../../lib/api/client';
 
 interface AdminTabProps {
   user: any;
@@ -9,16 +39,24 @@ interface AdminTabProps {
 export default function AdminTab({ user }: AdminTabProps) {
   const [isRotating, setIsRotating] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [rotationSuccess, setRotationSuccess] = useState('');
+  const [rotationError, setRotationError] = useState('');
 
   const handleMasterKeyRotation = async () => {
     setIsRotating(true);
+    setRotationSuccess('');
+    setRotationError('');
     try {
-      // TODO: Implement actual master key rotation API call
-      console.log('Rotating master key...');
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Master key rotated successfully');
-    } catch (error) {
+      const response = await apiClient.rotateMasterKey();
+      if (response.success) {
+        setRotationSuccess('Master key rotated successfully.');
+        console.log('Master key rotated successfully');
+      } else {
+        setRotationError(response.error || 'Failed to rotate master key.');
+        console.error('Failed to rotate master key:', response.error);
+      }
+    } catch (error: any) {
+      setRotationError(error?.message || 'Failed to rotate master key.');
       console.error('Failed to rotate master key:', error);
     } finally {
       setIsRotating(false);
@@ -90,6 +128,12 @@ export default function AdminTab({ user }: AdminTabProps) {
                         'Rotate Master Key'
                       )}
                     </button>
+                    {rotationSuccess && (
+                      <div className="rounded bg-green-50 border border-green-200 text-green-800 px-4 py-2 mt-2" data-testid="rotation-success">{rotationSuccess}</div>
+                    )}
+                    {rotationError && (
+                      <div className="rounded bg-red-50 border border-red-200 text-red-800 px-4 py-2 mt-2" data-testid="rotation-error">{rotationError}</div>
+                    )}
                   </div>
                 </dd>
               </div>

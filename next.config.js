@@ -1,4 +1,17 @@
 /** @type {import('next').NextConfig} */
+
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 14: Configuration Updates
+// - Add environment variables for secrets vault configuration
+// - Add security headers for secrets management routes
+// - Add CSP headers for secrets-related operations
+// - Add configuration for secrets vault encryption keys
+// - Add environment-specific secrets configuration
+// - Add secrets vault health check configuration
+// - Add connection-secret validation configuration
+// - Add secrets rotation configuration
+// - Add audit logging configuration for secrets
+// - Consider adding secrets vault monitoring configuration
+
 const nextConfig = {
   /* config options here */
   typescript: {

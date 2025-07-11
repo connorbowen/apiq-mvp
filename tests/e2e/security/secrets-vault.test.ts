@@ -547,8 +547,8 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Should show success message in modal - use first() to handle multiple success messages
       await expect(successMessage.first()).toContainText('Secret created successfully');
       
-      // Should show the new secret in the list
-      const secretCard = page.locator(`[data-testid="secret-card"]:has-text("${testData.name}")`);
+      // Should show the new secret in the list - use first() to handle multiple matches
+      const secretCard = page.locator(`[data-testid="secret-card"]:has-text("${testData.name}")`).first();
       await expect(secretCard).toBeVisible();
       
       // Should show OAuth2 type indicator in the secret card
@@ -601,8 +601,8 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Should show success message in modal - use first() to handle multiple success messages
       await expect(successMessage.first()).toContainText('Secret created successfully');
       
-      // Should show the new secret in the list
-      const secretCard = page.locator(`[data-testid="secret-card"]:has-text("${testData.name}")`);
+      // Should show the new secret in the list - use first() to handle multiple matches
+      const secretCard = page.locator(`[data-testid="secret-card"]:has-text("${testData.name}")`).first();
       await expect(secretCard).toBeVisible();
       
       // Should show database password type indicator in the secret card

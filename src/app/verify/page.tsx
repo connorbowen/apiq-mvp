@@ -3,6 +3,30 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
+/**
+ * TODO: UX SIMPLIFICATION - VERIFY PAGE PHASE 2.3 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.3: Streamline onboarding flow
+ * - [ ] Make email verification optional (don't block access)
+ * - [ ] Allow users to proceed to dashboard without verification
+ * - [ ] Simplify verification success flow
+ * - [ ] Redirect directly to Chat interface after verification
+ * - [ ] Add tests: tests/e2e/auth/authentication-session.test.ts - test optional verification
+ * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test verification flow
+ * - [ ] Add tests: tests/unit/app/verify/page.test.tsx - test simplified verification
+ * 
+ * PHASE 2.4: Guided tour integration
+ * - [ ] Redirect to guided tour after verification for new users
+ * - [ ] Add welcome message for verified users
+ * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test verification to tour flow
+ * 
+ * IMPLEMENTATION NOTES:
+ * - Update verification logic to not block dashboard access
+ * - Simplify success message and redirect flow
+ * - Update redirect to /dashboard?tab=chat
+ * - Add onboarding state check for tour redirection
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -102,8 +126,7 @@ export default function VerifyPage() {
           <div 
             className="rounded-md bg-green-50 p-4" 
             role="alert"
-            // TODO: Add aria-live for dynamic content accessibility
-            // aria-live="polite"
+            aria-live="polite"
           >
             <div className="flex">
               <div className="flex-shrink-0">
@@ -126,8 +149,7 @@ export default function VerifyPage() {
           <div 
             className="rounded-md bg-red-50 p-4" 
             role="alert"
-            // TODO: Add aria-live for dynamic content accessibility
-            // aria-live="assertive"
+            aria-live="assertive"
           >
             <div className="flex">
               <div className="flex-shrink-0">

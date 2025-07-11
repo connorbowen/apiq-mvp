@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { oauth2Service } from '../../../../src/lib/auth/oauth2';
-import { ApplicationError } from '../../../../src/middleware/errorHandler';
+import { ApplicationError } from '../../../../src/lib/errors/ApplicationError';
 
 /**
  * API Connection OAuth2 Providers Handler
@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('OAuth2 providers error:', error);
 
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code

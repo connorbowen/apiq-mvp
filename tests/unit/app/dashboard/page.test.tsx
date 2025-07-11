@@ -1,6 +1,64 @@
+/**
+ * TODO: UX SIMPLIFICATION - DASHBOARD UNIT TESTS - @connorbowen 2024-12-19
+ * 
+ * PHASE 1: QUICK WINS TESTING
+ * 
+ * 1.1 Hide non-essential tabs for regular users
+ * - [ ] test('should filter tabs based on user role')
+ * - [ ] test('should hide admin tab for regular users')
+ * - [ ] test('should hide audit tab for regular users')
+ * - [ ] test('should show all tabs for admin users')
+ * 
+ * 1.2 Make Chat the default tab
+ * - [ ] test('should initialize with chat as default tab')
+ * - [ ] test('should handle URL parameters for chat tab')
+ * - [ ] test('should maintain tab state correctly')
+ * 
+ * 1.3 Simplify the header - remove breadcrumbs
+ * - [ ] test('should render simplified header without breadcrumbs')
+ * - [ ] test('should maintain logout functionality')
+ * - [ ] test('should display user information correctly')
+ * 
+ * 1.4 Consolidate error/success messages
+ * - [ ] test('should display unified message banner')
+ * - [ ] test('should handle message state management')
+ * - [ ] test('should auto-clear messages after timeout')
+ * 
+ * PHASE 2: CORE SIMPLIFICATION TESTING
+ * 
+ * 2.1 Redesign dashboard layout with 3-tab structure
+ * - [ ] test('should render only 3 tabs: Chat, Workflows, Settings')
+ * - [ ] test('should handle tab switching in new structure')
+ * - [ ] test('should maintain tab content rendering')
+ * - [ ] test('should handle mobile menu for 3-tab structure')
+ * 
+ * 2.2 Progressive disclosure
+ * - [ ] test('should show features based on user onboarding stage')
+ * - [ ] test('should handle progressive feature unlocking')
+ * - [ ] test('should maintain functionality for advanced users')
+ * 
+ * 2.4 Guided tour integration
+ * - [ ] test('should trigger guided tour for new users')
+ * - [ ] test('should handle tour state management')
+ * - [ ] test('should allow tour skipping')
+ * 
+ * PHASE 3: POLISH TESTING
+ * 
+ * 3.1 Mobile optimization
+ * - [ ] test('should handle mobile navigation correctly')
+ * - [ ] test('should maintain responsive design')
+ * - [ ] test('should handle mobile menu interactions')
+ * 
+ * 3.2 Performance optimizations
+ * - [ ] test('should handle component memoization')
+ * - [ ] test('should optimize re-renders')
+ * - [ ] test('should handle lazy loading')
+ */
+
 import React from 'react';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
+import { useRouter } from 'next/navigation';
 
 // Mock Next.js router
 const mockPush = jest.fn();

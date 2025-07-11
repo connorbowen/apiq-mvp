@@ -1,3 +1,32 @@
+/**
+ * TODO: UX SIMPLIFICATION - AUDIT TAB PHASE 1.1 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 1.1: Hide non-essential tabs for regular users
+ * - [ ] HIDE: AuditTab will be hidden for non-admin users
+ * - [ ] Add role-based visibility logic
+ * - [ ] Maintain functionality for admin users
+ * - [ ] Update navigation to filter audit tabs
+ * - [ ] Add tests: tests/unit/components/dashboard/AuditTab.test.tsx - test role-based visibility
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test audit tab hidden for regular users
+ * 
+ * PHASE 2.1: Redesign dashboard layout with 3-tab structure
+ * - [ ] ADMIN OVERRIDE: Admin users see additional audit tab
+ * - [ ] Maintain audit functionality in new structure
+ * - [ ] Update audit navigation and routing
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test audit tab in 3-tab structure
+ * 
+ * PHASE 3.1: Mobile optimization
+ * - [ ] Optimize audit interface for mobile screens
+ * - [ ] Improve mobile audit log viewing
+ * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile audit
+ * 
+ * IMPLEMENTATION NOTES:
+ * - Only show for users with role === 'ADMIN'
+ * - Maintain all existing audit functionality
+ * - Update tab filtering logic in dashboard
+ * - Preserve audit logging and filtering features
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

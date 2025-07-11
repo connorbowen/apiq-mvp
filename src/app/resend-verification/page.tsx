@@ -81,8 +81,7 @@ export default function ResendVerificationPage() {
           <div 
             className="rounded-md bg-green-50 p-4" 
             role="alert"
-            // TODO: Add aria-live for dynamic content accessibility
-            // aria-live="polite"
+            aria-live="polite"
           >
             <div className="flex">
               <div className="flex-shrink-0">
@@ -102,8 +101,7 @@ export default function ResendVerificationPage() {
           <div 
             className="rounded-md bg-red-50 p-4" 
             role="alert"
-            // TODO: Add aria-live for dynamic content accessibility
-            // aria-live="assertive"
+            aria-live="assertive"
           >
             <div className="flex">
               <div className="flex-shrink-0">

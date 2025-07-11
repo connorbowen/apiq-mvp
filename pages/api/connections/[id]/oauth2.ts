@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth } from '../../../../src/lib/auth/session';
-import { prisma } from '../../../../lib/database/client';
-import { ApplicationError } from '../../../../src/middleware/errorHandler';
+import { prisma } from '../../../../src/lib/singletons/prisma';
+import { ApplicationError, badRequest, notFound } from '../../../../src/lib/errors/ApplicationError';
 import { markConnecting } from '../../../../src/lib/services/connectionService';
 import { oauth2Service } from '../../../../src/lib/auth/oauth2';
 import crypto from 'crypto';
@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { id } = req.query;
     if (!id || typeof id !== 'string') {
-      throw new ApplicationError('Invalid connection ID', 400, 'INVALID_ID');
+      throw badRequest('Invalid connection ID', 'INVALID_ID');
     }
 
     // Get the connection and verify ownership
@@ -33,13 +33,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!connection) {
-      throw new ApplicationError('Connection not found', 404, 'NOT_FOUND');
+      throw notFound('Connection not found', 'NOT_FOUND');
     }
 
     // Verify this is an OAuth2 connection
     const authConfig = connection.authConfig as any;
     if (authConfig?.authType !== 'oauth2') {
-      throw new ApplicationError('Connection is not configured for OAuth2', 400, 'INVALID_AUTH_TYPE');
+      throw badRequest('Connection is not configured for OAuth2', 'INVALID_AUTH_TYPE');
     }
 
     // Generate a unique OAuth state
@@ -79,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('OAuth2 authorization error:', error);
 
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code

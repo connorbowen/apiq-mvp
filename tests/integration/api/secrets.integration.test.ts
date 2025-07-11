@@ -1,3 +1,11 @@
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 7: Secrets Integration Updates
+// - Update secrets tests to verify connection integration
+// - Add tests for secret-connection relationship
+// - Test secret rotation in connection context
+// - Add tests for connection-specific secret management
+// - Test rollback scenarios for connection secrets
+// - Add tests for OAuth2 token storage in secrets
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/secrets';

@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { oauth2Service } from '../../../../src/lib/auth/oauth2';
 import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/session';
-import { ApplicationError } from '../../../../src/middleware/errorHandler';
+import { ApplicationError, badRequest, notFound } from '../../../../src/lib/errors/ApplicationError';
 import { prisma } from '../../../../lib/database/client';
 
 /**
@@ -43,23 +43,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validate required parameters
     if (!apiConnectionId || typeof apiConnectionId !== 'string') {
-      throw new ApplicationError('apiConnectionId is required', 400, 'MISSING_PARAMETER');
+      throw badRequest('apiConnectionId is required', 'MISSING_PARAMETER');
     }
 
     if (!provider || typeof provider !== 'string') {
-      throw new ApplicationError('provider is required', 400, 'MISSING_PARAMETER');
+      throw badRequest('provider is required', 'MISSING_PARAMETER');
     }
 
     if (!clientId || typeof clientId !== 'string') {
-      throw new ApplicationError('clientId is required', 400, 'MISSING_PARAMETER');
+      throw badRequest('clientId is required', 'MISSING_PARAMETER');
     }
 
     if (!clientSecret || typeof clientSecret !== 'string') {
-      throw new ApplicationError('clientSecret is required', 400, 'MISSING_PARAMETER');
+      throw badRequest('clientSecret is required', 'MISSING_PARAMETER');
     }
 
     if (!redirectUri || typeof redirectUri !== 'string') {
-      throw new ApplicationError('redirectUri is required', 400, 'MISSING_PARAMETER');
+      throw badRequest('redirectUri is required', 'MISSING_PARAMETER');
     }
 
     // Handle scope parameter (can be string or array)
@@ -74,15 +74,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!apiConnection) {
-      throw new ApplicationError('API connection not found', 404, 'NOT_FOUND');
+      throw notFound('API connection not found', 'NOT_FOUND');
     }
 
     // Check if provider is supported
     const supportedProviders = oauth2Service.getSupportedProviders();
     if (!supportedProviders.includes(provider)) {
-      throw new ApplicationError(
+      throw badRequest(
         `Unsupported OAuth2 provider: ${provider}. Supported providers: ${supportedProviders.join(', ')}`,
-        400,
         'UNSUPPORTED_PROVIDER'
       );
     }
@@ -90,9 +89,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get provider configuration to get the URLs
     const providerConfig = oauth2Service.getProviderConfig(provider);
     if (!providerConfig) {
-      throw new ApplicationError(
+      throw badRequest(
         `Provider configuration not found for: ${provider}`,
-        400,
         'PROVIDER_CONFIG_NOT_FOUND'
       );
     }
@@ -110,9 +108,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const validationErrors = oauth2Service.validateConfig(config);
     if (validationErrors.length > 0) {
-      throw new ApplicationError(
+      throw badRequest(
         `Invalid OAuth2 configuration: ${validationErrors.join(', ')}`,
-        400,
         'INVALID_CONFIG'
       );
     }
@@ -166,7 +163,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('❌ OAuth2 authorization error:', error);
 
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code

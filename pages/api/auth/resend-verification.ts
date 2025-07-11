@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
-import { prisma } from '../../../lib/database/client';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
-import { emailService } from '../../../src/lib/services/emailService';
+import { prisma } from '../../../src/lib/singletons/prisma';
+import { ApplicationError, badRequest, internalServerError } from '../../../src/lib/errors/ApplicationError';
+import { EmailService } from '../../../src/lib/services/emailService';
 import { logInfo, logError } from '../../../src/utils/logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -19,13 +19,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validate email
     if (!email) {
-      throw new ApplicationError('Email is required', 400, 'MISSING_EMAIL');
+      throw badRequest('Email is required', 'MISSING_EMAIL');
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      throw new ApplicationError('Invalid email format', 400, 'INVALID_EMAIL');
+      throw badRequest('Invalid email format', 'INVALID_EMAIL');
     }
 
     // Find user
@@ -73,6 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Send verification email
     try {
+      const emailService = new EmailService();
       const emailSent = await emailService.sendVerificationEmail(
         email.toLowerCase(),
         verificationToken,
@@ -87,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             email: email.toLowerCase()
           });
         } else {
-          throw new Error('EMAIL_SEND_FAILED');
+          throw internalServerError('Failed to send verification email', 'EMAIL_SEND_FAILED');
         }
       }
     } catch (emailError) {
@@ -109,7 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           email: email.toLowerCase()
         });
         
-        throw new ApplicationError('Failed to send verification email', 500, 'EMAIL_SEND_FAILED');
+        throw internalServerError('Failed to send verification email', 'EMAIL_SEND_FAILED');
       }
     }
 
@@ -148,7 +149,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code

@@ -1,8 +1,20 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { oauth2Service, OAuth2Service } from '../../../../src/lib/auth/oauth2';
-import { ApplicationError } from '../../../../src/middleware/errorHandler';
+import { ApplicationError, badRequest } from '../../../../src/lib/errors/ApplicationError';
 import { findConnectionByOAuthState, markConnected, markError } from '../../../../src/lib/services/connectionService';
 import { prisma } from '../../../../lib/database/client';
+
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 12: OAuth2 Callback API Migration
+// - Update OAuth2 callback to store tokens in secrets vault instead of ApiCredential
+// - Add connection-secret linking during OAuth2 callback processing
+// - Add secret creation for OAuth2 tokens during callback
+// - Add connection status updates based on secret creation success
+// - Add error handling for secret creation failures during callback
+// - Add connection-secret validation after OAuth2 completion
+// - Add audit logging for OAuth2 secret operations
+// - Add rollback capabilities for failed secret creation
+// - Add connection health checks based on OAuth2 secret status
+// - Consider adding OAuth2 provider-specific secret management
 
 /**
  * API Connection OAuth2 Callback Handler
@@ -63,11 +75,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validate required parameters
     if (!code || typeof code !== 'string') {
-      throw new ApplicationError('Authorization code is required', 400, 'MISSING_CODE');
+      throw badRequest('Authorization code is required', 'MISSING_CODE');
     }
 
     if (!state || typeof state !== 'string') {
-      throw new ApplicationError('State parameter is required', 400, 'MISSING_STATE');
+      throw badRequest('State parameter is required', 'MISSING_STATE');
     }
 
     console.log('🔍 OAuth2 Callback - Finding connection by state...');
@@ -90,7 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     if (!connection) {
       console.error('🔍 OAuth2 Callback - Connection not found for state:', state);
-      throw new ApplicationError('Invalid OAuth state - connection not found', 400, 'INVALID_STATE');
+      throw badRequest('Invalid OAuth state - connection not found', 'INVALID_STATE');
     }
 
     console.log('🔍 OAuth2 Callback - Connection found:', {
@@ -151,9 +163,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Mark connection as error
       await markError(connection.id, result.error || 'OAuth2 callback processing failed');
       
-      throw new ApplicationError(
+      throw badRequest(
         result.error || 'OAuth2 callback processing failed',
-        400,
         'CALLBACK_FAILED'
       );
     }
@@ -186,7 +197,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
       
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code

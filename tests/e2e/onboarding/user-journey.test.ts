@@ -1,3 +1,41 @@
+/**
+ * TODO: UX SIMPLIFICATION - USER JOURNEY E2E TESTS - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.3: Streamline onboarding flow
+ * - [ ] test('should complete simplified registration in under 2 minutes')
+ * - [ ] test('should allow access without email verification')
+ * - [ ] test('should redirect directly to chat interface after signup')
+ * - [ ] test('should handle simplified login flow')
+ * - [ ] test('should maintain security while reducing friction')
+ * 
+ * PHASE 2.4: Guided tour for new users
+ * - [ ] test('should automatically start guided tour for new users')
+ * - [ ] test('should allow users to skip guided tour')
+ * - [ ] test('should complete tour in under 5 minutes')
+ * - [ ] test('should teach users to create first workflow')
+ * - [ ] test('should introduce key features progressively')
+ * - [ ] test('should allow tour resumption if interrupted')
+ * 
+ * PHASE 2.2: Progressive disclosure
+ * - [ ] test('should show limited features for new users')
+ * - [ ] test('should reveal advanced features as user progresses')
+ * - [ ] test('should maintain full functionality for experienced users')
+ * - [ ] test('should track user progress through onboarding stages')
+ * 
+ * PHASE 2.1: 3-tab structure integration
+ * - [ ] test('should navigate through simplified 3-tab structure')
+ * - [ ] test('should find connections and secrets in settings tab')
+ * - [ ] test('should maintain workflow creation in chat tab')
+ * - [ ] test('should preserve workflow management in workflows tab')
+ * 
+ * TESTING STRATEGY:
+ * - Measure time to first workflow creation
+ * - Track user completion rates through onboarding
+ * - Validate progressive feature disclosure
+ * - Ensure accessibility compliance throughout
+ * - Test mobile responsiveness of new flows
+ */
+
 import { test, expect } from '@playwright/test';
 import { UXComplianceHelper } from '../../helpers/uxCompliance';
 

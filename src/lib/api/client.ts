@@ -1,3 +1,36 @@
+/**
+ * TODO: UX SIMPLIFICATION - API CLIENT PHASE 2.3 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.3: Streamline onboarding flow
+ * - [ ] Update register method to support simplified registration
+ * - [ ] Update login method to redirect to Chat interface
+ * - [ ] Add onboarding state management methods
+ * - [ ] Update verifyEmail method to be optional
+ * - [ ] Add tests: tests/unit/lib/api/client.test.ts - test simplified auth methods
+ * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test updated client methods
+ * 
+ * PHASE 2.4: Guided tour integration
+ * - [ ] Add guided tour state management methods
+ * - [ ] Add onboarding progress tracking methods
+ * - [ ] Add tests: tests/unit/lib/api/client.test.ts - test tour management
+ * 
+ * IMPLEMENTATION NOTES:
+ * - Update register method signature to remove name requirement
+ * - Add onboarding state methods: getOnboardingState, updateOnboardingState
+ * - Add tour methods: getTourState, updateTourState
+ * - Update response types to include onboarding information
+ * - Ensure backward compatibility with existing methods
+ */
+// TODO: [SECRETS-FIRST-REFACTOR] Phase 3: API Client Updates
+// - Update createConnection to handle secret creation
+// - Add secret management methods
+// - Update connection testing to use secrets
+// - Add secret reference handling
+// - Update OAuth2 flow to use secrets
+// - Add rollback mechanisms for failed operations
+
+import axios, { AxiosResponse } from 'axios';
+
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -14,6 +47,37 @@ export interface OAuth2Provider {
   userInfoUrl: string;
 }
 
+// TODO: [SECRETS-FIRST-REFACTOR] Update API types to support secrets
+export interface CreateConnectionRequest {
+  name: string;
+  description?: string;
+  baseUrl: string;
+  authType: 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM';
+  documentationUrl?: string;
+  authConfig: any;
+  // TODO: Add secret-related fields
+  // secretIds?: string[];
+  // secretReferences?: {
+  //   apiKey?: string;
+  //   bearerToken?: string;
+  //   username?: string;
+  //   password?: string;
+  //   clientId?: string;
+  //   clientSecret?: string;
+  // };
+}
+
+// TODO: [SECRETS-FIRST-REFACTOR] Add secret creation interface
+// export interface CreateSecretRequest {
+//   name: string;
+//   type: string;
+//   value: string;
+//   description?: string;
+//   connectionId?: string;
+//   enableRotation?: boolean;
+//   rotationInterval?: number;
+// }
+
 export interface ApiConnection {
   id: string;
   name: string;
@@ -28,487 +92,231 @@ export interface ApiConnection {
   createdAt: string;
   updatedAt: string;
   authConfig?: any;
+  // TODO: Add secret reference fields
+  // secretId?: string;
+  // secretReference?: {
+  //   id: string;
+  //   name: string;
+  //   type: string;
+  // };
 }
 
-export interface CreateConnectionRequest {
-  name: string;
-  description?: string;
-  baseUrl: string;
-  authType: 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM';
-  authConfig?: {
-    clientId?: string;
-    clientSecret?: string;
-    redirectUri?: string;
-    scope?: string;
-    provider?: string;
-    apiKey?: string;
-    secretKey?: string;
-    bearerToken?: string;
-    username?: string;
-    password?: string;
-  };
-  documentationUrl?: string;
-}
+// TODO: [SECRETS-FIRST-REFACTOR] Add Secret interface
+// export interface Secret {
+//   id: string;
+//   name: string;
+//   type: string;
+//   description?: string;
+//   connectionId?: string;
+//   version: number;
+//   isActive: boolean;
+//   expiresAt?: string;
+//   rotationEnabled: boolean;
+//   rotationInterval?: number;
+//   lastRotatedAt?: string;
+//   nextRotationAt?: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
 
+// TODO: [SECRETS-FIRST-REFACTOR] Update API client methods
 class ApiClient {
-  private baseUrl: string;
+  private baseURL: string;
 
-  constructor(baseUrl: string = '') {
-    this.baseUrl = baseUrl;
+  constructor() {
+    this.baseURL = process.env.NEXT_PUBLIC_API_URL || '';
   }
 
-  private getAuthHeaders(): Record<string, string> {
-    const token = localStorage.getItem('accessToken');
-    return {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    };
-  }
-
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
-    const config: RequestInit = {
-      headers: {
-        ...this.getAuthHeaders(),
-        ...options.headers,
-      },
-      credentials: 'include', // Include cookies in requests
-      ...options,
-    };
-
+  private async request<T>(config: any): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, config);
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle 401 by redirecting to login, except for login endpoint
-        if (response.status === 401 && !endpoint.includes('/api/auth/login')) {
-          // Clear any remaining localStorage data
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('user');
-            window.location.href = '/login?reason=auth';
-          }
-          return { success: false, error: 'Authentication required' };
-        }
-        return { success: false, error: data.error || 'Request failed', code: data.code };
-      }
-
-      return { success: true, data: data.data || data };
-    } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Network error' 
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      const response: AxiosResponse<ApiResponse<T>> = await axios({
+        ...config,
+        url: `${this.baseURL}${config.url}`,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+          ...config.headers,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('API request failed:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Network error',
       };
     }
   }
 
-  // API Connection OAuth2 Methods
-  async getOAuth2Providers(): Promise<ApiResponse<{ providers: OAuth2Provider[]; count: number }>> {
-    return this.request('/api/connections/oauth2/providers');
-  }
-
-  async initiateOAuth2Flow(
-    apiConnectionId: string,
-    provider: string,
-    clientId: string,
-    clientSecret: string,
-    redirectUri: string,
-    scope?: string
-  ): Promise<string> {
-    const params = new URLSearchParams({
-      apiConnectionId,
-      provider,
-      clientId,
-      clientSecret,
-      redirectUri,
-      ...(scope && { scope })
-    });
-
-    // For test provider, we need to handle the redirect differently
-    if (provider === 'test') {
-      // Use XMLHttpRequest instead of fetch to get better control over redirects
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        
-        xhr.open('GET', `/api/connections/oauth2/authorize?${params.toString()}`, true);
-        
-        // Set auth headers
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        }
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        
-        // Don't follow redirects automatically
-        xhr.responseType = 'text';
-        
-        xhr.onreadystatechange = function() {
-          if (xhr.readyState === 4) {
-            console.log('🔍 API Client Debug - XHR status:', xhr.status);
-            console.log('🔍 API Client Debug - XHR responseURL:', xhr.responseURL);
-            console.log('🔍 API Client Debug - XHR getAllResponseHeaders:', xhr.getAllResponseHeaders());
-            
-            // Check for redirect status codes
-            if (xhr.status >= 300 && xhr.status < 400) {
-              // Try to get location header
-              const location = xhr.getResponseHeader('location');
-              console.log('🔍 API Client Debug - Location header:', location);
-              
-              if (location) {
-                console.log('🔍 API Client Debug - Returning location:', location);
-                resolve(location);
-                return;
-              } else {
-                console.log('🔍 API Client Debug - No location header found');
-              }
-            } else {
-              console.log('🔍 API Client Debug - Not a redirect status');
-            }
-            
-            // If no redirect or no location header, try to parse response
-            try {
-              const response = JSON.parse(xhr.responseText);
-              console.log('🔍 API Client Debug - JSON response:', response);
-              if (response.success && response.data?.redirectUrl) {
-                resolve(response.data.redirectUrl);
-                return;
-              }
-            } catch (e) {
-              console.log('🔍 API Client Debug - JSON parsing failed:', e);
-            }
-            
-            reject(new Error(`Failed to get OAuth2 redirect URL for test provider. Status: ${xhr.status}`));
-          }
-        };
-        
-        xhr.onerror = function() {
-          console.log('🔍 API Client Debug - XHR error');
-          reject(new Error('Network error during OAuth2 initiation'));
-        };
-        
-        xhr.send();
-      });
-    } else {
-      // For non-test providers, use the normal JSON response flow
-      const response = await this.request<{ redirectUrl: string }>(`/api/connections/oauth2/authorize?${params.toString()}`);
-      
-      if (response.success && response.data?.redirectUrl) {
-        return response.data.redirectUrl;
-      }
-      
-      throw new Error(response.error || 'Failed to initiate OAuth2 flow');
-    }
-  }
-
-  async refreshOAuth2Token(apiConnectionId: string, provider: string): Promise<ApiResponse> {
-    return this.request('/api/connections/oauth2/refresh', {
+  // TODO: [SECRETS-FIRST-REFACTOR] Update createConnection to handle secrets
+  async createConnection(data: CreateConnectionRequest): Promise<ApiResponse<{ connection: ApiConnection }>> {
+    // TODO: Implement secret-first connection creation
+    // 1. Create secrets based on auth type
+    // 2. Create connection with secret references
+    // 3. Handle rollback on failure
+    return this.request({
       method: 'POST',
-      body: JSON.stringify({ apiConnectionId, provider }),
+      url: '/api/connections',
+      data,
     });
   }
 
-  async getOAuth2Token(apiConnectionId: string): Promise<ApiResponse<{ accessToken: string; tokenType: string }>> {
-    return this.request(`/api/connections/oauth2/token?apiConnectionId=${apiConnectionId}`);
+  // TODO: [SECRETS-FIRST-REFACTOR] Add secret management methods
+  // async createSecret(data: CreateSecretRequest): Promise<ApiResponse<{ secret: Secret }>> {
+  //   return this.request({
+  //     method: 'POST',
+  //     url: '/api/secrets',
+  //     data,
+  //   });
+  // }
+
+  // async getSecrets(): Promise<ApiResponse<{ secrets: Secret[] }>> {
+  //   return this.request({
+  //     method: 'GET',
+  //     url: '/api/secrets',
+  //   });
+  // }
+
+  // async getSecret(id: string): Promise<ApiResponse<{ secret: Secret }>> {
+  //   return this.request({
+  //     method: 'GET',
+  //     url: `/api/secrets/${id}`,
+  //   });
+  // }
+
+  // async updateSecret(id: string, data: Partial<CreateSecretRequest>): Promise<ApiResponse<{ secret: Secret }>> {
+  //   return this.request({
+  //     method: 'PUT',
+  //     url: `/api/secrets/${id}`,
+  //     data,
+  //   });
+  // }
+
+  // async deleteSecret(id: string): Promise<ApiResponse<void>> {
+  //   return this.request({
+  //     method: 'DELETE',
+  //     url: `/api/secrets/${id}`,
+  //   });
+  // }
+
+  // async rotateSecret(id: string): Promise<ApiResponse<{ secret: Secret }>> {
+  //   return this.request({
+  //     method: 'POST',
+  //     url: `/api/secrets/${id}/rotate`,
+  //   });
+  // }
+
+  // TODO: [SECRETS-FIRST-REFACTOR] Update test connection to use secrets
+  async testConnectionConfig(config: any): Promise<ApiResponse<any>> {
+    // TODO: Implement test using secrets instead of direct credentials
+    return this.request({
+      method: 'POST',
+      url: '/api/connections/test-config',
+      data: config,
+    });
   }
 
-  // API Connection Methods
+  // User management
+  async getCurrentUser(): Promise<ApiResponse<{ user: any }>> {
+    return this.request({
+      method: 'GET',
+      url: '/api/auth/me',
+    });
+  }
+
+  // Connection management
   async getConnections(): Promise<ApiResponse<{ connections: ApiConnection[] }>> {
-    return this.request('/api/connections');
+    return this.request({
+      method: 'GET',
+      url: '/api/connections',
+    });
   }
 
   async getConnection(id: string): Promise<ApiResponse<ApiConnection>> {
-    return this.request(`/api/connections/${id}`);
-  }
-
-  async createConnection(data: CreateConnectionRequest): Promise<ApiResponse<ApiConnection>> {
-    return this.request('/api/connections', {
-      method: 'POST',
-      body: JSON.stringify(data),
+    return this.request({
+      method: 'GET',
+      url: `/api/connections/${id}`,
     });
   }
 
   async updateConnection(id: string, data: Partial<CreateConnectionRequest>): Promise<ApiResponse<ApiConnection>> {
-    return this.request(`/api/connections/${id}`, {
+    return this.request({
       method: 'PUT',
-      body: JSON.stringify(data),
+      url: `/api/connections/${id}`,
+      data,
     });
   }
 
-  async deleteConnection(id: string): Promise<ApiResponse> {
-    return this.request(`/api/connections/${id}`, {
+  async deleteConnection(id: string): Promise<ApiResponse<void>> {
+    return this.request({
       method: 'DELETE',
+      url: `/api/connections/${id}`,
     });
   }
 
-  async testConnection(id: string): Promise<ApiResponse> {
-    return this.request(`/api/connections/${id}/test`, {
+  // Workflow management
+  async getWorkflows(): Promise<ApiResponse<{ workflows: any[] }>> {
+    return this.request({
+      method: 'GET',
+      url: '/api/workflows',
+    });
+  }
+
+  async createWorkflow(data: any): Promise<ApiResponse<{ workflow: any }>> {
+    return this.request({
       method: 'POST',
+      url: '/api/workflows',
+      data,
     });
   }
 
-  async refreshConnection(id: string): Promise<ApiResponse> {
-    return this.request(`/api/connections/${id}/refresh`, {
-      method: 'POST',
-    });
-  }
-
-  async refreshConnectionSpec(id: string): Promise<ApiResponse> {
-    return this.request(`/api/connections/${id}/refresh`, {
-      method: 'POST',
-    });
-  }
-
-  async getConnectionEndpoints(id: string): Promise<ApiResponse<{ endpoints: any[] }>> {
-    return this.request(`/api/connections/${id}/endpoints`);
-  }
-
-  // Authentication Methods
-  async register(email: string, name: string, password: string): Promise<ApiResponse<{
-    message: string;
-    userId: string;
-  }>> {
-    return this.request('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, name, password }),
-    });
-  }
-
-  /**
-   * Verify user email using a valid verification token
-   * @param token - Verification token from email
-   * @returns Promise resolving to API response with authentication tokens and user data
-   * @example
-   * ```typescript
-   * const response = await apiClient.verifyEmail('verification-token-123');
-   * if (response.success) {
-   *   console.log('Email verified and user signed in');
-   * }
-   * ```
-   */
-  async verifyEmail(token: string): Promise<ApiResponse<{
-    message: string;
-    userId: string;
-    accessToken: string;
-    refreshToken: string;
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      role: string;
-      isActive: boolean;
-    };
-  }>> {
-    return this.request('/api/auth/verify', {
-      method: 'POST',
-      body: JSON.stringify({ token }),
-    });
-  }
-
-  /**
-   * Request a password reset email to be sent
-   * @param email - User's email address
-   * @returns Promise resolving to API response with success message
-   * @example
-   * ```typescript
-   * const response = await apiClient.requestPasswordReset('user@example.com');
-   * if (response.success) {
-   *   console.log('Password reset email sent');
-   * }
-   * ```
-   */
-  async requestPasswordReset(email: string): Promise<ApiResponse<{ message: string }>> {
-    return this.request<{ message: string }>('/api/auth/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
-  }
-
-  /**
-   * Reset user password using a valid reset token
-   * @param token - Password reset token from email
-   * @param password - New password to set
-   * @returns Promise resolving to API response with success message
-   * @example
-   * ```typescript
-   * const response = await apiClient.resetPassword('reset-token-123', 'newPassword123');
-   * if (response.success) {
-   *   console.log('Password reset successful');
-   * }
-   * ```
-   */
-  async resetPassword(token: string, password: string): Promise<ApiResponse<{ message: string }>> {
-    const response = await this.request<{ message: string }>('/api/auth/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({ token, password }),
-    });
-    
-    // Handle the nested data structure from the API
-    if (response.success && response.data) {
-      return {
-        success: true,
-        data: response.data
-      };
-    }
-    return response;
-  }
-
-  /**
-   * Resend verification email for unverified accounts
-   * @param email - User's email address
-   * @returns Promise resolving to API response with success message
-   * @example
-   * ```typescript
-   * const response = await apiClient.resendVerification('user@example.com');
-   * if (response.success) {
-   *   console.log('Verification email sent');
-   * }
-   * ```
-   */
-  async resendVerification(email: string): Promise<ApiResponse<{ message: string }>> {
-    return this.request('/api/auth/resend-verification', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
-  }
-
-  async login(email: string, password: string): Promise<ApiResponse<{
-    accessToken: string;
-    refreshToken: string;
-    user: any;
-  }>> {
-    return this.request('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-  }
-
-  async getCurrentUser(): Promise<ApiResponse<any>> {
-    return this.request('/api/auth/me');
-  }
-
-  async refreshToken(): Promise<ApiResponse<{
-    accessToken: string;
-    refreshToken: string;
-  }>> {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
-      return { success: false, error: 'No refresh token available' };
-    }
-
-    return this.request('/api/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken }),
-    });
-  }
-
-  // Health Check
-  async healthCheck(): Promise<ApiResponse> {
-    return this.request('/api/health');
-  }
-
-  // Workflow Methods
-  async getWorkflows(params?: {
-    status?: string;
-    search?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<ApiResponse<{ workflows: any[]; pagination: any }>> {
-    const queryParams = new URLSearchParams();
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-    
-    return this.request(`/api/workflows?${queryParams.toString()}`);
-  }
-
-  async getWorkflow(id: string): Promise<ApiResponse<any>> {
-    return this.request(`/api/workflows/${id}`);
-  }
-
-  async createWorkflow(data: { name: string; description?: string; isPublic?: boolean }): Promise<ApiResponse<any>> {
-    return this.request('/api/workflows', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateWorkflow(id: string, data: { name?: string; description?: string; status?: string; isPublic?: boolean }): Promise<ApiResponse<any>> {
-    return this.request(`/api/workflows/${id}`, {
+  async updateWorkflow(id: string, data: any): Promise<ApiResponse<{ workflow: any }>> {
+    return this.request({
       method: 'PUT',
-      body: JSON.stringify(data),
+      url: `/api/workflows/${id}`,
+      data,
     });
   }
 
-  async deleteWorkflow(id: string): Promise<ApiResponse> {
-    return this.request(`/api/workflows/${id}`, {
+  async deleteWorkflow(id: string): Promise<ApiResponse<void>> {
+    return this.request({
       method: 'DELETE',
+      url: `/api/workflows/${id}`,
     });
   }
 
-  async executeWorkflow(id: string, parameters?: Record<string, any>): Promise<ApiResponse<any>> {
-    return this.request(`/api/workflows/${id}/execute`, {
+  async executeWorkflow(id: string): Promise<ApiResponse<any>> {
+    return this.request({
       method: 'POST',
-      body: JSON.stringify({ parameters }),
+      url: `/api/workflows/${id}/execute`,
     });
   }
 
-  // AI Chat Methods
-  async generateWorkflow(message: string, context?: Record<string, any>): Promise<ApiResponse<any>> {
-    return this.request('/api/chat', {
+  // Natural language workflow generation
+  async generateWorkflow(prompt: string): Promise<ApiResponse<{ workflow: any; steps: any[]; explanation: string }>> {
+    return this.request({
       method: 'POST',
-      body: JSON.stringify({ message, context }),
+      url: '/api/workflows/generate',
+      data: { prompt },
     });
   }
 
-  // Secrets Methods
-  async getSecrets(): Promise<ApiResponse<{ secrets: any[] }>> {
-    const response = await this.request<{ secrets: any[] }>('/api/secrets');
-    // Handle the nested data structure from the API
-    if (response.success && response.data) {
-      return {
-        success: true,
-        data: response.data
-      };
-    }
-    return response as ApiResponse<{ secrets: any[] }>;
+  // OAuth2 management
+  async getOAuth2Providers(): Promise<ApiResponse<{ providers: OAuth2Provider[] }>> {
+    return this.request({
+      method: 'GET',
+      url: '/api/connections/oauth2/providers',
+    });
   }
 
-  async createSecret(data: { name: string; value: string; description?: string; type?: string }): Promise<ApiResponse<any>> {
-    const response = await this.request('/api/secrets', {
+  // Admin functions
+  async rotateMasterKey(): Promise<ApiResponse<void>> {
+    return this.request({
       method: 'POST',
-      body: JSON.stringify(data),
-    });
-    // Handle the nested data structure from the API
-    if (response.success && response.data) {
-      return {
-        success: true,
-        data: response.data
-      };
-    }
-    return response;
-  }
-
-  async updateSecret(name: string, data: { value: string; description?: string }): Promise<ApiResponse<any>> {
-    return this.request(`/api/secrets/${name}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteSecret(name: string): Promise<ApiResponse> {
-    return this.request(`/api/secrets/${name}`, {
-      method: 'DELETE',
+      url: '/api/admin/rotate-master-key',
     });
   }
 }
 
-// Export singleton instance
-export const apiClient = new ApiClient();
-
-// Export the class for testing
-export { ApiClient }; 
+export const apiClient = new ApiClient(); 

@@ -1,9 +1,33 @@
+/**
+ * TODO: UX SIMPLIFICATION - REGISTRATION API PHASE 2.3 CHANGES - @connorbowen 2024-12-19
+ * 
+ * PHASE 2.3: Streamline onboarding flow
+ * - [ ] Simplify registration to email + password only (remove name requirement)
+ * - [ ] Make email verification optional (don't block access)
+ * - [ ] Allow immediate dashboard access after registration
+ * - [ ] Simplify validation logic
+ * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test simplified registration
+ * - [ ] Add tests: tests/unit/api/auth/register.test.ts - test simplified validation
+ * 
+ * PHASE 2.4: Guided tour integration
+ * - [ ] Add onboarding state tracking to user creation
+ * - [ ] Set user onboarding stage to 'new_user'
+ * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test onboarding state
+ * 
+ * IMPLEMENTATION NOTES:
+ * - Remove name field requirement and validation
+ * - Set isActive to true by default (no verification required)
+ * - Simplify password requirements
+ * - Add onboarding state to user model
+ * - Update response to include onboarding information
+ */
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { prisma } from '../../../lib/database/client';
-import { ApplicationError } from '../../../src/middleware/errorHandler';
-import { emailService } from '../../../src/lib/services/emailService';
+import { prisma } from '../../../src/lib/singletons/prisma';
+import { ApplicationError, badRequest, conflict, internalServerError } from '../../../src/lib/errors/ApplicationError';
+import { EmailService } from '../../../src/lib/services/emailService';
 import { logInfo, logError } from '../../../src/utils/logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -20,24 +44,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validate required fields
     if (!email || !name || !password) {
-      throw new ApplicationError('Email, name, and password are required', 400, 'MISSING_FIELDS');
+      throw badRequest('Email, name, and password are required', 'MISSING_FIELDS');
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      throw new ApplicationError('Invalid email format', 400, 'INVALID_EMAIL');
+      throw badRequest('Invalid email format', 'INVALID_EMAIL');
     }
 
     // Validate password strength
     if (password.length < 8) {
-      throw new ApplicationError('Password must be at least 8 characters long', 400, 'WEAK_PASSWORD');
+      throw badRequest('Password must be at least 8 characters long', 'WEAK_PASSWORD');
     }
 
     // Validate name format - allow letters (including accented), numbers, spaces, basic punctuation
     const nameRegex = /^[a-zA-ZÀ-ÿ0-9\s\-'.]{2,50}$/;
     if (!nameRegex.test(name)) {
-      throw new ApplicationError('Name contains invalid characters', 400, 'INVALID_NAME');
+      throw badRequest('Name contains invalid characters', 'INVALID_NAME');
     }
 
     // Check if user already exists
@@ -46,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (existingUser) {
-      throw new ApplicationError('User with this email already exists', 409, 'USER_EXISTS');
+      throw conflict('User with this email already exists', 'USER_EXISTS');
     }
 
     // Hash password
@@ -78,7 +102,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Send verification email
     try {
-      const emailSent = await emailService.sendVerificationEmail(
+             const emailService = new EmailService();
+       const emailSent = await emailService.sendVerificationEmail(
         email.toLowerCase(),
         verificationToken,
         name
@@ -113,7 +138,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           email: email.toLowerCase()
         });
         
-        throw new ApplicationError('Failed to send verification email', 500, 'EMAIL_SEND_FAILED');
+        throw internalServerError('Failed to send verification email', 'EMAIL_SEND_FAILED');
       }
     }
 
@@ -156,7 +181,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (error instanceof ApplicationError) {
-      return res.status(error.statusCode).json({
+      return res.status(error.status).json({
         success: false,
         error: error.message,
         code: error.code
