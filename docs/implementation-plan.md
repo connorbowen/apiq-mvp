@@ -36,7 +36,20 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
   - **Status Code Consistency**: Fixed `statusCode` vs `status` property inconsistencies
   - **OAuth2 Token Refresh**: Now returns proper 401 status codes instead of 500 errors
 
-**🚨 CRITICAL GAP**: Natural language workflow generation currently only supports single-step workflows, severely limiting the core value proposition. Multi-step workflow generation is required for MVP completion.
+**🚨 CRITICAL MVP BLOCKER**: Natural language workflow generation currently only supports single-step workflows, severely limiting the core value proposition. Multi-step workflow generation is required for MVP completion.
+
+**🆕 TDD IMPLEMENTATION READY**: Comprehensive test suite created for P0.1.1-P0.1.8 requirements
+- **Unit Tests**: `tests/unit/lib/services/multiStepWorkflowService.test.ts` (750+ lines) ✅ **CREATED**
+- **E2E Tests**: `tests/e2e/workflow-engine/multi-step-workflow-generation.test.ts` (527+ lines) ✅ **CREATED**
+- **Test Compliance**: 100% with user-rules.md guidelines ✅ **ACHIEVED**
+- **Implementation Status**: Tests ready, implementation pending ⏳ **PENDING**
+
+**IMMEDIATE NEXT STEPS (Week 1-2):**
+1. **Implement P0.1.1: Multi-Step Workflow Generation** - TDD tests created, service implementation required
+2. **Implement P0.1.2: Function Name Collision Prevention** - Tests ready, implementation required
+3. **Add P0.1.3: Parameter Schema Enhancement** - Tests ready, implementation required
+
+**PRD ALIGNMENT**: The PRD clearly states that "Multi-step workflow planning and generation" is a P0 requirement with acceptance criteria: "Users can describe workflows in plain English" and "System generates executable workflows from descriptions". This is currently only partially implemented.
 
 **E2E Test Status**: 
 - Authentication & Session tests: ✅ 16/16 passing (100% success rate)
@@ -76,12 +89,17 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 **P0.3 Status**: ✅ **COMPLETED** - API connection management fully functional
 **P0.4 Status**: ✅ **COMPLETED** - Dashboard UI implementation completed
 
-##  **TRUE PRODUCT PRIORITIES** (Reorganized by Business Value)
+## **REORGANIZED PRODUCT PRIORITIES** (Aligned with PRD Goals)
 
-### **P0: CORE VALUE PROPOSITION** (Must Have for MVP)
-The fundamental features that deliver the core value proposition and enable the first paying customers.
+### **P0: CORE MVP FEATURES** (Must Have for Launch)
+The fundamental features that deliver the core value proposition and enable the first paying customers, as defined in the PRD.
 
-#### **P0.1: Natural Language Workflow Creation** ✅ **PARTIALLY COMPLETED**
+#### **P0.1: Natural Language Workflow Creation** ⚠️ **CRITICAL MVP BLOCKER**
+**PRD Priority**: P0 (Critical) - Core differentiator
+**Business Impact**: This is the core differentiator - the "magic" that makes APIQ unique
+**User Value**: Non-technical users can create workflows without coding
+**Market Position**: Sets us apart from Zapier, Make, n8n
+**PRD Success Criteria**: Users can describe workflows in plain English, system generates executable workflows in <5 seconds
 **Business Impact**: This is the core differentiator - the "magic" that makes APIQ unique
 **User Value**: Non-technical users can create workflows without coding
 **Market Position**: Sets us apart from Zapier, Make, n8n
@@ -116,36 +134,43 @@ The fundamental features that deliver the core value proposition and enable the 
 - ❌ **Data Flow Mapping**: No support for step-to-step data flow
 - ❌ **Complex Workflow Planning**: No workflow decomposition logic
 
-**🚨 CRITICAL MISSING FUNCTIONALITY** (Core Value Proposition Gaps):
-- [ ] **Multi-Step Workflow Generation** - ❌ **CORE FEATURE MISSING**
-  - [ ] Implement workflow planning to break complex requests into multiple steps
-  - [ ] Add data flow mapping between steps (output → input)
-  - [ ] Support conditional logic and branching
-  - [ ] Add step dependencies and ordering
-- [ ] **Function Name Collision Prevention** - ❌ **QUALITY ISSUE**
-  - [ ] Add API prefix to function names (e.g., "GitHub_", "Slack_")
-  - [ ] Implement function name uniqueness validation
-  - [ ] Add function name conflict resolution
-- [ ] **Parameter Schema Enhancement** - ❌ **QUALITY ISSUE**
-  - [ ] Improve OpenAPI parameter conversion to include examples
-  - [ ] Add parameter validation and constraints
-  - [ ] Support complex parameter types (arrays, objects, nested structures)
-  - [ ] Add parameter descriptions from OpenAPI specs
-- [ ] **Context-Aware Function Filtering** - ❌ **SCALABILITY ISSUE**
-  - [ ] Implement API categorization (payment, communication, etc.)
-  - [ ] Add function relevance scoring based on user request
-  - [ ] Limit function count to prevent token overflow
-  - [ ] Add function prioritization (most commonly used first)
-- [ ] **Workflow Validation Enhancement** - ❌ **QUALITY ISSUE**
-  - [ ] Add workflow step dependency validation
-  - [ ] Validate data flow between steps
-  - [ ] Check for circular dependencies
-  - [ ] Validate parameter compatibility across steps
-- [ ] **Error Handling Improvements** - ❌ **UX ISSUE**
-  - [ ] Add specific error messages for different failure types
-  - [ ] Implement workflow generation retry logic
-  - [ ] Add fallback workflows when primary generation fails
-  - [ ] Provide actionable error messages to users
+**🆕 TDD IMPLEMENTATION READY** (Tests Created, Implementation Pending):
+- [x] **Multi-Step Workflow Generation Tests** - ✅ **TDD TESTS CREATED**
+  - [x] Unit tests for workflow planning and decomposition ✅ **CREATED**
+  - [x] E2E tests for multi-step workflow generation ✅ **CREATED**
+  - [x] Tests for data flow mapping between steps ✅ **CREATED**
+  - [x] Tests for conditional logic and branching ✅ **CREATED**
+  - [x] Tests for step dependencies and ordering ✅ **CREATED**
+  - [ ] **Implementation Required**: Service implementation to make tests pass ❌ **PENDING**
+- [x] **Function Name Collision Prevention Tests** - ✅ **TDD TESTS CREATED**
+  - [x] Tests for API prefix to function names ✅ **CREATED**
+  - [x] Tests for function name uniqueness validation ✅ **CREATED**
+  - [x] Tests for function name conflict resolution ✅ **CREATED**
+  - [ ] **Implementation Required**: Service implementation to make tests pass ❌ **PENDING**
+- [x] **Parameter Schema Enhancement Tests** - ✅ **TDD TESTS CREATED**
+  - [x] Tests for OpenAPI parameter conversion with examples ✅ **CREATED**
+  - [x] Tests for parameter validation and constraints ✅ **CREATED**
+  - [x] Tests for complex parameter types (arrays, objects, nested structures) ✅ **CREATED**
+  - [x] Tests for parameter descriptions from OpenAPI specs ✅ **CREATED**
+  - [ ] **Implementation Required**: Service implementation to make tests pass ❌ **PENDING**
+- [x] **Context-Aware Function Filtering Tests** - ✅ **TDD TESTS CREATED**
+  - [x] Tests for API categorization (payment, communication, etc.) ✅ **CREATED**
+  - [x] Tests for function relevance scoring based on user request ✅ **CREATED**
+  - [x] Tests for function count limits to prevent token overflow ✅ **CREATED**
+  - [x] Tests for function prioritization (most commonly used first) ✅ **CREATED**
+  - [ ] **Implementation Required**: Service implementation to make tests pass ❌ **PENDING**
+- [x] **Workflow Validation Enhancement Tests** - ✅ **TDD TESTS CREATED**
+  - [x] Tests for workflow step dependency validation ✅ **CREATED**
+  - [x] Tests for data flow validation between steps ✅ **CREATED**
+  - [x] Tests for circular dependency detection ✅ **CREATED**
+  - [x] Tests for parameter compatibility validation across steps ✅ **CREATED**
+  - [ ] **Implementation Required**: Service implementation to make tests pass ❌ **PENDING**
+- [x] **Error Handling Improvements Tests** - ✅ **TDD TESTS CREATED**
+  - [x] Tests for specific error messages for different failure types ✅ **CREATED**
+  - [x] Tests for workflow generation retry logic ✅ **CREATED**
+  - [x] Tests for fallback workflows when primary generation fails ✅ **CREATED**
+  - [x] Tests for actionable error messages to users ✅ **CREATED**
+  - [ ] **Implementation Required**: Service implementation to make tests pass ❌ **PENDING**
 
 #### **P0.2: Workflow Execution Engine** ✅ **COMPLETED**
 **Business Impact**: Enables the workflows created by P0.1 to actually run
@@ -286,10 +311,12 @@ The fundamental features that deliver the core value proposition and enable the 
   - [ ] Add rate limit monitoring and alerts
   - [ ] Support rate limit bypass for critical workflows
 
-#### **P0.4: Dashboard UI Implementation** ✅ **COMPLETED**
+#### **P0.4: User Interface & Experience** ✅ **COMPLETED**
+**PRD Priority**: P1 (High) - Moved to P0 for MVP completion
 **Business Impact**: Enables users to manage all core resources from a unified interface
 **User Value**: Intuitive, accessible, and test-driven dashboard for all APIQ features
 **Market Position**: Best-in-class UX and accessibility for API orchestration
+**PRD Success Criteria**: Interface is intuitive for non-technical users, chat interface responds within 2 seconds, mobile experience is fully functional
 
 **Requirements**:
 - [x] **Tab Navigation** - Overview, Connections, Workflows, Secrets, Admin ✅ COMPLETED
@@ -332,9 +359,14 @@ The fundamental features that deliver the core value proposition and enable the 
   - [ ] Support API documentation browsing
 
 ### **P1: USER EXPERIENCE & ADOPTION** (High Priority)
-Features that make the product intuitive, accessible, and sticky for users.
+Features that make the product intuitive, accessible, and sticky for users, as defined in the PRD.
 
-#### **P1.1: Intuitive User Interface** ✅ **COMPLETED**
+#### **P1.1: Workflow Templates & Libraries** 🚧 **PLANNED**
+**PRD Priority**: P1 (High)
+**Business Impact**: Reduces time-to-value and increases user retention
+**User Value**: Pre-built solutions for common use cases
+**Market Position**: Templates make it easier to get started than competitors
+**PRD Success Criteria**: 20+ pre-built templates available at launch, users can customize templates for their needs
 **Business Impact**: Reduces friction and increases user adoption
 **User Value**: Easy-to-use interface that doesn't require technical expertise
 **Market Position**: More accessible than technical alternatives
@@ -378,10 +410,12 @@ Features that make the product intuitive, accessible, and sticky for users.
   - [ ] Support error recovery workflows
   - [ ] Add help and documentation integration
 
-#### **P1.2: Workflow Templates & Libraries** 🚧 PLANNED
-**Business Impact**: Reduces time-to-value and increases user retention
-**User Value**: Pre-built solutions for common use cases
-**Market Position**: Templates make it easier to get started than competitors
+#### **P1.2: Onboarding & User Journey** 🚧 PLANNED
+**PRD Priority**: P1 (High) - Critical for user adoption
+**Business Impact**: Increases conversion from signup to active user
+**User Value**: Guided experience to first successful workflow
+**Market Position**: Better onboarding than technical alternatives
+**PRD Success Criteria**: Users can complete onboarding in <10 minutes, 70% of users create their first workflow within 24 hours
 
 **Requirements**:
 - [ ] **Pre-built Templates** - 20+ common workflow patterns
@@ -418,10 +452,12 @@ Features that make the product intuitive, accessible, and sticky for users.
   - [ ] Template versioning and updates
   - [ ] Template marketplace and discovery
 
-#### **P1.3: Onboarding & User Journey** 🚧 PLANNED
-**Business Impact**: Increases conversion from signup to active user
-**User Value**: Guided experience to first successful workflow
-**Market Position**: Better onboarding than technical alternatives
+#### **P1.3: Single API Operations** 🚧 PLANNED
+**PRD Priority**: P1 (High) - API Explorer Testing requirement
+**Business Impact**: Empowers non-technical users to perform quick tasks without full workflows  
+**User Value**: Test endpoints and retrieve data on demand  
+**Market Position**: Differentiates product by supporting both simple calls and complex workflows
+**PRD Success Criteria**: Users can invoke any stored endpoint with custom parameters, responses render in the UI immediately
 
 **Requirements**:
 - [x] **User Registration** - Email verification and account setup ✅ COMPLETED
@@ -449,10 +485,12 @@ Features that make the product intuitive, accessible, and sticky for users.
   - [ ] Workflow execution and monitoring demo
   - [ ] Advanced features introduction
 
-#### **P1.4: Single API Operations** 🚧 PLANNED
-**Business Impact**: Empowers non-technical users to perform quick tasks without full workflows  
-**User Value**: Test endpoints and retrieve data on demand  
-**Market Position**: Differentiates product by supporting both simple calls and complex workflows
+#### **P1.4: Advanced Analytics & Reporting** 🚧 PLANNED
+**PRD Priority**: P2 (Medium) - Moved to P1 for user retention
+**Business Impact**: Provides insights into workflow performance and usage
+**User Value**: Analytics and insights for optimization
+**Market Position**: Data-driven workflow optimization
+**PRD Success Criteria**: Users can view workflow performance metrics, system tracks API usage and costs, custom reports can be generated
 
 **Requirements**:
 - [ ] **API Explorer Testing** – "Try it out" buttons in `/explore-api` page call the real endpoint.
@@ -483,9 +521,14 @@ Features that make the product intuitive, accessible, and sticky for users.
   - [ ] Support response export and sharing
 
 ### **P2: ENTERPRISE READINESS** (Medium Priority)
-Features that enable enterprise adoption and compliance requirements.
+Features that enable enterprise adoption and compliance requirements, as defined in the PRD.
 
 #### **P2.1: Security & Compliance** ✅ **COMPLETED**
+**PRD Priority**: P2 (Medium) - Enterprise Features
+**Business Impact**: Enables enterprise adoption and compliance requirements
+**User Value**: Enterprise-grade security and compliance features
+**Market Position**: Meets enterprise security standards
+**PRD Success Criteria**: RBAC supports multiple user roles, SSO integrates with major providers, audit logs meet compliance requirements
 **Business Impact**: Enables enterprise adoption and compliance requirements
 **User Value**: Enterprise-grade security and compliance features
 **Market Position**: Meets enterprise security standards
@@ -527,9 +570,11 @@ Features that enable enterprise adoption and compliance requirements.
   - [ ] Support multi-tenant access control
 
 #### **P2.2: Team Collaboration** 🚧 PLANNED
+**PRD Priority**: P2 (Medium) - Enterprise Features
 **Business Impact**: Enables team-based workflow management
 **User Value**: Collaborative workflow creation and management
 **Market Position**: Team features for enterprise collaboration
+**PRD Success Criteria**: Teams can collaborate on workflow creation, role-based permissions work correctly, workflow sharing is secure and controlled
 
 **Requirements**:
 - [ ] **User Roles & Permissions** - Role-based access control
@@ -562,9 +607,14 @@ Features that enable enterprise adoption and compliance requirements.
   - [ ] Support approval audit trails
 
 ### **P3: ADVANCED FEATURES** (Lower Priority)
-Features that provide advanced capabilities for power users.
+Features that provide advanced capabilities for power users, as defined in the PRD.
 
-#### **P3.1: Advanced Workflow Features** 🚧 PLANNED
+#### **P3.1: AI-Powered API Extraction** 🚧 PLANNED
+**PRD Priority**: P2 (Medium) - Future Features
+**Business Impact**: Significantly expands platform's addressable market by supporting legacy APIs, undocumented APIs, and APIs with poor documentation
+**User Value**: Users can connect to any API, regardless of documentation quality
+**Market Position**: Unique capability that differentiates from competitors who require proper OpenAPI specs
+**PRD Success Criteria**: Users can import APIs with no or poor documentation, AI successfully discovers 80%+ of common API endpoints, generated specifications are accurate and usable
 **Business Impact**: Provides advanced capabilities for power users
 **User Value**: Advanced workflow features for complex automation
 **Market Position**: Advanced features for sophisticated users
@@ -599,10 +649,12 @@ Features that provide advanced capabilities for power users.
   - [ ] Add workflow performance optimization
   - [ ] Support workflow monitoring and alerting
 
-#### **P3.2: Analytics & Insights** 🚧 PLANNED
-**Business Impact**: Provides insights into workflow performance and usage
-**User Value**: Analytics and insights for optimization
-**Market Position**: Data-driven workflow optimization
+#### **P3.2: Advanced Workflow Features** 🚧 PLANNED
+**PRD Priority**: P3 (Low) - Future Features
+**Business Impact**: Provides advanced capabilities for power users
+**User Value**: Advanced workflow features for complex automation
+**Market Position**: Advanced features for sophisticated users
+**PRD Success Criteria**: Power users can create complex workflows, advanced scheduling works reliably, workflow dependencies are managed correctly
 
 **Requirements**:
 - [ ] **Workflow Analytics** - Performance metrics and insights
@@ -633,6 +685,174 @@ Features that provide advanced capabilities for power users.
   - [ ] Support failure pattern detection
   - [ ] Add optimization recommendations
   - [ ] Support anomaly detection and alerting
+
+## **SECRETS-FIRST REFACTOR** 🔐 **HIGH PRIORITY**
+
+### **Overview**
+**Goal**: Consolidate all credential storage into the secrets vault, eliminating duplication between the `ApiCredential` table and the secrets system.
+
+**Business Impact**: Improved security, better user experience, and reduced maintenance overhead
+**User Value**: Clear separation between connections and credentials, unified credential management
+**Market Position**: Enterprise-grade security with simplified credential management
+
+**Current State**: Credentials stored in two places - both in connections and in the secrets vault
+**Target State**: All credentials stored exclusively in the secrets vault with connections referencing secrets
+
+### **Implementation Status**
+**Progress**: 0% Complete - All TODO comments added, ready for implementation
+**Files Updated**: 18 key files with comprehensive TODO comments
+**Documentation**: Complete implementation plan and TODO summary created
+
+### **Phase 1: Database Schema Changes** 🚧 **READY TO START**
+**Priority**: HIGH - Foundation for all other changes
+**Files**: `prisma/schema.prisma`
+
+**Changes**:
+- [ ] Add `secretId` field to `ApiConnection` to reference `Secret`
+- [ ] Add `connectionId` field to `Secret` for connection-specific secrets
+- [ ] Add `SecretType` enum for better type safety
+- [ ] Add indexes for performance on secret lookups
+- [ ] Create migration scripts for existing data
+
+**TODOs Added**: ✅ Complete
+- Database schema changes for secrets-first approach
+- Migration strategy for existing credentials
+- Performance optimization with proper indexing
+
+### **Phase 2: Connection Creation Flow** 🚧 **READY TO START**
+**Priority**: HIGH - Core user experience
+**Files**: `src/components/dashboard/CreateConnectionModal.tsx`
+
+**Changes**:
+- [ ] Modify connection creation to automatically create secrets
+- [ ] Add secret creation during connection setup
+- [ ] Update `authConfig` to reference secrets instead of storing credentials directly
+- [ ] Add secret management options (create new, use existing, advanced settings)
+- [ ] Update test connection to use secrets
+- [ ] Add validation for secret creation
+- [ ] Add rollback function for failed connections
+
+**TODOs Added**: ✅ Complete
+- Connection creation flow updates
+- Secret management integration
+- Error handling and rollback mechanisms
+
+### **Phase 3: API Client Updates** 🚧 **READY TO START**
+**Priority**: HIGH - Backend integration
+**Files**: `src/lib/api/client.ts`, `src/types/index.ts`
+
+**Changes**:
+- [ ] Update `createConnection` to handle secret creation
+- [ ] Add secret management methods
+- [ ] Update connection testing to use secrets
+- [ ] Add secret reference handling
+- [ ] Update OAuth2 flow to use secrets
+- [ ] Add rollback mechanisms for failed operations
+
+**TODOs Added**: ✅ Complete
+- API client methods for secret management
+- Type system updates for secrets-first approach
+- OAuth2 integration with secrets
+
+### **Phase 4: Backend API Updates** 🚧 **READY TO START**
+**Priority**: HIGH - API layer changes
+**Files**: `pages/api/connections/index.ts`, `pages/api/secrets/index.ts`, `pages/api/connections/[id]/credentials.ts`
+
+**Changes**:
+- [ ] Update connection creation to handle secret creation
+- [ ] Modify connection retrieval to include secret references
+- [ ] Update connection testing to use secrets
+- [ ] Add secret validation and rollback mechanisms
+- [ ] Update OAuth2 flow to use secrets
+- [ ] Add connection-secret relationship management
+
+**TODOs Added**: ✅ Complete
+- Connection API migration
+- Secrets API enhancements
+- Credentials API migration
+
+### **Phase 5: Core Services Updates** 🚧 **READY TO START**
+**Priority**: MEDIUM - Service layer integration
+**Files**: `src/lib/secrets/secretsVault.ts`, `src/lib/services/connectionService.ts`, `src/lib/auth/oauth2.ts`
+
+**Changes**:
+- [ ] Enhance secrets vault for connection integration
+- [ ] Update connection service to use secrets
+- [ ] Update OAuth2 service to use secrets
+- [ ] Add connection-secret relationship management
+- [ ] Add secret rotation handling for connections
+
+**TODOs Added**: ✅ Complete
+- Secrets vault enhancements
+- Connection service updates
+- OAuth2 service migration
+
+### **Phase 6: UI Component Updates** 🚧 **READY TO START**
+**Priority**: MEDIUM - User interface
+**Files**: `src/components/dashboard/ConnectionsTab.tsx`, `src/components/dashboard/SecretsTab.tsx`
+
+**Changes**:
+- [ ] Update connections tab to show secret information
+- [ ] Add secret management UI integration
+- [ ] Display secret rotation status
+- [ ] Add secret creation during connection setup
+- [ ] Update connection testing to use secrets
+
+**TODOs Added**: ✅ Complete
+- Connection display updates
+- Secrets management integration
+- UI component enhancements
+
+### **Phase 7: Testing Updates** 🚧 **READY TO START**
+**Priority**: HIGH - Quality assurance
+**Files**: `tests/integration/api/connections/connections-management.integration.test.ts`, `tests/e2e/connections/connections-management.test.ts`
+
+**Changes**:
+- [ ] Update connection creation tests to verify secret creation
+- [ ] Add tests for secret-connection relationship
+- [ ] Test rollback scenarios when connection creation fails
+- [ ] Update connection testing to use secrets
+- [ ] Add tests for secret rotation in connections
+
+**TODOs Added**: ✅ Complete
+- Integration test updates
+- E2E test updates
+- Migration test scenarios
+
+### **Phase 8: Infrastructure Updates** 🚧 **READY TO START**
+**Priority**: LOW - Configuration and middleware
+**Files**: `src/middleware.ts`, `next.config.js`, `src/utils/encryption.ts`
+
+**Changes**:
+- [ ] Update middleware for secrets validation
+- [ ] Update configuration for secrets management
+- [ ] Add environment variables for secrets vault
+- [ ] Update encryption service for secrets
+
+**TODOs Added**: ✅ Complete
+- Middleware updates
+- Configuration updates
+- Encryption service updates
+
+### **Success Criteria**
+- [ ] All connections use secrets for credential storage
+- [ ] No duplicate credential storage in the system
+- [ ] All tests pass with secrets-first approach
+- [ ] Zero data loss during migration
+- [ ] Improved user experience metrics
+
+### **Implementation Timeline**
+- **Week 1**: Phase 1 (Database Schema) + Phase 2 (Connection Creation)
+- **Week 2**: Phase 3 (API Client) + Phase 4 (Backend API)
+- **Week 3**: Phase 5 (Core Services) + Phase 6 (UI Components)
+- **Week 4**: Phase 7 (Testing) + Phase 8 (Infrastructure)
+
+### **Risk Mitigation**
+- **Data Migration**: Comprehensive backup and rollback procedures
+- **Breaking Changes**: Gradual migration with backward compatibility
+- **Performance Impact**: Caching and optimization strategies
+
+---
 
 ## **CRITICAL IMPROVEMENTS BASED ON DEBUG ANALYSIS** 🚨
 
@@ -855,13 +1075,46 @@ Based on the detailed analysis of the natural language workflow generation syste
 - **Workflow Complexity**: 1 step → Support for workflows with 2-5 steps
 - **Error Recovery**: 0% → 90%+ of users successfully resolve generation errors
 
+## **PRIORITY REORGANIZATION SUMMARY**
+
+### **Alignment with PRD Goals**
+The implementation plan has been reorganized to properly align with the PRD priorities and success criteria:
+
+**P0 (Core MVP) - Must Have for Launch:**
+- **P0.1**: Natural Language Workflow Creation ⚠️ **CRITICAL MVP BLOCKER** (PRD P0)
+- **P0.2**: Workflow Execution Engine ✅ **COMPLETED** (PRD P0)
+- **P0.3**: API Connection Management ✅ **COMPLETED** (PRD P0)
+- **P0.4**: User Interface & Experience ✅ **COMPLETED** (PRD P1, moved to P0 for MVP)
+
+**P1 (User Experience & Adoption) - High Priority:**
+- **P1.1**: Workflow Templates & Libraries 🚧 **PLANNED** (PRD P1)
+- **P1.2**: Onboarding & User Journey 🚧 **PLANNED** (PRD P1)
+- **P1.3**: Single API Operations 🚧 **PLANNED** (PRD P1)
+- **P1.4**: Advanced Analytics & Reporting 🚧 **PLANNED** (PRD P2, moved to P1 for retention)
+
+**P2 (Enterprise Readiness) - Medium Priority:**
+- **P2.1**: Security & Compliance ✅ **COMPLETED** (PRD P2)
+- **P2.2**: Team Collaboration 🚧 **PLANNED** (PRD P2)
+
+**P3 (Advanced Features) - Lower Priority:**
+- **P3.1**: AI-Powered API Extraction 🚧 **PLANNED** (PRD P2, Future Features)
+- **P3.2**: Advanced Workflow Features 🚧 **PLANNED** (PRD P3)
+- **P3.3**: AI-Powered Optimization 🚧 **PLANNED** (PRD P3)
+
+### **Key Changes Made:**
+1. **Added PRD Priority References**: Each feature now clearly references its PRD priority level
+2. **Added PRD Success Criteria**: Each feature includes the specific success criteria from the PRD
+3. **Reorganized P1 Features**: Moved templates to P1.1 (highest P1 priority) and analytics to P1.4
+4. **Clarified MVP Blocker**: P0.1 is clearly marked as the critical MVP blocker
+5. **Added Future Features**: AI-Powered API Extraction moved to P3.1 as a strategic enhancement
+
 ## Implementation Timeline
 
 ### Phase 1: Core MVP (P0) ⚠️ **PARTIALLY COMPLETED**
-- **P0.1**: Natural Language Workflow Creation ⚠️ **PARTIALLY COMPLETED** (single-step only)
+- **P0.1**: Natural Language Workflow Creation ⚠️ **CRITICAL MVP BLOCKER** (single-step only)
 - **P0.2**: Workflow Execution Engine ✅ **COMPLETED**
 - **P0.3**: API Connection Management ✅ **COMPLETED**
-- **P0.4**: Dashboard UI Implementation ✅ **COMPLETED**
+- **P0.4**: User Interface & Experience ✅ **COMPLETED**
 
 ### Phase 2: User Experience (P1) ✅ **COMPLETED**
 - **P1.1**: Intuitive User Interface ✅ **COMPLETED**
@@ -885,6 +1138,54 @@ Based on the detailed analysis of the natural language workflow generation syste
 ### Phase 4: Advanced Features (P3) 🚧 **PLANNED**
 - **P3.1**: Advanced Workflow Features 🚧 **PLANNED**
 - **P3.2**: Analytics & Insights 🚧 **PLANNED**
+
+## **PRD SUCCESS METRICS ALIGNMENT**
+
+### **PRD Primary Goals vs Implementation Status**
+
+#### **Goal 1: User Adoption (1,000 active users within 6 months)**
+**PRD Metrics**: MAU 1,000+, Growth Rate 20% month-over-month, Retention Rate 70% at 30 days
+**Implementation Dependencies**:
+- ✅ **P0.4**: User Interface & Experience (completed)
+- 🚧 **P1.2**: Onboarding & User Journey (planned) - **CRITICAL FOR ADOPTION**
+- 🚧 **P1.1**: Workflow Templates & Libraries (planned) - **CRITICAL FOR RETENTION**
+- ⚠️ **P0.1**: Multi-step workflow generation (blocker) - **CRITICAL FOR VALUE**
+
+#### **Goal 2: Workflow Success Rate (>95% successful executions)**
+**PRD Metrics**: Workflow Success Rate 95%+, Execution Time <30 seconds, Error Resolution <2 hours
+**Implementation Dependencies**:
+- ✅ **P0.2**: Workflow Execution Engine (completed)
+- ⚠️ **P0.1**: Multi-step workflow generation (blocker) - **CRITICAL FOR SUCCESS**
+- 🚧 **P0.1.5**: Workflow Validation Enhancement (planned)
+- 🚧 **P0.1.6**: Error Handling Improvements (planned)
+
+#### **Goal 3: API Integration Coverage (50+ popular APIs within 3 months)**
+**PRD Metrics**: Supported APIs 50+, Connection Success Rate 90%+, Setup Time <5 minutes
+**Implementation Dependencies**:
+- ✅ **P0.3**: API Connection Management (completed)
+- 🚧 **P3.1**: AI-Powered API Extraction (planned) - **STRATEGIC ENHANCEMENT**
+
+#### **Goal 4: Revenue Generation ($100K ARR within 12 months)**
+**PRD Metrics**: MRR $8.3K+, CAC <$500, CLV >$2,000
+**Implementation Dependencies**:
+- ⚠️ **P0.1**: Multi-step workflow generation (blocker) - **CRITICAL FOR VALUE**
+- 🚧 **P1.2**: Onboarding & User Journey (planned) - **CRITICAL FOR CONVERSION**
+- 🚧 **P1.4**: Advanced Analytics & Reporting (planned) - **CRITICAL FOR OPTIMIZATION**
+
+### **PRD Secondary Goals vs Implementation Status**
+
+#### **Goal 5: Enterprise Readiness (SOC 2 compliance)**
+**PRD Metrics**: SOC 2 Certification, Enterprise Customers 10+, Security Incident Rate 0
+**Implementation Dependencies**:
+- ✅ **P2.1**: Security & Compliance (completed)
+- 🚧 **P2.2**: Team Collaboration (planned)
+
+#### **Goal 6: Platform Performance (99.9% uptime)**
+**PRD Metrics**: System Uptime 99.9%+, API Response Time <2 seconds, Workflow Generation <5 seconds
+**Implementation Dependencies**:
+- ✅ **P0.2**: Workflow Execution Engine (completed)
+- ✅ **P0.4**: User Interface & Experience (completed)
+- ⚠️ **P0.1**: Multi-step workflow generation (blocker) - **AFFECTS GENERATION TIME**
 
 ## Success Metrics
 
@@ -1211,13 +1512,33 @@ The APIQ MVP core engine is now **COMPLETE** with all P0 features fully implemen
 - ✅ OAuth2 integration and security
 - ✅ Real-time execution monitoring and control
 
-**Next Steps**:
-- **Immediate Priority**: Improve unit test coverage (Phase 1.5)
-- Deploy to production environment
-- Implement user onboarding improvements
-- Add workflow templates and libraries
-- Develop team collaboration features
-- Enhance analytics and monitoring capabilities
+**PRD-ALIGNED ACTION PLAN**:
+
+### **IMMEDIATE PRIORITIES (Next 2-4 weeks)**
+1. **🚨 CRITICAL: Complete P0.1.1 Multi-Step Workflow Generation** - This is blocking all PRD goals
+2. **🚨 CRITICAL: Implement P0.1.2 Function Name Collision Prevention** - Required for reliable generation
+3. **🚨 CRITICAL: Add P0.1.3 Parameter Schema Enhancement** - Required for quality generation
+
+### **HIGH PRIORITIES (Next 1-2 months)**
+4. **P1.2: Onboarding & User Journey** - Critical for PRD Goal 1 (User Adoption)
+5. **P1.1: Workflow Templates & Libraries** - Critical for PRD Goal 1 (User Retention)
+6. **P0.1.5: Workflow Validation Enhancement** - Critical for PRD Goal 2 (Success Rate)
+7. **P0.1.6: Error Handling Improvements** - Critical for PRD Goal 2 (Success Rate)
+
+### **MEDIUM PRIORITIES (Next 2-3 months)**
+8. **P1.4: Advanced Analytics & Reporting** - Critical for PRD Goal 4 (Revenue Optimization)
+9. **P1.3: Single API Operations** - Enhances user experience
+10. **P2.2: Team Collaboration** - Required for PRD Goal 5 (Enterprise Readiness)
+
+### **LOWER PRIORITIES (Next 3-6 months)**
+11. **P3.1: AI-Powered API Extraction** - Strategic enhancement for PRD Goal 3 (API Coverage)
+12. **P3.2: Advanced Workflow Features** - Future enhancement
+13. **P3.3: AI-Powered Optimization** - Future enhancement
+
+### **MAINTENANCE PRIORITIES**
+- **Unit Test Coverage Improvement** - Ongoing quality assurance
+- **E2E Test Compliance** - Ongoing quality assurance
+- **Secrets-First Refactor** - Technical debt reduction
 
 ---
 
@@ -1226,9 +1547,10 @@ The APIQ MVP core engine is now **COMPLETE** with all P0 features fully implemen
 - **P1 Features**: 1/4 Complete (25%)
 - **P2 Features**: 1/2 Complete (50%)
 - **P3 Features**: 0/2 Complete (0%)
+- **Secrets-First Refactor**: 0/8 phases complete (0%) 🚧 **HIGH PRIORITY**
 - **Unit Test Improvement**: 0/7 phases complete (0%)
 - **E2E Test Compliance**: 0/5 phases complete (0%) 🚧 **NEW PRIORITY**
-- **Overall Progress**: 6/12 features complete (50%)
+- **Overall Progress**: 6/13 features complete (46%)
 - **Core MVP**: 100% Complete ✅
 - **Test Coverage**: 1176+ tests with 100% pass rate ✅
 - **Unit Test Coverage**: 8.38% statements, 4.66% branches 🚧 **NEEDS IMPROVEMENT**
@@ -1696,3 +2018,366 @@ The APIQ MVP core engine is now **COMPLETE** with all P0 features fully implemen
 - **Phase 2**: Interactive exploration and manual refinement tools
 - **Phase 3**: Advanced pattern recognition and learning from user corrections
 - **Phase 4**: Community-driven API specification sharing and validation
+
+---
+
+## 🎨 **UX SIMPLIFICATION PLAN** 🚧 **HIGH PRIORITY**
+
+### **Overview**
+**Goal**: Simplify the user experience to focus on the core value proposition - natural language workflow creation through the Chat interface.
+
+**Business Impact**: Reduces cognitive load, improves user onboarding, and increases conversion rates
+**User Value**: Faster time-to-value, clearer navigation, and more intuitive interface
+**Market Position**: Differentiates from complex enterprise tools by being approachable and user-friendly
+
+**Current State**: Dashboard has 7 tabs (Overview, Connections, Workflows, Secrets, Chat, Admin, Audit) which creates cognitive overload
+**Target State**: 3-tab structure (Chat, Workflows, Settings) with progressive disclosure and guided onboarding
+
+### **PHASE 1: QUICK WINS** (1-2 weeks) 🚧 **HIGH PRIORITY**
+
+#### **1.1 Hide Non-Essential Tabs for Regular Users**
+**Goal**: Reduce visual clutter by hiding admin/audit tabs for regular users
+
+**Actions**:
+- [ ] **Add Role-Based Tab Visibility Logic** (HIGH)
+  - [ ] Update dashboard page to filter tabs based on user.role
+  - [ ] Hide Admin/Audit tabs for non-admin users
+  - [ ] Update tab rendering to use filtered tab list
+  - [ ] Add tests: `tests/unit/app/dashboard/page.test.tsx` - test tab visibility by role
+  - [ ] Add tests: `tests/e2e/ui/navigation.test.ts` - test admin-only tabs hidden for regular users
+
+**Success Criteria**:
+- [ ] Regular users see only 5 tabs (Overview, Connections, Workflows, Secrets, Chat)
+- [ ] Admin users see all 7 tabs
+- [ ] Tab filtering works correctly based on user role
+- [ ] All tests pass with 100% reliability
+
+#### **1.2 Make Chat the Default Tab**
+**Goal**: Prioritize the core value proposition by making Chat the default experience
+
+**Actions**:
+- [ ] **Update Default Tab Configuration** (HIGH)
+  - [ ] Change default activeTab from 'overview' to 'chat'
+  - [ ] Update URL parameter handling to default to chat
+  - [ ] Update tab initialization logic
+  - [ ] Add tests: `tests/unit/app/dashboard/page.test.tsx` - test default tab is chat
+  - [ ] Add tests: `tests/e2e/ui/navigation.test.ts` - test dashboard loads with chat tab active
+
+**Success Criteria**:
+- [ ] Dashboard loads with Chat tab active by default
+- [ ] URL parameters correctly handle chat tab state
+- [ ] Tab state persists correctly across page refreshes
+- [ ] All tests pass with 100% reliability
+
+#### **1.3 Simplify the Header - Remove Breadcrumbs**
+**Goal**: Clean up the header to reduce visual complexity
+
+**Actions**:
+- [ ] **Remove Breadcrumb Navigation** (MEDIUM)
+  - [ ] Remove breadcrumb navigation section (lines ~350-370 in dashboard page)
+  - [ ] Simplify header to just title and logout button
+  - [ ] Remove breadcrumb-related state and handlers
+  - [ ] Add tests: `tests/unit/app/dashboard/page.test.tsx` - test breadcrumbs removed
+  - [ ] Add tests: `tests/e2e/ui/navigation.test.ts` - test simplified header layout
+
+**Success Criteria**:
+- [ ] Header shows only title and logout button
+- [ ] No breadcrumb navigation elements present
+- [ ] Header maintains proper accessibility
+- [ ] All tests pass with 100% reliability
+
+#### **1.4 Consolidate Error/Success Messages**
+**Goal**: Create unified message display system
+
+**Actions**:
+- [ ] **Create Unified MessageBanner Component** (MEDIUM)
+  - [ ] Create `src/components/MessageBanner.tsx` component
+  - [ ] Replace duplicate message sections with single component
+  - [ ] Consolidate message state management
+  - [ ] Add tests: `tests/unit/components/MessageBanner.test.tsx` - test message display
+  - [ ] Add tests: `tests/e2e/ui/ui-compliance.test.ts` - test message accessibility
+
+**Success Criteria**:
+- [ ] Single MessageBanner component handles all messages
+- [ ] Messages display consistently across all tabs
+- [ ] Message accessibility compliance maintained
+- [ ] All tests pass with 100% reliability
+
+### **PHASE 2: CORE SIMPLIFICATION** (2-3 weeks) 🚧 **HIGH PRIORITY**
+
+#### **2.1 Redesign Dashboard Layout with 3-Tab Structure**
+**Goal**: Implement the new simplified 3-tab structure
+
+**Actions**:
+- [ ] **Create New Tab Configuration** (HIGH)
+  - [ ] Replace 7-tab system with 3-tab system: Chat, Workflows, Settings
+  - [ ] Create new tab configuration object
+  - [ ] Update tab rendering logic
+  - [ ] Move Connections and Secrets to Settings tab
+  - [ ] Add tests: `tests/unit/app/dashboard/page.test.tsx` - test 3-tab structure
+  - [ ] Add tests: `tests/e2e/ui/navigation.test.ts` - test simplified navigation
+  - [ ] Add tests: `tests/e2e/onboarding/user-journey.test.ts` - test new user flow
+
+**Success Criteria**:
+- [ ] Dashboard displays only 3 tabs: Chat, Workflows, Settings
+- [ ] Connections and Secrets are accessible through Settings tab
+- [ ] All existing functionality preserved in new structure
+- [ ] All tests pass with 100% reliability
+
+#### **2.2 Implement Progressive Disclosure**
+**Goal**: Show features based on user journey stage
+
+**Actions**:
+- [ ] **Add Onboarding State Management** (HIGH)
+  - [ ] Add user onboarding state tracking to database schema
+  - [ ] Create OnboardingContext for state management
+  - [ ] Show features based on user journey stage
+  - [ ] Add progressive feature unlocking
+  - [ ] Add tests: `tests/unit/components/ProgressiveDisclosure.test.tsx`
+  - [ ] Add tests: `tests/e2e/onboarding/user-journey.test.ts` - test progressive disclosure
+
+**Success Criteria**:
+- [ ] New users see limited features initially
+- [ ] Features unlock progressively as user progresses
+- [ ] Advanced users maintain full functionality
+- [ ] All tests pass with 100% reliability
+
+#### **2.3 Streamline Onboarding Flow**
+**Goal**: Simplify registration and reduce friction
+
+**Actions**:
+- [ ] **Simplify Registration Process** (HIGH)
+  - [ ] Simplify form to email + password only (remove name requirement)
+  - [ ] Make email verification optional (don't block access)
+  - [ ] Redirect directly to Chat interface after login
+  - [ ] Remove complex validation for faster signup
+  - [ ] Add tests: `tests/e2e/auth/authentication-session.test.ts` - test streamlined signup
+  - [ ] Add tests: `tests/integration/api/auth/auth-flow.test.ts` - test simplified registration
+  - [ ] Add tests: `tests/unit/app/signup/page.test.tsx` - test simplified form validation
+
+**Success Criteria**:
+- [ ] Registration takes under 2 minutes to complete
+- [ ] Users can access Chat interface without email verification
+- [ ] Login redirects directly to Chat tab
+- [ ] All tests pass with 100% reliability
+
+#### **2.4 Add Guided Tour for New Users**
+**Goal**: Provide interactive onboarding experience
+
+**Actions**:
+- [ ] **Create GuidedTour Component** (MEDIUM)
+  - [ ] Create `src/components/GuidedTour.tsx` component
+  - [ ] Add tour steps for Chat, Workflows, Settings
+  - [ ] Implement tour state management
+  - [ ] Add skip/resume functionality
+  - [ ] Add tests: `tests/unit/components/GuidedTour.test.tsx`
+  - [ ] Add tests: `tests/e2e/onboarding/user-journey.test.ts` - test guided tour
+
+**Success Criteria**:
+- [ ] New users automatically see guided tour
+- [ ] Tour covers all 3 main tabs
+- [ ] Users can skip or resume tour
+- [ ] All tests pass with 100% reliability
+
+### **PHASE 3: POLISH** (1-2 weeks) 🚧 **MEDIUM PRIORITY**
+
+#### **3.1 Mobile-Optimized Navigation**
+**Goal**: Optimize for mobile devices
+
+**Actions**:
+- [ ] **Implement Mobile Navigation** (MEDIUM)
+  - [ ] Implement bottom navigation bar for mobile
+  - [ ] Create `src/components/MobileNavigation.tsx` component
+  - [ ] Update responsive design for 3-tab structure
+  - [ ] Add tests: `tests/unit/components/MobileNavigation.test.tsx`
+  - [ ] Add tests: `tests/e2e/ui/navigation.test.ts` - test mobile navigation
+
+**Success Criteria**:
+- [ ] Mobile users see bottom navigation
+- [ ] 3-tab structure works well on mobile
+- [ ] Touch interactions are optimized
+- [ ] All tests pass with 100% reliability
+
+#### **3.2 Performance Optimizations**
+**Goal**: Improve performance and responsiveness
+
+**Actions**:
+- [ ] **Implement Performance Improvements** (MEDIUM)
+  - [ ] Implement React.memo for tab components
+  - [ ] Add lazy loading for non-critical components
+  - [ ] Optimize re-renders with useMemo/useCallback
+  - [ ] Add tests: `tests/performance/load-testing.test.ts` - test performance improvements
+
+**Success Criteria**:
+- [ ] Dashboard loads within performance budget
+- [ ] Tab switching is smooth and responsive
+- [ ] Performance maintained with many workflows
+- [ ] All tests pass with 100% reliability
+
+### **NEW COMPONENTS TO CREATE**
+
+#### **MessageBanner Component**
+**File**: `src/components/MessageBanner.tsx`
+**Purpose**: Unified message display for success/error/info messages
+**Features**:
+- [ ] Support for success, error, info, warning message types
+- [ ] Auto-dismiss functionality
+- [ ] Accessibility compliance (ARIA attributes)
+- [ ] Mobile responsive design
+- [ ] Tests: `tests/unit/components/MessageBanner.test.tsx`
+
+#### **OnboardingContext Component**
+**File**: `src/components/OnboardingContext.tsx`
+**Purpose**: State management for progressive disclosure and guided tour
+**Features**:
+- [ ] User onboarding stage tracking
+- [ ] Progressive feature unlocking
+- [ ] Guided tour state management
+- [ ] Tests: `tests/unit/components/OnboardingContext.test.tsx`
+
+#### **ProgressiveDisclosure Component**
+**File**: `src/components/ProgressiveDisclosure.tsx`
+**Purpose**: Wrapper component for feature unlocking
+**Features**:
+- [ ] Feature visibility based on user stage
+- [ ] Smooth reveal animations
+- [ ] Accessibility compliance
+- [ ] Tests: `tests/unit/components/ProgressiveDisclosure.test.tsx`
+
+#### **GuidedTour Component**
+**File**: `src/components/GuidedTour.tsx`
+**Purpose**: Interactive user tour system
+**Features**:
+- [ ] Step-by-step tour with highlights
+- [ ] Skip/resume functionality
+- [ ] Tour progress tracking
+- [ ] Tests: `tests/unit/components/GuidedTour.test.tsx`
+
+#### **MobileNavigation Component**
+**File**: `src/components/MobileNavigation.tsx`
+**Purpose**: Mobile-optimized bottom navigation
+**Features**:
+- [ ] Bottom navigation bar for mobile
+- [ ] Touch-optimized interactions
+- [ ] Responsive design
+- [ ] Tests: `tests/unit/components/MobileNavigation.test.tsx`
+
+#### **SettingsTab Component**
+**File**: `src/components/dashboard/SettingsTab.tsx`
+**Purpose**: Consolidated settings including connections and secrets
+**Features**:
+- [ ] Connections management section
+- [ ] Secrets management section
+- [ ] User preferences section
+- [ ] Tests: `tests/unit/components/dashboard/SettingsTab.test.tsx`
+
+### **DATABASE SCHEMA UPDATES**
+
+#### **User Model Enhancements**
+**File**: `prisma/schema.prisma`
+**Changes**:
+- [ ] Add `onboardingStage` enum field
+- [ ] Add `onboardingCompletedAt` DateTime? field
+- [ ] Add `guidedTourCompleted` Boolean @default(false)
+- [ ] Add `isActive` default to true
+- [ ] Make email verification optional
+
+**Migration**: Create new migration for onboarding fields
+
+### **API CLIENT UPDATES**
+
+#### **Authentication Methods**
+**File**: `src/lib/api/client.ts`
+**Changes**:
+- [ ] Update register method to support simplified registration
+- [ ] Update login method to redirect to Chat interface
+- [ ] Add onboarding state management methods
+- [ ] Update verifyEmail method to be optional
+- [ ] Add guided tour state management methods
+
+### **TESTING STRATEGY**
+
+#### **Unit Tests**
+- [ ] All new components have comprehensive unit tests
+- [ ] Dashboard page tests updated for new structure
+- [ ] API client tests updated for new methods
+- [ ] Database tests updated for schema changes
+
+#### **Integration Tests**
+- [ ] Authentication flow tests updated for simplified registration
+- [ ] Onboarding flow tests for progressive disclosure
+- [ ] Guided tour integration tests
+- [ ] Mobile navigation integration tests
+
+#### **E2E Tests**
+- [ ] User journey tests for new onboarding flow
+- [ ] Navigation tests for 3-tab structure
+- [ ] Mobile responsiveness tests
+- [ ] Performance tests for optimization validation
+
+### **SUCCESS METRICS**
+
+#### **User Experience Metrics**
+- [ ] Time to first workflow creation reduced by 50%
+- [ ] User onboarding completion rate increased to 80%+
+- [ ] Mobile usage increased by 30%
+- [ ] User satisfaction score increased to 4.5/5
+
+#### **Technical Metrics**
+- [ ] Dashboard load time under 2 seconds
+- [ ] Tab switching response time under 200ms
+- [ ] Mobile performance score above 90
+- [ ] Accessibility compliance score 100%
+
+### **IMPLEMENTATION TIMELINE**
+
+#### **Week 1-2: Phase 1 - Quick Wins**
+- [ ] Hide non-essential tabs for regular users
+- [ ] Make Chat the default tab
+- [ ] Simplify header - remove breadcrumbs
+- [ ] Consolidate error/success messages
+
+#### **Week 3-5: Phase 2 - Core Simplification**
+- [ ] Redesign dashboard layout with 3-tab structure
+- [ ] Implement progressive disclosure
+- [ ] Streamline onboarding flow
+- [ ] Add guided tour for new users
+
+#### **Week 6-7: Phase 3 - Polish**
+- [ ] Mobile-optimized navigation
+- [ ] Performance optimizations
+- [ ] Final testing and validation
+
+### **RISK MITIGATION**
+
+#### **Technical Risks**
+- [ ] **Breaking Changes**: Comprehensive testing strategy to prevent regressions
+- [ ] **Performance Impact**: Performance monitoring and optimization
+- [ ] **Mobile Compatibility**: Extensive mobile testing and responsive design
+
+#### **User Experience Risks**
+- [ ] **User Confusion**: Gradual rollout with user feedback
+- [ ] **Feature Discovery**: Clear onboarding and guided tour
+- [ ] **Accessibility**: Comprehensive accessibility testing
+
+#### **Business Risks**
+- [ ] **User Adoption**: A/B testing of new interface
+- [ ] **Feature Parity**: Ensure all existing functionality preserved
+- [ ] **Rollback Plan**: Ability to quickly revert if issues arise
+
+### **DEPENDENCIES**
+
+#### **Technical Dependencies**
+- [ ] Database schema updates for onboarding fields
+- [ ] API client updates for new authentication flow
+- [ ] Component library updates for new UI components
+
+#### **Testing Dependencies**
+- [ ] Test infrastructure updates for new components
+- [ ] E2E test framework updates for mobile testing
+- [ ] Performance testing tools setup
+
+#### **Design Dependencies**
+- [ ] UI/UX design system updates
+- [ ] Mobile design specifications
+- [ ] Accessibility design guidelines

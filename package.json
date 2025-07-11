@@ -53,7 +53,7 @@
     "rotate-secrets": "node scripts/rotate-secrets.js",
     "check:no-mock-data": "grep -r -E 'test-user-123|test-user-456|demo-key|demo-token|fake API|mock.*api|create-test-user' . --exclude-dir=tests --exclude-dir=node_modules --exclude-dir=.git --exclude=package-lock.json --exclude=package.json --exclude=.husky || exit 0",
     "test:e2e:current": "./scripts/kill-port-3000.sh && playwright test tests/e2e/auth/authentication-session.test.ts tests/e2e/auth/registration-verification.test.ts tests/e2e/auth/password-reset.test.ts tests/e2e/connections/connections-management.test.ts tests/e2e/connections/openapi-integration.test.ts tests/e2e/auth/oauth2.test.ts tests/e2e/security/secrets-vault.test.ts",
-    "test:e2e:p0": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/oauth2-flows.test.ts tests/e2e/workflow-engine/workflow-management.test.ts tests/e2e/security/ tests/e2e/ui/navigation.test.ts tests/e2e/ui/ui-compliance.test.ts",
+    "test:e2e:p0": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/oauth2-flows.test.ts tests/e2e/workflow-engine/workflow-management.test.ts tests/e2e/workflow-engine/core-workflow-generation.test.ts tests/e2e/workflow-engine/multi-step-workflow-generation.test.ts tests/e2e/security/ tests/e2e/ui/navigation.test.ts tests/e2e/ui/ui-compliance.test.ts",
     "test:e2e:p0:fast": "DISABLE_RATE_LIMITING=true ./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/oauth2-flows.test.ts tests/e2e/workflow-engine/workflow-management.test.ts tests/e2e/security/ tests/e2e/ui/navigation.test.ts tests/e2e/ui/ui-compliance.test.ts",
     "test:e2e:p1": "./scripts/kill-port-3000.sh && playwright test tests/e2e/ui/ tests/e2e/workflow-engine/step-runner-engine.test.ts",
     "test:e2e:p2": "./scripts/kill-port-3000.sh && playwright test tests/e2e/security/",
@@ -91,6 +91,8 @@
     "test:e2e:workflow-engine:step-runner-engine": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/step-runner-engine.test.ts",
     "test:e2e:workflow-engine:pause-resume": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/pause-resume.test.ts",
     "test:e2e:workflow-engine:natural-language-workflow": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/natural-language-workflow.test.ts",
+    "test:e2e:workflow-engine:core-generation": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/core-workflow-generation.test.ts",
+    "test:e2e:workflow-engine:multi-step-generation": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/multi-step-workflow-generation.test.ts",
     "test:e2e:performance:load-testing": "./scripts/kill-port-3000.sh && playwright test tests/e2e/performance/load-testing.test.ts",
     "test:e2e:onboarding:user-journey": "./scripts/kill-port-3000.sh && playwright test tests/e2e/onboarding/user-journey.test.ts"
   },
