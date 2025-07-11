@@ -145,6 +145,7 @@ export default function ResetPasswordPage() {
             <div
               className="rounded-md bg-green-50 p-4 text-green-800"
               role="alert"
+              aria-live="polite"
               data-testid="success-message"
             >
               {success}
@@ -154,6 +155,7 @@ export default function ResetPasswordPage() {
             <div
               className="rounded-md bg-red-50 p-4 text-red-800"
               role="alert"
+              aria-live="polite"
               data-testid="validation-errors"
             >
               {error && <div>{error}</div>}

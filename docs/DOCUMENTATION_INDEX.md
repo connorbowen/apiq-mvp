@@ -45,6 +45,9 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 
 ### Testing Strategy & Infrastructure
 - **[Testing Guide](TESTING.md)** - Comprehensive testing strategy, patterns, and infrastructure
+- **[E2E Test Evaluation Guide](E2E_TEST_EVALUATION_GUIDE.md)** - 14-criteria E2E test evaluation and TODO implementation
+- **[Enhanced E2E Test Criteria](E2E_TEST_ENHANCED_CRITERIA.md)** - Detailed breakdown of enhanced evaluation criteria
+- **[E2E Test Enhancement Summary](E2E_TEST_ENHANCEMENT_SUMMARY.md)** - Overview of enhanced E2E test evaluation system
 - **[Test Summary](TEST_SUMMARY.md)** - Current test status and recent test improvements
 - **[Test Coverage Comparison](TEST_COVERAGE_COMPARISON.md)** - Test coverage analysis and metrics
 - **[SecretTypeSelect Fixes](SECRET_TYPE_SELECT_FIXES.md)** - Component and test suite fixes documentation
@@ -74,6 +77,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 
 ### AI & Automation
 - **[Agentic Code Generation Plan](agentic-code-generation-plan.md)** - AI-powered code generation features and roadmap
+- **[AI-Powered API Extraction](implementation-plan.md#ai-powered-api-extraction)** - Strategic enhancement for extracting endpoints from undocumented APIs
 
 ---
 
@@ -115,11 +119,13 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 
 #### **Testing & Quality Assurance**
 1. **Use [Testing Guide](TESTING.md)** - Comprehensive testing strategy
-2. **Apply [Development Tools](DEVELOPMENT_TOOLS.md)** - Test analysis and optimization tools
-3. **Apply [Integration Test Optimization](INTEGRATION_TEST_OPTIMIZATION_SUMMARY.md)** - Performance patterns
-4. **Check [Test Summary](TEST_SUMMARY.md)** - Current test status
-5. **Reference specific optimization guides** - For targeted test improvements
-6. **Use [UX Compliant Testing](UX_COMPLIANT_TESTING.md)** - UX compliance and accessibility testing
+2. **Use [E2E Test Evaluation Guide](E2E_TEST_EVALUATION_GUIDE.md)** - 14-criteria test evaluation and TODO implementation
+3. **Reference [Enhanced E2E Test Criteria](E2E_TEST_ENHANCED_CRITERIA.md)** - Detailed evaluation criteria and examples
+4. **Apply [Development Tools](DEVELOPMENT_TOOLS.md)** - Test analysis and optimization tools
+5. **Apply [Integration Test Optimization](INTEGRATION_TEST_OPTIMIZATION_SUMMARY.md)** - Performance patterns
+6. **Check [Test Summary](TEST_SUMMARY.md)** - Current test status
+7. **Reference specific optimization guides** - For targeted test improvements
+8. **Use [UX Compliant Testing](UX_COMPLIANT_TESTING.md)** - UX compliance and accessibility testing
 
 #### **OAuth2 & Authentication Development**
 1. **Follow [OAuth2 Setup Guide](oauth2-setup-guide.md)** - Provider configuration
@@ -159,7 +165,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **Frontend Development**: [UX Specification](UX_SPEC.md) + [UX Compliant Testing](UX_COMPLIANT_TESTING.md) + [UI Pages](UI_PAGES.md) + [User Guide](USER_GUIDE.md) + [Secrets Vault UX Guide](SECRETS_VAULT_UX_GUIDE.md)
 - **Architecture Changes**: [Architecture](ARCHITECTURE.md) + [Development Guide](DEVELOPMENT_GUIDE.md)
 - **OAuth2 Implementation**: [OAuth2 Setup Guide](oauth2-setup-guide.md) + [OAuth2 Testing Plan](oauth2-testing-plan.md)
-- **Testing & Debugging**: [Development Tools](DEVELOPMENT_TOOLS.md) + [Testing Guide](TESTING.md) + [UX Compliant Testing](UX_COMPLIANT_TESTING.md)
+- **Testing & Debugging**: [Development Tools](DEVELOPMENT_TOOLS.md) + [Testing Guide](TESTING.md) + [E2E Test Evaluation Guide](E2E_TEST_EVALUATION_GUIDE.md) + [UX Compliant Testing](UX_COMPLIANT_TESTING.md)
 - **Production Deployment**: [Production Deployment Checklist](PRODUCTION_DEPLOYMENT_CHECKLIST.md) + [Deployment Guide](DEPLOYMENT_GUIDE.md)
 - **UX Development**: [UX Specification](UX_SPEC.md) + [UX Compliant Testing](UX_COMPLIANT_TESTING.md) + [Secrets Vault UX Guide](SECRETS_VAULT_UX_GUIDE.md) + [UI Pages](UI_PAGES.md)
 - **Security UX**: [Secrets Vault UX Guide](SECRETS_VAULT_UX_GUIDE.md) + [UX Specification](UX_SPEC.md) + [Security Guide](SECURITY_GUIDE.md)

@@ -499,6 +499,48 @@ export const cleanupTestWorkflow = async (workflowId: string): Promise<void> => 
   });
 };
 
+/**
+ * Set authentication cookies for E2E tests
+ * This replaces the localStorage approach with secure cookie-based authentication
+ */
+export const setAuthCookies = async (page: any, user: TestUser) => {
+  // Set the authentication cookies directly
+  await page.context().addCookies([
+    {
+      name: 'accessToken',
+      value: user.accessToken,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      secure: false, // false for localhost testing
+      sameSite: 'Lax'
+    },
+    {
+      name: 'refreshToken', 
+      value: user.refreshToken,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      secure: false, // false for localhost testing
+      sameSite: 'Lax'
+    }
+  ]);
+};
+
+/**
+ * Authenticate E2E test page using secure cookie-based authentication
+ */
+export const authenticateE2EPage = async (page: any, user: TestUser) => {
+  // Set authentication cookies
+  await setAuthCookies(page, user);
+  
+  // Navigate to dashboard to trigger authentication check
+  await page.goto(`${process.env.BASE_URL || 'http://localhost:3000'}/dashboard`);
+  
+  // Wait for dashboard to load (confirms authentication worked)
+  await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
+};
+
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET must be defined for E2E tests');
 } 

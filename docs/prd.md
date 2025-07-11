@@ -363,7 +363,30 @@ APIQ provides a unified platform that:
 
 ### Future Features
 
-#### 9. AI-Powered Optimization
+#### 9. AI-Powered API Extraction
+**Priority**: P2 (Medium)
+**Description**: AI-powered endpoint discovery and specification generation for APIs without OpenAPI documentation
+
+**Business Impact**: Significantly expands platform's addressable market by supporting legacy APIs, undocumented APIs, and APIs with poor documentation
+**User Value**: Users can connect to any API, regardless of documentation quality
+**Market Position**: Unique capability that differentiates from competitors who require proper OpenAPI specs
+
+**Requirements**:
+- AI-powered endpoint discovery through common HTTP methods
+- Response schema inference using AI analysis of JSON/XML responses
+- Authentication method detection (API key, OAuth2, Basic Auth, Bearer token)
+- Interactive API exploration with testing and validation tools
+- OpenAPI 3.0 specification generation from discovered endpoints
+- Respectful rate limiting and error handling for target APIs
+- User review and modification of generated specifications
+
+**Success Criteria**:
+- Users can import APIs with no or poor documentation
+- AI successfully discovers 80%+ of common API endpoints
+- Generated specifications are accurate and usable in workflow engine
+- Interactive exploration tools are intuitive and helpful
+
+#### 10. AI-Powered Optimization
 **Priority**: P3 (Low)
 **Description**: AI-driven workflow optimization and suggestions
 
@@ -374,7 +397,7 @@ APIQ provides a unified platform that:
 - Predictive error detection
 - Automated workflow improvements
 
-#### 10. Mobile Application
+#### 11. Mobile Application
 **Priority**: P3 (Low)
 **Description**: Native mobile applications for iOS and Android
 
@@ -385,7 +408,7 @@ APIQ provides a unified platform that:
 - Mobile-optimized interface
 - Biometric authentication
 
-#### 11. Advanced Integrations
+#### 12. Advanced Integrations
 **Priority**: P3 (Low)
 **Description**: Integration with additional platforms and services
 

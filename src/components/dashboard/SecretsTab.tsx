@@ -1098,28 +1098,28 @@ function CreateSecretModal({
     setSuccessMsg(null);
     try {
       console.log('Creating secret with data:', { name: data.name, type: data.type, hasValue: !!data.value });
-      
       const requestData = {
         name: data.name,
         value: data.value,
         description: data.description,
         type: data.type.toLowerCase()
       };
-      
       console.log('Sending request to API:', requestData);
-      
+      // Enforce minimum loading state duration
+      const minLoadingMs = 800;
+      const start = Date.now();
       const response = await apiClient.createSecret(requestData);
-      
+      const elapsed = Date.now() - start;
+      if (elapsed < minLoadingMs) {
+        await new Promise(res => setTimeout(res, minLoadingMs - elapsed));
+      }
       console.log('API response:', response);
-      
       if (response.success) {
         console.log('Secret created successfully, setting success message');
         console.log('Response data:', response.data);
         console.log('Secret object from response:', response.data.secret);
-        
         // Set success message in modal first
         setSuccessMsg(response.data.message || 'Secret created successfully');
-        
         // Pass the created secret data back to the parent
         if (response.data.secret) {
           console.log('Calling onSuccess with secret data:', response.data.secret);
@@ -1128,7 +1128,6 @@ function CreateSecretModal({
           console.log('No secret data in response, calling onSuccess without secret');
           onSuccess(response.data.message || 'Secret created successfully');
         }
-        
         // Close modal after a longer delay to ensure success message is visible
         setTimeout(() => {
           onClose();

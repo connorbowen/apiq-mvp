@@ -890,7 +890,7 @@ test.describe('Connections Management E2E Tests', () => {
       await expect(connectionCard).toBeVisible();
       
       // Test connection functionality
-      const testButton = connectionCard.locator('[data-testid="test-connection-list-btn"]');
+      const testButton = connectionCard.locator('[data-testid="primary-action test-connection-btn"]');
       const isButtonVisible = await testButton.isVisible().catch(() => false);
       console.log('🪵 Test button visible:', isButtonVisible);
       await testButton.click();
@@ -937,10 +937,10 @@ test.describe('Connections Management E2E Tests', () => {
       await expect(connectionCard).toBeVisible();
       
       // Test connection functionality with shorter timeout
-      await connectionCard.locator('[data-testid="test-connection-list-btn"]').click();
+      await connectionCard.locator('[data-testid="primary-action test-connection-btn"]').click();
       
       // Wait for test to complete by checking button state instead of using timeout
-      await expect(connectionCard.locator('[data-testid="test-connection-list-btn"]')).toBeEnabled({ timeout: 5000 });
+      await expect(connectionCard.locator('[data-testid="primary-action test-connection-btn"]')).toBeEnabled({ timeout: 5000 });
       
       // Just verify the connection still exists and the test button is enabled (indicating test completed)
       await expect(page.locator('[data-testid="connection-card"]').filter({ has: page.locator('p:has-text("Connection with invalid URL")') }).first()).toBeVisible();
@@ -1083,14 +1083,14 @@ test.describe('Connections Management E2E Tests', () => {
       // Performance testing functionality
       // Test connection functionality with more specific selector
       const connectionCard = page.locator('[data-testid="connection-card"]').filter({ has: page.locator('p:has-text("Connection for performance testing")') }).first();
-      await connectionCard.locator('[data-testid="test-connection-list-btn"]').click();
+      await connectionCard.locator('[data-testid="primary-action test-connection-btn"]').click();
       
       // Wait for test to complete
       await page.waitForTimeout(2000);
       
       // Check for any test result indicator (success message, status change, etc.)
       // Since response time might not be implemented yet, just verify the test completed
-      await expect(connectionCard.locator('[data-testid="test-connection-list-btn"]')).toBeEnabled();
+      await expect(connectionCard.locator('[data-testid="primary-action test-connection-btn"]')).toBeEnabled();
       
       // Verify the connection still exists after testing
       await expect(connectionCard).toBeVisible();

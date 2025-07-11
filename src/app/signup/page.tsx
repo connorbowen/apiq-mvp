@@ -148,9 +148,8 @@ export default function SignupPage() {
           <button
             type="button"
             onClick={() => handleOAuth2Signup('google')}
-            // TODO: Add ARIA attributes for OAuth2 button accessibility
-            // aria-label="Continue with Google"
-            // aria-describedby="oauth2-signup-description"
+            aria-label="Continue with Google"
+            aria-describedby="oauth2-signup-description"
             className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -161,6 +160,7 @@ export default function SignupPage() {
             </svg>
             Continue with Google
           </button>
+          <div id="oauth2-signup-description" className="sr-only">Sign up using your Google account</div>
         </div>
 
         <div className="relative">
@@ -174,7 +174,7 @@ export default function SignupPage() {
 
         {/* Error Messages - Single accessible container for all errors */}
         {hasErrors && (
-          <div className="rounded-md bg-red-50 p-4" role="alert">
+          <div className="rounded-md bg-red-50 p-4" role="alert" aria-live="polite">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

@@ -1,6 +1,7 @@
 import { prisma } from '../../../lib/database/client';
 import { logError, logInfo } from '../../utils/logger';
 import { ParsedOpenApiSpec } from './parser';
+import { SchemaDerefCache } from '../openapi/derefSchema';
 
 export interface ExtractedEndpoint {
   apiConnectionId: string;
@@ -27,7 +28,7 @@ export const extractAndStoreEndpoints = async (
   transaction?: any
 ): Promise<string[]> => {
   const extractedEndpoints: ExtractedEndpoint[] = [];
-  
+  const derefCache = new SchemaDerefCache();
   try {
     // Guard: paths must exist and be an object
     if (!parsedSpec.spec.paths || typeof parsedSpec.spec.paths !== 'object') {
@@ -44,10 +45,22 @@ export const extractAndStoreEndpoints = async (
       for (const [method, operation] of Object.entries(pathItem as any)) {
         if (['get', 'post', 'put', 'delete', 'patch'].includes(method)) {
           const op = operation as any;
-          
-          // Extract success schema (200/201 responses)
-          const successSchema = extractSuccessSchema(op.responses);
-          
+
+          // Extract first success response schema (OAS2 or OAS3)
+          const rawRespSchema = firstSuccessResponse(op);
+          let responseSchema = undefined;
+          if (rawRespSchema) {
+            try {
+              responseSchema = await derefCache.derefOnce({
+                ...parsedSpec.spec,
+                schema: rawRespSchema
+              });
+              responseSchema = responseSchema.schema;
+            } catch (e) {
+              responseSchema = rawRespSchema;
+            }
+          }
+
           extractedEndpoints.push({
             apiConnectionId,
             path,
@@ -57,7 +70,7 @@ export const extractAndStoreEndpoints = async (
             parameters: op.parameters || [],
             requestBody: op.requestBody,
             responses: op.responses,
-            successSchema
+            successSchema: responseSchema // for legacy, but also store as responseSchema below
           });
         }
       }
@@ -81,7 +94,8 @@ export const extractAndStoreEndpoints = async (
         description: endpoint.description,
         parameters: endpoint.parameters,
         requestBody: endpoint.requestBody,
-        responses: endpoint.responses
+        responses: endpoint.responses,
+        responseSchema: endpoint.successSchema // store as responseSchema
       }))
     });
 
@@ -106,29 +120,18 @@ export const extractAndStoreEndpoints = async (
   }
 };
 
-/**
- * Extract the success schema from OpenAPI responses (200/201)
- * @param responses The responses object from the OpenAPI spec
- * @returns The success schema or undefined
- */
-const extractSuccessSchema = (responses: any): any => {
-  if (!responses) return undefined;
-
-  // Look for 200 or 201 responses
-  const successResponse = responses['200'] || responses['201'] || responses['2XX'];
-  
-  if (!successResponse) return undefined;
-
-  // Extract the schema from the response
-  if (successResponse.content) {
-    const contentType = Object.keys(successResponse.content)[0];
-    if (contentType) {
-      return successResponse.content[contentType].schema;
-    }
+// Helper to extract first success response schema (OAS2 or OAS3)
+function firstSuccessResponse(op: any) {
+  const resKey = Object.keys(op.responses || {}).find(k => /^2\d\d$/.test(k));
+  if (!resKey) return undefined;
+  const resObj = op.responses[resKey];
+  if (resObj.content) {
+    const firstCT = Object.keys(resObj.content)[0];
+    return resObj.content[firstCT]?.schema;
   }
-
+  if (resObj.schema) return resObj.schema;
   return undefined;
-};
+}
 
 /**
  * Get all endpoints for an API connection with optional filtering
@@ -169,6 +172,26 @@ export const getEndpointsForConnection = async (
       };
     }
 
+    // Get the connection to access the raw OpenAPI spec
+    const connection = await prisma.apiConnection.findUnique({
+      where: { id: apiConnectionId },
+      select: { rawSpec: true }
+    });
+
+    if (!connection?.rawSpec) {
+      logError('No raw OpenAPI spec found for connection', new Error('No raw spec'), { apiConnectionId });
+      throw new Error('No OpenAPI specification found for this connection');
+    }
+
+    // Parse the raw spec back to an object for dereferencing context
+    let fullSpec: any;
+    try {
+      fullSpec = JSON.parse(connection.rawSpec);
+    } catch (error: any) {
+      logError('Failed to parse raw OpenAPI spec', error, { apiConnectionId });
+      throw new Error('Invalid OpenAPI specification format');
+    }
+
     const endpoints = await prisma.endpoint.findMany({
       where: whereClause,
       orderBy: [
@@ -177,7 +200,99 @@ export const getEndpointsForConnection = async (
       ]
     });
 
-    return endpoints;
+    // Create a cache for dereferencing schemas within this request
+    const derefCache = new SchemaDerefCache();
+
+    // Transform the endpoints to include schema data in the format expected by the frontend
+    const transformedEndpoints = await Promise.all(endpoints.map(async endpoint => {
+      const transformed: any = {
+        id: endpoint.id,
+        path: endpoint.path,
+        method: endpoint.method,
+        summary: endpoint.summary,
+        description: endpoint.description,
+        parameters: endpoint.parameters || [],
+        responses: endpoint.responses || {}
+      };
+
+      // Extract and dereference request schema from requestBody (OpenAPI 3.0) or parameters (OpenAPI 2.0)
+      let rawReqSchema: any = null;
+      if (endpoint.requestBody) {
+        const requestBody = endpoint.requestBody as any;
+        if (requestBody.content) {
+          const contentType = Object.keys(requestBody.content)[0];
+          rawReqSchema = contentType ? requestBody.content[contentType]?.schema : null;
+        }
+      } else if (endpoint.parameters) {
+        // OpenAPI 2.0: Look for body parameter
+        const parameters = endpoint.parameters as any[];
+        const bodyParam = parameters.find(param => param.in === 'body');
+        rawReqSchema = bodyParam?.schema || null;
+      }
+
+      if (rawReqSchema) {
+        try {
+          // Create a complete spec object that includes the schema and the full spec context
+          const specWithSchema = {
+            ...fullSpec,
+            schema: rawReqSchema
+          };
+          const dereferenced = await derefCache.derefOnce(specWithSchema);
+          transformed.requestSchema = dereferenced.schema;
+        } catch (error: any) {
+          logError('Failed to dereference request schema', error, { 
+            endpointId: endpoint.id, 
+            path: endpoint.path, 
+            method: endpoint.method 
+          });
+          // Fall back to raw schema if dereferencing fails
+          transformed.requestSchema = rawReqSchema;
+        }
+      }
+
+      // Extract and dereference response schema from responses
+      let rawResSchema: any = null;
+      if (endpoint.responses) {
+        const responses = endpoint.responses as any;
+        // Look for 200 or 201 responses
+        const successResponse = responses['200'] || responses['201'] || responses['2XX'];
+        if (successResponse) {
+          // OpenAPI 3.0: schema is nested under content
+          if (successResponse.content) {
+            const contentType = Object.keys(successResponse.content)[0];
+            rawResSchema = contentType ? successResponse.content[contentType]?.schema : null;
+          }
+          // OpenAPI 2.0: schema is directly on the response
+          else if (successResponse.schema) {
+            rawResSchema = successResponse.schema;
+          }
+        }
+      }
+
+      if (rawResSchema) {
+        try {
+          // Create a complete spec object that includes the schema and the full spec context
+          const specWithSchema = {
+            ...fullSpec,
+            schema: rawResSchema
+          };
+          const dereferenced = await derefCache.derefOnce(specWithSchema);
+          transformed.responseSchema = dereferenced.schema;
+        } catch (error: any) {
+          logError('Failed to dereference response schema', error, { 
+            endpointId: endpoint.id, 
+            path: endpoint.path, 
+            method: endpoint.method 
+          });
+          // Fall back to raw schema if dereferencing fails
+          transformed.responseSchema = rawResSchema;
+        }
+      }
+
+      return transformed;
+    }));
+
+    return transformedEndpoints;
   } catch (error: any) {
     logError('Failed to get endpoints for connection', error, { apiConnectionId, filters });
     throw new Error(`Failed to get endpoints: ${error.message}`);

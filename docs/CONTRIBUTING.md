@@ -620,7 +620,43 @@ npm test -- --testPathPattern=user.test.ts
 
 # Run E2E tests
 npm run test:e2e
+
+# Evaluate E2E tests against comprehensive criteria
+node scripts/evaluate-e2e-tests.js
+
+# Evaluate specific E2E test file
+node scripts/evaluate-e2e-tests.js tests/e2e/auth/authentication-session.test.ts
 ```
+
+### E2E Test Quality Standards
+
+**E2E Test Evaluation**
+- All E2E tests are evaluated against 14 comprehensive criteria
+- Use the evaluation script to identify areas for improvement
+- Address high-priority TODOs before submitting PRs
+- Ensure tests follow modern web testing best practices
+
+**Evaluation Criteria Include**:
+- Test Structure & Organization
+- Element Selection & Locators
+- Waiting Strategies
+- Error Handling & Assertions
+- Accessibility Testing
+- Mobile Responsiveness
+- Performance Testing
+- Security Testing
+- State Management
+- Modal & Dialog Behavior
+- Test Reliability & Flakiness Prevention
+- Cross-Browser/Device Testing
+- SEO & Meta Testing
+- Analytics & Monitoring
+
+**Quality Gates**:
+- All E2E tests must pass evaluation with minimum score
+- High-priority TODOs must be addressed
+- Tests must follow accessibility and UX compliance standards
+- Performance budgets must be met
 
 ### Integration Test Mocking
 - **Integration Test Mocking**: All integration tests must mock external API calls (e.g., HTTP requests to third-party services, OpenAPI spec fetches). Do not rely on network access for tests. Use Jest mocks or similar.

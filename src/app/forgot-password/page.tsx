@@ -111,12 +111,12 @@ export default function ForgotPasswordPage() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit} role="form" data-testid="forgot-password-form" noValidate>
           {error && (
-            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert" data-testid="alert-error">
+            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert" aria-live="polite" data-testid="alert-error">
               {error}
             </div>
           )}
           {validationError && (
-            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert" data-testid="alert-validation-error">
+            <div className="rounded-md bg-red-50 p-4 text-red-800" role="alert" aria-live="polite" data-testid="alert-validation-error">
               {validationError}
             </div>
           )}

@@ -131,7 +131,16 @@ NODE_OPTIONS="--max-old-space-size=4096" npm test
 npm test -- tests/unit/lib/queue/queueService.test.ts
 ```
 
-**Note**: The project uses a comprehensive Jest setup with polyfills for Node.js APIs (TextEncoder, TextDecoder, crypto, fetch) and separate configurations for unit and integration tests. See `docs/TESTING.md` for detailed configuration information.
+### 7. Evaluate E2E Tests
+```bash
+# Evaluate all E2E tests against 14 comprehensive criteria
+node scripts/evaluate-e2e-tests.js
+
+# Evaluate specific test file
+node scripts/evaluate-e2e-tests.js tests/e2e/auth/authentication-session.test.ts
+```
+
+**Note**: The project uses a comprehensive Jest setup with polyfills for Node.js APIs (TextEncoder, TextDecoder, crypto, fetch) and separate configurations for unit and integration tests. The E2E test evaluation script provides detailed analysis against modern web testing standards. See `docs/TESTING.md` and `docs/E2E_TEST_EVALUATION_GUIDE.md` for detailed configuration information.
 
 ## 🔄 Development Workflow
 

@@ -1,6 +1,6 @@
 import { test, expect, request } from '@playwright/test';
 import { UXComplianceHelper } from '../../helpers/uxCompliance';
-import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
+import { createTestUser, cleanupTestUser, generateTestId, authenticateE2EPage } from '../../helpers/testUtils';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -190,19 +190,19 @@ test.describe('UI Compliance E2E Tests', () => {
     test('should have consistent primary action patterns across all pages', async ({ page }) => {
       // Test login page primary actions
       await page.goto('/login');
-      await expect(page.getByTestId('primary-action signin-submit')).toBeVisible();
-      await expect(page.getByTestId('primary-action signin-submit')).toHaveText('Sign in');
+      await expect(page.getByTestId('primary-action signin-btn')).toBeVisible();
+      await expect(page.getByTestId('primary-action signin-btn')).toHaveText('Sign in');
       
       // Test signup page primary actions
       await page.goto('/signup');
-      await expect(page.getByTestId('primary-action signup-submit')).toBeVisible();
-      await expect(page.getByTestId('primary-action signup-submit')).toHaveText('Create account');
+      await expect(page.getByTestId('primary-action signup-btn')).toBeVisible();
+      await expect(page.getByTestId('primary-action signup-btn')).toHaveText('Create account');
       
       // Login to test dashboard primary actions
       await page.goto('/login');
       await page.fill('input[name="email"]', testUser.email);
       await page.fill('input[name="password"]', 'e2eTestPass123');
-      await page.getByTestId('primary-action signin-submit').click();
+      await page.getByTestId('primary-action signin-btn').click();
       
       // Wait for dashboard to load
       await page.waitForURL('/dashboard');
@@ -257,7 +257,7 @@ test.describe('UI Compliance E2E Tests', () => {
       await page.goto('/login');
       await page.fill('input[name="email"]', testUser.email);
       await page.fill('input[name="password"]', 'e2eTestPass123');
-      await page.getByTestId('primary-action signin-submit').click();
+      await page.getByTestId('primary-action signin-btn').click();
       await page.waitForURL('/dashboard');
       
       // Test workflows tab button styling
@@ -285,7 +285,7 @@ test.describe('UI Compliance E2E Tests', () => {
     test('should have accessible primary action buttons', async ({ page }) => {
       // Test login page accessibility
       await page.goto('/login');
-      const signinButton = page.getByTestId('primary-action signin-submit');
+      const signinButton = page.getByTestId('primary-action signin-btn');
       await expect(signinButton).toBeVisible();
       await expect(signinButton).toBeEnabled();
       
@@ -320,20 +320,8 @@ test.describe('UI Compliance E2E Tests', () => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
       
-      // Set authentication token directly instead of using UI login
-      await page.goto(`${BASE_URL}/dashboard`);
-      
-      // Set the JWT token in localStorage to authenticate the user
-      await page.evaluate((data) => {
-        localStorage.setItem('accessToken', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-      }, { token: jwt, user: testUser });
-      
-      // Reload the page to apply authentication
-      await page.reload();
-      
-      // Wait for dashboard to load
-      await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
+      // Use secure cookie-based authentication
+      await authenticateE2EPage(page, testUser);
     });
 
     test('should display mobile menu and navigation', async ({ page }) => {

@@ -147,6 +147,7 @@ model Endpoint {
   parameters      Json // OpenAPI parameters
   requestBody     Json? // OpenAPI request body
   responses       Json // OpenAPI responses
+  responseSchema  Json? // Dereferenced response schema (added for E2E and UI)
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
+import { createTestUser, cleanupTestUser, generateTestId, authenticateE2EPage } from '../../helpers/testUtils';
 import { createUXComplianceHelper } from '../../helpers/uxCompliance';
 
 // TODO: Add comprehensive UX compliance improvements (P0)
@@ -44,25 +44,8 @@ test.describe('OAuth2 Flow E2E Tests', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    // TODO: Add comprehensive UX compliance validation for page load (P0)
-    // const uxHelper = createUXComplianceHelper(page);
-    // await uxHelper.validateActivationFirstUX();
-    // await uxHelper.validateHeadingHierarchy(['Connections', 'Dashboard']);
-
-    // Set authentication token directly instead of using UI login
-    await page.goto(`${BASE_URL}/dashboard`);
-    
-    // Set the JWT token in localStorage to authenticate the user
-    await page.evaluate((data) => {
-      localStorage.setItem('accessToken', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-    }, { token: jwt, user: testUser });
-    
-    // Reload the page to apply authentication
-    await page.reload();
-    
-    // Wait for dashboard to load
-    await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
+    // Use secure cookie-based authentication
+    await authenticateE2EPage(page, testUser);
     
     // Navigate to connections tab
     await page.click('[data-testid="tab-connections"]');

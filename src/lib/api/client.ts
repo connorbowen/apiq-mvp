@@ -71,7 +71,7 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
         ...options.headers,
       },
       credentials: 'include', // Include cookies in requests
@@ -254,6 +254,16 @@ class ApiClient {
     return this.request(`/api/connections/${id}/refresh`, {
       method: 'POST',
     });
+  }
+
+  async refreshConnectionSpec(id: string): Promise<ApiResponse> {
+    return this.request(`/api/connections/${id}/refresh`, {
+      method: 'POST',
+    });
+  }
+
+  async getConnectionEndpoints(id: string): Promise<ApiResponse<{ endpoints: any[] }>> {
+    return this.request(`/api/connections/${id}/endpoints`);
   }
 
   // Authentication Methods

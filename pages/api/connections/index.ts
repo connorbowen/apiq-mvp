@@ -2,6 +2,8 @@
 // Consider extracting connection creation logic into a service layer to improve maintainability.
 // Priority: Low - not urgent for current functionality.
 
+console.log('LOADED /api/connections handler');
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
 import { handleApiError } from '../../../src/middleware/errorHandler';
@@ -12,13 +14,18 @@ import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
 import { requireAdmin, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { openApiService } from '../../../src/services/openApiService';
 import { ConnectionStatus } from '../../../src/generated/prisma';
+import { validateOpenApiConnection, validateOpenApiSpec } from '../../../src/lib/api/validation';
 
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
+  console.log('🔍 Handler called with method:', req.method);
+  console.log('🚨 CONNECTIONS API HANDLER EXECUTED - METHOD:', req.method, 'URL:', req.url);
   try {
     // Require admin authentication for all operations
     const user = await requireAdmin(req, res);
+    console.log('🔍 User authenticated:', user.id);
 
     if (req.method === 'GET') {
+      console.log('🔍 GET branch entered');
       // Get all API connections for the authenticated user
       const connections = await prisma.apiConnection.findMany({
         where: { userId: user.id },
@@ -29,6 +36,9 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         },
         orderBy: { createdAt: 'desc' }
       });
+
+      // Debug: Log userId and returned connection IDs (apiConnection)
+      console.log('🔵 GET result for', user.id, '=>', connections.map(c => c.id));
 
       // Add computed fields to each connection
       const connectionsWithComputedFields = connections.map(connection => ({
@@ -66,6 +76,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       });
 
     } else if (req.method === 'POST') {
+      console.log('🔍 POST branch entered');
       // Create a new API connection
       const connectionData: CreateApiConnectionRequest = req.body;
 
@@ -75,6 +86,21 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           success: false,
           error: 'Missing required fields: name, baseUrl, authType',
           code: 'VALIDATION_ERROR'
+        });
+      }
+
+      // Validate OpenAPI connection data
+      const connectionValidation = await validateOpenApiConnection(
+        connectionData.name,
+        connectionData.baseUrl,
+        connectionData.documentationUrl
+      );
+
+      if (!connectionValidation.isValid) {
+        return res.status(400).json({
+          success: false,
+          error: connectionValidation.error,
+          code: connectionValidation.code || 'VALIDATION_ERROR'
         });
       }
 
@@ -167,6 +193,13 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
             }
           });
 
+          // Debug: Log after persisting the apiConnection
+          console.log('🟢 POST persisted', {
+            userId: user.id,
+            connId: newConnection.id,
+            name: newConnection.name,
+          });
+
           logInfo('Created API connection', { 
             connectionId: newConnection.id,
             userId: user.id,
@@ -181,6 +214,12 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               
               if (!fetchResult.success) {
                 throw new Error(fetchResult.error || 'Failed to fetch OpenAPI spec');
+              }
+
+              // Validate the OpenAPI specification
+              const specValidation = validateOpenApiSpec(fetchResult.spec);
+              if (!specValidation.isValid) {
+                throw new Error(`Invalid OpenAPI specification: ${specValidation.error}`);
               }
 
               // Parse the OpenAPI specification using the fetched spec data
@@ -213,21 +252,14 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               });
 
             } catch (error: any) {
-              // Update connection with FAILED status within the same transaction
-              await tx.apiConnection.update({
-                where: { id: newConnection.id },
-                data: {
-                  ingestionStatus: 'FAILED'
-                }
-              });
-
-              // Log the error but don't fail the entire request
+              // Log the error
               logError('Failed to process OpenAPI spec', error, { 
                 connectionId: newConnection.id,
                 documentationUrl: connectionData.documentationUrl
               });
 
-              // Throw error to be caught by outer catch block
+              // Rollback the transaction by throwing the error
+              // This will prevent the connection from being created if OpenAPI validation fails
               throw error;
             }
           }
@@ -263,40 +295,36 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         });
 
       } catch (error: any) {
-        // If the connection was not created, return a 500 error
-        if (!newConnection || !newConnection.id) {
-          logError('API connection creation failed before DB insert', error, { name: connectionData.name, userId: user.id });
-          return res.status(500).json({
+        // Log the error
+        logError('API connection creation failed', error, { 
+          name: connectionData.name, 
+          userId: user.id,
+          documentationUrl: connectionData.documentationUrl 
+        });
+
+        // Return appropriate error response based on the error type
+        if (error.message?.includes('Invalid OpenAPI specification')) {
+          return res.status(400).json({
             success: false,
-            error: 'Failed to create API connection',
-            code: 'CONNECTION_CREATION_FAILED',
-            details: error.message || error
+            error: error.message,
+            code: 'INVALID_OPENAPI_SPEC'
           });
         }
-        // Always return a 201 with the connection object, even if OpenAPI fetch/parsing fails
-        const finalConnection = await prisma.apiConnection.findUnique({ where: { id: newConnection.id } });
-        return res.status(201).json({
-          success: true,
-          data: {
-            id: newConnection.id,
-            userId: newConnection.userId,
-            name: newConnection.name,
-            description: newConnection.description,
-            baseUrl: newConnection.baseUrl,
-            authType: newConnection.authType,
-            authConfig: newConnection.authConfig,
-            documentationUrl: newConnection.documentationUrl,
-            status: newConnection.status,
-            ingestionStatus: 'FAILED',
-            rawSpec: finalConnection?.rawSpec,
-            specHash: finalConnection?.specHash,
-            lastTested: finalConnection?.lastTested,
-            createdAt: newConnection.createdAt,
-            updatedAt: newConnection.updatedAt,
-            endpointCount: 0
-          },
-          message: 'API connection created successfully, but OpenAPI spec processing failed',
-          warning: error.message || 'Failed to process OpenAPI spec'
+
+        if (error.message?.includes('Failed to fetch OpenAPI spec')) {
+          return res.status(400).json({
+            success: false,
+            error: error.message,
+            code: 'OPENAPI_FETCH_FAILED'
+          });
+        }
+
+        // For other errors, return a generic error
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to create API connection',
+          code: 'CONNECTION_CREATION_FAILED',
+          details: error.message || 'Unknown error occurred'
         });
       }
 

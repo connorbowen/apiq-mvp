@@ -62,7 +62,9 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       // Always return 200 with an array, even if empty
       return res.status(200).json({
         success: true,
-        data: endpoints
+        data: {
+          endpoints: endpoints
+        }
       });
 
     } else if (req.method === 'DELETE') {

@@ -463,7 +463,7 @@ export default function ConnectionsTab({
                         </>
                       )}
                       <button
-                        data-testid="test-connection-list-btn"
+                        data-testid="primary-action test-connection-btn"
                         onClick={async () => {
                           try {
                             setIsLoading(true);

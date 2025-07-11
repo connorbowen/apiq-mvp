@@ -154,22 +154,40 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Real-time updates with faster polling for immediate feedback
   useEffect(() => {
+    // Initial load
     loadConnections();
     loadWorkflows();
     loadSecrets();
     handleOAuth2Callback();
-  }, [loadConnections, loadWorkflows, loadSecrets, handleOAuth2Callback]);
-
-  // Auto-refresh data every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
+    
+    // Fast polling for real-time updates (every 2 seconds for first 30 seconds)
+    const fastInterval = setInterval(() => {
       loadConnections();
       loadWorkflows();
       loadSecrets();
+    }, 2000);
+    
+    // Slower polling after initial period (every 30 seconds)
+    let slowInterval: NodeJS.Timeout;
+    const slowTimeout = setTimeout(() => {
+      clearInterval(fastInterval);
+      slowInterval = setInterval(() => {
+        loadConnections();
+        loadWorkflows();
+        loadSecrets();
+      }, 30000);
     }, 30000);
-    return () => clearInterval(interval);
-  }, [loadConnections, loadWorkflows, loadSecrets]);
+    
+    return () => {
+      clearInterval(fastInterval);
+      clearTimeout(slowTimeout);
+      if (slowInterval) {
+        clearInterval(slowInterval);
+      }
+    };
+  }, [loadConnections, loadWorkflows, loadSecrets, handleOAuth2Callback]);
 
   const handleLogout = async () => {
     try {

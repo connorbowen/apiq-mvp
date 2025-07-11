@@ -118,7 +118,73 @@ describe('API Connections', () => {
 });
 ```
 
-### 3. Slow Test Identification
+### 3. E2E Test Evaluation
+
+**Script**: `scripts/evaluate-e2e-tests.js`
+
+**Purpose**: Comprehensive evaluation of E2E tests against 14 modern web testing criteria.
+
+**Usage**:
+```bash
+# Evaluate all E2E tests
+node scripts/evaluate-e2e-tests.js
+
+# Evaluate specific test file
+node scripts/evaluate-e2e-tests.js tests/e2e/auth/authentication-session.test.ts
+```
+
+**Features**:
+- Evaluates tests against 14 comprehensive criteria
+- Generates priority-based TODO recommendations
+- Provides detailed scoring and analysis
+- Identifies missing patterns and best practices
+- Supports modern web standards and accessibility
+
+**Evaluation Criteria**:
+1. **Test Structure & Organization** - Proper describe blocks, test isolation
+2. **Element Selection & Locators** - Stable selectors, data-testid usage
+3. **Waiting Strategies** - Robust waiting patterns, no hardcoded delays
+4. **Error Handling & Assertions** - Comprehensive error checking
+5. **Accessibility Testing** - ARIA compliance, keyboard navigation
+6. **Mobile Responsiveness** - Cross-device testing, viewport handling
+7. **Performance Testing** - Load time validation, performance budgets
+8. **Security Testing** - Authentication, authorization, data protection
+9. **State Management** - Proper state handling, cleanup
+10. **Modal & Dialog Behavior** - Loading states, success transitions
+11. **Test Reliability & Flakiness Prevention** - Isolation, retry mechanisms
+12. **Cross-Browser/Device Testing** - Multi-browser support
+13. **SEO & Meta Testing** - Meta tags, structured data
+14. **Analytics & Monitoring** - Event tracking, monitoring
+
+**Output Example**:
+```
+🔍 E2E Test Evaluation Results
+==============================
+
+📊 Summary Statistics
+====================
+Total Tests Evaluated: 15
+Average Score: 7.2/10
+Priority TODOs Generated: 23
+
+🎯 Priority TODO Categories:
+  • High Priority (8): Security, Performance, Accessibility
+  • Medium Priority (10): State Management, Modal Behavior
+  • Low Priority (5): SEO, Analytics, Cross-Browser
+
+📋 Detailed Analysis:
+  ✅ Strong Areas: Test Structure, Element Selection
+  ⚠️  Needs Improvement: Waiting Strategies, Modal Behavior
+  ❌ Missing: Performance Testing, Cross-Browser Testing
+```
+
+**TODO Generation**:
+- Priority-based recommendations
+- Specific code examples
+- Best practice references
+- Implementation guidance
+
+### 4. Slow Test Identification
 
 **Script**: `scripts/identify-slow-tests.sh`
 
@@ -539,7 +605,7 @@ npm run validate-env
 ---
 
 **Development Tools Summary**
-- **Test Tools**: 5 tools for test analysis and optimization
+- **Test Tools**: 6 tools for test analysis and optimization
 - **Database Tools**: 2 tools for database management
 - **Workflow Tools**: 2 tools for development automation
 - **Debugging Tools**: 2 tools for troubleshooting

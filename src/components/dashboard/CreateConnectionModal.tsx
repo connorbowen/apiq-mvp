@@ -170,6 +170,7 @@ export default function CreateConnectionModal({
   const handleSubmit = async (e: React.FormEvent) => {
     console.log('Form submission triggered');
     e.preventDefault();
+    setIsSubmitting(true); // Move to the start
     
     // Clear previous errors
     setErrorMessage('');
@@ -181,6 +182,7 @@ export default function CreateConnectionModal({
     if (now - lastSubmission < 1000) { // 1 second rate limit
       setErrorMessage('Rate limit exceeded. Please wait before trying again.');
       onError('Rate limit exceeded. Please wait before trying again.');
+      setIsSubmitting(false); // Reset immediately
       return;
     }
     (window as any).lastConnectionSubmission = now;
@@ -197,6 +199,7 @@ export default function CreateConnectionModal({
     if (submissionCount >= 5) { // Allow max 5 submissions
       setErrorMessage('Rate limit exceeded. Too many requests. Please wait before trying again.');
       onError('Rate limit exceeded. Too many requests. Please wait before trying again.');
+      setIsSubmitting(false); // Reset immediately
       return;
     }
     (window as any).connectionSubmissionCount = submissionCount + 1;
@@ -266,13 +269,13 @@ export default function CreateConnectionModal({
     if (Object.keys(errors).length > 0) {
       console.log('Validation errors found:', errors);
       setFieldErrors(errors);
+      setIsSubmitting(false); // Reset immediately
       return;
     }
 
     try {
       console.log('Setting isSubmitting true');
-      setIsSubmitting(true);
-      
+      // setIsSubmitting(true); // Already set at the start
       const connectionData: CreateConnectionRequest = {
         name: formData.name,
         description: formData.description,
@@ -307,15 +310,22 @@ export default function CreateConnectionModal({
           break;
       }
 
+      // Enforce minimum loading state duration
+      const minLoadingMs = 800;
+      const start = Date.now();
       const response = await apiClient.createConnection(connectionData);
+      const elapsed = Date.now() - start;
+      if (elapsed < minLoadingMs) {
+        await new Promise(res => setTimeout(res, minLoadingMs - elapsed));
+      }
       console.log('API response:', response);
       
       if (response.success) {
         setSubmitSuccess(true);
-        // Show success message briefly before closing
+        // Show success message and keep modal open for 1.5s before closing
         setTimeout(() => {
           onSuccess();
-          onClose(); // Ensure modal closes
+          onClose();
         }, 1500);
       } else {
         setErrorMessage(response.error || 'Failed to create connection');
@@ -401,7 +411,7 @@ export default function CreateConnectionModal({
 
           {/* Error Messages */}
           {errorMessage && (
-            <div data-testid="error-message" className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <div data-testid="error-message" className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md" role="alert" aria-live="polite">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -417,7 +427,7 @@ export default function CreateConnectionModal({
 
           {/* Success Messages */}
           {submitSuccess && (
-            <div data-testid="success-message" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+            <div data-testid="success-message" className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md" role="alert" aria-live="polite">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -803,18 +813,18 @@ export default function CreateConnectionModal({
                     OpenAPI Specification Import
                   </label>
                   <div className="flex space-x-4">
-                    <button
-                      type="button"
-                      data-testid="import-openapi-btn"
-                      onClick={() => setImportMode('url')}
-                      className={`px-4 py-3 text-sm font-medium rounded-md min-h-[44px] ${
-                        importMode === 'url'
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      Import from URL
-                    </button>
+                                      <button
+                    type="button"
+                    data-testid="primary-action import-openapi-btn"
+                    onClick={() => setImportMode('url')}
+                    className={`px-4 py-3 text-sm font-medium rounded-md min-h-[44px] ${
+                      importMode === 'url'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Import from URL
+                  </button>
                     <button
                       type="button"
                       onClick={() => setImportMode('manual')}
@@ -870,7 +880,7 @@ export default function CreateConnectionModal({
                 <div className="flex justify-center">
                   <button
                     type="button"
-                    data-testid="test-connection-modal-btn"
+                    data-testid="primary-action test-connection-btn"
                     onClick={handleTestConnection}
                     disabled={isSubmitting}
                     className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px]"
@@ -928,7 +938,7 @@ export default function CreateConnectionModal({
               <button
                 type="submit"
                 data-testid="primary-action submit-connection-btn"
-                disabled={isSubmitting}
+                disabled={isSubmitting || submitSuccess}
                 className="px-4 py-3 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] flex items-center justify-center"
               >
                 {isSubmitting && (
@@ -937,8 +947,13 @@ export default function CreateConnectionModal({
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                   </svg>
                 )}
-                {isSubmitting ? 'Creating...' : 'Create Connection'}
+                {isSubmitting ? 'Creating...' : submitSuccess ? 'Success!' : 'Create Connection'}
               </button>
+              {submitSuccess && (
+                <div data-testid="modal-success-message" role="status" aria-live="polite" className="mt-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded-md text-center">
+                  Connection created successfully
+                </div>
+              )}
             </div>
           </form>
         </div>

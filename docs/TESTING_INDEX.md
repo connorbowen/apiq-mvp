@@ -40,9 +40,40 @@ compliance, real data for core operations, flexible external dependencies)
 
 **When to use**: When running E2E tests or debugging test issues
 
+### 4. **E2E Test Evaluation Guide** - `docs/E2E_TEST_EVALUATION_GUIDE.md`
+**Purpose**: Comprehensive E2E test evaluation and TODO implementation
+**Content**:
+- 14-criteria evaluation system
+- Priority-based TODO generation (P0/P1/P2)
+- Automated TODO implementation
+- Comprehensive reporting and analysis
+- Code examples for each testing area
+
+**When to use**: When evaluating test quality and implementing improvements
+
+### 5. **Enhanced E2E Test Criteria** - `docs/E2E_TEST_ENHANCED_CRITERIA.md`
+**Purpose**: Detailed documentation of enhanced evaluation criteria
+**Content**:
+- Complete breakdown of all 14 evaluation criteria
+- Implementation examples for each testing area
+- Best practices for comprehensive testing
+- Modern web application testing standards
+
+**When to use**: When understanding the evaluation criteria or implementing new tests
+
+### 6. **E2E Test Enhancement Summary** - `docs/E2E_TEST_ENHANCEMENT_SUMMARY.md`
+**Purpose**: Overview of enhanced E2E test evaluation system
+**Content**:
+- Summary of enhancements made
+- Migration notes for existing tests
+- Benefits and improvements
+- Quick reference for new features
+
+**When to use**: When understanding what was enhanced and how to use the new system
+
 ## Status and Audit Documentation
 
-### 4. **Test Summary** - `docs/TEST_SUMMARY.md`
+### 7. **Test Summary** - `docs/TEST_SUMMARY.md`
 **Purpose**: Current test implementation status and comprehensive results
 **Content**:
 - New tests added (unit, integration, E2E)
@@ -56,7 +87,7 @@ compliance, real data for core operations, flexible external dependencies)
 
 ## Implementation Documentation
 
-### 5. **E2E SMTP Setup** - `docs/E2E_SMTP_SETUP.md`
+### 8. **E2E SMTP Setup** - `docs/E2E_SMTP_SETUP.md`
 **Purpose**: Email testing setup for E2E tests
 **Content**:
 - SMTP server configuration
@@ -68,7 +99,17 @@ compliance, real data for core operations, flexible external dependencies)
 
 ## Test Implementation Files
 
-### 9. **UX Compliance Helper** - `tests/helpers/uxCompliance.ts`
+### 9. **E2E Test Evaluation Script** - `scripts/evaluate-e2e-tests.js`
+**Purpose**: Enhanced E2E test evaluation with 14 criteria
+**Content**:
+- Comprehensive test evaluation against modern web standards
+- Priority-based TODO generation and categorization
+- Detailed reporting with compliance scores
+- Actionable recommendations with code examples
+
+**When to use**: When evaluating test quality and identifying improvement areas
+
+### 10. **UX Compliance Helper** - `tests/helpers/uxCompliance.ts`
 **Purpose**: Comprehensive UX validation helper
 **Content**:
 - UXComplianceHelper class with 20+ validation methods
@@ -78,7 +119,7 @@ compliance, real data for core operations, flexible external dependencies)
 
 **When to use**: In E2E tests to validate UX compliance
 
-### 10. **Test Utilities** - `tests/helpers/testUtils.ts`
+### 11. **Test Utilities** - `tests/helpers/testUtils.ts`
 **Purpose**: Common test utilities and helpers
 **Content**:
 - Test user creation and cleanup
@@ -196,6 +237,6 @@ All documents now reference each other appropriately:
 ---
 
 **Last Updated**: January 2025
-**Total Documents**: 5 core testing documents
+**Total Documents**: 9 core testing documents
 **Consolidation Status**: Complete - Redundancy eliminated
 **Navigation**: Clear separation of concerns with cross-references 

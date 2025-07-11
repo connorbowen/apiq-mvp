@@ -188,4 +188,24 @@ import type { QueueJob, QueueConfig } from '../../../../src/lib/queue/queueServi
 - [ ] Logging wrapper
 - [ ] Database wrapper
 - [ ] NextAuth wrapper
-- [ ] Crypto wrapper 
+- [ ] Crypto wrapper
+
+## Future Enhancements
+
+### 📋 TODO: AI-Powered API Extraction Integration
+**Feature**: AI-powered endpoint discovery and schema inference for APIs without OpenAPI specs
+**Files that will need updates**:
+- `src/lib/openaiWrapper.ts` - Extend for API analysis capabilities
+- `src/lib/api/parser.ts` - Add AI-powered schema inference
+- `src/services/openApiService.ts` - Add endpoint discovery functionality
+- `pages/api/connections/index.ts` - Add AI-powered connection creation
+- `src/components/dashboard/CreateConnectionModal.tsx` - Add AI discovery UI
+
+**Implementation Notes**:
+- Extend existing OpenAI wrapper for API analysis and schema inference
+- Create new AI service for endpoint discovery and crawling
+- Add interactive UI components for API exploration
+- Implement respectful rate limiting and error handling
+- Add specification generation and export capabilities
+
+**Priority**: Strategic enhancement (future roadmap) 

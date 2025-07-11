@@ -150,6 +150,7 @@ export default function LoginPage() {
             </svg>
             Continue with Google
           </button>
+          <div id="oauth2-description" className="sr-only">Sign in using your Google account</div>
         </div>
 
         <div className="relative">
