@@ -92,7 +92,13 @@
     "test:e2e:workflow-engine:pause-resume": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/pause-resume.test.ts",
     "test:e2e:workflow-engine:natural-language-workflow": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/natural-language-workflow.test.ts",
     "test:e2e:performance:load-testing": "./scripts/kill-port-3000.sh && playwright test tests/e2e/performance/load-testing.test.ts",
-    "test:e2e:onboarding:user-journey": "./scripts/kill-port-3000.sh && playwright test tests/e2e/onboarding/user-journey.test.ts"
+    "test:e2e:onboarding:user-journey": "./scripts/kill-port-3000.sh && playwright test tests/e2e/onboarding/user-journey.test.ts",
+    "test:tdd": "DISABLE_RATE_LIMITING=true ./scripts/kill-port-3000.sh && playwright test tests/e2e/ui/ui-compliance.test.ts tests/e2e/auth/authentication-session.test.ts tests/e2e/security/secrets-vault.test.ts --timeout=10000",
+    "test:tdd:watch": "npm run test:tdd -- --watch",
+    "test:tdd:fast": "npm run test:tdd -- --workers=2 --reporter=list",
+    "test:feature": "DISABLE_RATE_LIMITING=true ./scripts/kill-port-3000.sh && playwright test --grep",
+    "test:pre-commit": "npm run test:tdd:fast && npm run lint",
+    "test:coverage-guard": "npm run test:tdd && echo '✅ TDD guardrails passed'"
   },
   "keywords": [
     "api",
