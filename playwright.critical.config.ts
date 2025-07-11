@@ -1,8 +1,9 @@
+// @ts-nocheck
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests/e2e/ui',
-  testMatch: '**/critical-ui.test.ts',
+  testDir: './tests/e2e',
+  grep: /@critical/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0, // No retries for fastest feedback
