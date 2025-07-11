@@ -504,6 +504,45 @@ class E2ETestEvaluator {
 // - Use appropriate timeouts for different operations`);
     }
 
+    // Check for performance measurement anti-patterns
+    const performanceAntiPatterns = [
+      /Date\.now\(\)\s*-\s*startTime.*click/,  // Measuring time including user interactions
+      /Date\.now\(\)\s*-\s*startTime.*goto/,   // Measuring time without waiting for load completion
+      /loadTime.*Date\.now\(\)\s*-\s*startTime.*click/,  // Measuring load time after clicks
+      /loadTime.*Date\.now\(\)\s*-\s*startTime.*tab/     // Measuring load time after tab clicks
+    ];
+
+    let hasPerformanceAntiPatterns = false;
+    performanceAntiPatterns.forEach(pattern => {
+      if (pattern.test(content)) {
+        hasPerformanceAntiPatterns = true;
+      }
+    });
+
+    if (!hasPerformanceAntiPatterns) {
+      result.compliant.push('✅ No performance measurement anti-patterns found');
+    } else {
+      result.nonCompliant.push('❌ Uses performance measurement anti-patterns');
+      
+      // Add TODO for fixing performance measurement
+      this.addTodo(fileName, 'P0', 'Fix performance measurement anti-patterns', 
+        `// TODO: Fix performance measurement anti-patterns in ${fileName}
+// Anti-pattern: Measuring time including user interactions
+// Current: const loadTime = Date.now() - startTime; // after page.click()
+// 
+// Fix: Measure only the actual page load time
+// const startTime = Date.now();
+// await page.goto(url);
+// await page.waitForLoadState('networkidle');
+// await page.waitForSelector('[data-testid="main-content"]', { state: 'visible' });
+// const loadTime = Date.now() - startTime;
+// 
+// Then separately measure user interaction time if needed:
+// const interactionStartTime = Date.now();
+// await page.click('[data-testid="tab-connections"]');
+// const interactionTime = Date.now() - interactionStartTime;`);
+    }
+
     // Check for proper timeout configurations
     const hasTimeoutConfig = /timeout.*\d{4,}|setTimeout.*\d{4,}/.test(content);
     if (hasTimeoutConfig) {
@@ -621,7 +660,7 @@ class E2ETestEvaluator {
     }
 
     // Calculate score based on all waiting strategy criteria
-    const maxScore = 6; // Total number of criteria
+    const maxScore = 7; // Updated to include performance measurement check
     let totalScore = 0;
     
     if (robustWaitingScore >= 3) totalScore += 1;
@@ -630,6 +669,7 @@ class E2ETestEvaluator {
     if (conditionalWaitingScore >= 2) totalScore += 1;
     if (networkWaitingScore >= 1) totalScore += 1;
     if (elementStateScore >= 2) totalScore += 1;
+    if (!hasPerformanceAntiPatterns) totalScore += 1;
 
     result.score = totalScore / maxScore;
 
@@ -1070,10 +1110,26 @@ class E2ETestEvaluator {
       required: []
     };
 
-    // Page load time testing
+    // Page load time testing with proper measurement patterns
     const hasPageLoadTesting = /load.*time|performance|core.*web.*vitals|lighthouse/.test(content);
-    if (hasPageLoadTesting) {
-      result.compliant.push('✅ Tests page load times');
+    const hasProperLoadMeasurement = /waitForLoadState|waitForNetworkIdle|performance\.measure|performance\.mark/.test(content);
+    
+    if (hasPageLoadTesting && hasProperLoadMeasurement) {
+      result.compliant.push('✅ Tests page load times with proper measurement patterns');
+    } else if (hasPageLoadTesting) {
+      result.compliant.push('⚠️ Tests page load times but could use better measurement patterns');
+      this.addTodo(fileName, 'P1', 'Improve page load time measurement patterns', 
+        `// TODO: Improve page load time measurement patterns in ${fileName}
+// - Use waitForLoadState('networkidle') before measuring load time
+// - Use performance.mark() and performance.measure() for precise timing
+// - Wait for specific elements to be visible before measuring
+// - Account for network requests and resource loading
+// 
+// Example improved pattern:
+// await page.goto(url);
+// await page.waitForLoadState('networkidle');
+// await page.waitForSelector('[data-testid="main-content"]', { state: 'visible' });
+// const loadTime = Date.now() - startTime;`);
     } else {
       result.nonCompliant.push('❌ Missing page load time testing');
       this.addTodo(fileName, 'P1', 'Add page load time testing', 
@@ -1081,7 +1137,26 @@ class E2ETestEvaluator {
 // - Test Core Web Vitals (LCP, FID, CLS)
 // - Test page load performance metrics
 // - Test resource loading optimization
-// - Test performance budgets and thresholds`);
+// - Test performance budgets and thresholds
+// - Use proper measurement patterns with waitForLoadState()`);
+    }
+
+    // Performance budget testing
+    const hasPerformanceBudget = /toBeLessThan.*\d{4,}|performance.*budget|threshold.*\d{4,}/.test(content);
+    if (hasPerformanceBudget) {
+      result.compliant.push('✅ Tests performance budgets and thresholds');
+    } else {
+      result.nonCompliant.push('❌ Missing performance budget testing');
+      this.addTodo(fileName, 'P1', 'Add performance budget testing', 
+        `// TODO: Add performance budget testing to ${fileName}
+// - Set realistic performance thresholds (e.g., 3000ms for page load)
+// - Test against performance budgets
+// - Account for network conditions and device performance
+// - Use appropriate timeouts for different operations
+// 
+// Example:
+// expect(loadTime).toBeLessThan(3000); // 3 second budget
+// expect(apiResponseTime).toBeLessThan(1000); // 1 second budget`);
     }
 
     // Memory leak testing
@@ -1126,14 +1201,31 @@ class E2ETestEvaluator {
 // - Test API error handling under stress`);
     }
 
+    // Network-aware performance testing
+    const hasNetworkAwareTesting = /waitForResponse|waitForRequest|waitForNetworkIdle|network.*performance/.test(content);
+    if (hasNetworkAwareTesting) {
+      result.compliant.push('✅ Tests network-aware performance');
+    } else {
+      result.nonCompliant.push('❌ Missing network-aware performance testing');
+      this.addTodo(fileName, 'P1', 'Add network-aware performance testing', 
+        `// TODO: Add network-aware performance testing to ${fileName}
+// - Wait for network requests to complete before measuring
+// - Test performance under different network conditions
+// - Account for API response times in performance measurements
+// - Use waitForResponse() and waitForNetworkIdle() for accurate timing`);
+    }
+
     // Calculate score based on performance testing criteria
-    const maxScore = 4;
+    const maxScore = 6; // Updated to include new criteria
     let totalScore = 0;
     
-    if (hasPageLoadTesting) totalScore += 1;
+    if (hasPageLoadTesting && hasProperLoadMeasurement) totalScore += 1;
+    else if (hasPageLoadTesting) totalScore += 0.5;
+    if (hasPerformanceBudget) totalScore += 1;
     if (hasMemoryLeakTesting) totalScore += 1;
     if (hasConcurrentTesting) totalScore += 1;
     if (hasAPIPerformanceTesting) totalScore += 1;
+    if (hasNetworkAwareTesting) totalScore += 1;
 
     result.score = totalScore / maxScore;
 

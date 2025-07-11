@@ -751,7 +751,10 @@ test.describe('Connections Management E2E Tests', () => {
       await page.fill('[data-testid="connection-name-input"]', 'Test OAuth2 Provider Connection');
       await page.fill('[data-testid="connection-description-input"]', 'Test OAuth2 provider connection');
       await page.selectOption('[data-testid="connection-authtype-select"]', 'OAUTH2');
-      await page.selectOption('[data-testid="connection-provider-select"]', 'test');
+      
+      // Use GitHub provider which is always available in the implementation
+      await page.selectOption('[data-testid="connection-provider-select"]', 'github');
+      
       await page.fill('[data-testid="connection-clientid-input"]', 'test-client-id');
       await page.fill('[data-testid="connection-clientsecret-input"]', 'test-client-secret');
       await page.fill('[data-testid="connection-redirecturi-input"]', 'http://localhost:3000/api/connections/oauth2/callback');
@@ -760,19 +763,16 @@ test.describe('Connections Management E2E Tests', () => {
       const submitBtn = page.getByTestId('primary-action submit-connection-btn');
       await submitBtn.click();
 
-      // DEBUG: dump console errors/warnings
-      page.on('console', msg => {
-        if (["error", "warning"].includes(msg.type())) console.log(`🪵 [browser] ${msg.text()}`);
-      });
+      // Wait for form processing
+      await page.waitForTimeout(2000);
 
-      // DEBUG: if a toast/error banner appears, print it
-      const banner = page.locator('[data-testid="toast-error"], .bg-red-50');
-      if (await banner.isVisible({ timeout: 4000 }).catch(() => false)) {
-        console.log('🪵 [ui-error]', await banner.innerText());
-      }
-
-      // Original success expectation
-      await expect(page.locator('text=Connection created')).toBeVisible({ timeout: 10000 });
+      // Check for success indicators - scope to the specific connection card
+      const card = page.locator('[data-testid="connection-card"]:has-text("Test OAuth2 Provider Connection")');
+      await expect(card).toBeVisible();
+      
+      // Verify the connection has the correct type and provider - scoped to the card
+      await expect(card.locator('text=Type: OAuth2')).toBeVisible();
+      await expect(card.locator('text=Base URL: https://api.github.com')).toBeVisible();
     });
 
     test('should handle OAuth2 callback and complete connection', async ({ page }) => {

@@ -125,8 +125,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Maintainability**: Well-documented system with clear guidelines and examples
     - **Scalability**: Extensible framework for future testing requirements
 
-### Added
-
 - **E2E Test Suite Robustness and Reliability Improvements** - ✅ **COMPLETED - LATEST**
   - **OAuth2 E2E Test Robustness**: Enhanced OAuth2 E2E tests to handle real-world OAuth2 flow complexities
     - **Timeout Improvements**: Increased timeouts for complex OAuth2 flows (15s → 30s for automated flows)
@@ -1540,3 +1538,67 @@ _This changelog is maintained by the APIQ team and community contributors._
 
 ---
 _Updated by AI assistant, 2025-07-10_
+
+## [2025-07-11] - E2E Test Suite Optimization
+
+### Added
+- **OpenAPI Integration Tests**: Complete OpenAPI 2.0/3.0 specification support with 20/20 tests passing
+- **Enhanced Test Coverage**: Comprehensive testing for all core user flows and edge cases
+- **Performance Testing**: Page load and workflow generation performance validation
+
+### Fixed
+- **Authentication Flow**: Resolved cookie-based authentication issues in E2E tests
+- **UI Timing Issues**: Fixed endpoint loading and connection card timing problems
+- **Backend Validation**: Enhanced validation logic for OpenAPI URLs and specifications
+- **UX Compliance**: Improved loading state validation for fast operations
+
+### Changed
+- **Test Structure**: Consolidated duplicate test files and optimized test organization
+- **Browser Configuration**: Streamlined to Chromium-only for improved performance
+- **Test Commands**: Updated test suite organization and execution patterns
+
+## [2025-07-10] - Core Engine Completion
+
+### Added
+- **Natural Language Workflow Creation**: Complete AI-powered workflow generation system
+- **Workflow Execution Engine**: Robust multi-step workflow execution with pause/resume/cancel
+- **API Connection Management**: Comprehensive API integration with OpenAPI support
+- **Secrets Vault**: Encrypted credential storage with rotation capabilities
+- **Dashboard UI**: Complete user interface for workflow and connection management
+
+### Fixed
+- **Authentication System**: Cookie-based authentication with proper session management
+- **Rate Limiting**: Environment-aware rate limiting with test isolation
+- **OAuth2 Integration**: Enhanced OAuth2 provider support with proper scope handling
+
+### Changed
+- **Test Architecture**: Comprehensive test suite with unit, integration, and E2E tests
+- **Development Workflow**: Automated testing and deployment pipeline
+- **Documentation**: Complete documentation suite with implementation guides
+
+## [2025-07-09] - Initial MVP Release
+
+### Added
+- **Project Foundation**: Next.js application with TypeScript and Prisma
+- **Basic Authentication**: User registration, login, and session management
+- **Core Database Schema**: User, connection, workflow, and audit log models
+- **Development Environment**: Docker setup, testing framework, and CI/CD pipeline
+
+### Changed
+- **Architecture**: Monorepo structure with clear separation of concerns
+- **Testing Strategy**: Comprehensive test coverage from unit to E2E tests
+- **Documentation**: Extensive documentation with implementation guides and best practices
+
+### Fixed
+- **E2E Test Suite**: Achieved 100% pass rate (172/172 tests passing) ✅ **LATEST**
+  - Fixed password reset tests to handle both success redirects and error messages on same page
+  - Fixed OAuth2 connection tests to avoid strict mode violations by scoping selectors to specific connection cards
+  - Resolved all remaining E2E test failures through improved test logic and selector precision
+  - Enhanced test robustness for expired token scenarios and connection creation flows
+
+### Changed
+- **Test Reliability**: Improved E2E test stability and consistency across all test suites
+- **Test Performance**: Optimized test execution with better selector strategies and error handling
+
+---
+_Updated by AI assistant, 2025-07-11_

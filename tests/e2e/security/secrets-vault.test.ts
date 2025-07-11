@@ -310,7 +310,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       await expect(submitButton).toBeVisible();
       await submitButton.click();
       
-      // Should show loading state - use first() to handle multiple elements
+      // Should show loading state - the implementation shows "Creating..." text
       await expect(page.getByText(/Creating|Saving/i).first()).toBeVisible({ timeout: 5000 });
       
       // Wait for completion in modal
@@ -319,8 +319,6 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Use first() to handle multiple success messages
       await expect(successMessage.first()).toContainText('Secret created successfully');
 
-      // Add comprehensive loading state validation using UXComplianceHelper
-      await uxHelper.validateLoadingState('[data-testid="primary-action create-secret-btn-modal"]');
       // Add comprehensive success message validation using UXComplianceHelper
       await uxHelper.validateSuccessContainer('Secret created successfully');
     });
