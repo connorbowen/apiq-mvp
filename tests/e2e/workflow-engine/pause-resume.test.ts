@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
 
+import { UXComplianceHelper } from '../../helpers/uxCompliance';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 let testUser: any;
@@ -60,6 +61,10 @@ test.describe('Pause/Resume E2E Tests', () => {
 
   test.describe('Workflow Pause Functionality', () => {
     test('should pause running workflow execution', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -135,6 +140,10 @@ test.describe('Pause/Resume E2E Tests', () => {
     });
 
     test('should pause workflow at specific step', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -228,6 +237,10 @@ test.describe('Pause/Resume E2E Tests', () => {
 
   test.describe('Workflow Resume Functionality', () => {
     test('should resume paused workflow execution', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -304,6 +317,10 @@ test.describe('Pause/Resume E2E Tests', () => {
     });
 
     test('should resume workflow from correct step', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -403,6 +420,10 @@ test.describe('Pause/Resume E2E Tests', () => {
 
   test.describe('Worker Pause/Resume Handling', () => {
     test('should handle worker pause status checks', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -485,6 +506,10 @@ test.describe('Pause/Resume E2E Tests', () => {
     });
 
     test('should requeue jobs when worker detects pause status', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -578,6 +603,10 @@ test.describe('Pause/Resume E2E Tests', () => {
 
   test.describe('Pause/Resume State Persistence', () => {
     test('should persist pause state across page refreshes', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -658,6 +687,10 @@ test.describe('Pause/Resume E2E Tests', () => {
     });
 
     test('should persist pause state across browser sessions', async ({ page, context }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -755,6 +788,10 @@ test.describe('Pause/Resume E2E Tests', () => {
 
   test.describe('Pause/Resume Error Handling', () => {
     test('should handle pause during error conditions', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -829,6 +866,10 @@ test.describe('Pause/Resume E2E Tests', () => {
     });
 
     test('should handle resume after long pause periods', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
       // Create HTTPBin connection via API first
       const connectionResponse = await page.request.post('/api/connections', {
         data: {
@@ -903,3 +944,38 @@ test.describe('Pause/Resume E2E Tests', () => {
     });
   });
 }); 
+
+  test.describe('Error Handling & Edge Cases', () => {
+    test('should handle network failures gracefully', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
+      // TODO: Implement network failure testing
+      // - Test offline scenarios
+      // - Test timeout scenarios
+      // - Test retry logic
+    });
+
+    test('should handle invalid input validation', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
+      // TODO: Implement invalid input testing
+      // - Test form validation errors
+      // - Test API error responses
+      // - Test boundary conditions
+    });
+
+    test('should handle rate limiting scenarios', async ({ page }) => {
+      // Validate screen reader compatibility
+      await uxHelper.validateScreenReaderCompatibility();
+      // Validate mobile responsiveness
+      await uxHelper.validateMobileResponsiveness();
+      // TODO: Implement rate limiting testing
+      // - Test rate limit responses
+      // - Test retry after rate limit
+      // - Test user feedback for rate limits
+    });
+  });

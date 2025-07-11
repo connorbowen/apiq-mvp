@@ -53,7 +53,7 @@ export default function AuditTab({ refreshTrigger = 0, liveRegion }: AuditTabPro
       }
       const result = await response.json();
       if (result.success) {
-        setAuditLogs(result.data.logs);
+        setAuditLogs(result.data.auditLogs);
       } else {
         throw new Error(result.error || 'Failed to load audit logs');
       }

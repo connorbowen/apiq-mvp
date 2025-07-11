@@ -98,7 +98,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       return res.status(200).json({
         success: true,
         data: {
-          auditLogs,
+          auditLogs: auditLogs,
           pagination: {
             page: pageNum,
             limit: limitNum,

@@ -299,10 +299,10 @@ export default function NaturalLanguageWorkflowChat({
 
         {/* Input Form */}
         <div className="border-t border-gray-200 p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" role="form">
             <div className="space-y-2">
               <label htmlFor="workflow-description" className="block text-sm font-medium text-gray-700">
-                Describe your workflow
+                Workflow Description
               </label>
               <textarea
                 id="workflow-description"
@@ -311,13 +311,16 @@ export default function NaturalLanguageWorkflowChat({
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Describe your workflow..."
                 required
-                // TODO: Add ARIA attributes for textarea accessibility
-                // aria-required="true"
-                // aria-describedby="workflow-description-help"
-                // aria-invalid={error ? "true" : "false"}
+                aria-required="true"
+                aria-describedby="workflow-description-help"
+                aria-invalid={error ? "true" : "false"}
+                aria-label="Workflow description"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px] min-w-[44px]"
                 disabled={isLoading}
               />
+              <p id="workflow-description-help" className="text-sm text-gray-500">
+                Describe what you want to automate or do
+              </p>
             </div>
 
             {/* Error Message */}
@@ -325,9 +328,8 @@ export default function NaturalLanguageWorkflowChat({
               <div 
                 className="p-3 bg-red-50 border border-red-200 rounded-md" 
                 data-testid="workflow-error-message"
-                // TODO: Add role="alert" for accessibility compliance
-                // role="alert"
-                // aria-live="assertive"
+                role="alert"
+                aria-live="assertive"
               >
                 <p className="text-sm text-red-600">{error}</p>
               </div>
@@ -338,9 +340,8 @@ export default function NaturalLanguageWorkflowChat({
               <div 
                 className="p-3 bg-green-50 border border-green-200 rounded-md" 
                 data-testid="workflow-success-form-message"
-                // TODO: Add role="alert" for accessibility compliance
-                // role="alert"
-                // aria-live="polite"
+                role="alert"
+                aria-live="polite"
               >
                 <p className="text-sm text-green-600">{successMessage}</p>
               </div>
