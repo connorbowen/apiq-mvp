@@ -172,6 +172,102 @@ The fundamental features that deliver the core value proposition and enable the 
   - [x] Tests for actionable error messages to users ✅ **CREATED**
   - [ ] **Implementation Required**: Service implementation to make tests pass ❌ **PENDING**
 
+**🆕 TDD IMPLEMENTATION TODOs** (Ready to Start):
+- [ ] **P0.1.1: Multi-Step Workflow Generation Implementation** 🚨 **CRITICAL MVP BLOCKER**
+  - [ ] **TODO**: Update `src/lib/services/naturalLanguageWorkflowService.ts` to support multi-step generation
+  - [ ] **TODO**: Add workflow planning logic to break complex requests into multiple steps
+  - [ ] **TODO**: Implement step dependency analysis and ordering
+  - [ ] **TODO**: Add data flow mapping between steps (output → input)
+  - [ ] **TODO**: Support conditional logic and branching in workflows
+  - [ ] **TODO**: Update OpenAI prompt to encourage multi-step workflows
+  - [ ] **TODO**: Add workflow validation for step dependencies
+  - [ ] **TODO**: Update UI components to display multi-step workflows
+  - [ ] **TODO**: Add tests: Run `npm run test:e2e -- tests/e2e/workflow-engine/multi-step-workflow-generation.test.ts`
+
+- [ ] **P0.1.2: Function Name Collision Prevention Implementation** 🚨 **HIGH PRIORITY**
+  - [ ] **TODO**: Update `src/lib/services/naturalLanguageWorkflowService.ts` to add API prefixes
+  - [ ] **TODO**: Implement function name uniqueness validation
+  - [ ] **TODO**: Add function name conflict resolution logic
+  - [ ] **TODO**: Update function name generation to include API name prefix (e.g., "GitHub_", "Slack_")
+  - [ ] **TODO**: Add tests: Run `npm run test:e2e -- tests/e2e/workflow-engine/core-workflow-generation.test.ts`
+
+- [ ] **P0.1.3: Parameter Schema Enhancement Implementation** 🚨 **MEDIUM PRIORITY**
+  - [ ] **TODO**: Update `src/lib/services/openApiService.ts` to enhance parameter conversion
+  - [ ] **TODO**: Add parameter validation and constraints from OpenAPI specs
+  - [ ] **TODO**: Support complex parameter types (arrays, objects, nested structures)
+  - [ ] **TODO**: Include parameter descriptions and examples from OpenAPI specs
+  - [ ] **TODO**: Add tests: Run `npm run test:e2e -- tests/e2e/workflow-engine/core-workflow-generation.test.ts`
+
+- [ ] **P0.1.4: Context-Aware Function Filtering Implementation** 🚨 **MEDIUM PRIORITY**
+  - [ ] **TODO**: Update `src/lib/services/naturalLanguageWorkflowService.ts` to add API categorization
+  - [ ] **TODO**: Implement function relevance scoring based on user request
+  - [ ] **TODO**: Add function count limits to prevent token overflow
+  - [ ] **TODO**: Implement function prioritization (most commonly used first)
+  - [ ] **TODO**: Add tests: Run `npm run test:e2e -- tests/e2e/workflow-engine/core-workflow-generation.test.ts`
+
+- [ ] **P0.1.5: Workflow Validation Enhancement Implementation** 🚨 **MEDIUM PRIORITY**
+  - [ ] **TODO**: Update `src/lib/services/naturalLanguageWorkflowService.ts` to add validation
+  - [ ] **TODO**: Implement workflow step dependency validation
+  - [ ] **TODO**: Add data flow validation between steps
+  - [ ] **TODO**: Implement circular dependency detection
+  - [ ] **TODO**: Add parameter compatibility validation across steps
+  - [ ] **TODO**: Add tests: Run `npm run test:e2e -- tests/e2e/workflow-engine/core-workflow-generation.test.ts`
+
+- [ ] **P0.1.6: Error Handling Improvements Implementation** 🚨 **MEDIUM PRIORITY**
+  - [ ] **TODO**: Update `src/lib/services/naturalLanguageWorkflowService.ts` to add error handling
+  - [ ] **TODO**: Implement specific error messages for different failure types
+  - [ ] **TODO**: Add workflow generation retry logic
+  - [ ] **TODO**: Implement fallback workflows when primary generation fails
+  - [ ] **TODO**: Add actionable error messages to users
+  - [ ] **TODO**: Add tests: Run `npm run test:e2e -- tests/e2e/workflow-engine/core-workflow-generation.test.ts`
+
+**🆕 MISSING E2E TESTS TO CREATE** (Additional Coverage Needed):
+- [ ] **TODO**: Create `tests/e2e/workflow-engine/workflow-planning.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/workflow-engine/data-flow-mapping.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/workflow-engine/function-collision.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/workflow-engine/error-recovery.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/connections/api-quality.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/connections/endpoint-filtering.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/connections/api-versioning.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/workflow-engine/advanced-data-flow.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/workflow-engine/conditional-logic.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/workflow-engine/workflow-templates.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/security/advanced-security.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/connections/audit-logging.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/collaboration/team-management.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/collaboration/workflow-collaboration.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/ux/progressive-disclosure.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/ux/guided-tour.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/ux/mobile-optimization.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/analytics/workflow-analytics.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/analytics/usage-analytics.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/ai/api-discovery.test.ts` (5 tests)
+- [ ] **TODO**: Create `tests/e2e/ai/api-exploration.test.ts` (5 tests)
+
+**🆕 IMPLEMENTATION TIMELINE** (TDD Approach):
+- **Week 1**: P0.1.1 Multi-Step Workflow Generation (start with 1 test, implement incrementally)
+- **Week 2**: P0.1.2 Function Name Collision Prevention + P0.1.3 Parameter Schema Enhancement
+- **Week 3**: P0.1.4 Context-Aware Function Filtering + P0.1.5 Workflow Validation Enhancement
+- **Week 4**: P0.1.6 Error Handling Improvements + Create missing E2E test files
+- **Week 5-6**: Implement remaining P1 features based on test failures
+- **Week 7-8**: Implement remaining P2 features based on test failures
+- **Week 9-10**: Implement remaining P3 features based on test failures
+
+**🆕 TDD WORKFLOW** (For Each Feature):
+1. **Run failing test**: `npm run test:e2e -- tests/e2e/workflow-engine/multi-step-workflow-generation.test.ts`
+2. **Implement minimal code** to make 1 test pass
+3. **Run test again** to verify it passes
+4. **Add next test** and repeat
+5. **Refactor** when all tests in file pass
+6. **Move to next feature** and repeat
+
+**🆕 SUCCESS METRICS**:
+- **Week 1 Goal**: 1/15 multi-step workflow tests passing
+- **Week 2 Goal**: 5/15 multi-step workflow tests passing
+- **Week 3 Goal**: 10/15 multi-step workflow tests passing
+- **Week 4 Goal**: 15/15 multi-step workflow tests passing
+- **Final Goal**: All 410+ E2E tests passing with 100% reliability
+
 #### **P0.2: Workflow Execution Engine** ✅ **COMPLETED**
 **Business Impact**: Enables the workflows created by P0.1 to actually run
 **User Value**: Reliable execution of complex multi-API workflows

@@ -249,36 +249,60 @@ class NaturalLanguageWorkflowService {
    * Create system prompt for workflow generation
    */
   private createSystemPrompt(): string {
-    return `You are an expert API workflow automation assistant. Your job is to help users create workflows by connecting different APIs based on their natural language descriptions.
+    return `You are an expert workflow automation specialist. Your job is to create multi-step workflows from natural language descriptions.
 
-CRITICAL: You MUST ALWAYS call one of the provided functions to create workflows. NEVER provide text-only explanations or responses.
+IMPORTANT: Always generate MULTI-STEP workflows for complex requests. Break down complex workflows into 2-5 logical steps.
 
-Key capabilities:
-- Parse natural language requests into structured API workflows
-- Identify the appropriate API endpoints to use
-- Map user intent to specific API calls
-- Generate workflows that are executable and well-structured
+WORKFLOW PLANNING RULES:
+1. For complex requests, create multiple steps (2-5 steps)
+2. Each step should have a clear purpose and action
+3. Steps should flow logically from one to the next
+4. Use data mapping between steps when possible
+5. Include conditional logic when appropriate
 
-WORKFLOW GENERATION RULES:
-1. ALWAYS call a function - never provide text explanations
-2. Choose the most appropriate function based on the user's request
-3. If the user's request cannot be accomplished with available APIs, call the closest function and explain what additional APIs would be needed
-4. If the request is unclear, call a function anyway and let the system handle validation
+COMMON WORKFLOW PATTERNS:
+- Webhook → Transform → Action (3 steps)
+- Monitor → Filter → Notify → Log (4 steps)
+- Collect → Process → Store → Notify (4 steps)
+- Trigger → Validate → Execute → Confirm (4 steps)
 
-When a user describes what they want to accomplish, you should:
-1. Analyze their request to understand the goal
-2. Identify which APIs and endpoints are needed from the available functions
-3. ALWAYS call the appropriate function(s) to create the workflow
-4. Never provide text-only responses
+STEP TYPES:
+- api_call: Make an API request
+- data_transform: Transform data between steps
+- condition: Add conditional logic
+- webhook: Set up webhook monitoring
 
-Example user request: "Send a Slack notification when a new GitHub issue is created"
-Expected response: Call the appropriate function (e.g., GitHub_create_webhook or Slack_send_message)
+DATA FLOW:
+- Map outputs from one step to inputs of the next step
+- Use JSON path expressions for data mapping
+- Include data validation between steps
 
-Remember: ALWAYS call a function. Never provide text explanations without function calls.`;
+EXAMPLES:
+User: "When a new GitHub issue is created, send a Slack notification and create a Trello card"
+Steps:
+1. Monitor GitHub issues (webhook)
+2. Send Slack notification (api_call)
+3. Create Trello card (api_call)
+
+User: "When a customer places an order, create invoice, send email, update inventory"
+Steps:
+1. Monitor orders (webhook)
+2. Create invoice in QuickBooks (api_call)
+3. Send confirmation email (api_call)
+4. Update inventory in Shopify (api_call)
+
+Available API endpoints are provided as functions. Use the most appropriate endpoints for each step.
+
+Generate workflows that are:
+- Practical and executable
+- Well-structured with clear step purposes
+- Include proper data flow between steps
+- Handle errors gracefully
+- Follow best practices for workflow automation`;
   }
 
   /**
-   * Parse OpenAI function call to workflow structure
+   * Parse OpenAI function call to workflow structure (supports multi-step workflows)
    */
   private parseFunctionCallToWorkflow(
     functionCall: OpenAI.Chat.Completions.ChatCompletionMessage.FunctionCall,
@@ -286,7 +310,12 @@ Remember: ALWAYS call a function. Never provide text explanations without functi
   ): GeneratedWorkflow {
     const args = JSON.parse(functionCall.arguments);
     
-    // Find the connection details
+    // Check if this is a multi-step workflow
+    if (args.steps && Array.isArray(args.steps)) {
+      return this.parseMultiStepWorkflow(args, availableConnections);
+    }
+    
+    // Fallback to single step workflow (current implementation)
     const connection = availableConnections.find(conn => conn.id === args.connectionId);
     const endpoint = connection?.endpoints.find(ep => ep.path === args.endpoint && ep.method === args.method);
     
@@ -309,6 +338,56 @@ Remember: ALWAYS call a function. Never provide text explanations without functi
       estimatedExecutionTime: 5000,
       confidence: 0.8,
       explanation: `This workflow will call ${connection?.name || 'API'} to ${endpoint?.summary || 'perform the requested action'}`
+    };
+  }
+
+  /**
+   * Parse multi-step workflow from function call arguments
+   */
+  private parseMultiStepWorkflow(
+    args: any,
+    availableConnections: WorkflowGenerationRequest['availableConnections']
+  ): GeneratedWorkflow {
+    const steps: WorkflowStep[] = [];
+    
+    for (let i = 0; i < args.steps.length; i++) {
+      const stepData = args.steps[i];
+      const connection = availableConnections.find(c => c.id === stepData.connectionId);
+      const endpoint = connection?.endpoints.find(e => e.path === stepData.endpoint);
+      
+      if (!connection || !endpoint) {
+        console.warn(`Skipping step ${i + 1}: Invalid connection or endpoint`);
+        continue;
+      }
+
+      const step: WorkflowStep = {
+        id: `step_${Date.now()}_${i}`,
+        name: stepData.name || endpoint.summary,
+        type: stepData.type || 'api_call',
+        apiConnectionId: connection.id,
+        endpoint: endpoint.path,
+        method: endpoint.method,
+        parameters: stepData.parameters || {},
+        dataMapping: stepData.dataMapping || {},
+        conditions: stepData.conditions || null,
+        order: i + 1
+      };
+      
+      steps.push(step);
+    }
+
+    if (steps.length === 0) {
+      throw new Error('No valid steps found in multi-step workflow');
+    }
+
+    return {
+      id: `workflow_${Date.now()}`,
+      name: args.name || `Multi-step workflow with ${steps.length} steps`,
+      description: args.description || `Workflow with ${steps.length} steps`,
+      steps,
+      estimatedExecutionTime: steps.length * 5000,
+      confidence: 0.8,
+      explanation: args.explanation || `This workflow executes ${steps.length} steps in sequence.`
     };
   }
 
