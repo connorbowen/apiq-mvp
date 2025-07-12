@@ -28,9 +28,10 @@ test.describe('@critical Login Journey', () => {
     // Login via helper
     await authFlow.login({ email: testUser.email, password: 'JourneyPass123' });
 
-    // Validate we landed on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator('h2')).toContainText(/Dashboard|Overview|Welcome/i);
+    // Validate we landed on dashboard using page object
+    const { DashboardPage } = await import('../pages/DashboardPage');
+    const dashboard = new DashboardPage(page);
+    await dashboard.expectLoaded();
   });
 
   test('session persists after page reload', async ({ page }) => {
