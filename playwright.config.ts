@@ -39,6 +39,7 @@ export default defineConfig({
       },
     },
   ],
+  globalTeardown: './playwright.global.teardown',
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',

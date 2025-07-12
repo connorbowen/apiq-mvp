@@ -62,6 +62,7 @@ export default defineConfig({
       ]
     }
   },
+  globalTeardown: './playwright.global.teardown',
   projects: [
     {
       name: 'chromium',

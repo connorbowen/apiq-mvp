@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/coverageFixture';
 import { AuthFlow } from '../helpers/AuthFlow';
 import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
 
