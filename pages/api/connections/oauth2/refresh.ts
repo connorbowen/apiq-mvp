@@ -82,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Return success response
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
         message: 'OAuth2 token refreshed successfully'

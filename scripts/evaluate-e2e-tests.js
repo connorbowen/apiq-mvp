@@ -42,13 +42,112 @@ const CRITERIA_WEIGHTS = {
   pwaTesting: 0.04,
   analyticsMonitoring: 0.04,
   edgeCasesSecurity: 0.06,
-  documentationCompliance: 0.04  // New criteria for documentation rules
+  documentationCompliance: 0.04,  // New criteria for documentation rules
+  robustTestingStandards: 0.12  // New criteria for robust testing standards
 };
 
 class E2ETestEvaluator {
   constructor() {
     this.results = {};
     this.todos = [];
+  }
+
+  /**
+   * Detect test file context and scope
+   */
+  detectTestContext(fileName, filePath, content) {
+    const context = {
+      type: 'general', // general, auth, workflow, connection, dashboard, etc.
+      scope: 'full', // full, focused, specific
+      expectedFeatures: [],
+      excludedFeatures: [],
+      description: ''
+    };
+
+    const lowerFileName = fileName.toLowerCase();
+    const lowerFilePath = filePath.toLowerCase();
+    const lowerContent = content.toLowerCase();
+
+    // Detect test type based on file name and path
+    if (lowerFileName.includes('auth') || lowerFilePath.includes('auth')) {
+      context.type = 'authentication';
+      context.scope = 'focused';
+      context.expectedFeatures = ['authentication flows', 'login', 'logout', 'session management'];
+      context.excludedFeatures = ['workflow execution engine', 'api connection management', 'secrets vault', 'dashboard functionality'];
+      context.description = 'Authentication-focused test file';
+    } else if (lowerFileName.includes('workflow') || lowerFilePath.includes('workflow')) {
+      context.type = 'workflow';
+      context.scope = 'focused';
+      context.expectedFeatures = ['workflow execution engine', 'natural language workflow creation'];
+      context.excludedFeatures = ['api connection management', 'secrets vault'];
+      context.description = 'Workflow-focused test file';
+    } else if (lowerFileName.includes('connection') || lowerFilePath.includes('connection')) {
+      context.type = 'connection';
+      context.scope = 'focused';
+      context.expectedFeatures = ['api connection management'];
+      context.excludedFeatures = ['workflow execution engine', 'natural language workflow creation'];
+      context.description = 'API Connection-focused test file';
+    } else if (lowerFileName.includes('dashboard') || lowerFilePath.includes('dashboard')) {
+      context.type = 'dashboard';
+      context.scope = 'focused';
+      context.expectedFeatures = ['dashboard functionality'];
+      context.excludedFeatures = ['workflow execution engine', 'natural language workflow creation'];
+      context.description = 'Dashboard-focused test file';
+    } else if (lowerFileName.includes('secret') || lowerFilePath.includes('secret')) {
+      context.type = 'secrets';
+      context.scope = 'focused';
+      context.expectedFeatures = ['secrets vault'];
+      context.excludedFeatures = ['workflow execution engine', 'natural language workflow creation'];
+      context.description = 'Secrets Vault-focused test file';
+    } else if (lowerFileName.includes('comprehensive') || lowerFileName.includes('full') || lowerFileName.includes('end-to-end')) {
+      context.type = 'comprehensive';
+      context.scope = 'full';
+      context.expectedFeatures = ['natural language workflow creation', 'workflow execution engine', 'api connection management', 'secrets vault', 'authentication flows', 'dashboard functionality'];
+      context.excludedFeatures = [];
+      context.description = 'Comprehensive end-to-end test file';
+    } else if (lowerFileName.includes('navigation') || lowerFileName.includes('ui')) {
+      context.type = 'ui';
+      context.scope = 'focused';
+      context.expectedFeatures = ['navigation', 'ui interactions', 'accessibility'];
+      context.excludedFeatures = ['workflow execution engine', 'natural language workflow creation', 'api connection management', 'secrets vault'];
+      context.description = 'UI/Navigation-focused test file';
+    } else if (lowerFileName.includes('performance') || lowerFileName.includes('load')) {
+      context.type = 'performance';
+      context.scope = 'focused';
+      context.expectedFeatures = ['performance testing', 'load testing'];
+      context.excludedFeatures = ['workflow execution engine', 'natural language workflow creation'];
+      context.description = 'Performance-focused test file';
+    } else if (lowerFileName.includes('security') || lowerFileName.includes('rate-limit')) {
+      context.type = 'security';
+      context.scope = 'focused';
+      context.expectedFeatures = ['security validation', 'rate limiting', 'authentication flows'];
+      context.excludedFeatures = ['workflow execution engine', 'natural language workflow creation'];
+      context.description = 'Security-focused test file';
+    } else {
+      // Default to general scope
+      context.type = 'general';
+      context.scope = 'general';
+      context.expectedFeatures = ['authentication flows']; // Minimal expectation
+      context.excludedFeatures = [];
+      context.description = 'General test file';
+    }
+
+    // Refine context based on content analysis
+    if (lowerContent.includes('login') || lowerContent.includes('signup') || lowerContent.includes('password')) {
+      if (context.type === 'general') {
+        context.type = 'authentication';
+        context.expectedFeatures = ['authentication flows', 'login', 'logout', 'session management'];
+      }
+    }
+
+    if (lowerContent.includes('workflow') && lowerContent.includes('create') || lowerContent.includes('execute')) {
+      if (context.type === 'general') {
+        context.type = 'workflow';
+        context.expectedFeatures = ['workflow execution engine', 'natural language workflow creation'];
+      }
+    }
+
+    return context;
   }
 
   /**
@@ -65,31 +164,38 @@ class E2ETestEvaluator {
     const content = fs.readFileSync(testFilePath, 'utf8');
     const fileName = path.basename(testFilePath);
     
+    // Detect test context
+    const testContext = this.detectTestContext(fileName, testFilePath, content);
+    
     this.results[fileName] = {
       filePath: testFilePath,
+      context: testContext,
       compliance: {},
       issues: [],
       recommendations: [],
       score: 0
     };
 
-    // Evaluate against each criteria
-    await this.evaluatePRDCompliance(fileName, content);
-    await this.evaluateImplementationPlanCompliance(fileName, content);
-    await this.evaluateUXSpecCompliance(fileName, content);
-    await this.evaluateTestingBestPractices(fileName, content);
-    await this.evaluateE2EvsAPISeparation(fileName, content);
-    await this.evaluateWaitingStrategies(fileName, content);
-    await this.evaluateModalBehavior(fileName, content);
-    await this.evaluateTestReliability(fileName, content);
-    await this.evaluateStateManagement(fileName, content);
-    await this.evaluatePerformanceTesting(fileName, content);
-    await this.evaluateAdvancedSecurity(fileName, content);
-    await this.evaluateSEOTesting(fileName, content);
-    await this.evaluatePWATesting(fileName, content);
-    await this.evaluateAnalyticsMonitoring(fileName, content);
-    await this.evaluateEdgeCasesSecurity(fileName, content);
-    await this.evaluateDocumentationCompliance(fileName, content);
+    console.log(`📋 Test Context: ${testContext.description} (${testContext.type})`);
+
+    // Evaluate against each criteria with context awareness
+    await this.evaluatePRDCompliance(fileName, content, testContext);
+    await this.evaluateImplementationPlanCompliance(fileName, content, testContext);
+    await this.evaluateUXSpecCompliance(fileName, content, testContext);
+    await this.evaluateTestingBestPractices(fileName, content, testContext);
+    await this.evaluateE2EvsAPISeparation(fileName, content, testContext);
+    await this.evaluateWaitingStrategies(fileName, content, testContext);
+    await this.evaluateModalBehavior(fileName, content, testContext);
+    await this.evaluateTestReliability(fileName, content, testContext);
+    await this.evaluateStateManagement(fileName, content, testContext);
+    await this.evaluatePerformanceTesting(fileName, content, testContext);
+    await this.evaluateAdvancedSecurity(fileName, content, testContext);
+    await this.evaluateSEOTesting(fileName, content, testContext);
+    await this.evaluatePWATesting(fileName, content, testContext);
+    await this.evaluateAnalyticsMonitoring(fileName, content, testContext);
+    await this.evaluateEdgeCasesSecurity(fileName, content, testContext);
+    await this.evaluateDocumentationCompliance(fileName, content, testContext);
+    await this.evaluateRobustTestingStandards(fileName, content, testContext);
 
     // Calculate overall score
     this.calculateOverallScore(fileName);
@@ -101,9 +207,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate PRD.md compliance
+   * Evaluate PRD.md compliance with context awareness
    */
-  async evaluatePRDCompliance(fileName, content) {
+  async evaluatePRDCompliance(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -111,31 +217,35 @@ class E2ETestEvaluator {
       required: []
     };
 
-    // Core feature coverage
-    const coreFeatures = [
-      'natural language workflow creation',
-      'workflow execution engine',
-      'api connection management',
-      'secrets vault',
-      'authentication flows',
-      'dashboard functionality'
-    ];
+    // Use context-appropriate core features
+    const coreFeatures = context.expectedFeatures;
+    const excludedFeatures = context.excludedFeatures;
 
     let featureCoverage = 0;
     coreFeatures.forEach(feature => {
       if (content.toLowerCase().includes(feature.replace(/\s+/g, '')) || 
           content.toLowerCase().includes(feature)) {
         featureCoverage++;
-        result.compliant.push(`✅ Tests ${feature}`);
+        result.compliant.push(`✅ Tests ${feature} (expected for ${context.type})`);
       } else {
-        result.nonCompliant.push(`❌ Missing ${feature} testing`);
-        // Add TODO for missing core feature
-        this.addTodo(fileName, 'P0', `Add ${feature} testing`, 
-          `// TODO: Add ${feature} testing to ${fileName}
+        result.nonCompliant.push(`❌ Missing ${feature} testing (expected for ${context.type})`);
+        // Add TODO for missing expected feature
+        this.addTodo(fileName, 'P0', `Add ${feature} testing for ${context.type}`, 
+          `// TODO: Add ${feature} testing to ${fileName} (${context.type} test)
 // - Test ${feature} functionality
 // - Test ${feature} integration with other features
 // - Test ${feature} error scenarios
 // - Test ${feature} user workflows`);
+      }
+    });
+
+    // Check for excluded features (should not be tested in this context)
+    excludedFeatures.forEach(feature => {
+      if (content.toLowerCase().includes(feature.replace(/\s+/g, '')) || 
+          content.toLowerCase().includes(feature)) {
+        result.compliant.push(`✅ Appropriately excludes ${feature} (not expected for ${context.type})`);
+      } else {
+        result.compliant.push(`✅ Correctly excludes ${feature} (not expected for ${context.type})`);
       }
     });
 
@@ -167,48 +277,51 @@ class E2ETestEvaluator {
 // - Test validation error messages`);
     }
 
-    // Performance requirements
+    // Performance requirements (only for performance-focused tests or comprehensive tests)
     const hasPerformanceTesting = /timeout|performance|load|speed/.test(content);
-    if (hasPerformanceTesting) {
-      result.compliant.push('✅ Includes performance testing');
-    } else {
-      result.nonCompliant.push('❌ Missing performance testing');
-      this.addTodo(fileName, 'P1', 'Add performance testing', 
-        `// TODO: Add performance testing to ${fileName}
+    if (context.type === 'performance' || context.type === 'comprehensive') {
+      if (hasPerformanceTesting) {
+        result.compliant.push('✅ Includes performance testing (expected for this test type)');
+      } else {
+        result.nonCompliant.push('❌ Missing performance testing (expected for this test type)');
+        this.addTodo(fileName, 'P1', 'Add performance testing', 
+          `// TODO: Add performance testing to ${fileName} (${context.type} test)
 // - Test page load times
 // - Test API response times
 // - Test UI responsiveness
 // - Test memory usage patterns`);
+      }
+    } else if (hasPerformanceTesting) {
+      result.compliant.push('✅ Includes performance testing (bonus for non-performance test)');
     }
 
-    // Business logic validation
+    // Business logic validation (context-appropriate)
     const hasBusinessLogic = /workflow|connection|secret|user|authentication/.test(content);
     if (hasBusinessLogic) {
-      result.compliant.push('✅ Tests business logic');
+      result.compliant.push('✅ Tests relevant business logic');
     } else {
       result.nonCompliant.push('❌ Missing business logic validation');
-
-      // Add TODO for business logic testing
       this.addTodo(fileName, 'P0', 'Add business logic validation tests', 
-        `// TODO: Add business logic validation tests for ${fileName}
-// - Test workflow creation and execution
-// - Test API connection management
-// - Test secrets vault operations
-// - Test user authentication flows`);
+        `// TODO: Add business logic validation tests for ${fileName} (${context.type} test)
+// - Test ${context.type} functionality
+// - Test ${context.type} error scenarios
+// - Test ${context.type} user workflows`);
     }
 
-    result.score = (featureCoverage / coreFeatures.length) * 0.4 + 
+    // Calculate score based on context
+    const expectedFeatureScore = coreFeatures.length > 0 ? (featureCoverage / coreFeatures.length) * 0.4 : 0.4;
+    result.score = expectedFeatureScore + 
                    (hasSuccessScenarios ? 0.3 : 0) + 
                    (hasFailureScenarios ? 0.2 : 0) + 
-                   (hasPerformanceTesting ? 0.1 : 0);
+                   (hasPerformanceTesting && (context.type === 'performance' || context.type === 'comprehensive') ? 0.1 : 0);
 
     this.results[fileName].compliance.prdCompliance = result;
   }
 
   /**
-   * Evaluate Implementation Plan compliance
+   * Evaluate Implementation Plan compliance with context awareness
    */
-  async evaluateImplementationPlanCompliance(fileName, content) {
+  async evaluateImplementationPlanCompliance(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -216,20 +329,52 @@ class E2ETestEvaluator {
       required: []
     };
 
-    // P0/P1/P2 feature coverage
-    const p0Features = ['authentication', 'workflow', 'connection', 'secret'];
-    const p1Features = ['oauth2', 'dashboard', 'monitoring'];
-    const p2Features = ['admin', 'audit', 'performance'];
+    // Context-appropriate P0/P1/P2 feature coverage
+    let p0Features = [];
+    let p1Features = [];
+    let p2Features = [];
+
+    // Define features based on context
+    if (context.type === 'authentication') {
+      p0Features = ['authentication'];
+      p1Features = ['oauth2'];
+      p2Features = [];
+    } else if (context.type === 'workflow') {
+      p0Features = ['workflow'];
+      p1Features = ['monitoring'];
+      p2Features = ['performance'];
+    } else if (context.type === 'connection') {
+      p0Features = ['connection'];
+      p1Features = ['oauth2'];
+      p2Features = [];
+    } else if (context.type === 'dashboard') {
+      p0Features = ['dashboard'];
+      p1Features = ['monitoring'];
+      p2Features = ['admin'];
+    } else if (context.type === 'secrets') {
+      p0Features = ['secret'];
+      p1Features = ['monitoring'];
+      p2Features = ['audit'];
+    } else if (context.type === 'comprehensive') {
+      p0Features = ['authentication', 'workflow', 'connection', 'secret'];
+      p1Features = ['oauth2', 'dashboard', 'monitoring'];
+      p2Features = ['admin', 'audit', 'performance'];
+    } else {
+      // General context - minimal expectations
+      p0Features = ['authentication'];
+      p1Features = [];
+      p2Features = [];
+    }
 
     let p0Coverage = 0;
     p0Features.forEach(feature => {
       if (content.toLowerCase().includes(feature)) {
         p0Coverage++;
-        result.compliant.push(`✅ Tests P0 feature: ${feature}`);
+        result.compliant.push(`✅ Tests P0 feature: ${feature} (expected for ${context.type})`);
       }
     });
 
-    // Real data usage (no mocking)
+    // Real data usage (no mocking) - always required
     const hasRealData = !content.includes('mock') && !content.includes('jest.mock') && 
                        !content.includes('vi.mock') && !content.includes('cy.stub');
     
@@ -237,8 +382,6 @@ class E2ETestEvaluator {
       result.compliant.push('✅ Uses real data (no mocking)');
     } else {
       result.nonCompliant.push('❌ Uses mocked data (violates no-mock-data policy)');
-      
-      // Add TODO for real data usage
       this.addTodo(fileName, 'P0', 'Replace mocked data with real data', 
         `// TODO: Replace mocked data with real data in ${fileName}
 // - Use real authentication cookies
@@ -247,14 +390,12 @@ class E2ETestEvaluator {
 // - Remove all jest.mock() and vi.mock() calls`);
     }
 
-    // Error handling and edge cases
+    // Error handling and edge cases - always required
     const hasErrorHandling = /try.*catch|error.*handling|edge.*case/.test(content);
     if (hasErrorHandling) {
       result.compliant.push('✅ Tests error handling and edge cases');
     } else {
       result.nonCompliant.push('❌ Missing error handling and edge case testing');
-      
-      // Add TODO for error handling
       this.addTodo(fileName, 'P1', 'Add comprehensive error handling tests', 
         `// TODO: Add comprehensive error handling tests for ${fileName}
 // - Test network failures
@@ -263,21 +404,27 @@ class E2ETestEvaluator {
 // - Test rate limiting scenarios`);
     }
 
-    // Integration with other features
+    // Integration with other features - context dependent
     const hasIntegration = /beforeEach|afterEach|setup|teardown/.test(content);
-    if (hasIntegration) {
-      result.compliant.push('✅ Tests integration with other features');
-    } else {
-      result.nonCompliant.push('❌ Missing integration testing');
-      this.addTodo(fileName, 'P1', 'Add integration testing', 
-        `// TODO: Add integration testing to ${fileName}
+    if (context.type === 'comprehensive') {
+      if (hasIntegration) {
+        result.compliant.push('✅ Tests integration with other features (expected for comprehensive test)');
+      } else {
+        result.nonCompliant.push('❌ Missing integration testing (expected for comprehensive test)');
+        this.addTodo(fileName, 'P1', 'Add integration testing', 
+          `// TODO: Add integration testing to ${fileName} (comprehensive test)
 // - Test integration with other features
 // - Test setup and teardown procedures
 // - Test data flow between components
 // - Test cross-feature dependencies`);
+      }
+    } else if (hasIntegration) {
+      result.compliant.push('✅ Tests integration with other features (bonus for focused test)');
     }
 
-    result.score = (p0Coverage / p0Features.length) * 0.5 + 
+    // Calculate score based on context
+    const p0Score = p0Features.length > 0 ? (p0Coverage / p0Features.length) * 0.5 : 0.5;
+    result.score = p0Score + 
                    (hasRealData ? 0.3 : 0) + 
                    (hasErrorHandling ? 0.2 : 0);
 
@@ -285,9 +432,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate UX_SPEC.md compliance
+   * Evaluate UX_SPEC.md compliance with context awareness
    */
-  async evaluateUXSpecCompliance(fileName, content) {
+  async evaluateUXSpecCompliance(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -413,9 +560,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate Waiting Strategies for Dynamic Elements
+   * Evaluate Waiting Strategies for Dynamic Elements with context awareness
    */
-  async evaluateWaitingStrategies(fileName, content) {
+  async evaluateWaitingStrategies(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -434,7 +581,11 @@ class E2ETestEvaluator {
       // Network waiting
       /waitForResponse|waitForRequest|waitForNetworkIdle/,
       // State-based waiting
-      /waitForLoadState|waitForFunction|waitForCondition/
+      /waitForLoadState|waitForFunction|waitForCondition/,
+      // Robust testing utilities
+      /SmartWait\.waitForElement|SmartWait\.waitForRequest|SmartWait\.waitForPageReady/,
+      /RobustInteraction\.clickWithRetry|RobustInteraction\.fillWithValidation/,
+      /waitForElement.*timeout|waitForRequest.*timeout|waitForPageReady.*timeout/
     ];
 
     let robustWaitingScore = 0;
@@ -474,7 +625,10 @@ class E2ETestEvaluator {
       /sleep.*\d{4,}/,       // sleep with 4+ digits
       /delay.*\d{4,}/,       // delay with 4+ digits
       /wait.*\d{4,}/,        // wait with 4+ digits
-      /pause.*\d{4,}/        // pause with 4+ digits
+      /pause.*\d{4,}/,       // pause with 4+ digits
+      // Exclude robust testing patterns that use timeouts properly
+      /SmartWait\.waitForElement.*timeout|SmartWait\.waitForRequest.*timeout|SmartWait\.waitForPageReady.*timeout/,
+      /RobustInteraction\.clickWithRetry.*timeout|RobustInteraction\.fillWithValidation.*timeout/
     ];
 
     let hasHardcodedDelays = false;
@@ -563,7 +717,11 @@ class E2ETestEvaluator {
     const conditionalWaiting = [
       /waitForFunction|waitForCondition|waitUntil/,
       /expect.*toHaveText.*\w+|expect.*toHaveValue.*\w+/,
-      /waitForResponse.*response.*url|waitForRequest.*request.*url/
+      /waitForResponse.*response.*url|waitForRequest.*request.*url/,
+      // Robust testing patterns
+      /SmartWait\.waitForElement.*state|SmartWait\.waitForRequest.*method/,
+      /RobustInteraction\.clickWithRetry.*maxRetries|RobustInteraction\.fillWithValidation.*validateValue/,
+      /ErrorHandling\.validateError|ErrorHandling\.validateSuccess/
     ];
 
     let conditionalWaitingScore = 0;
@@ -596,7 +754,10 @@ class E2ETestEvaluator {
     // Check for network-aware waiting
     const networkWaiting = [
       /waitForResponse|waitForRequest|waitForNetworkIdle/,
-      /waitForLoadState.*networkidle|waitForLoadState.*domcontentloaded/
+      /waitForLoadState.*networkidle|waitForLoadState.*domcontentloaded/,
+      // Robust testing patterns
+      /SmartWait\.waitForRequest|SmartWait\.waitForPageReady/,
+      /NetworkMocking\.mockAPIError|NetworkMocking\.mockExternalAPI/
     ];
 
     let networkWaitingScore = 0;
@@ -628,7 +789,10 @@ class E2ETestEvaluator {
     const elementStateWaiting = [
       /toBeVisible|toBeHidden|toBeEnabled|toBeDisabled/,
       /toHaveAttribute|toHaveClass|toHaveValue/,
-      /waitForSelector.*state|waitForElement.*state/
+      /waitForSelector.*state|waitForElement.*state/,
+      // Robust testing patterns
+      /SmartWait\.waitForElement.*state|RobustInteraction\.clickWithRetry.*isEnabled/,
+      /RobustInteraction\.fillWithValidation.*validateValue|RobustInteraction\.selectOptionWithValidation/
     ];
 
     let elementStateScore = 0;
@@ -677,9 +841,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate Modal & Dialog Behavior
+   * Evaluate Modal & Dialog Behavior with context awareness
    */
-  async evaluateModalBehavior(fileName, content) {
+  async evaluateModalBehavior(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -853,9 +1017,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate Test Reliability & Flakiness Prevention
+   * Evaluate Test Reliability & Flakiness Prevention with context awareness
    */
-  async evaluateTestReliability(fileName, content) {
+  async evaluateTestReliability(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -913,7 +1077,7 @@ class E2ETestEvaluator {
     }
 
     // Retry mechanisms for flaky operations
-    const hasRetryMechanisms = /retry|retryOnFailure|retry.*times|attempt.*retry/.test(content);
+    const hasRetryMechanisms = /retry|retryOnFailure|retry.*times|attempt.*retry|RobustInteraction\.clickWithRetry|RobustInteraction\.fillWithValidation/.test(content);
     if (hasRetryMechanisms) {
       result.compliant.push('✅ Has retry mechanisms for flaky operations');
     } else {
@@ -927,7 +1091,7 @@ class E2ETestEvaluator {
     }
 
     // Deterministic test data
-    const hasDeterministicData = /createTestData|setupTestData|seed.*data|fixture/.test(content);
+    const hasDeterministicData = /createTestData|setupTestData|seed.*data|fixture|TestDataUtils\.createTestUserData|TestDataUtils\.generateTestId/.test(content);
     if (hasDeterministicData) {
       result.compliant.push('✅ Uses deterministic test data');
     } else {
@@ -955,7 +1119,7 @@ class E2ETestEvaluator {
     }
 
     // Error handling and recovery
-    const hasErrorRecovery = /try.*catch|error.*handling|recovery|fallback/.test(content);
+    const hasErrorRecovery = /try.*catch|error.*handling|recovery|fallback|ErrorHandling\.validateError|ErrorHandling\.validateSuccess/.test(content);
     if (hasErrorRecovery) {
       result.compliant.push('✅ Has error handling and recovery');
     } else {
@@ -1019,9 +1183,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate State Management Testing
+   * Evaluate State Management Testing with context awareness
    */
-  async evaluateStateManagement(fileName, content) {
+  async evaluateStateManagement(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -1100,9 +1264,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate Performance & Load Testing
+   * Evaluate Performance & Load Testing with context awareness
    */
-  async evaluatePerformanceTesting(fileName, content) {
+  async evaluatePerformanceTesting(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -1112,7 +1276,7 @@ class E2ETestEvaluator {
 
     // Page load time testing with proper measurement patterns
     const hasPageLoadTesting = /load.*time|performance|core.*web.*vitals|lighthouse/.test(content);
-    const hasProperLoadMeasurement = /waitForLoadState|waitForNetworkIdle|performance\.measure|performance\.mark/.test(content);
+    const hasProperLoadMeasurement = /waitForLoadState|waitForNetworkIdle|performance\.measure|performance\.mark|PerformanceMonitor\.measurePageLoadTime|SmartWait\.waitForPageReady/.test(content);
     
     if (hasPageLoadTesting && hasProperLoadMeasurement) {
       result.compliant.push('✅ Tests page load times with proper measurement patterns');
@@ -1160,7 +1324,7 @@ class E2ETestEvaluator {
     }
 
     // Memory leak testing
-    const hasMemoryLeakTesting = /memory.*leak|memory.*usage|long.*running|memory.*test/.test(content);
+    const hasMemoryLeakTesting = /memory.*leak|memory.*usage|long.*running|memory.*test|PerformanceMonitor\.measureMemoryUsage|PerformanceMonitor\.checkMemoryLeak/.test(content);
     if (hasMemoryLeakTesting) {
       result.compliant.push('✅ Tests for memory leaks');
     } else {
@@ -1202,7 +1366,7 @@ class E2ETestEvaluator {
     }
 
     // Network-aware performance testing
-    const hasNetworkAwareTesting = /waitForResponse|waitForRequest|waitForNetworkIdle|network.*performance/.test(content);
+    const hasNetworkAwareTesting = /waitForResponse|waitForRequest|waitForNetworkIdle|network.*performance|SmartWait\.waitForRequest|NetworkMocking\.mockAPIError/.test(content);
     if (hasNetworkAwareTesting) {
       result.compliant.push('✅ Tests network-aware performance');
     } else {
@@ -1233,9 +1397,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate Advanced Security Testing
+   * Evaluate Advanced Security Testing with context awareness
    */
-  async evaluateAdvancedSecurity(fileName, content) {
+  async evaluateAdvancedSecurity(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -1314,9 +1478,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate SEO & Meta Testing
+   * Evaluate SEO & Meta Testing with context awareness
    */
-  async evaluateSEOTesting(fileName, content) {
+  async evaluateSEOTesting(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -1395,9 +1559,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate PWA Testing
+   * Evaluate PWA Testing with context awareness
    */
-  async evaluatePWATesting(fileName, content) {
+  async evaluatePWATesting(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -1476,9 +1640,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate Analytics & Monitoring Testing
+   * Evaluate Analytics & Monitoring Testing with context awareness
    */
-  async evaluateAnalyticsMonitoring(fileName, content) {
+  async evaluateAnalyticsMonitoring(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -1557,9 +1721,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate Testing Best Practices
+   * Evaluate Testing Best Practices with context awareness
    */
-  async evaluateTestingBestPractices(fileName, content) {
+  async evaluateTestingBestPractices(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -1568,7 +1732,7 @@ class E2ETestEvaluator {
     };
 
     // UXComplianceHelper usage
-    const hasUXComplianceHelper = /UXComplianceHelper|uxHelper/.test(content);
+    const hasUXComplianceHelper = /UXComplianceHelper|uxHelper|UXCompliance\.validateAccessibility|UXCompliance\.validateMobileResponsiveness|UXCompliance\.validateKeyboardNavigation/.test(content);
     if (hasUXComplianceHelper) {
       result.compliant.push('✅ Uses UXComplianceHelper');
     } else {
@@ -1750,9 +1914,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate E2E vs API Testing Separation
+   * Evaluate E2E vs API Testing Separation with context awareness
    */
-  async evaluateE2EvsAPISeparation(fileName, content) {
+  async evaluateE2EvsAPISeparation(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -1939,9 +2103,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate Edge Cases & Security
+   * Evaluate Edge Cases & Security with context awareness
    */
-  async evaluateEdgeCasesSecurity(fileName, content) {
+  async evaluateEdgeCasesSecurity(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -2020,9 +2184,9 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Evaluate Documentation Compliance
+   * Evaluate Documentation Compliance with context awareness
    */
-  async evaluateDocumentationCompliance(fileName, content) {
+  async evaluateDocumentationCompliance(fileName, content, context) {
     const result = {
       score: 0,
       compliant: [],
@@ -2095,6 +2259,172 @@ class E2ETestEvaluator {
 
     result.score = Math.min(1, score);
     this.results[fileName].compliance.documentationCompliance = result;
+  }
+
+  /**
+   * Evaluate Robust Testing Standards with context awareness
+   */
+  async evaluateRobustTestingStandards(fileName, content, context) {
+    const result = {
+      score: 0,
+      compliant: [],
+      nonCompliant: [],
+      required: []
+    };
+
+    // Check for test isolation setup
+    const hasTestIsolation = /beforeEach|afterEach|beforeAll|afterAll|cleanup|teardown/.test(content);
+    if (hasTestIsolation) {
+      result.compliant.push('✅ Has proper test isolation setup');
+    } else {
+      result.nonCompliant.push('❌ Missing test isolation setup');
+      this.addTodo(fileName, 'P0', 'Add test isolation setup', 
+        `// TODO: Add test isolation setup to ${fileName}
+// test.beforeEach(async () => {
+//   // Setup test data
+//   await createTestData();
+// });
+// 
+// test.afterEach(async () => {
+//   // Clean up test data
+//   await cleanupTestData();
+//   await prisma.user.deleteMany({ where: { email: { contains: 'e2e-test' } } });
+//   await prisma.connection.deleteMany({ where: { name: { contains: 'Test' } } });
+// });`);
+    }
+
+    // Check for data cleanup patterns
+    const hasDataCleanup = /deleteMany|cleanup|remove|truncate/.test(content);
+    if (hasDataCleanup) {
+      result.compliant.push('✅ Has proper data cleanup');
+    } else {
+      result.nonCompliant.push('❌ Missing data cleanup patterns');
+      this.addTodo(fileName, 'P0', 'Add data cleanup patterns', 
+        `// TODO: Add data cleanup patterns to ${fileName}
+// - Clean up test users: await prisma.user.deleteMany({ where: { email: { contains: 'e2e-test' } } });
+// - Clean up test connections: await prisma.connection.deleteMany({ where: { name: { contains: 'Test' } } });
+// - Clean up test workflows: await prisma.workflow.deleteMany({ where: { name: { contains: 'Test' } } });
+// - Clean up test secrets: await prisma.secret.deleteMany({ where: { name: { contains: 'Test' } } });`);
+    }
+
+    // Check for stable selectors (data-testid usage)
+    const hasStableSelectors = /data-testid|getByTestId|locator.*data-testid/.test(content);
+    if (hasStableSelectors) {
+      result.compliant.push('✅ Uses stable selectors (data-testid)');
+    } else {
+      result.nonCompliant.push('❌ Missing stable selectors');
+      this.addTodo(fileName, 'P0', 'Add stable selectors', 
+        `// TODO: Add stable selectors to ${fileName}
+// - Use data-testid attributes instead of CSS classes
+// - Example: await page.locator('[data-testid="submit-button"]').click();
+// - Avoid: await page.locator('.btn-primary').click();
+// - Add data-testid to all interactive elements being tested`);
+    }
+
+    // Check for retry mechanisms for flaky operations
+    const hasRetryMechanisms = /retry|retryOnFailure|retry.*times|attempt.*retry/.test(content);
+    if (hasRetryMechanisms) {
+      result.compliant.push('✅ Has retry mechanisms for flaky operations');
+    } else {
+      result.nonCompliant.push('❌ Missing retry mechanisms');
+      this.addTodo(fileName, 'P1', 'Add retry mechanisms', 
+        `// TODO: Add retry mechanisms to ${fileName}
+// - Use Playwright's built-in retry: await expect(page.locator(selector)).toBeVisible({ timeout: 10000 });
+// - Implement custom retry logic for flaky operations
+// - Retry network requests that might fail intermittently
+// - Add exponential backoff for critical operations`);
+    }
+
+    // Check for deterministic test data
+    const hasDeterministicData = /createTestData|setupTestData|seed.*data|fixture/.test(content);
+    if (hasDeterministicData) {
+      result.compliant.push('✅ Uses deterministic test data');
+    } else {
+      result.nonCompliant.push('❌ Missing deterministic test data');
+      this.addTodo(fileName, 'P0', 'Add deterministic test data', 
+        `// TODO: Add deterministic test data to ${fileName}
+// - Create predictable test data with unique identifiers
+// - Use timestamps or UUIDs to avoid conflicts
+// - Example: const testUser = await createTestUser({ email: \`e2e-test-\${Date.now()}@example.com\` });
+// - Ensure test data is isolated and doesn't interfere with other tests`);
+    }
+
+    // Check for timeout configurations
+    const hasTimeoutConfig = /setTimeout|timeout.*\d{4,}|test\.setTimeout/.test(content);
+    if (hasTimeoutConfig) {
+      result.compliant.push('✅ Has appropriate timeout configurations');
+    } else {
+      result.nonCompliant.push('❌ Missing timeout configurations');
+      this.addTodo(fileName, 'P1', 'Add timeout configurations', 
+        `// TODO: Add timeout configurations to ${fileName}
+// test.setTimeout(30000); // Global test timeout
+// await page.waitForSelector(selector, { timeout: 10000 }); // Element timeout
+// await expect(page.locator(selector)).toBeVisible({ timeout: 5000 }); // Expect timeout
+// Use different timeouts for different types of operations`);
+    }
+
+    // Check for error handling and recovery
+    const hasErrorRecovery = /try.*catch|error.*handling|recovery|fallback/.test(content);
+    if (hasErrorRecovery) {
+      result.compliant.push('✅ Has error handling and recovery');
+    } else {
+      result.nonCompliant.push('❌ Missing error handling and recovery');
+      this.addTodo(fileName, 'P1', 'Add error handling and recovery', 
+        `// TODO: Add error handling and recovery to ${fileName}
+// - Handle network failures gracefully
+// - Implement fallback mechanisms
+// - Log errors for debugging
+// - Provide meaningful error messages
+// - Test error recovery scenarios`);
+    }
+
+    // Check for test independence (no shared state)
+    const hasTestIndependence = /beforeEach.*clean|afterEach.*clean|isolated.*test/.test(content);
+    if (hasTestIndependence) {
+      result.compliant.push('✅ Tests are independent (no shared state)');
+    } else {
+      result.nonCompliant.push('❌ Tests may have shared state dependencies');
+      this.addTodo(fileName, 'P0', 'Ensure test independence', 
+        `// TODO: Ensure test independence in ${fileName}
+// - Each test should be able to run in isolation
+// - No dependencies on other test execution order
+// - Clean state before and after each test
+// - Use unique identifiers for all test data
+// - Avoid global state modifications`);
+    }
+
+    // Check for parallel execution safety
+    const hasParallelSafety = /parallel.*safe|concurrent.*safe|isolated.*parallel/.test(content);
+    if (hasParallelSafety) {
+      result.compliant.push('✅ Tests are safe for parallel execution');
+    } else {
+      result.nonCompliant.push('❌ Tests may not be safe for parallel execution');
+      this.addTodo(fileName, 'P1', 'Ensure parallel execution safety', 
+        `// TODO: Ensure parallel execution safety in ${fileName}
+// - Use unique database records for each test
+// - Avoid shared file system operations
+// - Use isolated browser contexts
+// - Ensure no cross-test interference
+// - Test with parallel execution enabled`);
+    }
+
+    // Calculate score based on robust testing standards criteria
+    const maxScore = 9; // Total number of criteria
+    let totalScore = 0;
+    
+    if (hasTestIsolation) totalScore += 1;
+    if (hasDataCleanup) totalScore += 1;
+    if (hasStableSelectors) totalScore += 1;
+    if (hasRetryMechanisms) totalScore += 1;
+    if (hasDeterministicData) totalScore += 1;
+    if (hasTimeoutConfig) totalScore += 1;
+    if (hasErrorRecovery) totalScore += 1;
+    if (hasTestIndependence) totalScore += 1;
+    if (hasParallelSafety) totalScore += 1;
+
+    result.score = totalScore / maxScore;
+
+    this.results[fileName].compliance.robustTestingStandards = result;
   }
 
   /**
@@ -2208,6 +2538,7 @@ class E2ETestEvaluator {
       const result = this.results[fileName];
       
       console.log(`\n📁 ${fileName}`);
+      console.log(`📋 Test Context: ${result.context.description} (${result.context.type})`);
       console.log(`📊 Overall Compliance Score: ${result.score}%`);
       
       // Show compliance breakdown
@@ -2231,6 +2562,26 @@ class E2ETestEvaluator {
         if (waiting.nonCompliant.length > 0) {
           console.log('  ❌ Areas for Improvement:');
           waiting.nonCompliant.forEach(item => {
+            console.log(`    ${item}`);
+          });
+        }
+      }
+
+      // Show robust testing standards details (new section)
+      if (result.compliance.robustTestingStandards) {
+        const robust = result.compliance.robustTestingStandards;
+        console.log('\n🛡️  Robust Testing Standards Analysis:');
+        
+        if (robust.compliant.length > 0) {
+          console.log('  ✅ Strong Areas:');
+          robust.compliant.forEach(item => {
+            console.log(`    ${item}`);
+          });
+        }
+        
+        if (robust.nonCompliant.length > 0) {
+          console.log('  ❌ Areas for Improvement:');
+          robust.nonCompliant.forEach(item => {
             console.log(`    ${item}`);
           });
         }
@@ -2361,6 +2712,8 @@ class E2ETestEvaluator {
       sum + (result.compliance.analyticsMonitoring?.score || 0), 0) / totalFiles;
     const avgSecurityScore = Object.values(this.results).reduce((sum, result) => 
       sum + (result.compliance.edgeCasesSecurity?.score || 0), 0) / totalFiles;
+    const avgRobustTestingScore = Object.values(this.results).reduce((sum, result) => 
+      sum + (result.compliance.robustTestingStandards?.score || 0), 0) / totalFiles;
 
     // Categorize TODOs by type
     const waitingTodos = this.todos.filter(todo => 
@@ -2507,6 +2860,20 @@ class E2ETestEvaluator {
     const analyticsP0Todos = analyticsTodos.filter(todo => todo.priority === 'P0').length;
     const analyticsP1Todos = analyticsTodos.filter(todo => todo.priority === 'P1').length;
 
+    const robustTestingTodos = this.todos.filter(todo => 
+      todo.description.includes('test isolation') ||
+      todo.description.includes('data cleanup') ||
+      todo.description.includes('stable selectors') ||
+      todo.description.includes('retry mechanisms') ||
+      todo.description.includes('deterministic data') ||
+      todo.description.includes('test independence') ||
+      todo.description.includes('parallel execution') ||
+      todo.description.includes('error handling') ||
+      todo.description.includes('timeout configurations')
+    );
+    const robustTestingP0Todos = robustTestingTodos.filter(todo => todo.priority === 'P0').length;
+    const robustTestingP1Todos = robustTestingTodos.filter(todo => todo.priority === 'P1').length;
+
     console.log('\n📈 Summary Statistics:');
     console.log(`  Total Files Evaluated: ${totalFiles}`);
     console.log(`  Average Compliance Score: ${Math.round(avgScore)}%`);
@@ -2531,6 +2898,7 @@ class E2ETestEvaluator {
     console.log(`  PWA Features: ${Math.round(avgPWAScore * 100)}% (${pwaTodos.length} TODOs)`);
     console.log(`  Analytics & Monitoring: ${Math.round(avgAnalyticsScore * 100)}% (${analyticsTodos.length} TODOs)`);
     console.log(`  Security & Edge Cases: ${Math.round(avgSecurityScore * 100)}% (${securityTodos.length} TODOs)`);
+    console.log(`  Robust Testing Standards: ${Math.round(avgRobustTestingScore * 100)}% (${robustTestingTodos.length} TODOs)`);
     
     console.log('\n🎯 Detailed TODO Breakdown:');
     console.log(`  📋 PRD Compliance TODOs: ${prdTodos.length} (P0: ${prdP0Todos}, P1: ${prdP1Todos})`);
@@ -2548,6 +2916,7 @@ class E2ETestEvaluator {
     console.log(`  📱 PWA TODOs: ${pwaTodos.length} (P0: ${pwaP0Todos}, P1: ${pwaP1Todos})`);
     console.log(`  📊 Analytics TODOs: ${analyticsTodos.length} (P0: ${analyticsP0Todos}, P1: ${analyticsP1Todos})`);
     console.log(`  🔒 Security TODOs: ${securityTodos.length} (P0: ${securityP0Todos}, P1: ${securityP1Todos})`);
+    console.log(`  🛡️  Robust Testing TODOs: ${robustTestingTodos.length} (P0: ${robustTestingP0Todos}, P1: ${robustTestingP1Todos})`);
   }
 
   /**

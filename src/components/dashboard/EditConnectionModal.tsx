@@ -137,13 +137,18 @@ export default function EditConnectionModal({
       console.log('API response:', response);
       
       if (response.success) {
+        console.log('🔄 Connection update successful, setting submit success');
         setSubmitSuccess(true);
-        // Show success message briefly before closing
+        // Close modal after a delay to ensure success callback completes
+        console.log('🔄 Calling onSuccess callback');
+        onSuccess();
+        console.log('🔄 Scheduling modal close in 1000ms');
         setTimeout(() => {
-          onSuccess();
+          console.log('🔄 Executing modal close callback');
           onClose(); // Ensure modal closes
-        }, 1500);
+        }, 1000); // Delay to ensure success callback completes
       } else {
+        console.log('🔄 Connection update failed:', response.error);
         setErrorMessage(response.error || 'Failed to update connection');
       }
     } catch (error) {

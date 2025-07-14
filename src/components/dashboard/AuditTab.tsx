@@ -73,9 +73,8 @@ export default function AuditTab({ refreshTrigger = 0, liveRegion }: AuditTabPro
     setIsRefreshing(true);
     setError(null);
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
       const response = await fetch('/api/audit-logs', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        credentials: 'include' // Include cookies for authentication
       });
       if (!response.ok) {
         throw new Error(`Failed to load audit logs: ${response.statusText}`);

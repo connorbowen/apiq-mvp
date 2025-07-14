@@ -31,15 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       scope 
     } = req.query;
 
-    // Add debug logging
-    console.log('🔍 OAuth2 Authorization Debug:', {
-      provider,
-      apiConnectionId,
-      clientId: clientId ? '***' : undefined,
-      redirectUri,
-      scope,
-      userAgent: req.headers['user-agent']
-    });
+
 
     // Validate required parameters
     if (!apiConnectionId || typeof apiConnectionId !== 'string') {
@@ -122,12 +114,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       config
     );
 
-    // Add debug logging for the generated URL
-    console.log('🔗 Generated OAuth2 Authorization URL:', {
-      provider,
-      authorizationUrl,
-      isTestProvider: provider === 'test'
-    });
+
 
     // Log the OAuth2 authorization attempt
     await prisma.auditLog.create({
@@ -146,12 +133,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // For test provider, redirect directly to the test OAuth2 server
     if (provider === 'test') {
-      console.log('🔄 Redirecting to test OAuth2 provider:', authorizationUrl);
-      res.redirect(authorizationUrl);
+      return res.redirect(authorizationUrl);
     } else {
       // For other providers, send a JSON response with the redirect URL
-      console.log('📤 Sending JSON response for non-test provider');
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         data: {
           redirectUrl: authorizationUrl
@@ -160,7 +145,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
   } catch (error) {
-    console.error('❌ OAuth2 authorization error:', error);
 
     if (error instanceof ApplicationError) {
       return res.status(error.status).json({

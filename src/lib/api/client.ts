@@ -128,20 +128,39 @@ class ApiClient {
   }
 
   private async request<T>(config: any): Promise<ApiResponse<T>> {
+    console.log('🔍 DEBUG: apiClient.request called');
+    console.log('🔍 DEBUG: Request config:', {
+      method: config.method,
+      url: `${this.baseURL}${config.url}`,
+      hasData: !!config.data,
+      dataKeys: config.data ? Object.keys(config.data) : [],
+      headers: config.headers
+    });
+    
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
       const response: AxiosResponse<ApiResponse<T>> = await axios({
         ...config,
         url: `${this.baseURL}${config.url}`,
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
           ...config.headers,
         },
+        withCredentials: true, // Include cookies in requests
       });
+      
+      console.log('🔍 DEBUG: API request successful');
+      console.log('🔍 DEBUG: Response status:', response.status);
+      console.log('🔍 DEBUG: Response data:', response.data);
+      
       return response.data;
     } catch (error: any) {
-      console.error('API request failed:', error);
+      console.error('🔍 DEBUG: API request failed');
+      console.error('🔍 DEBUG: Error type:', typeof error);
+      console.error('🔍 DEBUG: Error message:', error.message);
+      console.error('🔍 DEBUG: Error response status:', error.response?.status);
+      console.error('🔍 DEBUG: Error response data:', error.response?.data);
+      console.error('🔍 DEBUG: Full error:', error);
+      
       return {
         success: false,
         error: error.response?.data?.error || error.message || 'Network error',
@@ -151,61 +170,76 @@ class ApiClient {
 
   // TODO: [SECRETS-FIRST-REFACTOR] Update createConnection to handle secrets
   async createConnection(data: CreateConnectionRequest): Promise<ApiResponse<{ connection: ApiConnection }>> {
+    console.log('🔍 DEBUG: apiClient.createConnection called');
+    console.log('🔍 DEBUG: Request data:', {
+      name: data.name,
+      description: data.description,
+      baseUrl: data.baseUrl,
+      authType: data.authType,
+      hasAuthConfig: !!data.authConfig,
+      authConfigKeys: Object.keys(data.authConfig || {}),
+      hasDocumentationUrl: !!data.documentationUrl
+    });
+    
     // TODO: Implement secret-first connection creation
     // 1. Create secrets based on auth type
     // 2. Create connection with secret references
     // 3. Handle rollback on failure
-    return this.request({
+    
+    const response = await this.request<{ connection: ApiConnection }>({
       method: 'POST',
       url: '/api/connections',
       data,
     });
+    
+    console.log('🔍 DEBUG: apiClient.createConnection response:', response);
+    return response;
   }
 
   // TODO: [SECRETS-FIRST-REFACTOR] Add secret management methods
-  // async createSecret(data: CreateSecretRequest): Promise<ApiResponse<{ secret: Secret }>> {
-  //   return this.request({
-  //     method: 'POST',
-  //     url: '/api/secrets',
-  //     data,
-  //   });
-  // }
+  async createSecret(data: any): Promise<ApiResponse<{ secret: any }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/secrets',
+      data,
+    });
+  }
 
-  // async getSecrets(): Promise<ApiResponse<{ secrets: Secret[] }>> {
-  //   return this.request({
-  //     method: 'GET',
-  //     url: '/api/secrets',
-  //   });
-  // }
+  async getSecrets(): Promise<ApiResponse<{ secrets: any[] }>> {
+    return this.request({
+      method: 'GET',
+      url: '/api/secrets',
+    });
+  }
 
-  // async getSecret(id: string): Promise<ApiResponse<{ secret: Secret }>> {
-  //   return this.request({
-  //     method: 'GET',
-  //     url: `/api/secrets/${id}`,
-  //   });
-  // }
+  async getSecret(id: string): Promise<ApiResponse<{ secret: any }>> {
+    return this.request({
+      method: 'GET',
+      url: `/api/secrets/${id}`,
+    });
+  }
 
-  // async updateSecret(id: string, data: Partial<CreateSecretRequest>): Promise<ApiResponse<{ secret: Secret }>> {
-  //   return this.request({
-  //     method: 'PUT',
-  //     url: `/api/secrets/${id}`,
-  //     data,
-  //   });
-  // }
+  async updateSecret(id: string, data: any): Promise<ApiResponse<{ secret: any }>> {
+    return this.request({
+      method: 'PUT',
+      url: `/api/secrets/${id}`,
+      data,
+    });
+  }
 
-  // async deleteSecret(id: string): Promise<ApiResponse<void>> {
-  //   return this.request({
-  //     method: 'DELETE',
-  //     url: `/api/secrets/${id}`,
-  //   });
-  // }
+  async deleteSecret(id: string): Promise<ApiResponse<void>> {
+    return this.request({
+      method: 'DELETE',
+      url: `/api/secrets/${id}`,
+    });
+  }
 
-  // async rotateSecret(id: string): Promise<ApiResponse<{ secret: Secret }>> {
-  //   return this.request({
-  //     method: 'POST',
-  //     url: `/api/secrets/${id}/rotate`,
-  //   });
-  // }
+  async rotateSecret(id: string): Promise<ApiResponse<{ secret: any }>> {
+    return this.request({
+      method: 'POST',
+      url: `/api/secrets/${id}/rotate`,
+    });
+  }
 
   // TODO: [SECRETS-FIRST-REFACTOR] Update test connection to use secrets
   async testConnectionConfig(config: any): Promise<ApiResponse<any>> {
@@ -214,6 +248,46 @@ class ApiClient {
       method: 'POST',
       url: '/api/connections/test-config',
       data: config,
+    });
+  }
+
+  // Authentication
+  async login(email: string, password: string): Promise<ApiResponse<{ user: any; accessToken: string; refreshToken: string; expiresIn: number }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/auth/login',
+      data: { email, password },
+    });
+  }
+
+  async register(email: string, name: string, password: string): Promise<ApiResponse<{ user: any }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/auth/register',
+      data: { email, name, password },
+    });
+  }
+
+  async logout(): Promise<ApiResponse<void>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/auth/logout',
+    });
+  }
+
+  async requestPasswordReset(email: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/auth/forgot-password',
+      data: { email },
+    });
+  }
+
+  async resetPassword(token: string, password: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/auth/reset-password',
+      data: { token, password },
     });
   }
 
@@ -252,6 +326,27 @@ class ApiClient {
     return this.request({
       method: 'DELETE',
       url: `/api/connections/${id}`,
+    });
+  }
+
+  async testConnection(id: string): Promise<ApiResponse<{ status: string; message: string; responseTime?: number; endpoints?: number }>> {
+    return this.request({
+      method: 'POST',
+      url: `/api/connections/${id}/test`,
+    });
+  }
+
+  async getConnectionEndpoints(id: string): Promise<ApiResponse<{ endpoints: any[] }>> {
+    return this.request({
+      method: 'GET',
+      url: `/api/connections/${id}/endpoints`,
+    });
+  }
+
+  async refreshConnectionSpec(id: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request({
+      method: 'POST',
+      url: `/api/connections/${id}/refresh`,
     });
   }
 
@@ -315,6 +410,76 @@ class ApiClient {
     return this.request({
       method: 'POST',
       url: '/api/admin/rotate-master-key',
+    });
+  }
+
+  // Workflow execution management
+  async getExecutionStatus(executionId: string): Promise<ApiResponse<any>> {
+    return this.request({
+      method: 'GET',
+      url: `/api/workflows/executions/${executionId}/status`,
+    });
+  }
+
+  async pauseExecution(executionId: string): Promise<ApiResponse<any>> {
+    return this.request({
+      method: 'POST',
+      url: `/api/workflows/executions/${executionId}/pause`,
+    });
+  }
+
+  async resumeExecution(executionId: string): Promise<ApiResponse<any>> {
+    return this.request({
+      method: 'POST',
+      url: `/api/workflows/executions/${executionId}/resume`,
+    });
+  }
+
+  async cancelExecution(executionId: string): Promise<ApiResponse<any>> {
+    return this.request({
+      method: 'POST',
+      url: `/api/workflows/executions/${executionId}/cancel`,
+    });
+  }
+
+  // OAuth2 flow methods
+  async initiateOAuth2Flow(connectionId: string, provider: string, clientId: string, clientSecret: string, redirectUri: string, scope?: string): Promise<string> {
+    const params = new URLSearchParams({
+      apiConnectionId: connectionId,
+      provider,
+      clientId,
+      clientSecret,
+      redirectUri,
+      ...(scope && { scope }),
+    });
+
+    const response = await this.request<{ redirectUrl: string }>({
+      method: 'GET',
+      url: `/api/oauth/authorize?${params.toString()}`,
+    });
+
+    if (!response.success || !response.data?.redirectUrl) {
+      throw new Error('Failed to initiate OAuth2 flow');
+    }
+
+    return response.data.redirectUrl;
+  }
+
+  async refreshOAuth2Token(connectionId: string, provider: string): Promise<ApiResponse<any>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/oauth/refresh',
+      data: {
+        apiConnectionId: connectionId,
+        provider,
+      },
+    });
+  }
+
+  async getOAuth2Token(connectionId: string): Promise<ApiResponse<{ accessToken: string; tokenType: string }>> {
+    return this.request({
+      method: 'GET',
+      url: `/api/oauth/token?apiConnectionId=${connectionId}`,
     });
   }
 }

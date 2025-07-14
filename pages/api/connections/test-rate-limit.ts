@@ -90,27 +90,21 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
 
     switch (provider.toLowerCase()) {
       case 'github':
-        // Simulate GitHub rate limiting (5000 requests per hour)
-        if (Math.random() < 0.1) { // 10% chance of rate limit
-          providerRateLimited = true;
-          providerError = 'GitHub API rate limit exceeded. Please try again later or contact support for assistance.';
-        }
+        // For testing, always simulate GitHub rate limiting
+        providerRateLimited = true;
+        providerError = 'GitHub API rate limit exceeded. Please try again later or contact support for assistance.';
         break;
 
       case 'google':
-        // Simulate Google rate limiting (10000 requests per 100 seconds)
-        if (Math.random() < 0.05) { // 5% chance of rate limit
-          providerRateLimited = true;
-          providerError = 'Google API quota exceeded. Please try again later or contact support for assistance.';
-        }
+        // For testing, always simulate Google rate limiting
+        providerRateLimited = true;
+        providerError = 'Google API quota exceeded. Please try again later or contact support for assistance.';
         break;
 
       case 'slack':
-        // Simulate Slack rate limiting (50 requests per minute)
-        if (Math.random() < 0.15) { // 15% chance of rate limit
-          providerRateLimited = true;
-          providerError = 'Slack API rate limit exceeded. Please try again later or contact support for assistance.';
-        }
+        // For testing, always simulate Slack rate limiting
+        providerRateLimited = true;
+        providerError = 'Slack API rate limit exceeded. Please try again later or contact support for assistance.';
         break;
 
       default:

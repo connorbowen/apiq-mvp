@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { pauseExecution, resumeExecution, cancelExecution } from '../../../../../lib/api-client';
+import { apiClient } from '../../../../../lib/api/client';
 
 interface ExecutionControlsProps {
   executionId: string;
@@ -20,13 +20,13 @@ export default function ExecutionControls({ executionId, status, workflowId }: E
     try {
       switch (actionType) {
         case 'pause':
-          await pauseExecution(executionId);
+          await apiClient.pauseExecution(executionId);
           break;
         case 'resume':
-          await resumeExecution(executionId);
+          await apiClient.resumeExecution(executionId);
           break;
         case 'cancel':
-          await cancelExecution(executionId);
+          await apiClient.cancelExecution(executionId);
           break;
       }
       

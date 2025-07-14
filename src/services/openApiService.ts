@@ -2,6 +2,18 @@ import axios, { AxiosResponse } from 'axios';
 import { openApiCache } from '../utils/openApiCache';
 import logger from '../utils/logger';
 
+// TODO: [P1.5-OPENAPI-DISCOVERY] Add OpenAPI auto-discovery functionality
+// - Add discoverOpenApiSpec(baseUrl: string) method
+// - Add common path discovery logic (/swagger.json, /openapi.json, etc.)
+// - Add parallel requests to common paths for faster discovery
+// - Add content-type validation for discovered specs
+// - Add timeout handling to prevent long waits
+// - Add caching of successful discoveries
+// - Add fallback to manual URL entry if auto-discovery fails
+// - Add discovery attempt logging for debugging
+// - Add validation of discovered specs before returning
+// - Add error handling for network timeouts and invalid responses
+
 export interface OpenApiFetchResult {
   success: boolean;
   spec?: any;

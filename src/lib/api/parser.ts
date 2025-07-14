@@ -3,6 +3,15 @@ import crypto from 'crypto';
 import axios from 'axios';
 import { logError, logInfo } from '../../utils/logger';
 
+// TODO: [P1.5-OPENAPI-DISCOVERY] Add OpenAPI auto-discovery validation
+// - Add validateDiscoveredSpec(specData: any, url: string) method
+// - Add content-type validation for discovered specs
+// - Add basic structure validation before full parsing
+// - Add timeout handling for discovery validation
+// - Add error handling for invalid discovered specs
+// - Add logging for discovery validation attempts
+// - Add fallback validation for non-standard spec formats
+
 export interface ParsedOpenApiSpec {
   spec: any;
   rawSpec: string;

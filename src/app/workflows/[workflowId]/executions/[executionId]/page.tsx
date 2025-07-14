@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { getExecutionStatus } from '../../../../../lib/api-client';
+import { apiClient } from '../../../../../lib/api/client';
 import ExecutionControls from './ExecutionControls';
 import ExecutionLogs from './ExecutionLogs';
 import ExecutionProgress from './ExecutionProgress';
@@ -14,7 +14,7 @@ interface ExecutionDetailsPageProps {
 
 async function getExecutionData(executionId: string) {
   try {
-    const response = await getExecutionStatus(executionId);
+    const response = await apiClient.getExecutionStatus(executionId);
     if (!response.success) {
       throw new Error(response.error || 'Failed to fetch execution status');
     }

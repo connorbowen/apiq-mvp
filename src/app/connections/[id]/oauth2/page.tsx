@@ -16,9 +16,14 @@ export default function OAuth2SetupPage() {
   const params = useParams();
   const connectionId = params?.id as string;
 
-  const checkAuth = useCallback(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
+  const checkAuth = useCallback(async () => {
+    try {
+      const userResponse = await apiClient.getCurrentUser();
+      if (!userResponse.success) {
+        router.push('/login');
+      }
+    } catch (error) {
+      console.error('Failed to verify authentication:', error);
       router.push('/login');
     }
   }, [router]);
@@ -50,9 +55,12 @@ export default function OAuth2SetupPage() {
   }, []);
 
   useEffect(() => {
-    checkAuth();
-    loadConnection();
-    loadProviders();
+    const initialize = async () => {
+      await checkAuth();
+      loadConnection();
+      loadProviders();
+    };
+    initialize();
   }, [connectionId, checkAuth, loadConnection, loadProviders]);
 
   // Handle URL parameters for success/error messages

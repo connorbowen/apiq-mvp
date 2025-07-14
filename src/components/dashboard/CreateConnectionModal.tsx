@@ -12,6 +12,18 @@ import { apiClient, CreateConnectionRequest } from '../../lib/api/client';
 // - Add validation for secret creation
 // - Consider adding secret preview/confirmation step
 
+// TODO: [P1.5-OPENAPI-DISCOVERY] Add OpenAPI auto-discovery feature
+// - Add common path discovery (/swagger.json, /openapi.json, etc.)
+// - Add "Auto-discover" button in CreateConnectionModal
+// - Add discovery logic in openApiService
+// - Add validation and error handling for discovered specs
+// - Add E2E tests for auto-discovery functionality
+// - Add caching of successful discoveries
+// - Add timeout and fallback handling
+// - Add loading state during discovery process
+// - Add auto-fill of discovered URL in form
+// - Add success/error feedback for discovery attempts
+
 interface CreateConnectionModalProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -59,9 +71,9 @@ const OAUTH2_PROVIDERS = {
   },
   test: {
     name: 'Test OAuth2 Provider',
-    baseUrl: 'http://localhost:3000/api/test-oauth2',
-    authUrl: 'http://localhost:3000/api/test-oauth2/authorize',
-    tokenUrl: 'http://localhost:3000/api/test-oauth2/token',
+    baseUrl: 'https://api.test.com',
+    authUrl: 'https://api.test.com/oauth/authorize',
+    tokenUrl: 'https://api.test.com/oauth/token',
     defaultScopes: 'read write',
     description: 'Test OAuth2 provider for E2E testing'
   },
@@ -143,6 +155,13 @@ export default function CreateConnectionModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    console.info('[modal] mounted');
+    return () => {
+      console.info('[modal] unmounted');
+    };
+  }, []);
+
   // Auto-focus the name input when modal opens
   useEffect(() => {
     nameInputRef.current?.focus();
@@ -208,7 +227,8 @@ export default function CreateConnectionModal({
   // - Update connection to reference secret
   // - Add rollback if connection creation fails
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('Form submission triggered');
+    console.info('[modal] Form submission triggered');
+    console.info('[modal] Form data:', formData);
     e.preventDefault();
     setIsSubmitting(true); // Move to the start
     
@@ -220,6 +240,7 @@ export default function CreateConnectionModal({
     const now = Date.now();
     const lastSubmission = (window as any).lastConnectionSubmission || 0;
     if (now - lastSubmission < 1000) { // 1 second rate limit
+      console.log('🔍 DEBUG: Rate limit hit, last submission was', now - lastSubmission, 'ms ago');
       setErrorMessage('Rate limit exceeded. Please wait before trying again.');
       onError('Rate limit exceeded. Please wait before trying again.');
       setIsSubmitting(false); // Reset immediately
@@ -234,33 +255,103 @@ export default function CreateConnectionModal({
       (window as any).lastRateLimitReset = now;
     }
 
-    // TODO: [SECRETS-FIRST-REFACTOR] Implement secret-first submission
-    // try {
-    //   // Step 1: Create secret(s) based on auth type
-    //   const secretIds = await createSecretsForConnection(formData);
-    //   
-    //   // Step 2: Create connection with secret references
-    //   const connectionData = {
-    //     ...formData,
-    //     secretIds,
-    //     authConfig: { secretReferences: secretIds } // No longer store credentials directly
-    //   };
-    //   
-    //   const response = await apiClient.createConnection(connectionData);
-    //   
-    //   if (response.success) {
-    //     setSubmitSuccess(true);
-    //     onSuccess();
-    //   } else {
-    //     // Rollback: delete created secrets if connection fails
-    //     await rollbackSecrets(secretIds);
-    //     throw new Error(response.error);
-    //   }
-    // } catch (error) {
-    //   handleSubmissionError(error);
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
+    try {
+      console.log('🔍 DEBUG: Starting connection creation process');
+      
+      // TODO: [SECRETS-FIRST-REFACTOR] Implement secret-first submission
+      // For now, use the current direct credential storage approach
+      
+      // Prepare authConfig based on auth type
+      const authConfig: any = {};
+      
+      console.log('🔍 DEBUG: Preparing authConfig for authType:', formData.authType);
+      
+      switch (formData.authType) {
+        case 'API_KEY':
+          authConfig.apiKey = formData.credentials.apiKey;
+          console.log('🔍 DEBUG: API_KEY authConfig prepared:', { hasApiKey: !!authConfig.apiKey });
+          break;
+        case 'BEARER_TOKEN':
+          authConfig.bearerToken = formData.credentials.bearerToken;
+          console.log('🔍 DEBUG: BEARER_TOKEN authConfig prepared:', { hasBearerToken: !!authConfig.bearerToken });
+          break;
+        case 'BASIC_AUTH':
+          authConfig.username = formData.credentials.username;
+          authConfig.password = formData.credentials.password;
+          console.log('🔍 DEBUG: BASIC_AUTH authConfig prepared:', { hasUsername: !!authConfig.username, hasPassword: !!authConfig.password });
+          break;
+        case 'OAUTH2':
+          authConfig.clientId = formData.credentials.clientId;
+          authConfig.clientSecret = formData.credentials.clientSecret;
+          authConfig.redirectUri = formData.credentials.redirectUri;
+          authConfig.scopes = formData.credentials.scopes;
+          if (formData.provider) {
+            authConfig.provider = formData.provider;
+          }
+          console.log('🔍 DEBUG: OAUTH2 authConfig prepared:', { 
+            hasClientId: !!authConfig.clientId, 
+            hasClientSecret: !!authConfig.clientSecret,
+            hasRedirectUri: !!authConfig.redirectUri,
+            hasScopes: !!authConfig.scopes,
+            provider: authConfig.provider
+          });
+          break;
+      }
+      
+      const connectionData = {
+        name: formData.name,
+        description: formData.description,
+        baseUrl: formData.baseUrl,
+        authType: formData.authType,
+        authConfig: authConfig,
+        documentationUrl: formData.openApiUrl || undefined
+      };
+      
+      console.log('🔍 DEBUG: Final connection data to send:', {
+        name: connectionData.name,
+        description: connectionData.description,
+        baseUrl: connectionData.baseUrl,
+        authType: connectionData.authType,
+        hasAuthConfig: !!connectionData.authConfig,
+        authConfigKeys: Object.keys(connectionData.authConfig || {}),
+        hasDocumentationUrl: !!connectionData.documentationUrl
+      });
+      
+      console.info('[modal] About to call apiClient.createConnection');
+      const response = await apiClient.createConnection(connectionData);
+      console.info('[modal] apiClient.createConnection response:', response);
+      
+      if (response.success) {
+        console.info('[modal] Connection creation successful!');
+        console.info('[modal] Response data:', response.data);
+        setSubmitSuccess(true);
+        console.info('[modal] Calling onSuccess callback');
+        onSuccess();
+        // Close modal after a delay to ensure success callback completes
+        console.info('[modal] Scheduling modal close in 1000ms');
+        setTimeout(() => {
+          console.info('[modal] Executing modal close callback');
+          onClose();
+        }, 1000); // Delay to ensure success callback completes
+      } else {
+        console.info('[modal] Connection creation failed!');
+        console.info('[modal] Error response:', response);
+        console.info('[modal] Error message:', response.error);
+        console.info('[modal] Error code:', response.code);
+        setErrorMessage(response.error || 'Failed to create connection');
+        onError(response.error || 'Failed to create connection');
+      }
+    } catch (error: any) {
+      console.log('🔍 DEBUG: Exception caught in handleSubmit');
+      console.log('🔍 DEBUG: Error type:', typeof error);
+      console.log('🔍 DEBUG: Error message:', error.message);
+      console.log('🔍 DEBUG: Error stack:', error.stack);
+      console.log('🔍 DEBUG: Full error object:', error);
+      handleSubmissionError(error);
+    } finally {
+      console.log('🔍 DEBUG: Setting isSubmitting to false');
+      setIsSubmitting(false);
+    }
   };
 
   // TODO: [SECRETS-FIRST-REFACTOR] Add secret creation helper function
@@ -284,41 +375,40 @@ export default function CreateConnectionModal({
   //         name: `${connectionData.name} Bearer Token`,
   //         type: 'BEARER_TOKEN',
   //         value: connectionData.credentials.bearerToken,
-  //         description: `Bearer token for ${connectionData.name} connection`
+  //         description: `Bearer token for ${connectionData.name} connection`,
+  //         connectionId: null
   //       });
   //       secretIds.push(bearerSecret.id);
   //       break;
   //       
   //     case 'BASIC_AUTH':
-  //       const usernameSecret = await apiClient.createSecret({
-  //         name: `${connectionData.name} Username`,
-  //         type: 'BASIC_AUTH_USERNAME',
-  //         value: connectionData.credentials.username,
-  //         description: `Username for ${connectionData.name} connection`
+  //       const basicAuthSecret = await apiClient.createSecret({
+  //         name: `${connectionData.name} Basic Auth`,
+  //         type: 'BASIC_AUTH',
+  //         value: JSON.stringify({
+  //           username: connectionData.credentials.username,
+  //           password: connectionData.credentials.password
+  //         }),
+  //         description: `Basic auth credentials for ${connectionData.name} connection`,
+  //         connectionId: null
   //       });
-  //       const passwordSecret = await apiClient.createSecret({
-  //         name: `${connectionData.name} Password`,
-  //         type: 'BASIC_AUTH_PASSWORD',
-  //         value: connectionData.credentials.password,
-  //         description: `Password for ${connectionData.name} connection`
-  //       });
-  //       secretIds.push(usernameSecret.id, passwordSecret.id);
+  //       secretIds.push(basicAuthSecret.id);
   //       break;
   //       
   //     case 'OAUTH2':
-  //       const clientIdSecret = await apiClient.createSecret({
-  //         name: `${connectionData.name} Client ID`,
-  //         type: 'OAUTH2_CLIENT_ID',
-  //         value: connectionData.credentials.clientId,
-  //         description: `OAuth2 Client ID for ${connectionData.name}`
+  //       const oauth2Secret = await apiClient.createSecret({
+  //         name: `${connectionData.name} OAuth2 Credentials`,
+  //         type: 'OAUTH2',
+  //         value: JSON.stringify({
+  //           clientId: connectionData.credentials.clientId,
+  //           clientSecret: connectionData.credentials.clientSecret,
+  //           redirectUri: connectionData.credentials.redirectUri,
+  //           scopes: connectionData.credentials.scopes
+  //         }),
+  //         description: `OAuth2 credentials for ${connectionData.name} connection`,
+  //         connectionId: null
   //       });
-  //       const clientSecretSecret = await apiClient.createSecret({
-  //         name: `${connectionData.name} Client Secret`,
-  //         type: 'OAUTH2_CLIENT_SECRET',
-  //         value: connectionData.credentials.clientSecret,
-  //         description: `OAuth2 Client Secret for ${connectionData.name}`
-  //       });
-  //       secretIds.push(clientIdSecret.id, clientSecretSecret.id);
+  //       secretIds.push(oauth2Secret.id);
   //       break;
   //   }
   //   
@@ -335,6 +425,30 @@ export default function CreateConnectionModal({
   //     }
   //   }
   // };
+
+  // Error handling function for consistent error management
+  const handleSubmissionError = (error: any) => {
+    console.error('Connection creation error:', error);
+    
+    let errorMessage = 'An unexpected error occurred while creating the connection';
+    
+    if (error.response?.status === 429) {
+      errorMessage = 'Rate limit exceeded. Please wait before trying again.';
+    } else if (error.response?.status === 400) {
+      errorMessage = error.response.data?.error || 'Invalid connection data provided';
+    } else if (error.response?.status === 401) {
+      errorMessage = 'Authentication required. Please log in again.';
+    } else if (error.response?.status === 403) {
+      errorMessage = 'You do not have permission to create connections.';
+    } else if (error.response?.status >= 500) {
+      errorMessage = 'Server error. Please try again later.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    setErrorMessage(errorMessage);
+    onError(errorMessage);
+  };
 
   // TODO: [SECRETS-FIRST-REFACTOR] Update test connection to use secrets
   const handleTestConnection = async () => {
@@ -366,6 +480,40 @@ export default function CreateConnectionModal({
   // Helper function to get field error state
   const getFieldErrorState = (fieldName: string) => {
     return fieldErrors[fieldName] ? 'error' : 'default';
+  };
+
+  // Helper function to sanitize input and prevent XSS
+  const sanitizeInput = (input: string): string => {
+    // Remove script tags and other potentially dangerous content
+    return input
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+      .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '')
+      .trim();
+  };
+
+  // Helper function to handle input changes with sanitization
+  const handleInputChange = (field: string, value: string) => {
+    const sanitizedValue = sanitizeInput(value);
+    setFormData(prev => ({
+      ...prev,
+      [field]: sanitizedValue
+    }));
+  };
+
+  // Helper function to handle credentials input changes with sanitization
+  const handleCredentialsChange = (field: string, value: string) => {
+    const sanitizedValue = sanitizeInput(value);
+    setFormData(prev => ({
+      ...prev,
+      credentials: {
+        ...prev.credentials,
+        [field]: sanitizedValue
+      }
+    }));
   };
 
   return (
@@ -457,7 +605,7 @@ export default function CreateConnectionModal({
                     aria-describedby={fieldErrors.name ? 'name-error' : undefined}
                     aria-label="Connection name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
                     className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                       fieldErrors.name 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -477,7 +625,7 @@ export default function CreateConnectionModal({
                     data-testid="connection-description-input"
                     aria-label="Connection description"
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Optional description of this connection"
                     rows={3}
@@ -496,7 +644,7 @@ export default function CreateConnectionModal({
                     aria-invalid={fieldErrors.baseUrl ? 'true' : 'false'}
                     aria-describedby={fieldErrors.baseUrl ? 'baseUrl-error' : undefined}
                     value={formData.baseUrl}
-                    onChange={(e) => setFormData({ ...formData, baseUrl: e.target.value })}
+                    onChange={(e) => handleInputChange('baseUrl', e.target.value)}
                     className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                       fieldErrors.baseUrl 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -546,10 +694,7 @@ export default function CreateConnectionModal({
                       aria-invalid={fieldErrors.apiKey ? 'true' : 'false'}
                       aria-describedby={fieldErrors.apiKey ? 'apiKey-error' : undefined}
                       value={formData.credentials.apiKey}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        credentials: { ...formData.credentials, apiKey: e.target.value }
-                      })}
+                      onChange={(e) => handleCredentialsChange('apiKey', e.target.value)}
                       className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                         fieldErrors.apiKey 
                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -575,10 +720,7 @@ export default function CreateConnectionModal({
                       aria-invalid={fieldErrors.bearerToken ? 'true' : 'false'}
                       aria-describedby={fieldErrors.bearerToken ? 'bearerToken-error' : undefined}
                       value={formData.credentials.bearerToken}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        credentials: { ...formData.credentials, bearerToken: e.target.value }
-                      })}
+                      onChange={(e) => handleCredentialsChange('bearerToken', e.target.value)}
                       className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                         fieldErrors.bearerToken 
                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -605,10 +747,7 @@ export default function CreateConnectionModal({
                         aria-invalid={fieldErrors.username ? 'true' : 'false'}
                         aria-describedby={fieldErrors.username ? 'username-error' : undefined}
                         value={formData.credentials.username}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          credentials: { ...formData.credentials, username: e.target.value }
-                        })}
+                        onChange={(e) => handleCredentialsChange('username', e.target.value)}
                         className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                           fieldErrors.username 
                             ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -630,10 +769,7 @@ export default function CreateConnectionModal({
                         aria-invalid={fieldErrors.password ? 'true' : 'false'}
                         aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                         value={formData.credentials.password}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          credentials: { ...formData.credentials, password: e.target.value }
-                        })}
+                        onChange={(e) => handleCredentialsChange('password', e.target.value)}
                         className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                           fieldErrors.password 
                             ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -685,10 +821,7 @@ export default function CreateConnectionModal({
                             aria-invalid={fieldErrors.clientId ? 'true' : 'false'}
                             aria-describedby={fieldErrors.clientId ? 'clientId-error' : undefined}
                             value={formData.credentials.clientId}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              credentials: { ...formData.credentials, clientId: e.target.value }
-                            })}
+                            onChange={(e) => handleCredentialsChange('clientId', e.target.value)}
                             className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                               fieldErrors.clientId 
                                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -710,10 +843,7 @@ export default function CreateConnectionModal({
                             aria-invalid={fieldErrors.clientSecret ? 'true' : 'false'}
                             aria-describedby={fieldErrors.clientSecret ? 'clientSecret-error' : undefined}
                             value={formData.credentials.clientSecret}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              credentials: { ...formData.credentials, clientSecret: e.target.value }
-                            })}
+                            onChange={(e) => handleCredentialsChange('clientSecret', e.target.value)}
                             className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                               fieldErrors.clientSecret 
                                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -735,10 +865,7 @@ export default function CreateConnectionModal({
                             aria-invalid={fieldErrors.redirectUri ? 'true' : 'false'}
                             aria-describedby={fieldErrors.redirectUri ? 'redirectUri-error' : undefined}
                             value={formData.credentials.redirectUri}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              credentials: { ...formData.credentials, redirectUri: e.target.value }
-                            })}
+                            onChange={(e) => handleCredentialsChange('redirectUri', e.target.value)}
                             className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                               fieldErrors.redirectUri 
                                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -760,10 +887,7 @@ export default function CreateConnectionModal({
                             aria-invalid={fieldErrors.scopes ? 'true' : 'false'}
                             aria-describedby={fieldErrors.scopes ? 'scopes-error' : undefined}
                             value={formData.credentials.scopes}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              credentials: { ...formData.credentials, scopes: e.target.value }
-                            })}
+                            onChange={(e) => handleCredentialsChange('scopes', e.target.value)}
                             className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                               fieldErrors.scopes 
                                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -831,7 +955,7 @@ export default function CreateConnectionModal({
                       data-testid="openapi-url-input"
                       type="url"
                       value={formData.openApiUrl}
-                      onChange={(e) => setFormData({ ...formData, openApiUrl: e.target.value })}
+                      onChange={(e) => handleInputChange('openApiUrl', e.target.value)}
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="https://petstore.swagger.io/v2/swagger.json"
                     />
@@ -848,7 +972,7 @@ export default function CreateConnectionModal({
                       id="openapi-spec"
                       data-testid="openapi-spec-input"
                       value={formData.openApiSpec}
-                      onChange={(e) => setFormData({ ...formData, openApiSpec: e.target.value })}
+                      onChange={(e) => handleInputChange('openApiSpec', e.target.value)}
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="Paste your OpenAPI/Swagger specification here..."
                       rows={8}

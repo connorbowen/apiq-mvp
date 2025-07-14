@@ -24,11 +24,6 @@ import { prisma } from '../../../../lib/database/client';
  */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('🔍 OAuth2 Callback - Request received:', {
-    method: req.method,
-    url: req.url,
-    query: req.query
-  });
 
   if (req.method !== 'GET') {
     return res.status(405).json({
@@ -42,12 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Extract query parameters from OAuth2 callback
     const { code, state, error, error_description } = req.query;
 
-    console.log('🔍 OAuth2 Callback - Parameters:', {
-      hasCode: !!code,
-      hasState: !!state,
-      hasError: !!error,
-      error: error_description
-    });
+
 
     // Handle OAuth2 errors
     if (error) {
@@ -82,40 +72,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw badRequest('State parameter is required', 'MISSING_STATE');
     }
 
-    console.log('🔍 OAuth2 Callback - Finding connection by state...');
-
     // Find the connection by OAuth state (support both encoded and legacy state)
     let connection = null;
     let decodedState = OAuth2Service.decodeStateParam(state);
     if (decodedState && decodedState.apiConnectionId) {
       // Use apiConnectionId from decoded state
-      console.log('🔍 OAuth2 Callback - Using decoded state:', {
-        apiConnectionId: decodedState.apiConnectionId,
-        provider: decodedState.provider
-      });
       connection = await prisma.apiConnection.findUnique({ where: { id: decodedState.apiConnectionId } });
     } else {
       // Fallback: legacy lookup by oauthState
-      console.log('🔍 OAuth2 Callback - Using legacy state lookup');
       connection = await findConnectionByOAuthState(state);
     }
     
     if (!connection) {
-      console.error('🔍 OAuth2 Callback - Connection not found for state:', state);
       throw badRequest('Invalid OAuth state - connection not found', 'INVALID_STATE');
     }
-
-    console.log('🔍 OAuth2 Callback - Connection found:', {
-      id: connection.id,
-      name: connection.name,
-      authType: connection.authType
-    });
 
     // Check if this is a test scenario
     const isTestScenario = code === 'test' && state === 'test';
     
     if (isTestScenario) {
-      console.log('🔍 OAuth2 Callback - Test scenario detected');
       // Mark connection as connected for test scenarios
       await markConnected(connection.id);
       
@@ -129,8 +104,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    console.log('🔍 OAuth2 Callback - Processing OAuth2 callback...');
-
     // Extract OAuth2 configuration from the connection's authConfig
     const authConfig = connection.authConfig as any;
     const config = {
@@ -143,12 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       state: state
     };
 
-    console.log('🔍 OAuth2 Callback - Config prepared:', {
-      hasClientId: !!config.clientId,
-      hasClientSecret: !!config.clientSecret,
-      redirectUri: config.redirectUri,
-      scope: config.scope
-    });
+
 
     // Process the OAuth2 callback with timeout
     const processPromise = oauth2Service.processCallback(code, state, config);
@@ -159,7 +127,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const result = await Promise.race([processPromise, timeoutPromise]);
 
     if (!result.success) {
-      console.error('🔍 OAuth2 Callback - Processing failed:', result.error);
       // Mark connection as error
       await markError(connection.id, result.error || 'OAuth2 callback processing failed');
       
@@ -169,19 +136,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
     }
 
-    console.log('🔍 OAuth2 Callback - Processing successful, marking connection as connected...');
-
     // Mark connection as connected
     await markConnected(connection.id);
 
-    console.log('🔍 OAuth2 Callback - Connection marked as connected, redirecting...');
-
     // Redirect back to dashboard with success message
     const redirectUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard?oauth_success=true&connection_id=${connection.id}`;
-    res.redirect(redirectUrl);
+    return res.redirect(redirectUrl);
 
   } catch (error) {
-    console.error('🔍 OAuth2 Callback - Error:', error);
 
     if (error instanceof ApplicationError) {
       // Try to mark connection as error if we have a state

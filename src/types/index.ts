@@ -56,8 +56,13 @@ export interface CreateApiConnectionRequest {
   description?: string;
   baseUrl: string;
   authType: 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM';
-  authConfig: Record<string, any>;
+  authConfig?: Record<string, any>;
   documentationUrl?: string;
+  // Test properties for OAuth2 testing
+  oauth2Provider?: string;
+  clientId?: string;
+  clientSecret?: string;
+  redirectUri?: string;
 }
 
 export interface UpdateApiConnectionRequest {

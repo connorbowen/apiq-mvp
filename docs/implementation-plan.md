@@ -28,7 +28,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 **Authentication Middleware**: Server-side route protection with cookie-based authentication ✅ **COMPLETED - LATEST**
 **E2E Test Suite Robustness**: Enhanced OAuth2 E2E tests to handle real-world OAuth2 flow complexities ✅ **COMPLETED - LATEST**
 **Authentication Middleware Fix**: Fixed public route configuration for `/forgot-password-success` ✅ **COMPLETED - LATEST**
-**E2E Test Suite Completion**: Achieved 100% pass rate (172/172 tests) with comprehensive test fixes ✅ **COMPLETED - LATEST**
+**E2E Test Suite**: TDD Implementation in Progress - 77% pass rate (324/419 tests) with comprehensive TDD approach ⚠️ **TDD IMPLEMENTATION IN PROGRESS**
 **Unified Error Handling System**: Implemented centralized error handling with user-friendly messages ✅ **COMPLETED - LATEST**
   - **ApplicationError Class**: Single source of truth for application errors with convenience builders
   - **API Endpoint Updates**: All 12+ API endpoints updated to use unified error system
@@ -581,40 +581,95 @@ Features that make the product intuitive, accessible, and sticky for users, as d
   - [ ] Workflow execution and monitoring demo
   - [ ] Advanced features introduction
 
-#### **P1.4: Advanced Analytics & Reporting** 🚧 PLANNED
-**PRD Priority**: P2 (Medium) - Moved to P1 for user retention
-**Business Impact**: Provides insights into workflow performance and usage
-**User Value**: Analytics and insights for optimization
-**Market Position**: Data-driven workflow optimization
-**PRD Success Criteria**: Users can view workflow performance metrics, system tracks API usage and costs, custom reports can be generated
+#### **P1.4: Advanced Analytics & Reporting** 🚧 **PLANNED**
+**PRD Priority**: P2 (Medium) - Moved to P1 for user retention and revenue optimization
+**Business Impact**: Provides insights for user optimization and business intelligence
+**User Value**: Users can optimize their workflows and track usage
+**Market Position**: Analytics help users get more value from the platform
+**PRD Success Criteria**: Users can track workflow performance, identify bottlenecks, and optimize their automation
+**Business Impact**: Provides insights for user optimization and business intelligence
+**User Value**: Users can optimize their workflows and track usage
+**Market Position**: Analytics help users get more value from the platform
 
 **Requirements**:
-- [ ] **API Explorer Testing** – "Try it out" buttons in `/explore-api` page call the real endpoint.
-- [ ] **Quick-execute API endpoint** – Backend route (`/api/quick-exec`) that proxies single-call requests.
-- [ ] **Single Call UI** – In the Explorer, add parameter forms and an "Execute" button.
-- [ ] **Result Visualization** – Show response JSON or formatted table inline.
+- [ ] **Workflow Performance Analytics** - Track execution metrics
+  - [ ] Add execution time tracking and analysis
+  - [ ] Support success/failure rate monitoring
+  - [ ] Add bottleneck identification and optimization suggestions
+  - [ ] Support historical performance trends
+- [ ] **Usage Analytics** - Track user behavior and engagement
+  - [ ] Add workflow creation and execution tracking
+  - [ ] Support API usage monitoring and cost analysis
+  - [ ] Add user engagement metrics and retention analysis
+  - [ ] Support team usage and collaboration analytics
+- [ ] **Business Intelligence** - Advanced reporting and insights
+  - [ ] Add custom report generation and scheduling
+  - [ ] Support data export and integration with external tools
+  - [ ] Add predictive analytics and trend forecasting
+  - [ ] Support ROI calculation and business impact analysis
 
 **Success Criteria**:
-- Users can invoke any stored endpoint with custom parameters.
-- Responses render in the UI immediately.
-- No workflow creation needed for standalone calls.
+- Users can identify and fix workflow bottlenecks
+- Teams can track and optimize API usage costs
+- Business users can measure automation ROI
+- Platform can provide actionable optimization suggestions
 
-**🚧 IMPLEMENTATION PLAN** (Based on API Explorer Requirements):
-- [ ] **API Explorer Enhancement** - Interactive API testing interface
-  - [ ] Add endpoint testing interface with parameter forms
-  - [ ] Support parameter auto-completion and validation
-  - [ ] Add response visualization and formatting
-  - [ ] Support request/response history
-- [ ] **Quick Execute Backend** - Single API call execution
-  - [ ] Implement `/api/quick-exec` endpoint
-  - [ ] Add parameter validation and transformation
-  - [ ] Support authentication and rate limiting
-  - [ ] Add response caching and optimization
-- [ ] **Result Visualization** - Better response display
-  - [ ] Add JSON response formatting and syntax highlighting
-  - [ ] Support table view for structured data
-  - [ ] Add response filtering and search
-  - [ ] Support response export and sharing
+#### **P1.5: OpenAPI Auto-Discovery** 🚨 **P1 PRIORITY - NEW**
+**PRD Priority**: P1 (High) - Enhanced user experience for API connection setup
+**Business Impact**: Reduces friction in API connection setup, increases user adoption
+**User Value**: Users don't need to know exact OpenAPI spec URLs, faster setup
+**Market Position**: Differentiates from competitors who require manual spec URL entry
+**PRD Success Criteria**: Users can connect to APIs in <3 minutes, 90%+ auto-discovery success rate for common APIs
+
+**Requirements**:
+- [ ] **Common Path Discovery** - Try standard OpenAPI spec locations
+  - [ ] Add `/swagger.json` (Swagger 2.0) path discovery
+  - [ ] Add `/openapi.json` (OpenAPI 3.0) path discovery
+  - [ ] Add `/swagger.yaml` and `/openapi.yaml` (YAML format) discovery
+  - [ ] Add `/api-docs` and `/docs` alternative path discovery
+  - [ ] Add versioned paths (`/v1/swagger.json`, `/v2/swagger.json`, etc.)
+- [ ] **Smart Discovery Logic** - Intelligent spec location detection
+  - [ ] Add parallel requests to common paths for faster discovery
+  - [ ] Add content-type validation to ensure valid OpenAPI specs
+  - [ ] Add timeout handling to prevent long waits
+  - [ ] Add fallback to manual URL entry if auto-discovery fails
+  - [ ] Add caching of successful discoveries for future use
+- [ ] **User Experience Integration** - Seamless UI integration
+  - [ ] Add "Auto-discover" button next to OpenAPI URL field
+  - [ ] Add loading state during discovery process
+  - [ ] Add auto-fill of discovered URL in form
+  - [ ] Add success/error feedback for discovery attempts
+  - [ ] Add option to manually override discovered URL
+- [ ] **Error Handling & Fallbacks** - Robust discovery process
+  - [ ] Add graceful handling of network timeouts
+  - [ ] Add validation of discovered specs before auto-filling
+  - [ ] Add user notification when discovery fails
+  - [ ] Add manual URL entry as fallback option
+  - [ ] Add discovery attempt logging for debugging
+
+**Implementation Files**:
+- `src/components/dashboard/CreateConnectionModal.tsx` - Add auto-discovery UI
+- `src/services/openApiService.ts` - Add discovery logic
+- `src/lib/api/parser.ts` - Add validation for discovered specs
+- `tests/e2e/connections/openapi-auto-discovery.test.ts` - Add E2E tests
+
+**Success Criteria**:
+- 90%+ success rate for auto-discovery on popular APIs (GitHub, Slack, etc.)
+- Auto-discovery completes in <5 seconds for successful attempts
+- Users can still manually enter URLs if auto-discovery fails
+- No impact on existing manual URL entry functionality
+
+**TODO Comments to Add**:
+```typescript
+// TODO: [P1.5-OPENAPI-DISCOVERY] Add OpenAPI auto-discovery feature
+// - Add common path discovery (/swagger.json, /openapi.json, etc.)
+// - Add "Auto-discover" button in CreateConnectionModal
+// - Add discovery logic in openApiService
+// - Add validation and error handling for discovered specs
+// - Add E2E tests for auto-discovery functionality
+// - Add caching of successful discoveries
+// - Add timeout and fallback handling
+```
 
 ### **P2: ENTERPRISE READINESS** (Medium Priority)
 Features that enable enterprise adoption and compliance requirements, as defined in the PRD.

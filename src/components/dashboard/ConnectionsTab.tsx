@@ -161,6 +161,9 @@ export default function ConnectionsTab({
   };
 
   const handleConnectionSuccess = () => {
+    console.log('🔍 DEBUG: Connection success callback triggered');
+    console.log('🔍 DEBUG: Current showCreateForm state:', showCreateForm);
+    console.log('🔍 DEBUG: Closing modal and calling onConnectionCreated');
     setShowCreateForm(false);
     onConnectionCreated();
   };
@@ -174,6 +177,7 @@ export default function ConnectionsTab({
   };
 
   const handleEditSuccess = () => {
+    console.log('🔄 Edit success callback triggered, closing modal');
     setEditingConnection(null);
     onConnectionEdited(); // Call the new callback for edit
   };
@@ -208,11 +212,36 @@ export default function ConnectionsTab({
   };
 
   const filteredConnections = connections.filter(connection => {
+    console.info('[connections] Filtering connection:', {
+      id: connection.id,
+      name: connection.name,
+      authType: connection.authType,
+      searchTerm,
+      filterType,
+      matchesSearch: connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                     connection.description?.toLowerCase().includes(searchTerm.toLowerCase()),
+      matchesFilter: filterType === 'all' || connection.authType === filterType
+    });
+    
     const matchesSearch = connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          connection.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterType === 'all' || connection.authType === filterType;
-    return matchesSearch && matchesFilter;
+    const result = matchesSearch && matchesFilter;
+    
+    console.info('[connections] Connection filter result:', {
+      name: connection.name,
+      matchesSearch,
+      matchesFilter,
+      result
+    });
+    
+    return result;
   });
+
+  console.info('[connections] Total connections:', connections.length);
+  console.info('[connections] Filtered connections:', filteredConnections.length);
+  console.info('[connections] Search term:', searchTerm);
+  console.info('[connections] Filter type:', filterType);
 
   return (
     <div data-testid="connections-management">
@@ -504,25 +533,50 @@ export default function ConnectionsTab({
                         onClick={async () => {
                           try {
                             setIsLoading(true);
-                            // Simulate test connection API call and response time
                             const start = Date.now();
-                            await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 500));
+                            
+                            // Call the actual test connection API
+                            const response = await fetch(`/api/connections/${connection.id}/test`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                              }
+                            });
+                            
                             const responseTime = Date.now() - start;
                             setResponseTimes(prev => ({ ...prev, [connection.id]: responseTime }));
-                            // Simulate random success/failure
-                            const success = Math.random() > 0.2;
-                            setTestResults(prev => ({
-                              ...prev,
-                              [connection.id]: success
-                                ? { success: true, message: 'Connection successful' }
-                                : { success: false, message: 'Connection failed' },
-                            }));
-                            if (success) {
+                            
+                            if (response.ok) {
+                              const result = await response.json();
+                              setTestResults(prev => ({
+                                ...prev,
+                                [connection.id]: { 
+                                  success: true, 
+                                  message: result.data?.message || 'Connection test successful' 
+                                }
+                              }));
                               onConnectionTested(); // Set global success message
                             } else {
-                              onConnectionError('Connection test failed');
+                              const errorData = await response.json();
+                              setTestResults(prev => ({
+                                ...prev,
+                                [connection.id]: { 
+                                  success: false, 
+                                  message: errorData.error || 'Connection test failed' 
+                                }
+                              }));
+                              onConnectionError(errorData.error || 'Connection test failed');
                             }
                           } catch (error) {
+                            console.error('Connection test error:', error);
+                            setTestResults(prev => ({
+                              ...prev,
+                              [connection.id]: { 
+                                success: false, 
+                                message: 'Connection test failed' 
+                              }
+                            }));
                             onConnectionError('Connection test failed');
                           } finally {
                             setIsLoading(false);
@@ -560,8 +614,17 @@ export default function ConnectionsTab({
       {/* Create Connection Modal */}
       {showCreateForm && (
         <CreateConnectionModal
-          onClose={() => setShowCreateForm(false)}
-          onSuccess={handleConnectionSuccess}
+          onClose={() => {
+            console.log('🔄 Create modal onClose called, setting showCreateForm to false');
+            setShowCreateForm(false);
+          }}
+          onSuccess={() => {
+            console.log('🔄 Connection success callback triggered, closing modal');
+            console.log('🔄 Current showCreateForm state before setting to false:', showCreateForm);
+            setShowCreateForm(false);
+            console.log('🔄 Called onConnectionCreated callback');
+            onConnectionCreated();
+          }}
           onError={handleConnectionError}
         />
       )}
@@ -570,8 +633,17 @@ export default function ConnectionsTab({
       {editingConnection && (
         <EditConnectionModal
           connection={editingConnection}
-          onClose={() => setEditingConnection(null)}
-          onSuccess={handleEditSuccess}
+          onClose={() => {
+            console.log('🔄 Edit modal onClose called, setting editingConnection to null');
+            setEditingConnection(null);
+          }}
+          onSuccess={() => {
+            console.log('🔄 Edit success callback triggered, closing modal');
+            console.log('🔄 Current editingConnection state before setting to null:', editingConnection?.id);
+            setEditingConnection(null);
+            console.log('🔄 Called onConnectionEdited callback');
+            onConnectionEdited(); // Call the new callback for edit
+          }}
           onError={handleEditError}
         />
       )}

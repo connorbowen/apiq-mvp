@@ -108,10 +108,9 @@ export default function SecretsTab({
   const loadAuditLogs = async () => {
     setAuditLoading(true);
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
       // Fetch SECRET_CREATED and SECRET_ACCESSED logs separately since the API doesn't support multiple actions
       const response = await fetch('/api/audit-logs?action=SECRET_CREATED&limit=3', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        credentials: 'include' // Include cookies for authentication
       });
       if (response.ok) {
         const result = await response.json();
@@ -120,7 +119,7 @@ export default function SecretsTab({
           
           // Also fetch SECRET_ACCESSED logs
           const accessResponse = await fetch('/api/audit-logs?action=SECRET_ACCESSED&limit=3', {
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            credentials: 'include' // Include cookies for authentication
           });
           if (accessResponse.ok) {
             const accessResult = await accessResponse.json();
@@ -830,8 +829,8 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, handleRotateSecret,
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')}`,
         },
+        credentials: 'include', // Include cookies for authentication
       });
       
       if (!response.ok) {

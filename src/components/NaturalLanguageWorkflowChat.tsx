@@ -99,15 +99,12 @@ export default function NaturalLanguageWorkflowChat({
     await new Promise(r => setTimeout(r, 300));
     
     try {
-      // Get the JWT token from localStorage
-      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-      
       const response = await fetch('/api/workflows/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({ userDescription: inputValue }),
       });
 

@@ -24,16 +24,7 @@ export default function WorkflowsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check authentication first
-    const token = localStorage.getItem('accessToken');
-    const userData = localStorage.getItem('user');
-    
-    if (!token || !userData) {
-      router.push('/login');
-      return;
-    }
-    
-    // Verify token is valid
+    // Verify authentication using cookies
     const verifyAuth = async () => {
       try {
         const userResponse = await apiClient.getCurrentUser();

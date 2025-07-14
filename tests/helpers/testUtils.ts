@@ -531,14 +531,62 @@ export const setAuthCookies = async (page: any, user: TestUser) => {
  * Authenticate E2E test page using secure cookie-based authentication
  */
 export const authenticateE2EPage = async (page: any, user: TestUser) => {
-  // Set authentication cookies
-  await setAuthCookies(page, user);
+  console.log('🔍 DEBUG: Starting authenticateE2EPage');
+  console.log('🔍 DEBUG: User accessToken:', user.accessToken ? 'present' : 'missing');
   
-  // Navigate to dashboard to trigger authentication check
-  await page.goto(`${process.env.BASE_URL || 'http://localhost:3000'}/dashboard`);
+  // 1️⃣ Navigate to the site first to establish the origin
+  console.log('🔍 DEBUG: Navigating to site first...');
+  await page.goto('http://localhost:3000');
   
-  // Wait for dashboard to load (confirms authentication worked)
-  await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
+  // 2️⃣ Set cookies for the established origin
+  console.log('🔍 DEBUG: Setting cookies...');
+  await page.context().addCookies([
+    {
+      name: 'accessToken',
+      value: user.accessToken,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
+    },
+    {
+      name: 'refreshToken',
+      value: user.refreshToken,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      secure: false,
+      sameSite: 'Lax',
+    },
+  ]);
+  
+  console.log('🔍 DEBUG: Cookies set, checking context cookies...');
+  const cookies = await page.context().cookies();
+  console.log('🔍 DEBUG: Context cookies after setting:', cookies);
+
+  // 3️⃣ Navigate to dashboard with cookies set
+  console.log('🔍 DEBUG: Navigating to dashboard...');
+  await page.goto('http://localhost:3000/dashboard');
+
+  // 4️⃣ Reload to ensure cookies are properly attached
+  console.log('🔍 DEBUG: Reloading page to ensure cookies are attached...');
+  await page.reload();
+
+  // 5️⃣ Wait for dashboard to load
+  console.log('🔍 DEBUG: Waiting for dashboard...');
+  try {
+    await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10_000 });
+    console.log('🔍 DEBUG: Dashboard loaded successfully');
+  } catch (error) {
+    console.log('🔍 DEBUG: Dashboard loading failed:', error instanceof Error ? error.message : String(error));
+    // Check if we're on login page instead
+    const currentUrl = page.url();
+    console.log('🔍 DEBUG: Current URL:', currentUrl);
+    if (currentUrl.includes('login')) {
+      console.log('🔍 DEBUG: Redirected to login - cookies not working');
+    }
+  }
 };
 
 if (!process.env.JWT_SECRET) {

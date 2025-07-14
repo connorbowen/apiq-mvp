@@ -111,6 +111,8 @@ interface User {
 }
 
 export default function DashboardPage() {
+  console.info('[dashboard] DashboardPage rendered');
+  
   const [user, setUser] = useState<User | null>(null);
   const [connections, setConnections] = useState<ApiConnection[]>([]);
   const [workflows, setWorkflows] = useState<any[]>([]);
@@ -126,41 +128,44 @@ export default function DashboardPage() {
   const [auditRefreshTrigger, setAuditRefreshTrigger] = useState(0); // Trigger for audit log refresh
   const router = useRouter();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const userResponse = await apiClient.getCurrentUser();
-        if (userResponse.success) {
-          setUser(userResponse.data.user);
-          setIsLoading(false);
-        } else {
-          setIsLoading(false); // Stop loading before redirect
-          router.push('/login');
-        }
-      } catch (error: unknown) {
-        console.error('Failed to load user:', error);
+  const loadUser = useCallback(async () => {
+    try {
+      const userResponse = await apiClient.getCurrentUser();
+      if (userResponse.success && userResponse.data) {
+        setUser(userResponse.data.user);
+        setIsLoading(false);
+      } else {
         setIsLoading(false); // Stop loading before redirect
         router.push('/login');
       }
-    };
-    
-    loadUser();
+    } catch (error: unknown) {
+      console.error('Failed to load user:', error);
+      setIsLoading(false); // Stop loading before redirect
+      router.push('/login');
+    }
   }, [router]);
 
-  const loadConnections = useCallback(async () => {
+  const loadConnections = useCallback(async (retryCount = 0) => {
     try {
-      console.log('Loading connections...');
+      console.info('[dashboard] loadConnections called (attempt', retryCount + 1, ')');
       const response = await apiClient.getConnections();
-      console.log('Connections API response:', response);
+      console.info('[dashboard] loadConnections API response:', JSON.stringify(response, null, 2));
       if (response.success && response.data) {
-        console.log('Setting connections:', response.data.connections);
-        setConnections(response.data.connections || []);
+        const connections = response.data.connections || [];
+        console.info('[dashboard] setConnections length:', connections.length);
+        console.info('[dashboard] setConnections data:', connections.map(c => ({
+          id: c.id,
+          name: c.name,
+          authType: c.authType,
+          status: c.status
+        })));
+        setConnections(connections);
       } else {
-        console.error('Failed to load connections:', response.error);
+        console.error('❌ DASHBOARD: Failed to load connections:', response.error);
         setErrorMessage(response.error || 'Failed to load connections');
       }
     } catch (error: unknown) {
-      console.error('Error loading connections:', error);
+      console.error('❌ DASHBOARD: Error loading connections:', error);
       setErrorMessage('Network error');
     } finally {
       setIsLoading(false);
@@ -222,17 +227,11 @@ export default function DashboardPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const oauth2Success = urlParams.get('oauth2_success');
     if (oauth2Success === 'true') {
-      const accessToken = urlParams.get('accessToken');
-      const refreshToken = urlParams.get('refreshToken');
       const userData = urlParams.get('user');
-      if (accessToken && refreshToken && userData) {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('user', userData);
+      if (userData) {
+        // Clear URL parameters
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('oauth2_success');
-        newUrl.searchParams.delete('accessToken');
-        newUrl.searchParams.delete('refreshToken');
         newUrl.searchParams.delete('user');
         window.history.replaceState({}, '', newUrl.toString());
         try {
@@ -243,6 +242,15 @@ export default function DashboardPage() {
       }
     }
   }, []);
+
+  // Load initial data
+  useEffect(() => {
+    console.info('[dashboard] DashboardPage useEffect triggered - loading initial data');
+    loadConnections();
+    loadWorkflows();
+    loadSecrets();
+    loadUser();
+  }, [loadConnections, loadWorkflows, loadSecrets, loadUser]);
 
   // Real-time updates with faster polling for immediate feedback
   useEffect(() => {
@@ -290,7 +298,7 @@ export default function DashboardPage() {
       console.error('Logout error:', error);
     }
     
-    // Clear any remaining localStorage data
+    // Clear any remaining localStorage data (for backward compatibility)
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
@@ -305,6 +313,13 @@ export default function DashboardPage() {
 
   const handleTabChange = (tab: 'overview' | 'connections' | 'workflows' | 'secrets' | 'chat' | 'admin' | 'audit') => {
     console.log('Tab change requested:', tab, 'Current active tab:', activeTab);
+    
+    // Only clear messages if switching to a different tab
+    if (activeTab !== tab) {
+      setSuccessMessage(null);
+      setErrorMessage(null);
+    }
+    
     setActiveTab(tab);
     // Update URL to reflect the active tab
     const url = new URL(window.location.href);
@@ -315,9 +330,6 @@ export default function DashboardPage() {
     }
     window.history.replaceState({}, '', url.toString());
     console.log('URL updated to:', url.toString());
-    // Clear any existing messages when switching tabs
-    setSuccessMessage(null);
-    setErrorMessage(null);
     
     // Trigger audit log refresh when switching to audit tab
     if (tab === 'audit') {
@@ -330,9 +342,17 @@ export default function DashboardPage() {
     const url = new URL(window.location.href);
     const tabParam = url.searchParams.get('tab');
     if (tabParam && ['overview', 'connections', 'workflows', 'secrets', 'chat', 'admin', 'audit'].includes(tabParam)) {
-      setActiveTab(tabParam as 'overview' | 'connections' | 'workflows' | 'secrets' | 'chat' | 'admin' | 'audit');
+      // Check if user has permission to access admin/audit tabs
+      if ((tabParam === 'admin' || tabParam === 'audit') && user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN') {
+        // Redirect to overview tab if user doesn't have admin access
+        setActiveTab('overview');
+        url.searchParams.delete('tab');
+        window.history.replaceState({}, '', url.toString());
+      } else {
+        setActiveTab(tabParam as 'overview' | 'connections' | 'workflows' | 'secrets' | 'chat' | 'admin' | 'audit');
+      }
     }
-  }, []);
+  }, [user]);
 
   // Announce success messages to screen readers and auto-clear
   useEffect(() => {
@@ -435,7 +455,7 @@ export default function DashboardPage() {
         )}
         
         {errorMessage && (
-          <div data-testid="error-message" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div data-testid="error-message" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md" role="alert" aria-live="polite">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -548,32 +568,36 @@ export default function DashboardPage() {
               >
                 Secrets
               </button>
-              <button
-                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
-                  activeTab === 'admin' 
-                    ? 'bg-indigo-100 text-indigo-700' 
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-                onClick={() => {
-                  handleTabChange('admin');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                Admin
-              </button>
-              <button
-                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
-                  activeTab === 'audit' 
-                    ? 'bg-indigo-100 text-indigo-700' 
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-                onClick={() => {
-                  handleTabChange('audit');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                Audit
-              </button>
+              {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                <button
+                  className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                    activeTab === 'admin' 
+                      ? 'bg-indigo-100 text-indigo-700' 
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                  onClick={() => {
+                    handleTabChange('admin');
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  Admin
+                </button>
+              )}
+              {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                <button
+                  className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                    activeTab === 'audit' 
+                      ? 'bg-indigo-100 text-indigo-700' 
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                  onClick={() => {
+                    handleTabChange('audit');
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  Audit
+                </button>
+              )}
               <button
                 className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
                   activeTab === 'chat' 
@@ -592,8 +616,9 @@ export default function DashboardPage() {
         )}
 
         {/* Desktop Tab Navigation */}
-        <div className="mb-6 hidden lg:block">
-          <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm" aria-label="Tabs">
+        {user && (
+          <div className="mb-6 hidden lg:block">
+            <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm" aria-label="Tabs">
             <button
               data-testid="tab-overview"
               className={`px-4 py-2 font-medium text-sm rounded-md transition-colors min-h-[44px] ${
@@ -638,28 +663,32 @@ export default function DashboardPage() {
             >
               Secrets
             </button>
-            <button
-              data-testid="tab-admin"
-              className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${
-                activeTab === 'admin' 
-                  ? 'bg-indigo-100 text-indigo-700' 
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => handleTabChange('admin')}
-            >
-              Admin
-            </button>
-            <button
-              data-testid="tab-audit"
-              className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${
-                activeTab === 'audit' 
-                  ? 'bg-indigo-100 text-indigo-700' 
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => handleTabChange('audit')}
-            >
-              Audit
-            </button>
+            {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+              <button
+                data-testid="tab-admin"
+                className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${
+                  activeTab === 'admin' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => handleTabChange('admin')}
+              >
+                Admin
+              </button>
+            )}
+            {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+              <button
+                data-testid="tab-audit"
+                className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${
+                  activeTab === 'audit' 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => handleTabChange('audit')}
+              >
+                Audit
+              </button>
+            )}
             <button
               data-testid="tab-chat"
               className={`px-4 py-2 font-medium text-sm rounded-md transition-colors ${
@@ -673,8 +702,7 @@ export default function DashboardPage() {
             </button>
           </nav>
         </div>
-
-
+        )}
 
         {errorMessage && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md" data-testid="error-message" aria-live="polite">
@@ -705,7 +733,18 @@ export default function DashboardPage() {
             <ConnectionsTab
               connections={connections}
               onConnectionCreated={() => {
-                loadConnections();
+                console.info('[dashboard] onConnectionCreated fired');
+                // Add a small delay to ensure the API has fully processed the new connection
+                setTimeout(async () => {
+                  console.info('[dashboard] onConnectionCreated: calling loadConnections after delay');
+                  await loadConnections();
+                  
+                  // If no connections found, retry once more after another delay
+                  setTimeout(async () => {
+                    console.info('[dashboard] onConnectionCreated: calling loadConnections retry');
+                    await loadConnections(1);
+                  }, 1000);
+                }, 500);
                 setSuccessMessage('Connection created successfully!');
               }}
               onConnectionEdited={() => {
@@ -717,7 +756,7 @@ export default function DashboardPage() {
                 setSuccessMessage('Connection deleted successfully');
               }}
               onConnectionTested={() => {
-                setSuccessMessage('Connection test passed');
+                setSuccessMessage('Connection test successful');
               }}
               onConnectionError={(error) => {
                 setErrorMessage(error);

@@ -71,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Return the access token
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
         accessToken,
