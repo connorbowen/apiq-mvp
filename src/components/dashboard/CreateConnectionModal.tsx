@@ -325,14 +325,11 @@ export default function CreateConnectionModal({
         console.info('[modal] Connection creation successful!');
         console.info('[modal] Response data:', response.data);
         setSubmitSuccess(true);
-        console.info('[modal] Calling onSuccess callback');
+        console.info('[modal] Calling onSuccess callback immediately');
         onSuccess();
-        // Close modal after a delay to ensure success callback completes
-        console.info('[modal] Scheduling modal close in 1000ms');
-        setTimeout(() => {
-          console.info('[modal] Executing modal close callback');
-          onClose();
-        }, 1000); // Delay to ensure success callback completes
+        // Close modal immediately to ensure UI updates
+        console.info('[modal] Closing modal immediately');
+        onClose();
       } else {
         console.info('[modal] Connection creation failed!');
         console.info('[modal] Error response:', response);

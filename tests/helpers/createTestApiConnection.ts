@@ -1,4 +1,4 @@
-import { prisma } from '../../lib/database/client';
+import { prisma } from '../../src/lib/singletons/prisma';
 import petstoreOpenApi from '../fixtures/petstore-openapi.json';
 
 /**
@@ -43,12 +43,16 @@ export async function createTestApiConnection(userId: string) {
         method: method.toUpperCase(),
         summary: op.summary || `${method.toUpperCase()} ${path}`,
         description: op.description || '',
-        parameters: op.parameters || [],
+        parameters: Array.isArray(op.parameters) ? op.parameters : [],
         requestBody: op.requestBody || null,
         responses: op.responses || {},
-        tags: op.tags || [],
         isActive: true,
       });
+      // Debug log for parameters
+      if (!Array.isArray(op.parameters)) {
+        // eslint-disable-next-line no-console
+        console.warn(`[DEBUG] Endpoint ${method.toUpperCase()} ${path} has non-array parameters:`, op.parameters);
+      }
     }
   }
 

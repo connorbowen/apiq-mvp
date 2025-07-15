@@ -412,6 +412,20 @@ To use OAuth2 authentication:
 
 > **Note:** E2E and unit tests now fully cover Google OAuth2 flows, including login, connection, and token handling.
 
+## Integration Test OpenAI API Key Handling
+
+By default, integration tests use a mock OpenAI API key for safety, speed, and cost control. To run integration tests with your real OpenAI API key, set the environment variable `USE_REAL_OPENAI=1` before running tests. This will allow the test runner to use the key from your `.env.test` or environment, in accordance with [docs/user-rules.md](docs/user-rules.md).
+
+Example:
+
+```
+USE_REAL_OPENAI=1 npm run test:integration
+```
+
+- Never commit real API keys to the codebase.
+- Only use real keys for integration tests when explicitly needed.
+- See [docs/user-rules.md](docs/user-rules.md) for full policy.
+
 ## 🔒 Security
 
 ### OAuth2 Security Features

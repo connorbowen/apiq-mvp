@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../src/generated/prisma';
+import { prisma, PrismaClient } from '../../lib/database/client';
 
 export interface TestFixtures {
   users: {
@@ -78,4 +78,14 @@ export async function loadFixtures(tx: PrismaClient): Promise<TestFixtures> {
       slackConnection: { id: slackConnection.id, userId: slackConnection.userId, name: slackConnection.name },
     },
   };
+}
+
+// At the end, add a script runner for direct execution
+if (require.main === module) {
+  (async () => {
+    await loadFixtures(prisma);
+    await prisma.$disconnect();
+    // eslint-disable-next-line no-console
+    console.log('Seed data loaded successfully.');
+  })();
 } 

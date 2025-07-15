@@ -37,8 +37,8 @@ const customJestConfig = {
   testEnvironmentOptions: {
     url: 'http://localhost:3000'
   },
-  globalSetup: '<rootDir>/jest.integration.setup.ts',
-  globalTeardown: '<rootDir>/jest.integration.teardown.ts',
+  // globalSetup: '<rootDir>/jest.integration.setup.ts',
+  // globalTeardown: '<rootDir>/jest.integration.teardown.ts',
   // Add parallelization optimizations
   bail: false, // Don't bail on first failure
   detectOpenHandles: true,

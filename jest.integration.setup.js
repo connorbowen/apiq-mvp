@@ -11,15 +11,23 @@ if (typeof global.TextEncoder === 'undefined') {
 process.env.NODE_ENV = 'test';
 process.env.TEST_DB_HOST = process.env.TEST_DB_HOST || 'localhost';
 process.env.TEST_DB_PORT = process.env.TEST_DB_PORT || '5432';
-process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || 'apiq_test';
+process.env.TEST_DB_NAME = process.env.TEST_DB_NAME || 'apiq_mvp'; // Use apiq_mvp to match DATABASE_URL
 process.env.TEST_DB_USER = process.env.TEST_DB_USER || 'connorbowen';
 process.env.TEST_DB_PASSWORD = process.env.TEST_DB_PASSWORD || '';
 
 // Set DATABASE_URL for test environment
-process.env.DATABASE_URL = `postgresql://${process.env.TEST_DB_USER}:${process.env.TEST_DB_PASSWORD}@${process.env.TEST_DB_HOST}:${process.env.TEST_DB_PORT}/${process.env.TEST_DB_NAME}`;
+process.env.DATABASE_URL = 'postgresql://connorbowen@localhost:5432/apiq_mvp';
 
-// Set OpenAI API key for tests (mock value)
-process.env.OPENAI_API_KEY = 'test-openai-api-key';
+// jest.integration.setup.js
+/**
+ * OpenAI API Key Handling for Integration Tests
+ * - By default, sets OPENAI_API_KEY to a mock value for safe, fast, and cost-free testing.
+ * - If USE_REAL_OPENAI=1 is set in the environment, does NOT override OPENAI_API_KEY, allowing the real key from .env.test or the environment to be used.
+ * - This follows user-rules.md: never use real keys in dev/prod code, only in test scripts, and only when explicitly enabled.
+ */
+if (!process.env.USE_REAL_OPENAI) {
+  process.env.OPENAI_API_KEY = 'test-openai-api-key';
+}
 process.env.OPENAI_MODEL = 'gpt-4-turbo-preview';
 
 // Set encryption keys for tests (mock values)

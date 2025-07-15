@@ -397,6 +397,13 @@ class ApiClient {
     });
   }
 
+  async getWorkflow(id: string): Promise<ApiResponse<{ workflow: any }>> {
+    return this.request({
+      method: 'GET',
+      url: `/api/workflows/${id}`,
+    });
+  }
+
   // OAuth2 management
   async getOAuth2Providers(): Promise<ApiResponse<{ providers: OAuth2Provider[] }>> {
     return this.request({

@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
-import NaturalLanguageWorkflowService from '../../../src/lib/services/naturalLanguageWorkflowService';
+import { NaturalLanguageWorkflowService } from '../../../src/lib/services/naturalLanguageWorkflowService';
 import { prisma } from '../../../src/lib/singletons/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -137,6 +137,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     console.error('=== API ENDPOINT ERROR ===');
     console.error('Workflow generation error:', error);
+    
+    // Check if it's an ApplicationError and preserve its status code
+    if (error && typeof error === 'object' && 'status' in error && 'code' in error) {
+      return res.status((error as any).status).json({
+        success: false,
+        error: (error as any).message,
+        code: (error as any).code
+      });
+    }
     
     return res.status(500).json({
       success: false,

@@ -1,7 +1,21 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { apiClient } from '../lib/api/client';
+
+// Validation schema
+const workflowDescriptionSchema = z.object({
+  description: z
+    .string()
+    .min(1, 'Workflow description is required. Please describe your workflow in plain English')
+    .min(10, 'Please provide more details about what you want to accomplish (at least 10 characters)')
+    .max(2000, 'Description is too long. Please keep it under 2000 characters')
+});
+
+type WorkflowFormData = z.infer<typeof workflowDescriptionSchema>;
 
 interface WorkflowStep {
   id: string;
@@ -50,13 +64,49 @@ export default function NaturalLanguageWorkflowChat({
   onWorkflowError 
 }: NaturalLanguageWorkflowChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<GeneratedWorkflow | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<GeneratedWorkflow | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // React Hook Form setup
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    watch,
+    trigger
+  } = useForm<WorkflowFormData>({
+    resolver: zodResolver(workflowDescriptionSchema)
+  });
+
+  const watchedDescription = watch('description');
+
+  // Focus the textarea after component mounts (delay ensures reliability in React/Playwright)
+  useEffect(() => {
+    // Delay focus to ensure DOM is ready (fixes Playwright/React timing issues)
+    const timeout = setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 0);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Merged ref for React Hook Form and our own ref
+  const registerTextarea = register('description');
+  const setMergedRef = (el: HTMLTextAreaElement | null) => {
+    textareaRef.current = el;
+    if (typeof registerTextarea.ref === 'function') {
+      registerTextarea.ref(el);
+    }
+    // Do not assign to .current if it's an object, as it's read-only
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
@@ -68,31 +118,20 @@ export default function NaturalLanguageWorkflowChat({
       id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date()
     };
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => {
+      const updated = [...prev, newMessage];
+      // Debug: log the full messages state after each update
+      console.log('📝 [NaturalLanguageWorkflowChat] messages state:', JSON.stringify(updated, null, 2));
+      return updated;
+    });
   };
 
-  const validateInput = (input: string): string | null => {
-    if (!input.trim()) {
-      return 'Please describe your workflow in plain English';
-    }
-    if (input.trim().length < 10) {
-      return 'Please provide more details about what you want to accomplish';
-    }
-    return null;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate input using the validateInput function
-    const validationError = validateInput(inputValue);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+  const onSubmit = async (data: WorkflowFormData) => {
+    console.log('NaturalLanguageWorkflowChat: onSubmit called with description:', `"${data.description}"`);
     
     // Set loading state immediately
     setIsLoading(true);
+    console.log('NaturalLanguageWorkflowChat: Clearing error, setting loading state');
     setError('');
     setSuccessMessage('');
     // Artificial delay for E2E test reliability
@@ -105,30 +144,35 @@ export default function NaturalLanguageWorkflowChat({
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Include cookies for authentication
-        body: JSON.stringify({ userDescription: inputValue }),
+        body: JSON.stringify({ userDescription: data.description }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
+      console.log('🔍 Frontend: API response data:', JSON.stringify(responseData, null, 2));
 
-      if (data.success) {
+      if (responseData.success) {
         const successText = "I've created a workflow for you based on your description. You can now review and activate it.";
         setSuccessMessage(successText);
-        setInputValue('');
+        reset(); // Reset form after successful submission
+        
+        console.log('🔍 Frontend: Workflow object from response:', responseData.data?.workflow);
+        console.log('🔍 Frontend: Validation from response:', responseData.data?.validation);
+        console.log('🔍 Frontend: Alternatives from response:', responseData.data?.alternatives);
         
         // Add a chat message with the workflow object if available
         addMessage({
           type: 'assistant',
           content: successText,
-          workflow: data.data?.workflow || undefined,
-          validation: data.data?.validation || undefined,
-          alternatives: data.data?.alternatives || undefined
+          workflow: responseData.data?.workflow || undefined,
+          validation: responseData.data?.validation || undefined,
+          alternatives: responseData.data?.alternatives || undefined
         });
         
         if (onWorkflowCreated) {
           onWorkflowCreated();
         }
       } else {
-        const errorMessage = data.error || 'Failed to generate workflow. Please try again.';
+        const errorMessage = responseData.error || 'Failed to generate workflow. Please try again.';
         setError(errorMessage);
         if (onWorkflowError) {
           onWorkflowError(errorMessage);
@@ -217,66 +261,68 @@ export default function NaturalLanguageWorkflowChat({
                 key={msg.id || idx}
                 className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                {isWorkflowSuccess ? (
-                  <div
-                    data-testid="workflow-success-chat-message"
-                    className="bg-green-50 text-green-800 p-3 rounded-lg shadow"
-                  >
-                    {msg.content}
-                  </div>
-                ) : (
-                  <div
-                    className={`max-w-3xl rounded-lg px-4 py-2 ${
-                      msg.type === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
-                    
-                    {/* Show workflow details if available */}
-                    {msg.workflow && (
-                      <div className="mt-4 p-4 bg-white rounded border">
-                        <h4 className="font-semibold text-gray-900 mb-2">Generated Workflow</h4>
-                        <div className="space-y-2 text-sm">
-                          <p><strong>Steps:</strong> {msg.workflow.steps.length}</p>
-                          <p><strong>Confidence:</strong> {Math.round(msg.workflow.confidence * 100)}%</p>
-                          <p><strong>Est. Time:</strong> {msg.workflow.estimatedExecutionTime / 1000}s</p>
-                        </div>
-                        
-                        {/* Show validation issues */}
-                        {msg.validation && !msg.validation.isValid && (
-                          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                            <p className="text-yellow-800 font-medium">⚠️ Issues Found:</p>
-                            <ul className="text-yellow-700 text-sm mt-1">
-                              {msg.validation.issues.map((issue, index) => (
-                                <li key={index}>• {issue}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        
-                        {/* Show alternatives */}
-                        {msg.alternatives && msg.alternatives.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-sm font-medium text-gray-700 mb-2">Alternative approaches:</p>
-                            <div className="space-y-2">
-                              {msg.alternatives.map((alt, index) => (
-                                <button
-                                  key={index}
-                                  onClick={() => handleWorkflowSelect(alt)}
-                                  className="block w-full text-left p-2 text-sm border rounded hover:bg-gray-50 min-h-[44px] min-w-[44px]"
-                                >
-                                  {alt.name}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                <div
+                  className={`max-w-3xl rounded-lg px-4 py-2 ${
+                    msg.type === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : isWorkflowSuccess
+                      ? 'bg-green-50 text-green-800'
+                      : 'bg-gray-100 text-gray-900'
+                  }`}
+                >
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  
+                  {/* Show workflow details if available */}
+                  {msg.workflow && (
+                    <div className="mt-4 p-4 bg-white rounded border">
+                      <h4 className="font-semibold text-gray-900 mb-2">Generated Workflow</h4>
+                      <div className="space-y-2 text-sm">
+                        <p><strong>Steps:</strong> {msg.workflow.steps.length}</p>
+                        <p><strong>Confidence:</strong> {Math.round(msg.workflow.confidence * 100)}%</p>
+                        <p><strong>Est. Time:</strong> {msg.workflow.estimatedExecutionTime / 1000}s</p>
                       </div>
-                    )}
-                  </div>
-                )}
+                      
+                      {/* Add clickable button to select this workflow */}
+                      <button
+                        onClick={() => handleWorkflowSelect(msg.workflow!)}
+                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors min-h-[44px]"
+                        data-testid="select-workflow-btn"
+                      >
+                        Select This Workflow
+                      </button>
+                      
+                      {/* Show validation issues */}
+                      {msg.validation && !msg.validation.isValid && (
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                          <p className="text-yellow-800 font-medium">⚠️ Issues Found:</p>
+                          <ul className="text-yellow-700 text-sm mt-1">
+                            {msg.validation.issues.map((issue, index) => (
+                              <li key={index}>• {issue}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Show alternatives */}
+                      {msg.alternatives && msg.alternatives.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-sm font-medium text-gray-700 mb-2">Alternative approaches:</p>
+                          <div className="space-y-2">
+                            {msg.alternatives.map((alt, index) => (
+                              <button
+                                key={index}
+                                onClick={() => handleWorkflowSelect(alt)}
+                                className="block w-full text-left p-2 text-sm border rounded hover:bg-gray-50 min-h-[44px] min-w-[44px]"
+                              >
+                                {alt.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -296,7 +342,7 @@ export default function NaturalLanguageWorkflowChat({
 
         {/* Input Form */}
         <div className="border-t border-gray-200 p-6">
-          <form onSubmit={handleSubmit} className="space-y-4" role="form">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" role="form">
             <div className="space-y-2">
               <label htmlFor="workflow-description" className="block text-sm font-medium text-gray-700">
                 Workflow Description
@@ -304,24 +350,72 @@ export default function NaturalLanguageWorkflowChat({
               <textarea
                 id="workflow-description"
                 data-testid="workflow-description-input"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                autoFocus
+                {...registerTextarea}
+                onKeyDown={async (e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    // Trigger validation to show errors
+                    await trigger('description');
+                    // Only submit if validation passes
+                    if (Object.keys(errors).length === 0) {
+                      const form = e.currentTarget.form;
+                      if (form) {
+                        form.requestSubmit();
+                      }
+                    }
+                  } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    // Submit the form
+                    const form = e.currentTarget.form;
+                    if (form) {
+                      form.requestSubmit();
+                    }
+                  }
+                }}
                 placeholder="Describe your workflow..."
-                required
                 aria-required="true"
-                aria-describedby="workflow-description-help"
-                aria-invalid={error ? "true" : "false"}
+                aria-describedby="workflow-description-help workflow-description-error"
+                aria-invalid={errors.description ? "true" : "false"}
                 aria-label="Workflow description"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px] min-w-[44px]"
-                disabled={isLoading}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px] min-w-[44px] ${
+                  errors.description 
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300'
+                }`}
+                disabled={isLoading || isSubmitting}
+                ref={setMergedRef}
               />
               <p id="workflow-description-help" className="text-sm text-gray-500">
                 Describe what you want to automate or do
               </p>
+              
+              {/* Form Validation Error */}
+              {errors.description && (
+                <div 
+                  id="workflow-description-error"
+                  className="p-3 bg-red-50 border border-red-200 rounded-md" 
+                  data-testid="workflow-validation-error"
+                  role="alert"
+                  aria-live="assertive"
+                >
+                  <p className="text-sm text-red-600">{errors.description.message}</p>
+                </div>
+              )}
             </div>
 
-            {/* Error Message */}
-            {error && (
+            {/* API Error Message */}
+            {error && error.toLowerCase().includes('rate limit') && (
+              <div 
+                className="p-3 bg-red-50 border border-red-200 rounded-md" 
+                data-testid="rate-limit-error"
+                role="alert"
+                aria-live="assertive"
+              >
+                <p className="text-sm text-red-600">Rate Limit: You have made too many requests. Please wait a moment and try again.</p>
+              </div>
+            )}
+            {error && (!error.toLowerCase().includes('rate limit')) && (
               <div 
                 className="p-3 bg-red-50 border border-red-200 rounded-md" 
                 data-testid="workflow-error-message"
@@ -346,12 +440,11 @@ export default function NaturalLanguageWorkflowChat({
 
             <button
               type="submit"
-              disabled={isLoading}
-
+              disabled={isLoading || isSubmitting}
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="primary-action generate-workflow-btn"
             >
-              {isLoading ? 'Generating...' : 'Generate Workflow'}
+              {isLoading || isSubmitting ? 'Generating...' : 'Generate Workflow'}
             </button>
           </form>
         </div>

@@ -160,13 +160,18 @@ export default function DashboardPage() {
           status: c.status
         })));
         setConnections(connections);
+        
+        // Clear any error messages if connections load successfully
+        if (connections.length > 0) {
+          setErrorMessage(null);
+        }
       } else {
         console.error('❌ DASHBOARD: Failed to load connections:', response.error);
         setErrorMessage(response.error || 'Failed to load connections');
       }
     } catch (error: unknown) {
       console.error('❌ DASHBOARD: Error loading connections:', error);
-      setErrorMessage('Network error');
+      setErrorMessage('Network error while loading connections');
     } finally {
       setIsLoading(false);
     }
@@ -734,17 +739,52 @@ export default function DashboardPage() {
               connections={connections}
               onConnectionCreated={() => {
                 console.info('[dashboard] onConnectionCreated fired');
-                // Add a small delay to ensure the API has fully processed the new connection
-                setTimeout(async () => {
-                  console.info('[dashboard] onConnectionCreated: calling loadConnections after delay');
-                  await loadConnections();
+                
+                // Immediately try to load connections first
+                console.info('[dashboard] onConnectionCreated: immediate loadConnections call');
+                loadConnections();
+                
+                // Use a more robust retry mechanism instead of setTimeout
+                const retryLoadConnections = async (attempt = 1, maxAttempts = 10) => {
+                  console.info(`[dashboard] onConnectionCreated: calling loadConnections (attempt ${attempt}/${maxAttempts})`);
                   
-                  // If no connections found, retry once more after another delay
-                  setTimeout(async () => {
-                    console.info('[dashboard] onConnectionCreated: calling loadConnections retry');
-                    await loadConnections(1);
-                  }, 1000);
-                }, 500);
+                  try {
+                    const response = await apiClient.getConnections();
+                    console.info(`[dashboard] loadConnections API response (attempt ${attempt}):`, JSON.stringify(response, null, 2));
+                    
+                    if (response.success && response.data) {
+                      const freshConnections = response.data.connections || [];
+                      console.info(`[dashboard] Fresh connections count: ${freshConnections.length}`);
+                      
+                      // Update the connections state
+                      setConnections(freshConnections);
+                      
+                      // If we have connections, we're done
+                      if (freshConnections.length > 0) {
+                        console.info('[dashboard] Connections loaded successfully');
+                        return;
+                      }
+                    }
+                    
+                    // If we haven't reached max attempts, retry after a delay
+                    if (attempt < maxAttempts) {
+                      const delay = Math.min(500 * attempt, 2000); // Progressive delay: 500ms, 1000ms, 1500ms, 2000ms...
+                      console.info(`[dashboard] No connections found, retrying in ${delay}ms`);
+                      setTimeout(() => retryLoadConnections(attempt + 1, maxAttempts), delay);
+                    } else {
+                      console.warn('[dashboard] Max retry attempts reached, giving up');
+                    }
+                  } catch (error) {
+                    console.error('[dashboard] Error loading connections:', error);
+                    if (attempt < maxAttempts) {
+                      const delay = Math.min(500 * attempt, 2000);
+                      setTimeout(() => retryLoadConnections(attempt + 1, maxAttempts), delay);
+                    }
+                  }
+                };
+                
+                // Start the retry mechanism
+                setTimeout(() => retryLoadConnections(), 1000); // Add a small delay
                 setSuccessMessage('Connection created successfully!');
               }}
               onConnectionEdited={() => {

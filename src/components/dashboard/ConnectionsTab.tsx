@@ -73,6 +73,12 @@ export default function ConnectionsTab({
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string }>>({});
   const [responseTimes, setResponseTimes] = useState<Record<string, number>>({});
 
+  // Add debugging for connections prop
+  console.info('[connections-tab] ConnectionsTab rendered with connections:', {
+    count: connections.length,
+    connections: connections.map(c => ({ id: c.id, name: c.name, authType: c.authType }))
+  });
+
   const getStatusColor = (connection: ApiConnection) => {
     // For OAuth2 connections, use connectionStatus instead of status
     if (connection.authType === 'OAUTH2' && connection.connectionStatus) {

@@ -72,7 +72,9 @@ process.env.ENABLE_TEST_OAUTH2 = 'true'
 process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
 
 // Mock scrollIntoView for jsdom
-Element.prototype.scrollIntoView = jest.fn()
+if (typeof Element !== 'undefined') {
+  Element.prototype.scrollIntoView = jest.fn();
+}
 
 // Global cleanup for any remaining async operations
 afterAll(async () => {

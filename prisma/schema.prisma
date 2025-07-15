@@ -149,6 +149,7 @@ model User {
   auditLogs      AuditLog[]
   credentials    ApiCredential[]
   secrets        Secret[]
+  workflowShares WorkflowShare[] // Add this relation
 
   @@map("users")
 }
@@ -225,6 +226,7 @@ model Workflow {
   user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   steps      WorkflowStep[]
   executions WorkflowExecution[]
+  shares     WorkflowShare[] // Add this relation
 
   @@unique([userId, name])
   @@map("workflows")
@@ -408,4 +410,28 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@map("password_reset_tokens")
+}
+
+// Workflow Sharing
+
+enum WorkflowPermissionLevel {
+  VIEW
+  EDIT
+  OWNER
+}
+
+model WorkflowShare {
+  id          String                  @id @default(cuid())
+  workflowId  String
+  userId      String
+  permission  WorkflowPermissionLevel @default(VIEW)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  // Relations
+  workflow    Workflow                @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  user        User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowId, userId])
+  @@map("workflow_shares")
 }

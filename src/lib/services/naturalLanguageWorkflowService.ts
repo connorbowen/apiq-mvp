@@ -48,7 +48,7 @@ export interface WorkflowGenerationResponse {
   alternatives?: GeneratedWorkflow[];
 }
 
-class NaturalLanguageWorkflowService {
+export class NaturalLanguageWorkflowService {
   private openai: OpenAI;
   private prisma: PrismaClient;
 
@@ -65,100 +65,151 @@ class NaturalLanguageWorkflowService {
    */
   async generateWorkflow(request: WorkflowGenerationRequest): Promise<WorkflowGenerationResponse> {
     try {
-      console.log('NaturalLanguageWorkflowService: Starting workflow generation');
-      console.log('NaturalLanguageWorkflowService: Available connections:', request.availableConnections.length);
-      
-      // Convert available connections to function definitions for GPT
-      const functions = this.convertConnectionsToFunctions(request.availableConnections);
-      console.log('NaturalLanguageWorkflowService: Generated functions:', functions.length);
-      
-      if (functions.length === 0) {
+      // Validate that we have available connections
+      if (!request.availableConnections || request.availableConnections.length === 0) {
         return {
           success: false,
-          error: 'No API endpoints available for workflow generation. Please add at least one API connection with endpoints.',
+          error: 'No API connections available. Please add at least one API connection before generating workflows.',
           alternatives: []
         };
       }
 
-      // Create system prompt
-      const systemPrompt = this.createSystemPrompt();
-      console.log('NaturalLanguageWorkflowService: System prompt created');
-
-      // Create messages array
-      const messages = [
-        { role: 'system' as const, content: systemPrompt },
-        { role: 'user' as const, content: request.userDescription }
-      ];
-
-      // DEBUG: Log exactly what we're sending to OpenAI
-      console.log('=== OPENAI API DEBUG ===');
-      console.log('→ FUNCTIONS:', JSON.stringify(functions, null, 2));
-      console.log('→ MESSAGES:', JSON.stringify(messages, null, 2));
-      console.log('→ USER REQUEST:', request.userDescription);
-      console.log('=== END DEBUG ===');
-
-      // Call OpenAI API
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4',
-        messages,
-        functions,
-        function_call: 'auto',
-        temperature: 0.1,
-        max_tokens: 2000
-      });
-
-      console.log('NaturalLanguageWorkflowService: OpenAI response received');
-      console.log('NaturalLanguageWorkflowService: Response choices:', completion.choices.length);
+      // Validate that connections have endpoints
+      const connectionsWithEndpoints = request.availableConnections.filter(
+        conn => conn.endpoints && conn.endpoints.length > 0
+      );
       
-      const choice = completion.choices[0];
-      console.log('NaturalLanguageWorkflowService: Choice finish reason:', choice.finish_reason);
-      console.log('NaturalLanguageWorkflowService: Choice message:', JSON.stringify(choice.message, null, 2));
-
-      if (choice.finish_reason === 'function_call' && choice.message.function_call) {
-        console.log('NaturalLanguageWorkflowService: Function call detected');
-        const functionCall = choice.message.function_call;
-        
-        try {
-          const args = JSON.parse(functionCall.arguments);
-          console.log('NaturalLanguageWorkflowService: Parsed function arguments:', JSON.stringify(args, null, 2));
-          
-          // Generate workflow from function call
-          const workflow = this.parseFunctionCallToWorkflow(functionCall, request.availableConnections);
-          
-          return {
-            success: true,
-            workflow,
-            alternatives: await this.generateAlternatives(request, functions, systemPrompt)
-          };
-        } catch (parseError) {
-          console.error('NaturalLanguageWorkflowService: Failed to parse function arguments:', parseError);
-          return {
-            success: false,
-            error: 'Failed to parse workflow generation response',
-            alternatives: await this.generateAlternatives(request, functions, systemPrompt)
-          };
-        }
-      } else if (choice.finish_reason === 'stop' && choice.message.content) {
-        console.log('NaturalLanguageWorkflowService: Stop finish reason with content');
-        // Handle case where GPT provides explanation without function call
+      if (connectionsWithEndpoints.length === 0) {
         return {
           success: false,
-          error: 'Unable to generate workflow. Please provide more specific details about what you want to accomplish.',
-          alternatives: await this.generateAlternatives(request, functions, systemPrompt)
-        };
-      } else {
-        console.log('NaturalLanguageWorkflowService: Unexpected finish reason:', choice.finish_reason);
-        return {
-          success: false,
-          error: 'Failed to generate workflow due to technical error',
-          alternatives: await this.generateAlternatives(request, functions, systemPrompt)
+          error: 'No API endpoints available. Please ensure your connections have valid API specifications.',
+          alternatives: []
         };
       }
+
+      // Basic content validation for unsafe requests
+      const unsafePatterns = [
+        /delete\s+all\s+files/i,
+        /destroy\s+system/i,
+        /wipe\s+database/i,
+        /remove\s+everything/i,
+        /clear\s+all\s+data/i
+      ];
+      
+      const isUnsafe = unsafePatterns.some(pattern => pattern.test(request.userDescription));
+      if (isUnsafe) {
+        return {
+          success: false,
+          error: 'This request appears to be unsafe or destructive. Please provide a more specific and safe workflow description.',
+          alternatives: []
+        };
+      }
+
+      // Convert connections to OpenAI function definitions
+      const functions = this.convertConnectionsToFunctions(connectionsWithEndpoints);
+      
+      if (functions.length === 0) {
+        return {
+          success: false,
+          error: 'Unable to generate workflow functions from available API connections. Please check your connection configurations.',
+          alternatives: []
+        };
+      }
+
+      // Log prompt and function definitions
+      console.log('=== OpenAI Workflow Generation Debug ===');
+      console.log('→ User description:', request.userDescription);
+      console.log('→ Function definitions:', JSON.stringify(functions, null, 2));
+
+      // Prepare OpenAI prompt and call
+      const openaiClient = this.openai;
+      const model = process.env.OPENAI_MODEL || 'gpt-4-turbo-preview';
+      const systemPrompt = this.createSystemPrompt();
+      const userPrompt = request.userDescription;
+
+      console.log('→ System prompt:', systemPrompt);
+      console.log('→ User prompt:', userPrompt);
+      console.log('→ Model:', model);
+
+      let openaiResponse;
+      try {
+        openaiResponse = await openaiClient.chat.completions.create({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          functions,
+          function_call: { name: 'create_workflow' },
+          temperature: 0.1,
+          max_tokens: 2000
+        });
+        console.log('→ Raw OpenAI response:', JSON.stringify(openaiResponse, null, 2));
+      } catch (openaiError) {
+        console.error('→ OpenAI API error:', openaiError);
+        return {
+          success: false,
+          error: 'OpenAI API error: ' + (openaiError instanceof Error ? openaiError.message : String(openaiError)),
+          alternatives: []
+        };
+      }
+
+      const functionCall = openaiResponse.choices[0]?.message?.function_call;
+      if (!functionCall || functionCall.name !== 'create_workflow') {
+        console.error('→ Invalid OpenAI function call:', functionCall);
+        return {
+          success: false,
+          error: 'Failed to generate workflow: Invalid response from OpenAI',
+          alternatives: []
+        };
+      }
+
+      let result;
+      try {
+        result = JSON.parse(functionCall.arguments);
+      } catch (parseError) {
+        console.error('→ Failed to parse OpenAI function call arguments:', functionCall.arguments);
+        return {
+          success: false,
+          error: 'Failed to parse workflow from OpenAI response',
+          alternatives: []
+        };
+      }
+      
+      console.log('→ Parsed workflow result:', JSON.stringify(result, null, 2));
+
+      // Convert the create_workflow function result to our workflow format
+      const workflow: GeneratedWorkflow = {
+        id: `workflow_${Date.now()}`,
+        name: result.name || 'Generated Workflow',
+        description: result.description || 'Workflow generated from natural language request',
+        steps: result.steps.map((step: any, index: number) => ({
+          id: `step_${Date.now()}_${index}`,
+          name: step.name,
+          type: step.type,
+          apiConnectionId: step.connectionId,
+          endpoint: step.endpoint,
+          method: step.method,
+          parameters: step.parameters || {},
+          order: step.order || index + 1
+        })),
+        estimatedExecutionTime: (result.steps.length || 1) * 5000,
+        confidence: 0.8,
+        explanation: `This workflow executes ${result.steps.length || 1} steps in sequence.`
+      };
+
+      return {
+        success: true,
+        workflow,
+        alternatives: [],
+        error: undefined
+      };
     } catch (error) {
-      console.error('NaturalLanguageWorkflowService: Error in generateWorkflow:', error);
+      console.error('=== Workflow Generation Error ===');
+      console.error(error);
       return {
         success: false,
-        error: 'Failed to generate workflow due to technical error',
+        error: error instanceof Error ? error.message : String(error),
         alternatives: []
       };
     }
@@ -170,6 +221,67 @@ class NaturalLanguageWorkflowService {
   private convertConnectionsToFunctions(connections: WorkflowGenerationRequest['availableConnections']) {
     const functions = [];
 
+    // Add the create_workflow function that can orchestrate multiple API calls
+    functions.push({
+      name: 'create_workflow',
+      description: 'Create a new workflow with multiple steps that can orchestrate API calls',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            description: 'The name of the workflow'
+          },
+          description: {
+            type: 'string',
+            description: 'A description of what the workflow does'
+          },
+          steps: {
+            type: 'array',
+            description: 'Array of workflow steps',
+            items: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                  description: 'Name of the step'
+                },
+                type: {
+                  type: 'string',
+                  enum: ['api_call'],
+                  description: 'Type of step (currently only api_call is supported)'
+                },
+                connectionId: {
+                  type: 'string',
+                  description: 'The ID of the API connection to use'
+                },
+                endpoint: {
+                  type: 'string',
+                  description: 'The API endpoint path'
+                },
+                method: {
+                  type: 'string',
+                  enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+                  description: 'The HTTP method'
+                },
+                parameters: {
+                  type: 'object',
+                  description: 'Parameters to pass to the API call'
+                },
+                order: {
+                  type: 'number',
+                  description: 'The order of this step in the workflow'
+                }
+              },
+              required: ['name', 'type', 'connectionId', 'endpoint', 'method', 'order']
+            }
+          }
+        },
+        required: ['name', 'description', 'steps']
+      }
+    });
+
+    // Add individual API endpoint functions for reference
     for (const connection of connections) {
       for (const endpoint of connection.endpoints) {
         // Generate a user-friendly function name using the connection name and action
@@ -182,6 +294,11 @@ class NaturalLanguageWorkflowService {
         // Ensure the function name is under 64 characters
         const finalFunctionName = functionName.length > 64 ? functionName.substring(0, 64) : functionName;
         
+        // Defensive: ensure endpoint.parameters is always an array
+        let safeParameters = Array.isArray(endpoint.parameters) ? endpoint.parameters : [];
+        if (!Array.isArray(endpoint.parameters)) {
+          console.warn(`convertConnectionsToFunctions: endpoint.parameters for ${endpoint.method} ${endpoint.path} is not an array (got: ${typeof endpoint.parameters}). Using empty array.`);
+        }
         functions.push({
           name: finalFunctionName,
           description: `${endpoint.summary} using ${connection.name}`,
@@ -206,7 +323,7 @@ class NaturalLanguageWorkflowService {
               parameters: {
                 type: 'object',
                 description: 'Parameters to pass to the API call',
-                properties: this.convertOpenAPIParametersToJSONSchema(endpoint.parameters)
+                properties: this.convertOpenAPIParametersToJSONSchema(safeParameters)
               }
             },
             required: ['connectionId', 'endpoint', 'method']
@@ -232,17 +349,118 @@ class NaturalLanguageWorkflowService {
     
     for (const param of parameters) {
       if (param.name && param.schema) {
-        properties[param.name] = {
+        // Debug logging for problematic parameters
+        if (param.name === 'tags') {
+          console.log('NaturalLanguageWorkflowService: Processing tags parameter:', JSON.stringify(param, null, 2));
+        }
+        
+        // Skip parameters that don't have a valid schema
+        if (!param.schema || typeof param.schema !== 'object') {
+          console.warn(`NaturalLanguageWorkflowService: Skipping parameter ${param.name} - invalid schema`);
+          continue;
+        }
+        
+        const paramSchema: any = {
           type: param.schema.type || 'string',
           description: param.description || `Parameter: ${param.name}`,
-          ...(param.schema.enum && { enum: param.schema.enum }),
-          ...(param.schema.format && { format: param.schema.format }),
-          ...(param.required && { required: true })
         };
+
+        // Handle enum values
+        if (param.schema.enum && Array.isArray(param.schema.enum)) {
+          paramSchema.enum = param.schema.enum;
+        }
+
+        // Handle format
+        if (param.schema.format && typeof param.schema.format === 'string') {
+          paramSchema.format = param.schema.format;
+        }
+
+        // Handle array types - they need items property
+        if (param.schema.type === 'array') {
+          // Ensure items property is always present for arrays
+          if (param.schema.items && typeof param.schema.items === 'object') {
+            paramSchema.items = {
+              type: param.schema.items.type || 'string'
+            };
+            
+            // If the array items have enum values, include them
+            if (param.schema.items.enum && Array.isArray(param.schema.items.enum)) {
+              paramSchema.items.enum = param.schema.items.enum;
+            }
+            
+            // Handle format for array items
+            if (param.schema.items.format && typeof param.schema.items.format === 'string') {
+              paramSchema.items.format = param.schema.items.format;
+            }
+          } else {
+            // Default to string items if items schema is missing
+            console.warn(`NaturalLanguageWorkflowService: Array parameter ${param.name} missing items schema, using default string type`);
+            paramSchema.items = { type: 'string' };
+          }
+        }
+
+        // Handle object types
+        if (param.schema.type === 'object') {
+          if (param.schema.properties && typeof param.schema.properties === 'object') {
+            paramSchema.properties = param.schema.properties;
+          }
+          if (param.schema.required && Array.isArray(param.schema.required)) {
+            paramSchema.required = param.schema.required;
+          }
+        }
+
+        // Handle additional properties for objects
+        if (param.schema.additionalProperties !== undefined) {
+          paramSchema.additionalProperties = param.schema.additionalProperties;
+        }
+
+        // Validate that the schema is valid before adding it
+        if (this.isValidJSONSchema(paramSchema)) {
+          properties[param.name] = paramSchema;
+        } else {
+          console.warn(`NaturalLanguageWorkflowService: Skipping parameter ${param.name} - invalid JSON schema generated`);
+        }
       }
     }
     
     return properties;
+  }
+
+  /**
+   * Validate that a schema object is valid JSON Schema
+   */
+  private isValidJSONSchema(schema: any): boolean {
+    if (!schema || typeof schema !== 'object') {
+      return false;
+    }
+
+    // Check for required type property
+    if (!schema.type || typeof schema.type !== 'string') {
+      return false;
+    }
+
+    // Validate type values
+    const validTypes = ['string', 'number', 'integer', 'boolean', 'array', 'object', 'null'];
+    if (!validTypes.includes(schema.type)) {
+      return false;
+    }
+
+    // Validate array schemas have items
+    if (schema.type === 'array' && (!schema.items || typeof schema.items !== 'object')) {
+      return false;
+    }
+
+    // Validate enum values are arrays
+    if (schema.enum && !Array.isArray(schema.enum)) {
+      return false;
+    }
+
+    // Validate required is boolean or array
+    if (schema.required !== undefined && typeof schema.required !== 'boolean' && !Array.isArray(schema.required)) {
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -302,108 +520,6 @@ Generate workflows that are:
   }
 
   /**
-   * Parse OpenAI function call to workflow structure (supports multi-step workflows)
-   */
-  private parseFunctionCallToWorkflow(
-    functionCall: OpenAI.Chat.Completions.ChatCompletionMessage.FunctionCall,
-    availableConnections: WorkflowGenerationRequest['availableConnections']
-  ): GeneratedWorkflow {
-    const args = JSON.parse(functionCall.arguments);
-    
-    // Check if this is a multi-step workflow
-    if (args.steps && Array.isArray(args.steps)) {
-      return this.parseMultiStepWorkflow(args, availableConnections);
-    }
-    
-    // Fallback to single step workflow (current implementation)
-    const connection = availableConnections.find(conn => conn.id === args.connectionId);
-    const endpoint = connection?.endpoints.find(ep => ep.path === args.endpoint && ep.method === args.method);
-    
-    const step: WorkflowStep = {
-      id: `step_${Date.now()}`,
-      name: `${connection?.name || 'API'} ${args.method} ${args.endpoint}`,
-      type: 'api_call',
-      apiConnectionId: args.connectionId,
-      endpoint: args.endpoint,
-      method: args.method,
-      parameters: args.parameters || {},
-      order: 1
-    };
-
-    return {
-      id: `workflow_${Date.now()}`,
-      name: `Generated Workflow`,
-      description: `Workflow generated from natural language request`,
-      steps: [step],
-      estimatedExecutionTime: 5000,
-      confidence: 0.8,
-      explanation: `This workflow will call ${connection?.name || 'API'} to ${endpoint?.summary || 'perform the requested action'}`
-    };
-  }
-
-  /**
-   * Parse multi-step workflow from function call arguments
-   */
-  private parseMultiStepWorkflow(
-    args: any,
-    availableConnections: WorkflowGenerationRequest['availableConnections']
-  ): GeneratedWorkflow {
-    const steps: WorkflowStep[] = [];
-    
-    for (let i = 0; i < args.steps.length; i++) {
-      const stepData = args.steps[i];
-      const connection = availableConnections.find(c => c.id === stepData.connectionId);
-      const endpoint = connection?.endpoints.find(e => e.path === stepData.endpoint);
-      
-      if (!connection || !endpoint) {
-        console.warn(`Skipping step ${i + 1}: Invalid connection or endpoint`);
-        continue;
-      }
-
-      const step: WorkflowStep = {
-        id: `step_${Date.now()}_${i}`,
-        name: stepData.name || endpoint.summary,
-        type: stepData.type || 'api_call',
-        apiConnectionId: connection.id,
-        endpoint: endpoint.path,
-        method: endpoint.method,
-        parameters: stepData.parameters || {},
-        dataMapping: stepData.dataMapping || {},
-        conditions: stepData.conditions || null,
-        order: i + 1
-      };
-      
-      steps.push(step);
-    }
-
-    if (steps.length === 0) {
-      throw new Error('No valid steps found in multi-step workflow');
-    }
-
-    return {
-      id: `workflow_${Date.now()}`,
-      name: args.name || `Multi-step workflow with ${steps.length} steps`,
-      description: args.description || `Workflow with ${steps.length} steps`,
-      steps,
-      estimatedExecutionTime: steps.length * 5000,
-      confidence: 0.8,
-      explanation: args.explanation || `This workflow executes ${steps.length} steps in sequence.`
-    };
-  }
-
-  /**
-   * Generate alternative workflows
-   */
-  private async generateAlternatives(
-    request: WorkflowGenerationRequest,
-    functions: any[],
-    systemPrompt: string
-  ): Promise<GeneratedWorkflow[]> {
-    // For now, return empty array - this could be expanded to generate alternatives
-    return [];
-  }
-
-  /**
    * Validate a generated workflow
    */
   async validateWorkflow(workflow: GeneratedWorkflow): Promise<{
@@ -445,30 +561,4 @@ Generate workflows that are:
       suggestions
     };
   }
-
-  /**
-   * Save workflow to database
-   */
-  async saveWorkflow(workflow: GeneratedWorkflow, userId: string): Promise<string> {
-    const savedWorkflow = await this.prisma.workflow.create({
-      data: {
-        id: workflow.id,
-        name: workflow.name,
-        description: workflow.description,
-        userId,
-        isActive: true,
-        steps: workflow.steps,
-        metadata: {
-          estimatedExecutionTime: workflow.estimatedExecutionTime,
-          confidence: workflow.confidence,
-          explanation: workflow.explanation,
-          generatedAt: new Date().toISOString()
-        }
-      }
-    });
-
-    return savedWorkflow.id;
-  }
 }
-
-export default NaturalLanguageWorkflowService; 

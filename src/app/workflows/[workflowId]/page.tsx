@@ -7,6 +7,7 @@ export const runtime = 'edge';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '../../../lib/api/client';
+import WorkflowShareModal from '../../../components/WorkflowShareModal';
 
 interface Workflow {
   id: string;
@@ -22,6 +23,7 @@ export default function WorkflowDetailPage() {
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const params = useParams();
   const router = useRouter();
   const workflowId = params?.workflowId as string;
@@ -173,6 +175,13 @@ export default function WorkflowDetailPage() {
                     >
                       Execute
                     </button>
+                    <button
+                      onClick={() => setIsShareModalOpen(true)}
+                      data-testid="share-workflow-btn"
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      Share
+                    </button>
                     <Link
                       href={`/workflows/${workflowId}/edit`}
                       className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -267,6 +276,13 @@ export default function WorkflowDetailPage() {
           </div>
         </div>
       </div>
+      
+      {/* Share Modal */}
+      <WorkflowShareModal
+        workflowId={workflowId}
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+      />
     </div>
   );
 } 

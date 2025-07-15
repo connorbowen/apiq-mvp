@@ -20,7 +20,7 @@ if (process.env.NODE_ENV === 'test') {
   const testConfig = {
     host: process.env.TEST_DB_HOST || 'localhost',
     port: parseInt(process.env.TEST_DB_PORT || '5432'),
-    database: process.env.TEST_DB_NAME || 'apiq_test',
+    database: process.env.TEST_DB_NAME || 'apiq_mvp', // Use apiq_mvp to match Jest setup
     user: process.env.TEST_DB_USER || 'connorbowen',
     password: process.env.TEST_DB_PASSWORD || '',
   };
@@ -47,7 +47,7 @@ if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   global.prisma = prisma;
 }
 
-export { prisma };
+export { prisma, PrismaClient };
 
 // Test database connection
 export const testDatabaseConnection = async () => {
