@@ -349,13 +349,39 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       try {
         // Use a transaction to ensure atomicity
         await prisma.$transaction(async (tx) => {
-          // TODO: [SECRETS-FIRST-REFACTOR] Create secrets first if auth data is provided
-          if (connectionData.authConfig && Object.keys(connectionData.authConfig).length > 0) {
+                  // TODO: [SECRETS-FIRST-REFACTOR] Handle secrets-first connection creation
+        // Check if secrets are already provided (frontend created them)
+        if (connectionData.secretIds && connectionData.secretIds.length > 0) {
+          // Use existing secrets provided by frontend
+          createdSecretIds = connectionData.secretIds;
+          console.log('🔍 Using existing secrets provided by frontend:', createdSecretIds);
+        } else {
+          // Create secrets from auth data if provided
+          const hasAuthData = (connectionData.authConfig && Object.keys(connectionData.authConfig).length > 0) ||
+                             connectionData.apiKey ||
+                             connectionData.token ||
+                             connectionData.username ||
+                             connectionData.password ||
+                             connectionData.clientId ||
+                             connectionData.clientSecret;
+          
+          if (hasAuthData) {
+            // Prepare auth config by combining authConfig with direct fields
+            const combinedAuthConfig = {
+              ...connectionData.authConfig,
+              apiKey: connectionData.apiKey || connectionData.authConfig?.apiKey,
+              token: connectionData.token || connectionData.authConfig?.token,
+              username: connectionData.username || connectionData.authConfig?.username,
+              password: connectionData.password || connectionData.authConfig?.password,
+              clientId: connectionData.clientId || connectionData.authConfig?.clientId,
+              clientSecret: connectionData.clientSecret || connectionData.authConfig?.clientSecret
+            };
+            
             const { secretIds, errors } = await createSecretsFromConnection(
               user.id,
               connectionData.name,
               connectionData.authType,
-              connectionData.authConfig
+              combinedAuthConfig
             );
             
             if (errors.length > 0) {
@@ -368,6 +394,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
             
             createdSecretIds = secretIds;
           }
+        }
 
           // Determine initial connection status based on auth type
           const initialConnectionStatus = connectionData.authType === 'OAUTH2' 
@@ -391,6 +418,18 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               secretId: createdSecretIds.length > 0 ? createdSecretIds[0] : null
             }
           });
+
+          // Link existing secrets to the connection if they were provided by frontend
+          if (connectionData.secretIds && connectionData.secretIds.length > 0) {
+            for (const secretId of connectionData.secretIds) {
+              await tx.secret.update({
+                where: { id: secretId },
+                data: {
+                  connectionId: newConnection.id
+                }
+              });
+            }
+          }
 
           // Debug: Log after persisting the apiConnection
           console.log('🟢 POST persisted', {

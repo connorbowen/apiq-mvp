@@ -102,12 +102,15 @@ import SecretsTab from '../../components/dashboard/SecretsTab';
 import AdminTab from '../../components/dashboard/AdminTab';
 import AuditTab from '../../components/dashboard/AuditTab';
 import CreateConnectionModal from '../../components/dashboard/CreateConnectionModal';
+import UserDropdown from '../../components/dashboard/UserDropdown';
 
 interface User {
   id: string;
   email: string;
   name: string;
   role: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export default function DashboardPage() {
@@ -427,14 +430,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <div className="flex items-center space-x-4">
-            {user && <span className="text-gray-700">Welcome, {user.name}</span>}
-            <button
-              data-testid="logout-btn"
-              onClick={handleLogout}
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors min-h-[44px]"
-            >
-              Logout
-            </button>
+            {user && <UserDropdown user={user} onLogout={handleLogout} />}
           </div>
         </div>
       </header>

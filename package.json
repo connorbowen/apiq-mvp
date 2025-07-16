@@ -83,6 +83,8 @@
     "test:e2e:connections:connections-management": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/connections-management.test.ts",
     "test:e2e:connections:oauth2-flows": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/oauth2-flows.test.ts",
     "test:e2e:connections:openapi-integration": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/openapi-integration.test.ts",
+    "test:e2e:connections:secrets-first": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/secrets-first-connection.test.ts",
+    "test:e2e:secrets-first": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/secrets-first-connection.test.ts tests/e2e/connections/connections-management.test.ts --grep 'Secrets-First'",
     "test:e2e:security:rate-limiting": "./scripts/kill-port-3000.sh && playwright test tests/e2e/security/rate-limiting.test.ts",
     "test:e2e:security:secrets-vault": "./scripts/kill-port-3000.sh && playwright test tests/e2e/security/secrets-vault.test.ts",
     "test:e2e:workflow-engine:workflow-management": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/workflow-management.test.ts",

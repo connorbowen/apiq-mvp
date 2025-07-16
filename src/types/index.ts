@@ -66,6 +66,11 @@ export interface CreateApiConnectionRequest {
   authType: 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM';
   authConfig?: Record<string, any>;
   documentationUrl?: string;
+  // Direct auth fields for frontend compatibility
+  apiKey?: string;
+  token?: string;
+  username?: string;
+  password?: string;
   // Test properties for OAuth2 testing
   oauth2Provider?: string;
   clientId?: string;

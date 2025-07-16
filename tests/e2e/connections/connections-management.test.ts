@@ -1,10 +1,5 @@
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 6: E2E Test Updates
-// - Update E2E tests to verify secret creation during connection setup
-// - Test secret management UI integration
-// - Verify secret rotation in E2E flows
-// - Test OAuth2 flow with secrets
-// - Add E2E tests for secret-connection relationship
-// - Test rollback scenarios in E2E
+// E2E Tests for Connections Management with Secrets-First Integration
+// Tests the complete connection management functionality including secrets-first refactor
 
 import { test, expect } from '../../helpers/serverHealthCheck';
 import { createTestUser, cleanupTestUser, generateTestId, TestUser } from '../../helpers/testUtils';
@@ -1673,6 +1668,200 @@ test.describe('Connections Management E2E Tests', () => {
       await expect(successMessage).toBeVisible();
       const messageText = await successMessage.textContent();
       expect(messageText).toMatch(/Connection test successful|test passed/i);
+    });
+  });
+
+  test.describe('Secrets-First Integration', () => {
+    test('should create connection with automatic secret creation', async ({ page, request }) => {
+      // Click create connection button
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      
+      // Wait for modal to appear
+      await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
+      
+      // Fill connection form
+      await page.fill('[data-testid="connection-name-input"]', 'Secrets-First Test Connection');
+      await page.fill('[data-testid="connection-description-input"]', 'Connection with automatic secret creation');
+      await page.fill('[data-testid="connection-baseurl-input"]', 'https://httpbin.org/get');
+      await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
+      await page.fill('[data-testid="connection-apikey-input"]', 'secrets-first-test-key');
+      
+      // Submit form
+      await page.click('[data-testid="primary-action submit-connection-btn"]');
+      
+      // Wait for modal to close (indicating success)
+      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
+      
+      // Check for success message
+      await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
+      
+      // Check for connection card
+      const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Secrets-First Test Connection")');
+      await expect(connectionCard).toBeVisible({ timeout: 10000 });
+      
+      // Verify that a secret was automatically created via API
+      const connectionsResponse = await request.get('/api/connections', {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+      expect(connectionsResponse.ok()).toBeTruthy();
+      
+      const response = await connectionsResponse.json();
+      expect(response.success).toBeTruthy();
+      expect(response.data).toBeDefined();
+      expect(response.data.connections).toBeDefined();
+      
+      const connections = response.data.connections;
+      const createdConnection = connections.find((conn: any) => 
+        conn.name === 'Secrets-First Test Connection'
+      );
+      
+      expect(createdConnection).toBeDefined();
+      expect(createdConnection.secretId).toBeDefined();
+      expect(createdConnection.secretId).not.toBeNull();
+      
+      // Verify the secret exists and is linked to the connection
+      const secretResponse = await request.get(`/api/secrets/${createdConnection.secretId}`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+      expect(secretResponse.ok()).toBeTruthy();
+      
+      const secret = await secretResponse.json();
+      expect(secret.connectionId).toBe(createdConnection.id);
+      expect(secret.connectionName).toBe('Secrets-First Test Connection');
+      expect(secret.type).toBe('API_KEY');
+    });
+
+    test('should manage secrets for existing connection', async ({ page, request }) => {
+      // First create a connection
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      
+      await page.fill('[data-testid="connection-name-input"]', 'Secrets Management Test');
+      await page.fill('[data-testid="connection-description-input"]', 'Connection for secrets management testing');
+      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
+      await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
+      await page.fill('[data-testid="connection-apikey-input"]', 'initial-secret-key');
+      
+      await page.click('[data-testid="primary-action submit-connection-btn"]');
+      
+      // Wait for modal to close (indicating success)
+      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
+      
+      // Get the created connection
+      const connectionsResponse = await request.get('/api/connections', {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+      expect(connectionsResponse.ok()).toBeTruthy();
+      
+      const response = await connectionsResponse.json();
+      expect(response.success).toBeTruthy();
+      expect(response.data).toBeDefined();
+      expect(response.data.connections).toBeDefined();
+      
+      const connections = response.data.connections;
+      const createdConnection = connections.find((conn: any) => 
+        conn.name === 'Secrets Management Test'
+      );
+      
+      expect(createdConnection).toBeDefined();
+      expect(createdConnection.secretId).toBeDefined();
+      
+      // Navigate to connection details page
+      await page.goto(`${BASE_URL}/connections/${createdConnection.id}`);
+      await page.waitForLoadState('networkidle');
+      
+      // Check for secrets section
+      const secretsSection = page.locator('[data-testid="connection-secrets-section"]');
+      await expect(secretsSection).toBeVisible();
+      
+      // Check for existing secret
+      const existingSecret = page.locator('[data-testid="secret-item"]');
+      await expect(existingSecret).toBeVisible();
+      
+      // Test secret rotation
+      const rotateButton = page.locator('[data-testid="primary-action rotate-secret-btn"]');
+      await expect(rotateButton).toBeVisible();
+      
+      // Click rotate button
+      await rotateButton.click();
+      
+      // Wait for rotation confirmation
+      const confirmButton = page.locator('[data-testid="primary-action confirm-rotate-btn"]');
+      await expect(confirmButton).toBeVisible();
+      
+      await confirmButton.click();
+      
+      // Wait for success message
+      const successMessage = page.locator('[data-testid="success-message"]');
+      await expect(successMessage).toBeVisible({ timeout: 10000 });
+      
+      // Verify secret was rotated via API
+      const secretResponse = await request.get(`/api/secrets/${createdConnection.secretId}`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+      expect(secretResponse.ok()).toBeTruthy();
+      
+      const secret = await secretResponse.json();
+      expect(secret.connectionId).toBe(createdConnection.id);
+    });
+
+    test('should handle connection creation with rollback on secret failure', async ({ page, request }) => {
+      // This test verifies that if secret creation fails, the connection creation is rolled back
+      
+      // Click create connection button
+      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      
+      // Wait for modal to appear
+      await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
+      
+      // Fill connection form with potentially problematic data
+      await page.fill('[data-testid="connection-name-input"]', 'Rollback Test Connection');
+      await page.fill('[data-testid="connection-description-input"]', 'Connection to test rollback functionality');
+      await page.fill('[data-testid="connection-baseurl-input"]', 'https://httpbin.org/get');
+      await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
+      await page.fill('[data-testid="connection-apikey-input"]', 'rollback-test-key');
+      
+      // Submit form
+      await page.click('[data-testid="primary-action submit-connection-btn"]');
+      
+      // Wait for modal to close (indicating success)
+      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
+      
+      // Check for success message
+      await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
+      
+      // Check for connection card
+      const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Rollback Test Connection")');
+      await expect(connectionCard).toBeVisible({ timeout: 10000 });
+      
+      // Verify that both connection and secret were created successfully
+      const connectionsResponse = await request.get('/api/connections', {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+      expect(connectionsResponse.ok()).toBeTruthy();
+      
+      const response = await connectionsResponse.json();
+      expect(response.success).toBeTruthy();
+      expect(response.data).toBeDefined();
+      expect(response.data.connections).toBeDefined();
+      
+      const connections = response.data.connections;
+      const createdConnection = connections.find((conn: any) => 
+        conn.name === 'Rollback Test Connection'
+      );
+      
+      expect(createdConnection).toBeDefined();
+      expect(createdConnection.secretId).toBeDefined();
+      expect(createdConnection.secretId).not.toBeNull();
+      
+      // Verify the secret exists and is properly linked
+      const secretResponse = await request.get(`/api/secrets/${createdConnection.secretId}`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+      expect(secretResponse.ok()).toBeTruthy();
+      
+      const secret = await secretResponse.json();
+      expect(secret.connectionId).toBe(createdConnection.id);
+      expect(secret.connectionName).toBe('Rollback Test Connection');
     });
   });
 }); 

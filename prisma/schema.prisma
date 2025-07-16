@@ -138,7 +138,6 @@ model User {
   // Profile fields
   firstName    String?
   lastName     String?
-  avatar       String? // URL to profile picture
   timezone     String? @default("UTC")
   language     String? @default("en")
   emailVerified Boolean @default(false)

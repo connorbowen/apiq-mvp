@@ -32,7 +32,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import ProgressiveDisclosure from '../ProgressiveDisclosure';
 import ProfileTab from './ProfileTab';
@@ -107,6 +107,17 @@ export default function SettingsTab({
 }: SettingsTabProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>('connections');
   const { isFeatureAvailable } = useOnboarding();
+
+  // Check URL for section parameter to set initial active section
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      const sectionParam = url.searchParams.get('section');
+      if (sectionParam && ['connections', 'secrets', 'account', 'preferences'].includes(sectionParam)) {
+        setActiveSection(sectionParam as SettingsSection);
+      }
+    }
+  }, []);
 
   const handleSectionChange = (section: SettingsSection) => {
     setActiveSection(section);
