@@ -1,4 +1,4 @@
-import { MultiStepWorkflowService } from '../../../../src/lib/services/multiStepWorkflowService';
+import { NaturalLanguageWorkflowService } from '../../../../src/lib/services/naturalLanguageWorkflowService';
 import { PrismaClient } from '@prisma/client';
 
 // Mock Prisma for unit testing (following user-rules.md testing guidelines)
@@ -25,7 +25,7 @@ const mockPrisma = {
  * - Proper TypeScript typing and error handling
  */
 describe('MultiStepWorkflowService', () => {
-  let service: MultiStepWorkflowService;
+  let service: NaturalLanguageWorkflowService;
   let mockPrisma: jest.Mocked<PrismaClient>;
 
   beforeEach(() => {
@@ -39,7 +39,7 @@ describe('MultiStepWorkflowService', () => {
         create: jest.fn()
       }
     } as any;
-    service = new MultiStepWorkflowService('test-api-key', mockPrisma);
+    service = new NaturalLanguageWorkflowService('test-api-key', mockPrisma);
   });
 
   describe('P0.1.1: Multi-Step Workflow Generation - Core MVP Blocker', () => {

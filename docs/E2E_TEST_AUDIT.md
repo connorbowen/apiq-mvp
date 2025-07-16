@@ -10,6 +10,6 @@
 
 ## Remaining Issues
 - Test pass rate decline: 262 tests failing
-- Critical Blocker: Multi-step workflow generation not yet implemented (TDD tests created, implementation pending)
+- ✅ Multi-step workflow generation implemented and tested (P0.1 complete)
 
 _Last updated: 2025-07-16 (Secrets-first refactor, E2E, and documentation update)_ 

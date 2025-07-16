@@ -488,11 +488,11 @@ class ApiClient {
   }
 
   // Natural language workflow generation
-  async generateWorkflow(prompt: string): Promise<ApiResponse<{ workflow: any; steps: any[]; explanation: string }>> {
+  async generateWorkflow(userDescription: string): Promise<ApiResponse<{ workflow: any; steps: any[]; explanation: string }>> {
     return this.request({
       method: 'POST',
       url: '/api/workflows/generate',
-      data: { prompt },
+      data: { userDescription },
     });
   }
 

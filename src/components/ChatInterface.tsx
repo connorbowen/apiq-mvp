@@ -208,9 +208,41 @@ export default function ChatInterface({ onWorkflowGenerated }: ChatInterfaceProp
                   <div className="text-xs text-gray-600 mb-2">
                     {message.workflow.description}
                   </div>
-                  <div className="text-xs text-gray-500 mb-2">
-                    {message.steps.length} step{message.steps.length !== 1 ? 's' : ''} • Ready to save
+                  
+                  {/* Multi-step workflow display */}
+                  <div className="mb-3">
+                    <div className="text-xs font-medium text-gray-700 mb-2">
+                      📋 Workflow Steps ({message.steps.length} step{message.steps.length !== 1 ? 's' : ''})
+                    </div>
+                    <div className="space-y-2">
+                      {message.steps.map((step: any, index: number) => (
+                        <div key={step.id || index} className="flex items-start space-x-2 p-2 bg-gray-50 rounded border border-gray-100">
+                          <div className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-medium">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium text-gray-900">
+                              {step.name}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              {step.description || `${step.type} step`}
+                            </div>
+                            {step.type === 'api_call' && step.apiConnectionId && (
+                              <div className="text-xs text-indigo-600 mt-1">
+                                🔗 API Connection: {step.apiConnectionId}
+                              </div>
+                            )}
+                            {step.dataMapping && Object.keys(step.dataMapping).length > 0 && (
+                              <div className="text-xs text-green-600 mt-1">
+                                🔄 Data mapping configured
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                  
                   <div className="flex space-x-2">
                     <button className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700">
                       Save Workflow

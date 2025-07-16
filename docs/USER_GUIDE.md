@@ -299,46 +299,67 @@ The API Explorer helps you understand what each connected API can do:
 
 ### Natural Language Workflows
 
-The easiest way to create workflows is using natural language! Simply describe what you want to happen in plain English, and our AI will create the workflow for you.
+The easiest way to create workflows is using natural language! Simply describe what you want to happen in plain English, and our AI will create multi-step workflows for you automatically.
 
 #### How It Works:
 1. **Start a Conversation** - Click "New Workflow" or "Chat"
 2. **Describe Your Workflow** - Tell us what you want to happen, for example:
-   - "When a new GitHub issue is created, send a Slack notification"
-   - "When a Trello card is moved to 'Done', create a Google Calendar event"
-   - "When a new email arrives in Gmail, create a task in Todoist"
-   - "Every Monday at 9 AM, check our Google Analytics and send a summary to Slack"
-3. **Review & Confirm** - We'll generate a workflow and show you exactly what will happen
-4. **Customize if Needed** - Modify any steps or add conditions before saving
+   - "When a new GitHub issue is created, send a Slack notification and create a Trello card"
+   - "When a customer places an order, create an invoice, send a confirmation email, and update inventory"
+   - "When a new email arrives in Gmail, create a task in Todoist and add it to our project management system"
+   - "Every Monday at 9 AM, check our Google Analytics, generate a report, and send it to our team Slack channel"
+3. **Review & Confirm** - We'll generate a multi-step workflow and show you exactly what each step will do
+4. **Customize if Needed** - Modify any steps, add conditions, or adjust data mapping before saving
 5. **Save & Activate** - Your workflow is ready to run!
 
-#### Example Workflows:
-```
-"When someone creates a new GitHub issue with the label 'bug', 
-send a message to the #bugs Slack channel with the issue details"
-```
+#### Multi-Step Workflow Examples:
 
+**Example 1: GitHub Issue Management**
+```
+"When a new GitHub issue is created with the label 'bug', 
+send a Slack notification to the #bugs channel and create a Trello card"
+```
+*Generated Workflow:*
+- Step 1: Monitor GitHub issues for new bug reports
+- Step 2: Send formatted Slack notification with issue details
+- Step 3: Create Trello card with issue information and link
+
+**Example 2: Customer Onboarding**
 ```
 "When a new customer signs up through our website form, 
-add them to our Mailchimp list and create a welcome email"
+add them to our CRM, send a welcome email, and create a task for follow-up"
 ```
+*Generated Workflow:*
+- Step 1: Monitor website form submissions
+- Step 2: Add customer to CRM system
+- Step 3: Send personalized welcome email
+- Step 4: Create follow-up task in project management
 
+**Example 3: Weekly Reporting**
 ```
-"Every Monday at 9 AM, check our Google Analytics for the previous week 
-and send a summary report to our team Slack channel"
+"Every Monday at 9 AM, check our Google Analytics for the previous week, 
+generate a report, and send it to our team Slack channel"
 ```
+*Generated Workflow:*
+- Step 1: Fetch analytics data from Google Analytics
+- Step 2: Transform and format the data into a report
+- Step 3: Send formatted report to Slack channel
 
 #### Advanced Features:
+- **Multi-Step Generation** - Automatically breaks complex requests into 2-5 logical steps
+- **Data Mapping** - Automatically maps data between steps using JSON path expressions
 - **Alternative Suggestions** - If we can't create exactly what you want, we'll suggest alternatives
 - **Workflow Validation** - We'll check your workflow for potential issues and suggest improvements
 - **Context Awareness** - The AI remembers your previous requests and can build on them
 - **Confidence Scoring** - We'll tell you how confident we are in the generated workflow
 
 #### AI Analysis Process:
-- APIQ analyzes your request
-- Identifies required API calls
-- Plans the execution sequence
-- Handles data flow between steps
+- APIQ analyzes your request for multiple actions or conditions
+- Breaks down complex scenarios into logical, sequential steps
+- Identifies required API calls and their dependencies
+- Plans the execution sequence with proper data flow
+- Handles data mapping between steps automatically
+- Validates the workflow for potential issues
 
 ### Visual Workflow Builder
 

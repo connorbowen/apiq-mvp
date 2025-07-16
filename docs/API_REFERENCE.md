@@ -64,7 +64,7 @@ Error responses:
 
 ### Natural Language Workflow Generation 🆕
 
-The Natural Language Workflow Generation API allows users to create complex workflows by describing them in plain English. The system uses OpenAI GPT-4 to understand user intent and generate executable workflows.
+The Natural Language Workflow Generation API allows users to create complex multi-step workflows by describing them in plain English. The system uses OpenAI GPT-4 to understand user intent and generate executable workflows with 2-5 steps for complex automation scenarios.
 
 #### `POST /api/workflows/generate`
 
@@ -93,15 +93,8 @@ Generate a workflow from natural language description.
         {
           "id": "step_1",
           "name": "Monitor GitHub Issues",
-          "type": "api_call",
-          "apiConnectionId": "github_conn_123",
-          "endpoint": "/repos/{owner}/{repo}/issues",
-          "method": "GET",
-          "parameters": {
-            "state": "open",
-            "sort": "created",
-            "direction": "desc"
-          },
+          "type": "webhook",
+          "description": "Listen for new issue events from GitHub",
           "order": 1
         },
         {
@@ -123,12 +116,36 @@ Generate a workflow from natural language description.
               }
             ]
           },
+          "dataMapping": {
+            "issue_title": "$.step_1.title",
+            "issue_url": "$.step_1.html_url",
+            "issue_body": "$.step_1.body"
+          },
           "order": 2
+        },
+        {
+          "id": "step_3",
+          "name": "Create Trello Card",
+          "type": "api_call",
+          "apiConnectionId": "trello_conn_789",
+          "endpoint": "/cards",
+          "method": "POST",
+          "parameters": {
+            "name": "{{step_1.title}}",
+            "desc": "{{step_1.body}}\n\nLink: {{step_1.html_url}}",
+            "idList": "{{trello_list_id}}"
+          },
+          "dataMapping": {
+            "card_name": "$.step_1.title",
+            "card_description": "$.step_1.body",
+            "card_url": "$.step_1.html_url"
+          },
+          "order": 3
         }
       ],
-      "estimatedExecutionTime": 5000,
+      "estimatedExecutionTime": 15000,
       "confidence": 0.95,
-      "explanation": "This workflow monitors GitHub for new issues and sends formatted notifications to Slack with issue details and links."
+      "explanation": "This multi-step workflow \"GitHub Issue to Slack Notification\" executes 3 steps in sequence:\n\nStep 1: Monitor GitHub Issues\nStep 2: Send Slack Notification\nStep 3: Create Trello Card\n\nThe workflow includes data mapping between steps to ensure smooth data flow and proper execution order."
     },
     "validation": {
       "isValid": true,

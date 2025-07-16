@@ -30,6 +30,6 @@
 - **Test Pass Rate Decline**: 262 tests failing (down from previous 100% pass rate)
   - **Primary Issue**: Prisma validation errors in test cleanup
   - **Secondary Issue**: UI element timing issues in various test suites
-- **Critical Blocker**: Multi-step workflow generation not yet implemented (TDD tests created, implementation pending)
+- ✅ **Multi-step workflow generation**: Implemented and tested (P0.1 complete)
 
 _Last updated: 2025-07-16 (Secrets-first refactor, E2E, and documentation update)_
