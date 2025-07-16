@@ -203,7 +203,22 @@ ${process.env.NEXTAUTH_URL || 'http://localhost:3000'}
       return false;
     }
   }
+
+  /**
+   * Send a support email (public)
+   */
+  async sendSupportEmail(to: string, subject: string, text: string): Promise<boolean> {
+    const template = {
+      subject,
+      html: `<pre>${text}</pre>`,
+      text,
+    };
+    return this.sendEmail(to, template);
+  }
 }
 
-// Export singleton instance
-export const emailService = new EmailService(); 
+export const emailService = new EmailService();
+
+export async function sendSupportEmail({ to, from, subject, text }: { to: string; from: string; subject: string; text: string; }) {
+  return emailService.sendSupportEmail(to, subject, text);
+} 

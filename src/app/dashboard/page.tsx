@@ -103,6 +103,7 @@ import AdminTab from '../../components/dashboard/AdminTab';
 import AuditTab from '../../components/dashboard/AuditTab';
 import CreateConnectionModal from '../../components/dashboard/CreateConnectionModal';
 import UserDropdown from '../../components/dashboard/UserDropdown';
+import SupportModal from '../../components/dashboard/SupportModal';
 
 interface User {
   id: string;
@@ -129,6 +130,7 @@ export default function DashboardPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [auditRefreshTrigger, setAuditRefreshTrigger] = useState(0); // Trigger for audit log refresh
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const router = useRouter();
 
   const loadUser = useCallback(async () => {
@@ -411,7 +413,7 @@ export default function DashboardPage() {
 
   return (
     <main role="main" className="min-h-screen bg-gray-50">
-
+      <SupportModal open={showSupportModal} onClose={() => setShowSupportModal(false)} user={user || { email: '', name: '' }} />
       
       {/* Skip link for accessibility */}
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
@@ -430,7 +432,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <div className="flex items-center space-x-4">
-            {user && <UserDropdown user={user} onLogout={handleLogout} />}
+            {user && <UserDropdown user={user} onLogout={handleLogout} onHelp={() => setShowSupportModal(true)} />}
           </div>
         </div>
       </header>
