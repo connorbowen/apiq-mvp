@@ -10,10 +10,10 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 ## Current Status: MVP Core Engine Partially Complete ⚠️
 
-**Test Status**: 50.7% E2E pass rate (218/430 tests passing) ⚠️ **DECREASED**
+**Test Status**: 50.7% E2E pass rate (218/480 tests passing) ⚠️ **DECREASED**
 **Unit Test Coverage**: 656/657 passing (99.8% success rate) ✅ **MAINTAINED**
 **Integration Test Coverage**: 243/248 passing (98% success rate) ✅ **MAINTAINED**
-**E2E Test Coverage**: 218/430 passing (50.7% success rate) ⚠️ **DECREASED**
+**E2E Test Coverage**: 218/480 passing (50.7% success rate) ⚠️ **DECREASED**
 **Last Updated**: July 15, 2025
 **Next Milestone**: Complete multi-step workflow generation (P0.1.1)
 **Authentication Flow**: Fixed login error handling and client-side validation ✅ **MAINTAINED**
@@ -28,7 +28,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 **Authentication Middleware**: Server-side route protection with cookie-based authentication ✅ **COMPLETED - LATEST**
 **E2E Test Suite Robustness**: Enhanced OAuth2 E2E tests to handle real-world OAuth2 flow complexities ✅ **COMPLETED - LATEST**
 **Authentication Middleware Fix**: Fixed public route configuration for `/forgot-password-success` ✅ **COMPLETED - LATEST**
-**E2E Test Suite**: TDD Implementation in Progress - 50.7% pass rate (218/430 tests) with comprehensive TDD approach ⚠️ **TDD IMPLEMENTATION IN PROGRESS**
+**E2E Test Suite**: TDD Implementation in Progress - 50.7% pass rate (218/480 tests) with comprehensive TDD approach ⚠️ **TDD IMPLEMENTATION IN PROGRESS**
 **Unified Error Handling System**: Implemented centralized error handling with user-friendly messages ✅ **COMPLETED - LATEST**
   - **ApplicationError Class**: Single source of truth for application errors with convenience builders
   - **API Endpoint Updates**: All 12+ API endpoints updated to use unified error system
@@ -69,7 +69,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - Secrets e2e tests: ✅ 29/29 passing (100% success rate, audit log/UX compliance, script reorg) ✅ **COMPLETED - LATEST**
 - Performance e2e tests: ✅ Passing
 - **🆕 Workflow Sharing tests**: ✅ 1/1 passing (100% success rate) ✅ **COMPLETED - LATEST**
-- **Total E2E Tests**: ⚠️ 218/430 passing (50.7% success rate) ⚠️ **DECREASED**
+- **Total E2E Tests**: ⚠️ 218/480 passing (50.7% success rate) ⚠️ **DECREASED**
 
 **Unit Test Status**:
 - Authentication components: ✅ All passing (login, registration, password reset)

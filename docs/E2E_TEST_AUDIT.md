@@ -4,10 +4,10 @@
 
 This audit identifies duplications, performance issues, and optimization opportunities in the APIQ E2E test suite. The goal is to ensure tests run efficiently on Chromium only while maintaining comprehensive coverage.
 
-**Latest Update**: **50.7% E2E test pass rate (218/430 tests passing)** ⚠️ **DECREASED**
+**Latest Update**: **50.7% E2E test pass rate (218/480 tests passing)** ⚠️ **DECREASED**
 - **🆕 Workflow Sharing Tests**: 1/1 passing (100% success rate) ✅ **COMPLETED - LATEST**
 - **🆕 New Integration Tests**: OpenAPI parameters and rate limiting tests added ✅ **COMPLETED - LATEST**
-- **Test Pass Rate Decline**: 212 tests failing (down from previous 100% pass rate) ⚠️ **CRITICAL ISSUE**
+- **Test Pass Rate Decline**: 262 tests failing (down from previous 100% pass rate) ⚠️ **CRITICAL ISSUE**
   - **Primary Issue**: Prisma validation errors in test cleanup (`undefined` values in arrays)
   - **Secondary Issue**: UI element timing issues in various test suites
 - **Password Reset Tests**: Fixed expired token handling to check for error messages on same page ✅ **LATEST**

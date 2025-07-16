@@ -24,6 +24,7 @@ export default function WorkflowDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isExecuting, setIsExecuting] = useState(false);
   const params = useParams();
   const router = useRouter();
   const workflowId = params?.workflowId as string;
@@ -52,16 +53,26 @@ export default function WorkflowDetailPage() {
   }, [workflowId, loadWorkflow]);
 
   const executeWorkflow = async () => {
+    setIsExecuting(true);
     try {
       const response = await apiClient.executeWorkflow(workflowId);
+      console.log('🔍 executeWorkflow API response:', response);
       if (response.success) {
-        // Redirect to execution page or show success message
-        router.push(`/workflows/${workflowId}/executions/${response.data.executionId}`);
+        // Wait 500ms to show loading state before redirect
+        setTimeout(() => {
+          setIsExecuting(false);
+          console.log('🔍 Redirecting to execution details page:', `/workflows/${workflowId}/executions/${response.data.executionId}`);
+          router.push(`/workflows/${workflowId}/executions/${response.data.executionId}`);
+        }, 500);
       } else {
+        console.log('🔍 executeWorkflow error path:', response.error);
         setError(response.error || 'Failed to execute workflow');
+        setIsExecuting(false);
       }
     } catch (error) {
+      console.log('🔍 executeWorkflow catch path:', error);
       setError('Failed to execute workflow');
+      setIsExecuting(false);
     }
   };
 
@@ -172,8 +183,9 @@ export default function WorkflowDetailPage() {
                       onClick={executeWorkflow}
                       data-testid="primary-action execute-workflow-btn"
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                      disabled={isExecuting}
                     >
-                      Execute
+                      {isExecuting ? 'Executing...' : 'Execute'}
                     </button>
                     <button
                       onClick={() => setIsShareModalOpen(true)}

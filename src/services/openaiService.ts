@@ -149,7 +149,8 @@ export class OpenAIService {
         stepId: step.id,
         stepName: step.name,
         stepOrder: step.stepOrder,
-        action: step.action,
+        method: step.method,
+        endpoint: step.endpoint,
         apiConnectionId: apiConnection.id,
         apiConnectionName: apiConnection.name,
         previousResultsCount: Object.keys(previousResults).length,
@@ -339,10 +340,11 @@ Remember: You're helping someone automate their work, so be enthusiastic about m
 
 Step: ${step.name}
 Description: ${step.description || 'No description'}
-Action: ${step.action}
+Method: ${step.method}
+Endpoint: ${step.endpoint}
 
 Your task is to:
-1. Parse the action and determine the appropriate API call
+1. Use the provided method and endpoint to determine the appropriate API call
 2. Use the provided context and previous results to build the request
 3. Execute the API call with proper parameters
 4. Handle any errors gracefully

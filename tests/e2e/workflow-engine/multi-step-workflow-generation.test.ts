@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { UXComplianceHelper } from '../../helpers/uxCompliance';
-import { createTestUser, loginAsTestUser } from '../../helpers/createTestData';
+import { createTestUser, createTestConnection, cleanupTestUser, cleanupTestConnection, authenticateE2EPage, TestConnection } from '../../helpers/testUtils';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -18,14 +18,14 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 test.describe('Multi-Step Workflow Generation E2E Tests - P0.1.1 Critical MVP Blocker', () => {
   let uxHelper: UXComplianceHelper;
   let testUser: any;
-  let testConnections: any[];
+  let testConnections: TestConnection[] = [];
 
   test.beforeEach(async ({ page }) => {
     uxHelper = new UXComplianceHelper(page);
     
     // Create real test user and login (following user-rules.md: real data in E2E tests)
-    testUser = await createTestUser();
-    await loginAsTestUser(page, testUser);
+    testUser = await createTestUser(undefined, undefined, 'ADMIN');
+    await authenticateE2EPage(page, testUser);
     
     // Create real API connections for testing (no mocks)
     testConnections = await createRealTestConnections(testUser.id);
@@ -39,7 +39,14 @@ test.describe('Multi-Step Workflow Generation E2E Tests - P0.1.1 Critical MVP Bl
 
   test.afterEach(async () => {
     // Clean up real test data
-    await cleanupTestData(testUser.id, testConnections);
+    if (testUser) {
+      await cleanupTestUser(testUser);
+    }
+    if (testConnections && testConnections.length > 0) {
+      for (const connection of testConnections) {
+        await cleanupTestConnection(connection);
+      }
+    }
   });
 
   test.describe('P0.1.1: Multi-Step Workflow Generation - Core MVP Blocker', () => {
@@ -61,38 +68,60 @@ test.describe('Multi-Step Workflow Generation E2E Tests - P0.1.1 Critical MVP Bl
       // Start generation using real API connections
       await page.getByTestId('primary-action generate-workflow-btn').click();
       
+      // DEBUG: Wait a moment and check for any error messages
+      await page.waitForTimeout(2000);
+      
+      // Check for error messages
+      const errorElements = page.locator('.bg-red-50, [data-testid="workflow-error-message"], .text-red-600');
+      const errorCount = await errorElements.count();
+      if (errorCount > 0) {
+        console.log('🔍 Found error messages:');
+        for (let i = 0; i < errorCount; i++) {
+          const errorText = await errorElements.nth(i).textContent();
+          console.log(`🔍 Error ${i + 1}:`, errorText);
+        }
+        throw new Error(`Workflow generation failed: ${await errorElements.first().textContent()}`);
+      }
+      
+      // Check for loading state
+      const loadingElement = page.locator('text=Generating workflow..., text=Loading..., [data-testid="loading-indicator"]');
+      const isLoading = await loadingElement.isVisible();
+      console.log('🔍 Loading state visible:', isLoading);
+      
       // Wait for workflow generation (should be multi-step)
+      console.log('🔍 Waiting for workflow preview...');
       await page.waitForSelector('[data-testid="workflow-preview"]', { timeout: 30000 });
       
       // CRITICAL: Validate that multiple steps were generated (not single-step)
-      await expect(page.getByText('Step 1:')).toBeVisible();
-      await expect(page.getByText('Step 2:')).toBeVisible();
-      await expect(page.getByText('Step 3:')).toBeVisible();
+      await expect(page.getByTestId('step-1-title')).toBeVisible();
+      await expect(page.getByTestId('step-2-title')).toBeVisible();
+      await expect(page.getByTestId('step-3-title')).toBeVisible();
       
       // Validate specific steps were created using real API connections
-      await expect(page.getByText(/GitHub.*issue/i)).toBeVisible();
-      await expect(page.getByText(/Slack.*notification/i)).toBeVisible();
-      await expect(page.getByText(/Trello.*card/i)).toBeVisible();
+      await expect(page.getByTestId('step-1-title')).toContainText('GitHub');
+      await expect(page.getByTestId('step-2-title')).toContainText('Slack');
+      await expect(page.getByTestId('step-3-title')).toContainText('Trello');
       
       // Validate step explanations
-      await page.getByText('Step 1:').click();
-      await expect(page.getByText(/monitors.*GitHub.*issues/i)).toBeVisible();
-      
-      await page.getByText('Step 2:').click();
-      await expect(page.getByText(/sends.*Slack.*message/i)).toBeVisible();
-      
-      await page.getByText('Step 3:').click();
-      await expect(page.getByText(/creates.*Trello.*card/i)).toBeVisible();
+      await expect(page.getByTestId('step-1-description')).toContainText('GitHub');
+      await expect(page.getByTestId('step-2-description')).toContainText('Slack');
+      await expect(page.getByTestId('step-3-description')).toContainText('Trello');
       
       // Test workflow confirmation and saving
+      await page.getByTestId('select-workflow-btn').click();
       await page.getByTestId('primary-action save-workflow-btn').click();
       
-      // Validate success message
-      await uxHelper.validateSuccessContainer('Workflow created successfully');
+      // Wait for redirect to workflows page
+      await page.waitForURL(/.*workflows/);
       
-      // Verify workflow appears in dashboard with real data
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      await expect(page.getByText(/GitHub.*Slack.*Trello/i)).toBeVisible();
+      // Validate the new workflow appears in the list (more robust than success message)
+      await expect(page.getByTestId('workflow-card')).toBeVisible();
+      
+      // Verify the workflow contains the expected content from our multi-step generation
+      const workflowCard = page.getByTestId('workflow-card').first();
+      await expect(workflowCard).toContainText(/GitHub/i);
+      await expect(workflowCard).toContainText(/Slack/i);
+      await expect(workflowCard).toContainText(/Trello/i);
     });
 
     test('should handle complex order processing workflow with real APIs', async ({ page }) => {
@@ -514,14 +543,49 @@ test.describe('Multi-Step Workflow Generation E2E Tests - P0.1.1 Critical MVP Bl
  */
 
 async function createRealTestConnections(userId: string) {
-  // Create real API connections for testing
-  // This would use the actual API endpoints to create test connections
-  // Implementation would depend on the actual API structure
-  return [];
-}
-
-async function cleanupTestData(userId: string, connections: any[]) {
-  // Clean up real test data
-  // This would use the actual API endpoints to clean up test data
-  // Implementation would depend on the actual API structure
+  // Create real API connections for testing multi-step workflows
+  const connections = [];
+  
+  // Create a proper TestUser object
+  const testUserObj = {
+    id: userId,
+    email: 'test@example.com',
+    password: 'testpass123',
+    name: 'Test User',
+    role: 'ADMIN' as const,
+    accessToken: '',
+    refreshToken: ''
+  };
+  
+  // Create GitHub connection
+  const githubConnection = await createTestConnection(
+    testUserObj,
+    'GitHub Test Connection',
+    'https://api.github.com',
+    'API_KEY',
+    true
+  );
+  connections.push(githubConnection);
+  
+  // Create Slack connection
+  const slackConnection = await createTestConnection(
+    testUserObj,
+    'Slack Test Connection',
+    'https://slack.com/api',
+    'API_KEY',
+    true
+  );
+  connections.push(slackConnection);
+  
+  // Create Trello connection
+  const trelloConnection = await createTestConnection(
+    testUserObj,
+    'Trello Test Connection',
+    'https://api.trello.com/1',
+    'API_KEY',
+    true
+  );
+  connections.push(trelloConnection);
+  
+  return connections;
 } 

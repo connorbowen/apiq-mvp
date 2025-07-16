@@ -60,7 +60,6 @@ export class ApiCallStepExecutor implements StepExecutor {
         logDebug('Executing API call step', {
           stepId: step.id,
           stepName: step.name,
-          action: step.action,
           retryCount
         });
 
@@ -70,8 +69,12 @@ export class ApiCallStepExecutor implements StepExecutor {
           throw new Error(`API connection not found: ${step.apiConnectionId}`);
         }
 
-        // Parse action (e.g., "GET /users", "POST /data")
-        const { method, path } = this.parseAction(step.action);
+        // Require method and endpoint
+        const method = step.method;
+        const path = step.endpoint;
+        if (!method || !path) {
+          throw new Error('API_CALL step must have method and endpoint');
+        }
         
         // Prepare request parameters with context substitution
         const requestParams = this.prepareRequestParams(step.parameters, context);
@@ -118,7 +121,7 @@ export class ApiCallStepExecutor implements StepExecutor {
             error: error instanceof Error ? error.message : 'Unknown error',
             duration,
             retryCount,
-            metadata: { method: this.parseAction(step.action).method }
+            metadata: { method: step.method }
           };
         }
 
@@ -131,40 +134,37 @@ export class ApiCallStepExecutor implements StepExecutor {
   }
 
   validate(step: any): boolean {
-    return !!(
-      step.apiConnectionId &&
-      step.action &&
-      this.parseAction(step.action).method &&
-      this.parseAction(step.action).path
-    );
+    // Only accept new format: method and endpoint must be present
+    return !!(step.apiConnectionId && step.method && step.endpoint);
   }
 
   private async getApiConnection(apiConnectionId: string | null): Promise<ApiConnection | null> {
-    if (!apiConnectionId) return null;
+    if (!apiConnectionId) {
+      console.log('🔍 [ApiCallStepExecutor] No API connection ID provided');
+      return null;
+    }
+    
+    console.log('🔍 [ApiCallStepExecutor] Getting API connection:', apiConnectionId);
     
     try {
       const response = await apiClient.getConnection(apiConnectionId);
-      return response.success ? response.data || null : null;
+      console.log('🔍 [ApiCallStepExecutor] API connection response:', {
+        success: response.success,
+        hasData: !!response.data,
+        error: response.error
+      });
+      
+      if (!response.success) {
+        console.error('❌ [ApiCallStepExecutor] Failed to get API connection:', response.error);
+        return null;
+      }
+      
+      return response.data || null;
     } catch (error) {
+      console.error('❌ [ApiCallStepExecutor] Error getting API connection:', error);
       logError('Failed to get API connection', error as Error);
       return null;
     }
-  }
-
-  private parseAction(action: string): { method: string; path: string } {
-    const parts = action.trim().split(' ');
-    if (parts.length !== 2) {
-      throw new Error(`Invalid action format: ${action}. Expected "METHOD /path"`);
-    }
-    
-    const method = parts[0].toUpperCase();
-    const path = parts[1];
-    
-    if (!['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-      throw new Error(`Unsupported HTTP method: ${method}`);
-    }
-    
-    return { method, path };
   }
 
   private prepareRequestParams(parameters: Record<string, any>, context: ExecutionContext): Record<string, any> {
@@ -609,10 +609,20 @@ export class StepRunner {
     const startTime = Date.now();
     
     try {
+      console.log('🔍 [StepRunner] Starting step execution:', {
+        stepId: step.id,
+        stepName: step.name,
+        stepType: step.type || 'unknown',
+        executionId: context.executionId
+      });
+      
       const stepType = this.determineStepType(step);
+      console.log('🔍 [StepRunner] Determined step type:', stepType);
+      
       const executor = this.executors.get(stepType);
 
       if (!executor) {
+        console.error('❌ [StepRunner] No executor found for step type:', stepType);
         const duration = Date.now() - startTime;
         return {
           success: false,
@@ -622,7 +632,10 @@ export class StepRunner {
         };
       }
 
+      console.log('🔍 [StepRunner] Found executor:', executor.constructor.name);
+
       if (!executor.validate(step)) {
+        console.error('❌ [StepRunner] Step validation failed for type:', stepType);
         const duration = Date.now() - startTime;
         return {
           success: false,
@@ -632,10 +645,19 @@ export class StepRunner {
         };
       }
 
+      console.log('🔍 [StepRunner] Step validation passed');
+
       // Log step execution start
       await this.logStepExecution(context.executionId, step, 'INFO', 'Step execution started');
 
+      console.log('🔍 [StepRunner] Executing step...');
       const result = await executor.execute(step, context);
+      console.log('🔍 [StepRunner] Step execution result:', {
+        success: result.success,
+        duration: result.duration,
+        retryCount: result.retryCount,
+        error: result.error
+      });
       
       // Log step execution result
       const logMessage = result.success ? 'Step completed successfully' : `Step failed: ${result.error}`;
@@ -645,6 +667,13 @@ export class StepRunner {
     } catch (error) {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      console.error('❌ [StepRunner] Step execution error:', {
+        stepId: step.id,
+        stepName: step.name,
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       await this.logStepExecution(context.executionId, step, 'ERROR', `Step execution error: ${errorMessage}`, { error: errorMessage });
       
@@ -672,12 +701,12 @@ export class StepRunner {
       return 'CONDITION';
     }
     
-    // Check for custom actions
+    // Only check for action for custom steps
     if (step.action === 'noop' || step.action === 'wait' || step.action === 'log' || step.action === 'flaky' || step.action === 'custom') {
       return 'CUSTOM';
     }
     
-    // Default to API_CALL for backward compatibility
+    // Default to API_CALL
     return 'API_CALL';
   }
 

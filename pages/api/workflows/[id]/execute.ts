@@ -31,6 +31,10 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
 async function executeWorkflow(req: NextApiRequest, res: NextApiResponse, userId: string, workflowId: string) {
   try {
     const { parameters = {} } = req.body;
+    
+    console.log('🔍 [executeWorkflow] Starting execution for workflow:', workflowId);
+    console.log('🔍 [executeWorkflow] User ID:', userId);
+    console.log('🔍 [executeWorkflow] Parameters:', parameters);
 
     // Check if workflow exists and belongs to user
     const workflow = await prisma.workflow.findFirst({
@@ -48,17 +52,36 @@ async function executeWorkflow(req: NextApiRequest, res: NextApiResponse, userId
       }
     });
 
+    console.log('🔍 [executeWorkflow] Found workflow:', workflow ? {
+      id: workflow.id,
+      name: workflow.name,
+      status: workflow.status,
+      stepCount: workflow.steps.length
+    } : 'NOT FOUND');
+
     if (!workflow) {
+      console.log('❌ [executeWorkflow] Workflow not found');
       return res.status(404).json({ success: false, error: 'Workflow not found' });
     }
 
     if (workflow.status !== 'ACTIVE') {
+      console.log('❌ [executeWorkflow] Workflow is not active, status:', workflow.status);
       return res.status(400).json({ success: false, error: 'Workflow is not active' });
     }
 
     if (workflow.steps.length === 0) {
+      console.log('❌ [executeWorkflow] Workflow has no steps');
       return res.status(400).json({ success: false, error: 'Workflow has no steps' });
     }
+
+    console.log('🔍 [executeWorkflow] Workflow steps:', workflow.steps.map(step => ({
+      id: step.id,
+      name: step.name,
+      method: step.method,
+      endpoint: step.endpoint,
+      apiConnectionId: step.apiConnectionId,
+      parameters: step.parameters
+    })));
 
     logInfo('Starting workflow execution', { 
       userId, 
@@ -67,19 +90,24 @@ async function executeWorkflow(req: NextApiRequest, res: NextApiResponse, userId
     });
 
     // Create dependencies
+    console.log('🔍 [executeWorkflow] Creating dependencies...');
     const queueService = new QueueService();
     const stateManager = new ExecutionStateManager(queueService);
     
     // Create workflow executor with dependencies
+    console.log('🔍 [executeWorkflow] Creating workflow executor...');
     const workflowExecutor = createWorkflowExecutor(stateManager, queueService);
 
     // Execute workflow using the executor
+    console.log('🔍 [executeWorkflow] Executing workflow...');
     const result = await workflowExecutor.executeWorkflow(
       workflow as any,
       workflow.steps as any,
       userId,
       parameters
     );
+
+    console.log('🔍 [executeWorkflow] Execution result:', result);
 
     return res.status(200).json({
       success: result.success,
@@ -103,8 +131,20 @@ async function executeWorkflow(req: NextApiRequest, res: NextApiResponse, userId
       message: result.success ? 'Workflow execution completed successfully' : `Workflow execution failed: ${result.error}`
     });
   } catch (error) {
+    console.error('❌ [executeWorkflow] Error during execution:', error);
+    console.error('❌ [executeWorkflow] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('❌ [executeWorkflow] Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error)
+    });
     logError('Failed to execute workflow', error as Error);
-    return res.status(500).json({ success: false, error: 'Failed to execute workflow' });
+    return res.status(500).json({ 
+      success: false, 
+      error: `Workflow execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error instanceof Error ? error.stack : undefined
+      } : undefined
+    });
   }
 }
 

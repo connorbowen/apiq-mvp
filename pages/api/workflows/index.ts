@@ -124,7 +124,7 @@ async function createWorkflow(req: NextApiRequest, res: NextApiResponse, userId:
           name,
           description,
           isPublic,
-          status: 'DRAFT'
+          status: 'ACTIVE'
         }
       });
 
@@ -135,7 +135,9 @@ async function createWorkflow(req: NextApiRequest, res: NextApiResponse, userId:
           stepOrder: index + 1,
           name: step.name || `Step ${index + 1}`,
           description: step.description || '',
-          action: step.type || 'API_CALL',
+          method: step.method,
+          endpoint: step.endpoint,
+          apiConnectionId: step.apiConnectionId,
           parameters: step.parameters || {},
           isActive: true
         }));

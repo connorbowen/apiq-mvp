@@ -195,7 +195,8 @@ describe('Workflow API Integration', () => {
           workflowId: workflow.id,
           stepOrder: 1,
           name: 'Step 1',
-          action: 'noop',
+          method: 'CUSTOM',
+          endpoint: 'noop',
           parameters: {},
           isActive: true,
         },
@@ -289,7 +290,8 @@ describe('Workflow API Integration', () => {
             workflowId: workflow.id,
             stepOrder: 1,
             name: 'Noop Step',
-            action: 'noop',
+            method: 'CUSTOM',
+            endpoint: 'noop',
             parameters: {},
             isActive: true,
           },
@@ -297,7 +299,8 @@ describe('Workflow API Integration', () => {
             workflowId: workflow.id,
             stepOrder: 2,
             name: 'Transform Step',
-            action: 'transform',
+            method: 'POST',
+            endpoint: '/transform',
             parameters: { operation: 'map', input: { foo: 1 }, output: { bar: 2 } },
             isActive: true,
           },
@@ -305,7 +308,8 @@ describe('Workflow API Integration', () => {
             workflowId: workflow.id,
             stepOrder: 3,
             name: 'Condition Step',
-            action: 'condition',
+            method: 'POST',
+            endpoint: '/condition',
             parameters: { 
               condition: { field: 'param.test', operator: 'exists', value: null },
               trueStep: null, 
@@ -370,7 +374,8 @@ describe('Workflow API Integration', () => {
           workflowId: workflow.id,
           stepOrder: 1,
           name: 'Flaky Step',
-          action: 'noop',
+          method: 'CUSTOM',
+          endpoint: 'noop',
           parameters: {},
           isActive: true,
         },
@@ -381,9 +386,9 @@ describe('Workflow API Integration', () => {
       await prisma.workflowStep.update({
         where: { id: step.id },
         data: {
-          action: 'custom',
+          method: 'CUSTOM',
+          endpoint: 'flaky',
           parameters: { 
-            action: 'flaky',
             failCount: 1,
             currentFailures: 0
           }

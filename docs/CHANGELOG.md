@@ -7,7 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### **Workflow Sharing System - Complete Implementation** - ✅ **COMPLETED - LATEST**
+### **Workflow Step Schema Updates** - 🆕 **NEW - LATEST**
+- **Database Schema Enhancements**: Updated workflow step structure for improved API integration
+  - **New Fields**: Added `method` and `endpoint` fields to `WorkflowStep` model
+  - **Database Migrations**: Created migrations for schema updates
+    - **Migration**: `20250715231217_add_method_endpoint_to_workflow_steps`
+    - **Migration**: `20250715231257_remove_action_from_workflow_steps`
+  - **Migration Scripts**: Created `scripts/migrate-workflow-steps.js` for data migration
+  - **Backward Compatibility**: Maintained compatibility with existing workflow data
+  - **Schema Improvements**: Enhanced workflow step structure for better API integration
+- **Component Updates**: Updated workflow-related components to use new schema
+  - **WorkflowBuilder**: Updated to handle new step structure
+  - **NaturalLanguageWorkflowChat**: Enhanced for improved workflow generation
+  - **Workflow Pages**: Updated create and detail pages for new schema
+- **Service Enhancements**: Improved natural language workflow service
+  - **Enhanced Parsing**: Better workflow step parsing and generation
+  - **API Integration**: Improved integration with API endpoints
+  - **Error Handling**: Enhanced error handling for workflow generation
+- **Test Updates**: Updated tests to reflect new schema structure
+  - **E2E Tests**: Updated workflow management and multi-step generation tests
+  - **Integration Tests**: Updated workflow integration tests
+  - **Helper Functions**: Enhanced test utilities for new schema
+
+**Technical Implementation**:
+- ✅ **Database Migrations**: 2 new migrations for schema updates
+- ✅ **Migration Scripts**: Data migration utilities for existing workflows
+- ✅ **Component Updates**: All workflow components updated for new schema
+- ✅ **Service Enhancements**: Natural language workflow service improvements
+- ✅ **Test Updates**: Comprehensive test updates for new schema
+- ✅ **Backward Compatibility**: Existing workflows continue to function
+
+**Quality Improvements**:
+- ✅ **Schema Consistency**: Improved workflow step structure consistency
+- ✅ **API Integration**: Better integration with API endpoints and methods
+- ✅ **Data Migration**: Safe migration of existing workflow data
+- ✅ **Test Coverage**: Updated tests to validate new schema functionality
+- ✅ **Maintainability**: Cleaner schema structure for future development
+
+### **Workflow Sharing System - Complete Implementation** - ✅ **COMPLETED**
 
 - **Comprehensive Workflow Sharing & Team Collaboration**: Implemented complete workflow sharing system with full CRUD functionality
   - **Database Schema**: Added `WorkflowShare` model with permission-based access control

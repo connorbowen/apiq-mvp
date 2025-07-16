@@ -464,7 +464,8 @@ export const createTestWorkflow = async (
       stepOrder: 1,
       name: 'Test API Call',
       description: 'Test step for E2E testing',
-      action: 'GET /api/test',
+      method: 'GET',
+      endpoint: '/api/test',
       parameters: {},
       isActive: true
     }

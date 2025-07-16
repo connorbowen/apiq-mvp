@@ -25,7 +25,10 @@ interface WorkflowStep {
   endpoint?: string;
   method?: string;
   parameters?: Record<string, any>;
+  dataMapping?: Record<string, string>;
+  conditions?: any;
   order: number;
+  description?: string; // Added description field
 }
 
 interface GeneratedWorkflow {
@@ -101,11 +104,10 @@ export default function NaturalLanguageWorkflowChat({
   // Merged ref for React Hook Form and our own ref
   const registerTextarea = register('description');
   const setMergedRef = (el: HTMLTextAreaElement | null) => {
-    textareaRef.current = el;
+    // Use callback ref pattern to avoid read-only property assignment
     if (typeof registerTextarea.ref === 'function') {
       registerTextarea.ref(el);
     }
-    // Do not assign to .current if it's an object, as it's read-only
   };
 
   useEffect(() => {
@@ -201,15 +203,21 @@ export default function NaturalLanguageWorkflowChat({
       // Save the workflow to the database
       const response = await apiClient.createWorkflow({
         name: selectedWorkflow.name,
-        description: selectedWorkflow.description
+        description: selectedWorkflow.description,
+        steps: selectedWorkflow.steps
       });
 
       if (response.success) {
         addMessage({
           type: 'assistant',
-          content: `✅ Workflow "${selectedWorkflow.name}" has been saved successfully! You can now run it from your workflows dashboard.`
+          content: `✅ Workflow "${selectedWorkflow.name}" has been saved successfully! Redirecting to workflows dashboard...`
         });
         setSelectedWorkflow(null);
+        
+        // Redirect to workflows list page after successful save
+        setTimeout(() => {
+          window.location.href = '/workflows';
+        }, 1500); // Give user time to see the success message
       } else {
         addMessage({
           type: 'assistant',
@@ -274,18 +282,125 @@ export default function NaturalLanguageWorkflowChat({
                   
                   {/* Show workflow details if available */}
                   {msg.workflow && (
-                    <div className="mt-4 p-4 bg-white rounded border">
+                    <div className="mt-4 p-4 bg-white rounded border" data-testid="workflow-preview">
                       <h4 className="font-semibold text-gray-900 mb-2">Generated Workflow</h4>
-                      <div className="space-y-2 text-sm">
-                        <p><strong>Steps:</strong> {msg.workflow.steps.length}</p>
-                        <p><strong>Confidence:</strong> {Math.round(msg.workflow.confidence * 100)}%</p>
-                        <p><strong>Est. Time:</strong> {msg.workflow.estimatedExecutionTime / 1000}s</p>
+                      
+                      {/* Multi-step workflow preview */}
+                      <div className="space-y-4">
+                        {/* Workflow overview */}
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="font-medium text-gray-700">Steps</p>
+                            <p className="text-gray-900">{msg.workflow.steps.length}</p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">Confidence</p>
+                            <p className="text-gray-900">{Math.round(msg.workflow.confidence * 100)}%</p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">Est. Time</p>
+                            <p className="text-gray-900">{msg.workflow.estimatedExecutionTime / 1000}s</p>
+                          </div>
+                        </div>
+
+                        {/* Step-by-step preview */}
+                        <div className="space-y-3">
+                          <h5 className="font-medium text-gray-900">Workflow Steps</h5>
+                          {msg.workflow.steps.map((step, index) => (
+                            <div key={step.id} className="border rounded-lg p-3 bg-gray-50">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2 mb-2">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-600 text-white text-xs font-medium rounded-full">
+                                      {step.order}
+                                    </span>
+                                    <h6 className="font-medium text-gray-900" data-testid={`step-${index + 1}-title`}>
+                                      Step {index + 1}: {step.name}
+                                    </h6>
+                                    <span className={`px-2 py-1 text-xs font-medium rounded ${
+                                      step.type === 'api_call' ? 'bg-blue-100 text-blue-800' :
+                                      step.type === 'data_transform' ? 'bg-purple-100 text-purple-800' :
+                                      step.type === 'condition' ? 'bg-yellow-100 text-yellow-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {step.type}
+                                    </span>
+                                  </div>
+                                  
+                                  {/* Step details */}
+                                  <div className="text-sm text-gray-600 space-y-1">
+                                    {/* Step description/explanation */}
+                                    {step.description && (
+                                      <p className="mb-1" data-testid={`step-${index + 1}-description`}>
+                                        {step.description}
+                                      </p>
+                                    )}
+                                    {step.endpoint && (
+                                      <p><span className="font-medium">Endpoint:</span> {step.method} {step.endpoint}</p>
+                                    )}
+                                    {step.parameters && Object.keys(step.parameters).length > 0 && (
+                                      <div>
+                                        <p className="font-medium">Parameters:</p>
+                                        <ul className="ml-4 space-y-1">
+                                          {Object.entries(step.parameters).map(([key, value]) => (
+                                            <li key={key} data-testid={`step-${index + 1}-param-${key}`}>
+                                              <span className="font-medium">{key}:</span> {String(value)}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {step.dataMapping && Object.keys(step.dataMapping).length > 0 && (
+                                      <div>
+                                        <p className="font-medium">Data Mapping:</p>
+                                        <ul className="ml-4 space-y-1">
+                                          {Object.entries(step.dataMapping).map(([key, value]) => (
+                                            <li key={key} data-testid={`step-${index + 1}-mapping-${key}`}>
+                                              <span className="font-medium">{key}:</span> {value}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {step.conditions && (
+                                      <div>
+                                        <p className="font-medium">Conditions:</p>
+                                        <p className="ml-4 text-gray-600">{JSON.stringify(step.conditions)}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Data flow visualization */}
+                        {msg.workflow.steps.some(step => step.dataMapping && Object.keys(step.dataMapping).length > 0) && (
+                          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                            <h5 className="font-medium text-blue-900 mb-2">Data Flow</h5>
+                            <div className="space-y-2 text-sm">
+                              {msg.workflow.steps.map((step, index) => {
+                                if (step.dataMapping && Object.keys(step.dataMapping).length > 0) {
+                                  return (
+                                    <div key={step.id} className="flex items-center space-x-2">
+                                      <span className="text-blue-600">Step {step.order}</span>
+                                      <span className="text-blue-400">→</span>
+                                      <span className="text-blue-800">{Object.keys(step.dataMapping).join(', ')}</span>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Add clickable button to select this workflow */}
                       <button
                         onClick={() => handleWorkflowSelect(msg.workflow!)}
-                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors min-h-[44px]"
+                        className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors min-h-[44px]"
                         data-testid="select-workflow-btn"
                       >
                         Select This Workflow
@@ -332,7 +447,30 @@ export default function NaturalLanguageWorkflowChat({
               <div className="bg-gray-100 text-gray-900 rounded-lg px-4 py-2">
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span>Generating workflow...</span>
+                  <span>Generating multi-step workflow...</span>
+                </div>
+                {/* Progress indicators for multi-step generation */}
+                <div className="mt-2 space-y-1 text-xs text-gray-600">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <span>Analyzing workflow requirements</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <span>Planning workflow steps</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <span>Generating step configurations</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <span>Validating workflow logic</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <span>Creating data flow mappings</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -452,26 +590,50 @@ export default function NaturalLanguageWorkflowChat({
         {/* Selected Workflow Actions */}
         {selectedWorkflow && (
           <div className="border-t border-gray-200 p-6 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Selected Workflow</h3>
-                <p className="text-sm text-gray-600">{selectedWorkflow.name}</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Selected Workflow</h3>
+                  <p className="text-sm text-gray-600">{selectedWorkflow.name}</p>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setSelectedWorkflow(null)}
+                    className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] min-w-[44px]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveWorkflow}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px]"
+                    data-testid="primary-action save-workflow-btn"
+                  >
+                    Save Workflow
+                  </button>
+                </div>
               </div>
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setSelectedWorkflow(null)}
-                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] min-w-[44px]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveWorkflow}
-
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors min-h-[44px]"
-                  data-testid="primary-action save-workflow-btn"
-                >
-                  Save Workflow
-                </button>
+              
+              {/* Selected workflow details */}
+              <div className="bg-white rounded-lg p-4 border">
+                <h4 className="font-medium text-gray-900 mb-3">Workflow Preview</h4>
+                <div className="space-y-2">
+                  {selectedWorkflow.steps.map((step, index) => (
+                    <div key={step.id} className="flex items-center space-x-2 text-sm">
+                      <span className="inline-flex items-center justify-center w-5 h-5 bg-blue-600 text-white text-xs font-medium rounded-full">
+                        {step.order}
+                      </span>
+                      <span className="font-medium">{step.name}</span>
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${
+                        step.type === 'api_call' ? 'bg-blue-100 text-blue-800' :
+                        step.type === 'data_transform' ? 'bg-purple-100 text-purple-800' :
+                        step.type === 'condition' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {step.type}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

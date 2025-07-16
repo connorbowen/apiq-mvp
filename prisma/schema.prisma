@@ -240,7 +240,8 @@ model WorkflowStep {
   stepOrder       Int
   name            String
   description     String?
-  action          String // The action to perform (e.g., "GET /users", "POST /data")
+  method          String? // HTTP method (e.g., "GET", "POST", "PUT", "DELETE")
+  endpoint        String? // API endpoint path (e.g., "/users", "/data")
   parameters      Json // Step-specific parameters
   conditions      Json? // Conditional logic for step execution
   retryConfig     Json? // Retry configuration

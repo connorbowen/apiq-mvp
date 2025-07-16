@@ -8,7 +8,8 @@ interface WorkflowStep {
   stepOrder: number;
   name: string;
   description?: string;
-  action: string;
+  method?: string;
+  endpoint?: string;
   apiConnectionId?: string;
   parameters: Record<string, any>;
   conditions?: Record<string, any>;
@@ -64,7 +65,8 @@ export default function WorkflowBuilder({ workflow, onSave, onCancel }: Workflow
       stepOrder: steps.length + 1,
       name: `Step ${steps.length + 1}`,
       description: '',
-      action: '',
+      method: '',
+      endpoint: '',
       parameters: {},
       timeout: 30
     };
@@ -307,13 +309,24 @@ export default function WorkflowBuilder({ workflow, onSave, onCancel }: Workflow
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Action</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Method</label>
                       <input
                         type="text"
-                        value={step.action}
-                        onChange={(e) => updateStep(index, 'action', e.target.value)}
+                        value={step.method || ''}
+                        onChange={(e) => updateStep(index, 'method', e.target.value)}
                         className="block w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="e.g., GET /users, POST /data"
+                        placeholder="e.g., GET, POST"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Endpoint</label>
+                      <input
+                        type="text"
+                        value={step.endpoint || ''}
+                        onChange={(e) => updateStep(index, 'endpoint', e.target.value)}
+                        className="block w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., /users, /data"
                       />
                     </div>
 

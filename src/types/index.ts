@@ -124,7 +124,8 @@ export interface WorkflowStep {
   stepOrder: number;
   name: string;
   description?: string;
-  action: string;
+  method?: string;
+  endpoint?: string;
   parameters: Record<string, any>;
   conditions?: Record<string, any>;
   retryConfig?: Record<string, any>;
@@ -139,7 +140,8 @@ export interface CreateWorkflowStepRequest {
   stepOrder: number;
   name: string;
   description?: string;
-  action: string;
+  method?: string;
+  endpoint?: string;
   parameters: Record<string, any>;
   conditions?: Record<string, any>;
   retryConfig?: Record<string, any>;

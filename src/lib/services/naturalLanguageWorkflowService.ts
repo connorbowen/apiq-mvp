@@ -183,15 +183,18 @@ export class NaturalLanguageWorkflowService {
         id: `workflow_${Date.now()}`,
         name: result.name || 'Generated Workflow',
         description: result.description || 'Workflow generated from natural language request',
-        steps: result.steps.map((step: any, index: number) => ({
-          id: `step_${Date.now()}_${index}`,
+        steps: (result.steps || []).map((step: any, i: number) => ({
+          id: step.id || `step-${i + 1}`,
           name: step.name,
           type: step.type,
-          apiConnectionId: step.connectionId,
+          apiConnectionId: step.apiConnectionId,
           endpoint: step.endpoint,
           method: step.method,
           parameters: step.parameters || {},
-          order: step.order || index + 1
+          dataMapping: step.dataMapping || undefined,
+          conditions: step.conditions || undefined,
+          order: step.order ?? i + 1,
+          description: step.description || '',
         })),
         estimatedExecutionTime: (result.steps.length || 1) * 5000,
         confidence: 0.8,
@@ -224,7 +227,7 @@ export class NaturalLanguageWorkflowService {
     // Add the create_workflow function that can orchestrate multiple API calls
     functions.push({
       name: 'create_workflow',
-      description: 'Create a new workflow with multiple steps that can orchestrate API calls',
+      description: 'Create a new workflow with multiple steps that can orchestrate API calls, data transforms, conditions, and webhooks',
       parameters: {
         type: 'object',
         properties: {
@@ -242,38 +245,19 @@ export class NaturalLanguageWorkflowService {
             items: {
               type: 'object',
               properties: {
-                name: {
-                  type: 'string',
-                  description: 'Name of the step'
-                },
-                type: {
-                  type: 'string',
-                  enum: ['api_call'],
-                  description: 'Type of step (currently only api_call is supported)'
-                },
-                connectionId: {
-                  type: 'string',
-                  description: 'The ID of the API connection to use'
-                },
-                endpoint: {
-                  type: 'string',
-                  description: 'The API endpoint path'
-                },
-                method: {
-                  type: 'string',
-                  enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-                  description: 'The HTTP method'
-                },
-                parameters: {
-                  type: 'object',
-                  description: 'Parameters to pass to the API call'
-                },
-                order: {
-                  type: 'number',
-                  description: 'The order of this step in the workflow'
-                }
+                id: { type: 'string', description: 'Unique step ID' },
+                name: { type: 'string', description: 'Step name' },
+                type: { type: 'string', enum: ['api_call', 'data_transform', 'condition', 'webhook'], description: 'Step type' },
+                apiConnectionId: { type: 'string', description: 'API connection ID (if applicable)' },
+                endpoint: { type: 'string', description: 'API endpoint (if applicable)' },
+                method: { type: 'string', description: 'HTTP method (if applicable)' },
+                parameters: { type: 'object', description: 'Parameters for the step' },
+                dataMapping: { type: 'object', description: 'Data mapping for the step' },
+                conditions: { type: 'object', description: 'Conditional logic for the step' },
+                order: { type: 'integer', description: 'Step order' },
+                description: { type: 'string', description: 'Human-readable explanation of what this step does' }
               },
-              required: ['name', 'type', 'connectionId', 'endpoint', 'method', 'order']
+              required: ['id', 'name', 'type', 'order', 'description']
             }
           }
         },

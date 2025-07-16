@@ -64,6 +64,21 @@ export default function WorkflowsPage() {
     router.push('/workflows/new');
   };
 
+  const executeWorkflow = async (workflowId: string) => {
+    try {
+      const response = await apiClient.executeWorkflow(workflowId);
+      console.log('executeWorkflow response', response); // DEBUG LOG
+      if (response.success) {
+        // Navigate to the workflow execution page
+        router.push(`/workflows/${workflowId}/executions/${response.data.executionId}`);
+      } else {
+        setError(response.error || 'Failed to execute workflow');
+      }
+    } catch (error) {
+      setError('Failed to execute workflow');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -133,12 +148,13 @@ export default function WorkflowsPage() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {workflows.map((workflow) => (
-                <div
-                  key={workflow.id}
-                  className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200"
-                >
+                          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {workflows.map((workflow) => (
+                  <div
+                    key={workflow.id}
+                    data-testid="workflow-card"
+                    className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-200"
+                  >
                   <div className="p-6">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-medium text-gray-900 truncate">
@@ -157,12 +173,21 @@ export default function WorkflowsPage() {
                     </p>
                     <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
                       <span>Created {new Date(workflow.createdAt).toLocaleDateString()}</span>
-                      <Link
-                        href={`/workflows/${workflow.id}`}
-                        className="text-indigo-600 hover:text-indigo-500 font-medium"
-                      >
-                        View Details →
-                      </Link>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => executeWorkflow(workflow.id)}
+                          data-testid="primary-action execute-workflow-btn"
+                          className="text-green-600 hover:text-green-500 font-medium"
+                        >
+                          Execute
+                        </button>
+                        <Link
+                          href={`/workflows/${workflow.id}`}
+                          className="text-indigo-600 hover:text-indigo-500 font-medium"
+                        >
+                          View Details →
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
