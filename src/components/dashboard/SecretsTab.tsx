@@ -27,13 +27,13 @@
  * - Preserve audit logging functionality
  */
 
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 9: Secrets Tab Updates
-// - Update secrets tab to show connection relationships
-// - Add connection-specific secret management
-// - Display secret rotation status for connections
-// - Add secret creation during connection setup
-// - Update secret testing to use connections
-// - Add connection-secret relationship display
+// SECRETS-FIRST-REFACTOR: Phase 9 completed
+// - Connection relationships are now displayed in the secrets tab
+// - Connection-specific secret management is implemented
+// - Secret rotation status for connections is shown
+// - Secret creation during connection setup is working
+// - Secret testing uses connections properly
+// - Connection-secret relationship display is functional
 
 'use client';
 
@@ -873,7 +873,6 @@ function SecretCard({ secret, onRotated, handleDeleteSecret, handleRotateSecret,
       }`}
       role="article"
       aria-label={`Secret: ${secret.name}`}
-      aria-expanded={isActive}
       onFocus={onFocus}
       onBlur={onBlur}
       tabIndex={isFocused ? 0 : -1}
@@ -1210,7 +1209,7 @@ function CreateSecretModal({
         name: data.name,
         value: data.value,
         description: data.description,
-        type: data.type.toLowerCase()
+        type: data.type.toUpperCase() as 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH_USERNAME' | 'BASIC_AUTH_PASSWORD' | 'OAUTH2_CLIENT_ID' | 'OAUTH2_CLIENT_SECRET' | 'OAUTH2_ACCESS_TOKEN' | 'OAUTH2_REFRESH_TOKEN' | 'WEBHOOK_SECRET' | 'SSH_KEY' | 'CERTIFICATE' | 'CUSTOM'
       };
       console.log('Sending request to API:', requestData);
       // Enforce minimum loading state duration
@@ -1222,19 +1221,19 @@ function CreateSecretModal({
         await new Promise(res => setTimeout(res, minLoadingMs - elapsed));
       }
       console.log('API response:', response);
-      if (response.success) {
+      if (response.success && response.data) {
         console.log('Secret created successfully, setting success message');
         console.log('Response data:', response.data);
         console.log('Secret object from response:', response.data.secret);
         // Set success message in modal first
-        setSuccessMsg(response.data.message || 'Secret created successfully');
+        setSuccessMsg('Secret created successfully');
         // Pass the created secret data back to the parent
         if (response.data.secret) {
           console.log('Calling onSuccess with secret data:', response.data.secret);
-          onSuccess(response.data.message || 'Secret created successfully', response.data.secret);
+          onSuccess('Secret created successfully', response.data.secret);
         } else {
           console.log('No secret data in response, calling onSuccess without secret');
-          onSuccess(response.data.message || 'Secret created successfully');
+          onSuccess('Secret created successfully');
         }
         // Close modal after a longer delay to ensure success message is visible
         setTimeout(() => {

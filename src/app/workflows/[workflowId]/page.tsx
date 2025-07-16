@@ -35,7 +35,7 @@ export default function WorkflowDetailPage() {
       const response = await apiClient.getWorkflow(workflowId);
       
       if (response.success && response.data) {
-        setWorkflow(response.data);
+        setWorkflow(response.data.workflow);
       } else {
         setError(response.error || 'Failed to load workflow');
       }

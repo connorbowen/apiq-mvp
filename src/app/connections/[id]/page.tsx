@@ -393,7 +393,7 @@ export default function APIExplorerPage() {
               </svg>
               <h3 className="mt-2 text-sm font-medium text-gray-900">No endpoints found</h3>
               <p className="mt-1 text-sm text-gray-500">
-                This API connection doesn't have any documented endpoints yet.
+                This API connection doesn&apos;t have any documented endpoints yet.
               </p>
               <div className="mt-6">
                 <button

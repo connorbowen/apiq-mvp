@@ -8,18 +8,7 @@ import {
   ApiConnection,
   Workflow 
 } from '../types';
-
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 5: OpenAI Service Updates
-// - Update API connection handling to use secrets instead of direct credentials
-// - Add methods to retrieve secrets for API connections
-// - Update authentication methods to use secrets vault
-// - Add validation to ensure connections have required secrets
-// - Add connection status validation before API calls
-// - Add secret rotation handling for API connections
-// - Add connection-secret dependency validation
-// - Update error handling for missing or invalid secrets
-// - Add audit logging for secret-based API calls
-// - Consider adding connection health checks based on secret availability
+import { secretsVault } from '../lib/secrets/secretsVault';
 
 /**
  * OpenAI service for AI-powered workflow generation and execution
@@ -29,16 +18,34 @@ import {
 export class OpenAIService {
   private client: any;
   private model: string;
+  private apiKey: string;
 
-  constructor() {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is required');
-    }
-
+  private constructor(apiKey: string, model: string) {
+    this.apiKey = apiKey;
     this.client = getOpenAIClient(apiKey);
+    this.model = model;
+  }
 
-    this.model = process.env.OPENAI_MODEL || 'gpt-4-turbo-preview';
+  /**
+   * Factory method to create an OpenAIService instance with API key from secrets vault
+   * @param userId - The user ID whose secret to use (or 'system' for system-wide key)
+   * @param secretName - The name of the secret storing the OpenAI API key
+   */
+  static async create(userId: string, secretName: string = 'OPENAI_API_KEY'): Promise<OpenAIService> {
+    let apiKey: string | undefined;
+    try {
+      const secret = await secretsVault.getSecret(userId, secretName);
+      apiKey = secret.value;
+    } catch (e) {
+      // Fallback to env for legacy support
+      apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error('OpenAI API key not found in secrets vault or environment variable');
+      }
+      logInfo('Falling back to OPENAI_API_KEY from environment variable');
+    }
+    const model = process.env.OPENAI_MODEL || 'gpt-4-turbo-preview';
+    return new OpenAIService(apiKey, model);
   }
 
   /**
@@ -374,13 +381,10 @@ Please execute the appropriate API call and return the result.`;
    * Validate OpenAI configuration
    */
   validateConfig(): boolean {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!this.apiKey) {
       logError('OpenAI API key not configured');
       return false;
     }
     return true;
   }
-}
-
-// Export singleton instance
-export const openaiService = new OpenAIService(); 
+} 

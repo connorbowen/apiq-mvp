@@ -3,15 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { apiClient, CreateConnectionRequest } from '../../lib/api/client';
 
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 2: Connection Creation Flow
-// - Modify connection creation to automatically create secrets
-// - Add secret creation during connection setup
-// - Update authConfig to reference secret instead of storing credentials directly
-// - Add secret management options (create new, use existing, advanced settings)
-// - Update test connection to use secrets
-// - Add validation for secret creation
-// - Consider adding secret preview/confirmation step
-
 // TODO: [P1.5-OPENAPI-DISCOVERY] Add OpenAPI auto-discovery feature
 // - Add common path discovery (/swagger.json, /openapi.json, etc.)
 // - Add "Auto-discover" button in CreateConnectionModal
@@ -29,11 +20,6 @@ interface CreateConnectionModalProps {
   onSuccess: () => void;
   onError: (error: string) => void;
 }
-
-// TODO: [SECRETS-FIRST-REFACTOR] Update OAuth2 provider configs to use secrets
-// - Store OAuth2 client secrets in secrets vault
-// - Reference secrets in connection creation
-// - Update OAuth2 flow to use secrets for token storage
 
 // OAuth2 Provider configurations
 const OAUTH2_PROVIDERS = {
@@ -106,10 +92,6 @@ export default function CreateConnectionModal({
   onSuccess, 
   onError 
 }: CreateConnectionModalProps) {
-  // TODO: [SECRETS-FIRST-REFACTOR] Update form data structure
-  // - Add secret-related fields (secretName, secretDescription, etc.)
-  // - Add option to use existing secret
-  // - Add secret creation preferences
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -129,17 +111,6 @@ export default function CreateConnectionModal({
       scopes: ''
     }
   });
-
-  // TODO: [SECRETS-FIRST-REFACTOR] Add secret management state
-  // const [secretManagement, setSecretManagement] = useState({
-  //   createNewSecret: true,
-  //   useExistingSecret: false,
-  //   selectedSecretId: '',
-  //   secretName: '',
-  //   secretDescription: '',
-  //   enableRotation: false,
-  //   rotationInterval: 90
-  // });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResult, setTestResult] = useState<{ 
@@ -221,207 +192,156 @@ export default function CreateConnectionModal({
     }
   };
 
-  // TODO: [SECRETS-FIRST-REFACTOR] Update form submission to create secrets
-  // - Create secret first, then create connection
-  // - Handle secret creation errors
-  // - Update connection to reference secret
-  // - Add rollback if connection creation fails
+  // Helper to create secrets for a connection
+  const createSecretsForConnection = async (
+    name: string,
+    credentials: typeof formData.credentials,
+    authType: typeof formData.authType,
+    isTest: boolean = false
+  ): Promise<{ secretIds: string[]; secretReferences: Record<string, string> }> => {
+    const secretsToCreate = [];
+    const secretIds: string[] = [];
+    const secretReferences: Record<string, string> = {};
+    const suffix = isTest ? '_test' : '';
+
+    if (authType === 'API_KEY' && credentials.apiKey) {
+      secretsToCreate.push({
+        name: `${name}_api_key${suffix}`,
+        type: 'API_KEY' as const,
+        value: credentials.apiKey,
+        description: `API key for ${name}${isTest ? ' (test)' : ''}`
+      });
+      secretReferences.apiKey = `${name}_api_key${suffix}`;
+    } else if (authType === 'BEARER_TOKEN' && credentials.bearerToken) {
+      secretsToCreate.push({
+        name: `${name}_bearer_token${suffix}`,
+        type: 'BEARER_TOKEN' as const,
+        value: credentials.bearerToken,
+        description: `Bearer token for ${name}${isTest ? ' (test)' : ''}`
+      });
+      secretReferences.bearerToken = `${name}_bearer_token${suffix}`;
+    } else if (authType === 'BASIC_AUTH' && (credentials.username || credentials.password)) {
+      if (credentials.username) {
+        secretsToCreate.push({
+          name: `${name}_username${suffix}`,
+          type: 'BASIC_AUTH_USERNAME' as const,
+          value: credentials.username,
+          description: `Username for ${name}${isTest ? ' (test)' : ''}`
+        });
+        secretReferences.username = `${name}_username${suffix}`;
+      }
+      if (credentials.password) {
+        secretsToCreate.push({
+          name: `${name}_password${suffix}`,
+          type: 'BASIC_AUTH_PASSWORD' as const,
+          value: credentials.password,
+          description: `Password for ${name}${isTest ? ' (test)' : ''}`
+        });
+        secretReferences.password = `${name}_password${suffix}`;
+      }
+    } else if (authType === 'OAUTH2') {
+      if (credentials.clientId) {
+        secretsToCreate.push({
+          name: `${name}_client_id${suffix}`,
+          type: 'OAUTH2_CLIENT_ID' as const,
+          value: credentials.clientId,
+          description: `OAuth2 client ID for ${name}${isTest ? ' (test)' : ''}`
+        });
+        secretReferences.clientId = `${name}_client_id${suffix}`;
+      }
+      if (credentials.clientSecret) {
+        secretsToCreate.push({
+          name: `${name}_client_secret${suffix}`,
+          type: 'OAUTH2_CLIENT_SECRET' as const,
+          value: credentials.clientSecret,
+          description: `OAuth2 client secret for ${name}${isTest ? ' (test)' : ''}`
+        });
+        secretReferences.clientSecret = `${name}_client_secret${suffix}`;
+      }
+    }
+
+    for (const secretData of secretsToCreate) {
+      const secretResp = await apiClient.createSecret(secretData);
+      if (secretResp.success && secretResp.data?.secret) {
+        secretIds.push(secretResp.data.secret.id);
+      } else {
+        // Rollback any created secrets
+        await rollbackSecrets(secretIds);
+        throw new Error(secretResp.error || 'Failed to create secret');
+      }
+    }
+    return { secretIds, secretReferences };
+  };
+
+  // Helper to rollback (delete) secrets by ID
+  const rollbackSecrets = async (secretIds: string[]) => {
+    for (const secretId of secretIds) {
+      try {
+        await apiClient.deleteSecret(secretId);
+      } catch (error) {
+        console.error(`Failed to rollback secret ${secretId}:`, error);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     console.info('[modal] Form submission triggered');
     console.info('[modal] Form data:', formData);
     e.preventDefault();
-    setIsSubmitting(true); // Move to the start
-    
-    // Clear previous errors
+    setIsSubmitting(true);
     setErrorMessage('');
     setFieldErrors({});
-    
-    // Simple rate limiting simulation
     const now = Date.now();
     const lastSubmission = (window as any).lastConnectionSubmission || 0;
-    if (now - lastSubmission < 1000) { // 1 second rate limit
-      console.log('🔍 DEBUG: Rate limit hit, last submission was', now - lastSubmission, 'ms ago');
+    if (now - lastSubmission < 1000) {
       setErrorMessage('Rate limit exceeded. Please wait before trying again.');
       onError('Rate limit exceeded. Please wait before trying again.');
-      setIsSubmitting(false); // Reset immediately
+      setIsSubmitting(false);
       return;
     }
     (window as any).lastConnectionSubmission = now;
-    
-    // Reset submission count after 1 minute of inactivity
     const lastReset = (window as any).lastRateLimitReset || 0;
-    if (now - lastReset > 60000) { // 1 minute
+    if (now - lastReset > 60000) {
       (window as any).connectionSubmissionCount = 0;
       (window as any).lastRateLimitReset = now;
     }
-
     try {
-      console.log('🔍 DEBUG: Starting connection creation process');
-      
-      // TODO: [SECRETS-FIRST-REFACTOR] Implement secret-first submission
-      // For now, use the current direct credential storage approach
-      
-      // Prepare authConfig based on auth type
-      const authConfig: any = {};
-      
-      console.log('🔍 DEBUG: Preparing authConfig for authType:', formData.authType);
-      
-      switch (formData.authType) {
-        case 'API_KEY':
-          authConfig.apiKey = formData.credentials.apiKey;
-          console.log('🔍 DEBUG: API_KEY authConfig prepared:', { hasApiKey: !!authConfig.apiKey });
-          break;
-        case 'BEARER_TOKEN':
-          authConfig.bearerToken = formData.credentials.bearerToken;
-          console.log('🔍 DEBUG: BEARER_TOKEN authConfig prepared:', { hasBearerToken: !!authConfig.bearerToken });
-          break;
-        case 'BASIC_AUTH':
-          authConfig.username = formData.credentials.username;
-          authConfig.password = formData.credentials.password;
-          console.log('🔍 DEBUG: BASIC_AUTH authConfig prepared:', { hasUsername: !!authConfig.username, hasPassword: !!authConfig.password });
-          break;
-        case 'OAUTH2':
-          authConfig.clientId = formData.credentials.clientId;
-          authConfig.clientSecret = formData.credentials.clientSecret;
-          authConfig.redirectUri = formData.credentials.redirectUri;
-          authConfig.scopes = formData.credentials.scopes;
-          if (formData.provider) {
-            authConfig.provider = formData.provider;
-          }
-          console.log('🔍 DEBUG: OAUTH2 authConfig prepared:', { 
-            hasClientId: !!authConfig.clientId, 
-            hasClientSecret: !!authConfig.clientSecret,
-            hasRedirectUri: !!authConfig.redirectUri,
-            hasScopes: !!authConfig.scopes,
-            provider: authConfig.provider
-          });
-          break;
-      }
-      
+      // --- SECRETS-FIRST: Create secrets first ---
+      const { secretIds, secretReferences } = await createSecretsForConnection(
+        formData.name,
+        formData.credentials,
+        formData.authType,
+        false
+      );
+      // --- SECRETS-FIRST: Create connection with secret references ---
       const connectionData = {
         name: formData.name,
         description: formData.description,
         baseUrl: formData.baseUrl,
         authType: formData.authType,
-        authConfig: authConfig,
-        documentationUrl: formData.openApiUrl || undefined
+        authConfig: {}, // Do not store credentials directly
+        documentationUrl: formData.openApiUrl || undefined,
+        secretIds,
+        secretReferences
       };
-      
-      console.log('🔍 DEBUG: Final connection data to send:', {
-        name: connectionData.name,
-        description: connectionData.description,
-        baseUrl: connectionData.baseUrl,
-        authType: connectionData.authType,
-        hasAuthConfig: !!connectionData.authConfig,
-        authConfigKeys: Object.keys(connectionData.authConfig || {}),
-        hasDocumentationUrl: !!connectionData.documentationUrl
-      });
-      
-      console.info('[modal] About to call apiClient.createConnection');
       const response = await apiClient.createConnection(connectionData);
-      console.info('[modal] apiClient.createConnection response:', response);
-      
       if (response.success) {
-        console.info('[modal] Connection creation successful!');
-        console.info('[modal] Response data:', response.data);
         setSubmitSuccess(true);
-        console.info('[modal] Calling onSuccess callback immediately');
         onSuccess();
-        // Close modal immediately to ensure UI updates
-        console.info('[modal] Closing modal immediately');
         onClose();
       } else {
-        console.info('[modal] Connection creation failed!');
-        console.info('[modal] Error response:', response);
-        console.info('[modal] Error message:', response.error);
-        console.info('[modal] Error code:', response.code);
+        // Rollback any created secrets
+        await rollbackSecrets(secretIds);
         setErrorMessage(response.error || 'Failed to create connection');
         onError(response.error || 'Failed to create connection');
       }
     } catch (error: any) {
-      console.log('🔍 DEBUG: Exception caught in handleSubmit');
-      console.log('🔍 DEBUG: Error type:', typeof error);
-      console.log('🔍 DEBUG: Error message:', error.message);
-      console.log('🔍 DEBUG: Error stack:', error.stack);
-      console.log('🔍 DEBUG: Full error object:', error);
-      handleSubmissionError(error);
+      setErrorMessage(error.message || 'Failed to create connection');
+      onError(error.message || 'Failed to create connection');
     } finally {
-      console.log('🔍 DEBUG: Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
-
-  // TODO: [SECRETS-FIRST-REFACTOR] Add secret creation helper function
-  // const createSecretsForConnection = async (connectionData: typeof formData) => {
-  //   const secretIds: string[] = [];
-  //   
-  //   switch (connectionData.authType) {
-  //     case 'API_KEY':
-  //       const apiKeySecret = await apiClient.createSecret({
-  //         name: `${connectionData.name} API Key`,
-  //         type: 'API_KEY',
-  //         value: connectionData.credentials.apiKey,
-  //         description: `API Key for ${connectionData.name} connection`,
-  //         connectionId: null // Will be set after connection creation
-  //       });
-  //       secretIds.push(apiKeySecret.id);
-  //       break;
-  //       
-  //     case 'BEARER_TOKEN':
-  //       const bearerSecret = await apiClient.createSecret({
-  //         name: `${connectionData.name} Bearer Token`,
-  //         type: 'BEARER_TOKEN',
-  //         value: connectionData.credentials.bearerToken,
-  //         description: `Bearer token for ${connectionData.name} connection`,
-  //         connectionId: null
-  //       });
-  //       secretIds.push(bearerSecret.id);
-  //       break;
-  //       
-  //     case 'BASIC_AUTH':
-  //       const basicAuthSecret = await apiClient.createSecret({
-  //         name: `${connectionData.name} Basic Auth`,
-  //         type: 'BASIC_AUTH',
-  //         value: JSON.stringify({
-  //           username: connectionData.credentials.username,
-  //           password: connectionData.credentials.password
-  //         }),
-  //         description: `Basic auth credentials for ${connectionData.name} connection`,
-  //         connectionId: null
-  //       });
-  //       secretIds.push(basicAuthSecret.id);
-  //       break;
-  //       
-  //     case 'OAUTH2':
-  //       const oauth2Secret = await apiClient.createSecret({
-  //         name: `${connectionData.name} OAuth2 Credentials`,
-  //         type: 'OAUTH2',
-  //         value: JSON.stringify({
-  //           clientId: connectionData.credentials.clientId,
-  //           clientSecret: connectionData.credentials.clientSecret,
-  //           redirectUri: connectionData.credentials.redirectUri,
-  //           scopes: connectionData.credentials.scopes
-  //         }),
-  //         description: `OAuth2 credentials for ${connectionData.name} connection`,
-  //         connectionId: null
-  //       });
-  //       secretIds.push(oauth2Secret.id);
-  //       break;
-  //   }
-  //   
-  //   return secretIds;
-  // };
-
-  // TODO: [SECRETS-FIRST-REFACTOR] Add rollback function for failed connections
-  // const rollbackSecrets = async (secretIds: string[]) => {
-  //   for (const secretId of secretIds) {
-  //     try {
-  //       await apiClient.deleteSecret(secretId);
-  //     } catch (error) {
-  //       console.error(`Failed to rollback secret ${secretId}:`, error);
-  //     }
-  //   }
-  // };
 
   // Error handling function for consistent error management
   const handleSubmissionError = (error: any) => {
@@ -447,12 +367,42 @@ export default function CreateConnectionModal({
     onError(errorMessage);
   };
 
-  // TODO: [SECRETS-FIRST-REFACTOR] Update test connection to use secrets
   const handleTestConnection = async () => {
-    // TODO: Implement test connection using secrets instead of direct credentials
-    // - Fetch secrets for the connection
-    // - Use secrets in test request
-    // - Handle secret access errors
+    setErrorMessage('');
+    setTestResult(null);
+    setIsSubmitting(true);
+    try {
+      // --- SECRETS-FIRST: Create secrets for test (ephemeral) ---
+      const { secretIds, secretReferences } = await createSecretsForConnection(
+        formData.name,
+        formData.credentials,
+        formData.authType,
+        true
+      );
+      // --- SECRETS-FIRST: Test connection using secret references ---
+      const testData = {
+        name: formData.name,
+        description: formData.description,
+        baseUrl: formData.baseUrl,
+        authType: formData.authType,
+        authConfig: {},
+        documentationUrl: formData.openApiUrl || undefined,
+        secretIds,
+        secretReferences
+      };
+      const response = await apiClient.testConnectionConfig(testData);
+      // Clean up test secrets
+      await rollbackSecrets(secretIds);
+      if (response.success) {
+        setTestResult({ success: true, message: response.data?.message || 'Connection test successful' });
+      } else {
+        setTestResult({ success: false, message: response.error || 'Connection test failed' });
+      }
+    } catch (error: any) {
+      setTestResult({ success: false, message: error.message || 'Connection test failed' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Helper function to render field error

@@ -2,18 +2,6 @@
 // Consider extracting connection creation logic into a service layer to improve maintainability.
 // Priority: Low - not urgent for current functionality.
 
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 4: Connection API Migration
-// - Update connection creation to use secrets instead of direct authConfig storage
-// - Add secret creation during connection setup
-// - Add connection-secret linking and validation
-// - Add rollback mechanisms for failed secret creation
-// - Update connection retrieval to include secret information
-// - Add connection status updates based on secret health
-// - Add migration logic for existing connections
-// - Add connection-secret dependency validation
-// - Add audit logging for connection-secret operations
-// - Consider adding connection-secret bulk operations
-
 console.log('LOADED /api/connections handler');
 
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -110,7 +98,11 @@ async function createSecretsFromConnection(
           userId,
           secretData.name,
           { value: secretData.value, metadata: { description: secretData.description } },
-          secretData.type
+          secretData.type,
+          undefined, // expiresAt
+          undefined, // rotationConfig
+          undefined, // connectionId - will be set after connection creation
+          connectionName // connectionName for metadata
         );
         secretIds.push(secret.id);
       } catch (error) {
@@ -186,7 +178,6 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         // Metadata fields
         createdAt: connection.createdAt,
         updatedAt: connection.updatedAt,
-        // TODO: [SECRETS-FIRST-REFACTOR] Include secret information
         secretId: connection.secretId,
         hasSecrets: !!connection.secretId
       }));
@@ -349,7 +340,6 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       try {
         // Use a transaction to ensure atomicity
         await prisma.$transaction(async (tx) => {
-                  // TODO: [SECRETS-FIRST-REFACTOR] Handle secrets-first connection creation
         // Check if secrets are already provided (frontend created them)
         if (connectionData.secretIds && connectionData.secretIds.length > 0) {
           // Use existing secrets provided by frontend
@@ -414,7 +404,6 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               status: 'ACTIVE',
               connectionStatus: initialConnectionStatus,
               ingestionStatus: 'PENDING',
-              // TODO: [SECRETS-FIRST-REFACTOR] Link to primary secret if created
               secretId: createdSecretIds.length > 0 ? createdSecretIds[0] : null
             }
           });
@@ -422,6 +411,16 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           // Link existing secrets to the connection if they were provided by frontend
           if (connectionData.secretIds && connectionData.secretIds.length > 0) {
             for (const secretId of connectionData.secretIds) {
+              await tx.secret.update({
+                where: { id: secretId },
+                data: {
+                  connectionId: newConnection.id
+                }
+              });
+            }
+          } else if (createdSecretIds.length > 0) {
+            // Link secrets created during connection creation to the connection
+            for (const secretId of createdSecretIds) {
               await tx.secret.update({
                 where: { id: secretId },
                 data: {
@@ -537,7 +536,6 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
             updatedAt: finalConnection?.updatedAt,
             endpointCount,
             lastUsed: finalConnection?.updatedAt,
-            // TODO: [SECRETS-FIRST-REFACTOR] Include secret information
             secretId: finalConnection?.secretId,
             createdSecretIds
           },

@@ -4,18 +4,8 @@ import { handleApiError } from '../../../src/middleware/errorHandler';
 import { logInfo, logError } from '../../../src/utils/logger';
 import { requireAdmin, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { z } from 'zod';
-
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 8: Token Refresh API Migration
-// - Update token refresh to use secrets vault instead of direct authConfig
-// - Add methods to retrieve OAuth2 secrets for token refresh
-// - Add connection-secret validation before token refresh
-// - Add secret rotation handling for refreshed tokens
-// - Add connection status updates based on token refresh success/failure
-// - Add audit logging for secret-based token refresh operations
-// - Add error handling for missing or invalid secrets during refresh
-// - Add connection health checks based on token secret status
-// - Add fallback mechanisms for secret retrieval failures
-// - Consider adding connection-secret dependency validation for refresh flows
+import { secretsVault } from '../../../src/lib/secrets/secretsVault';
+import { updateConnectionStatusBasedOnSecrets } from '../../../src/lib/services/connectionService';
 
 // Input validation schema
 const refreshTokenSchema = z.object({
@@ -25,14 +15,14 @@ const refreshTokenSchema = z.object({
 
 /**
  * OAuth2 Token Refresh Endpoint
- * 
+ *
  * Refreshes OAuth2 access tokens using refresh tokens for supported providers.
  * Supports GitHub, Google, and Slack OAuth2 providers.
- * 
+ *
  * @param req - Next.js API request with connectionId and refreshToken in body
  * @param res - Next.js API response
  * @returns Promise resolving to refreshed token data or error response
- * 
+ *
  * @example
  * ```typescript
  * POST /api/connections/refresh-token
@@ -41,7 +31,7 @@ const refreshTokenSchema = z.object({
  *   "refreshToken": "rt_456"
  * }
  * ```
- * 
+ *
  * @throws {AppError} When authentication fails or connection not found
  * @throws {AppError} When token refresh fails or token is revoked
  */
@@ -73,7 +63,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
 
     // Find the connection
     const connection = await prisma.apiConnection.findFirst({
-      where: { 
+      where: {
         id: connectionId,
         userId: user.id,
         authType: 'OAUTH2'
@@ -88,14 +78,36 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       });
     }
 
-    // Get OAuth2 configuration
-    const authConfig = connection.authConfig as any;
-    if (!authConfig || !authConfig.oauth2Provider) {
+    // --- SECRETS-FIRST-REFACTOR: Retrieve OAuth2 secrets from secrets vault ---
+    const secrets = await secretsVault.getSecretsForConnection(user.id, connectionId);
+    const secretMap = Object.fromEntries(secrets.map(s => [s.type, s]));
+    // Required: clientId, clientSecret, refreshToken
+    const clientIdSecret = secretMap['OAUTH2_CLIENT_ID'];
+    const clientSecretSecret = secretMap['OAUTH2_CLIENT_SECRET'];
+    let refreshTokenSecret = secretMap['OAUTH2_REFRESH_TOKEN'];
+    if (!clientIdSecret || !clientSecretSecret) {
       return res.status(400).json({
         success: false,
-        error: 'OAuth2 configuration is invalid. Please check your connection settings and try again.',
-        code: 'VALIDATION_ERROR'
+        error: 'OAuth2 clientId or clientSecret secret missing. Please check your connection secrets.',
+        code: 'MISSING_SECRETS'
       });
+    }
+    // Use provided refreshToken if present, else use secret
+    const refreshTokenValue = refreshToken || (refreshTokenSecret ? (await secretsVault.getSecret(user.id, refreshTokenSecret.name)).value : undefined);
+    if (!refreshTokenValue) {
+      return res.status(400).json({
+        success: false,
+        error: 'OAuth2 refresh token secret missing. Please check your connection secrets.',
+        code: 'MISSING_SECRETS'
+      });
+    }
+    // --- END SECRETS-FIRST-REFACTOR ---
+
+    // Extract provider for use in both try and catch
+    const authConfig = connection.authConfig as any;
+    let provider: string | undefined = undefined;
+    if (authConfig && typeof authConfig === 'object') {
+      provider = (authConfig as any).oauth2Provider || (authConfig as any).provider;
     }
 
     try {
@@ -103,8 +115,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       let newAccessToken: string;
       let newRefreshToken: string | undefined;
       let expiresIn: number;
-
-      switch (authConfig.oauth2Provider) {
+      switch (provider) {
         case 'GITHUB':
           const githubResponse = await fetch('https://github.com/login/oauth/access_token', {
             method: 'POST',
@@ -113,10 +124,10 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              client_id: authConfig.clientId,
-              client_secret: authConfig.clientSecret,
+              client_id: (await secretsVault.getSecret(user.id, clientIdSecret.name)).value,
+              client_secret: (await secretsVault.getSecret(user.id, clientSecretSecret.name)).value,
               grant_type: 'refresh_token',
-              refresh_token: refreshToken
+              refresh_token: refreshTokenValue
             })
           });
 
@@ -141,10 +152,10 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-              client_id: authConfig.clientId,
-              client_secret: authConfig.clientSecret,
+              client_id: (await secretsVault.getSecret(user.id, clientIdSecret.name)).value,
+              client_secret: (await secretsVault.getSecret(user.id, clientSecretSecret.name)).value,
               grant_type: 'refresh_token',
-              refresh_token: refreshToken
+              refresh_token: refreshTokenValue
             })
           });
 
@@ -169,10 +180,10 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-              client_id: authConfig.clientId,
-              client_secret: authConfig.clientSecret,
+              client_id: (await secretsVault.getSecret(user.id, clientIdSecret.name)).value,
+              client_secret: (await secretsVault.getSecret(user.id, clientSecretSecret.name)).value,
               grant_type: 'refresh_token',
-              refresh_token: refreshToken
+              refresh_token: refreshTokenValue
             })
           });
 
@@ -193,31 +204,51 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         default:
           return res.status(400).json({
             success: false,
-            error: `OAuth2 provider '${authConfig.oauth2Provider}' is not supported. Please contact support for assistance.`,
+            error: `OAuth2 provider '${provider}' is not supported. Please contact support for assistance.`,
             code: 'VALIDATION_ERROR'
           });
       }
 
-      // Update connection with new tokens
-      const updatedAuthConfig = {
-        ...authConfig,
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken || refreshToken, // Use new refresh token if provided
-        tokenExpiresAt: new Date(Date.now() + expiresIn * 1000)
-      };
-
-      await prisma.apiConnection.update({
-        where: { id: connectionId },
-        data: {
-          authConfig: updatedAuthConfig,
-          lastTested: new Date()
-        }
+      // --- SECRETS-FIRST-REFACTOR: Update/rotate secrets and connection status ---
+      // Update or create access token secret
+      await secretsVault.storeSecret(
+        user.id,
+        `${connection.name}_access_token`,
+        { value: newAccessToken, metadata: { description: `Access token for ${connection.name}` } },
+        'OAUTH2_ACCESS_TOKEN',
+        undefined,
+        undefined,
+        connectionId,
+        connection.name
+      );
+      // Update or create refresh token secret if new one is provided
+      if (newRefreshToken && newRefreshToken !== refreshTokenValue) {
+        await secretsVault.storeSecret(
+          user.id,
+          `${connection.name}_refresh_token`,
+          { value: newRefreshToken, metadata: { description: `Refresh token for ${connection.name}` } },
+          'OAUTH2_REFRESH_TOKEN',
+          undefined,
+          undefined,
+          connectionId,
+          connection.name
+        );
+      }
+      // Update connection status based on secret health
+      await updateConnectionStatusBasedOnSecrets(user.id, connectionId);
+      // Audit log (use logInfo for audit if logSecretAccess is private)
+      logInfo('Secret rotated (audit)', {
+        userId: user.id,
+        secretName: `${connection.name}_access_token`,
+        action: 'SECRET_ROTATED',
+        connectionId
       });
+      // --- END SECRETS-FIRST-REFACTOR ---
 
       logInfo('OAuth2 token refreshed successfully', {
         connectionId,
         userId: user.id,
-        provider: authConfig.oauth2Provider,
+        provider,
         expiresIn
       });
 
@@ -225,7 +256,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         success: true,
         data: {
           accessToken: newAccessToken,
-          refreshToken: newRefreshToken || refreshToken,
+          refreshToken: newRefreshToken || refreshTokenValue,
           expiresIn,
           expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString()
         },
@@ -236,11 +267,15 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       logError('OAuth2 token refresh failed', error, {
         connectionId,
         userId: user.id,
-        provider: authConfig.oauth2Provider
+        provider
       });
-
+      // Update connection status to error
+      await prisma.apiConnection.update({
+        where: { id: connectionId },
+        data: { connectionStatus: 'error' }
+      });
       // Check if it's a token revocation error
-      if (error.message.includes('invalid_grant') || 
+      if (error.message.includes('invalid_grant') ||
           error.message.includes('Token revoked') ||
           error.message.includes('expired')) {
         return res.status(401).json({
@@ -249,7 +284,6 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           code: 'TOKEN_REVOKED'
         });
       }
-
       return res.status(400).json({
         success: false,
         error: 'Failed to refresh your OAuth2 connection. Please try again or contact support if the problem persists.',

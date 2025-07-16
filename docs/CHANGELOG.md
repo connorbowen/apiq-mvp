@@ -1917,3 +1917,4 @@ _Updated by AI assistant, 2025-07-11_
 ### 🆕 Documentation
 - Updated all core documentation files for secrets-first, E2E, and implementation status
 - Synchronized test counts, pass rates, and compliance metrics
+- **Archived Implementation Documents**: Moved completed secrets-first refactor implementation documents to `docs/archive/secrets-first-refactor/` for historical preservation

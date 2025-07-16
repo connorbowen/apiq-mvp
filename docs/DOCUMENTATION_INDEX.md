@@ -27,6 +27,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **[Development Guide](DEVELOPMENT_GUIDE.md)** - Comprehensive development setup, coding standards, and best practices
 - **[Development Tools](DEVELOPMENT_TOOLS.md)** - Development scripts, testing tools, and workflow automation
 - **[API Reference](API_REFERENCE.md)** - Complete API endpoint documentation and specifications
+- **[OAuth2 Guide](OAUTH2_GUIDE.md)** - Comprehensive OAuth2 setup, testing, and integration guide
 
 ### Setup & Configuration
 - **[Quick Start Guide](QUICK_START.md)** - Initial project setup and basic configuration
@@ -44,7 +45,8 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 ## 🧪 **TESTING & QUALITY ASSURANCE**
 
 ### Testing Strategy & Infrastructure
-- **[Testing Guide](TESTING.md)** - Comprehensive testing strategy, patterns, and infrastructure
+- **[Testing Strategy](testing-strategy.md)** - Comprehensive testing strategy, patterns, and infrastructure
+- **[Testing Index](TESTING_INDEX.md)** - Complete testing documentation organization and navigation
 - **[E2E Test Evaluation Guide](E2E_TEST_EVALUATION_GUIDE.md)** - 14-criteria E2E test evaluation and TODO implementation
 - **[Enhanced E2E Test Criteria](E2E_TEST_ENHANCED_CRITERIA.md)** - Detailed breakdown of enhanced evaluation criteria
 - **[E2E Test Enhancement Summary](E2E_TEST_ENHANCEMENT_SUMMARY.md)** - Overview of enhanced E2E test evaluation system
@@ -60,9 +62,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **[UI Test Optimization](UI_TEST_OPTIMIZATION.md)** - UI test performance and browser optimization
 
 ### OAuth2 & Authentication Testing
-- **[OAuth2 Setup Guide](oauth2-setup-guide.md)** - OAuth2 provider configuration and setup
-- **[OAuth2 Testing Plan](oauth2-testing-plan.md)** - OAuth2 testing strategies and implementation
-- **[OAuth2 Frontend Integration](oauth2-frontend-integration.md)** - OAuth2 UI implementation and integration
+- **[OAuth2 Guide](OAUTH2_GUIDE.md)** - Comprehensive OAuth2 setup, testing, and integration guide
 
 ---
 
@@ -90,6 +90,12 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute to the project and development workflow
 - **[Commit Checklist](COMMIT_CHECKLIST.md)** - Pre-commit requirements and quality gates
 
+### Archived Documentation
+- **[OAuth2 Renaming Files](docs/archive/oauth2-renaming/)** - Historical OAuth2 renaming implementation files
+- **Note**: These files have been archived after successful consolidation into [OAuth2 Guide](OAUTH2_GUIDE.md)
+- **[Secrets-First Refactor](docs/archive/secrets-first-refactor/)** - Historical secrets-first refactor implementation files
+- **Note**: These files have been archived after successful completion of the secrets-first refactor (2024-07-16)
+
 ---
 
 ## 📋 **DOCUMENTATION USAGE GUIDELINES**
@@ -107,7 +113,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 2. **Use [Development Tools](DEVELOPMENT_TOOLS.md)** - Scripts and tools for development workflow
 3. **Use [API Reference](API_REFERENCE.md)** - Endpoint specifications and patterns
 4. **Check [Security Guide](SECURITY_GUIDE.md)** - Security implementation requirements
-5. **Reference [Testing Guide](TESTING.md)** - Testing strategies and patterns
+5. **Reference [Testing Strategy](testing-strategy.md)** - Testing strategies and patterns
 
 #### **UX & Frontend Development**
 1. **Follow [UX Specification](UX_SPEC.md)** - Comprehensive UX design principles and patterns
@@ -118,7 +124,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 6. **Check [Security Guide](SECURITY_GUIDE.md)** - Security UX patterns
 
 #### **Testing & Quality Assurance**
-1. **Use [Testing Guide](TESTING.md)** - Comprehensive testing strategy
+1. **Use [Testing Strategy](testing-strategy.md)** - Comprehensive testing strategy
 2. **Use [E2E Test Evaluation Guide](E2E_TEST_EVALUATION_GUIDE.md)** - 14-criteria test evaluation and TODO implementation
 3. **Reference [Enhanced E2E Test Criteria](E2E_TEST_ENHANCED_CRITERIA.md)** - Detailed evaluation criteria and examples
 4. **Apply [Development Tools](DEVELOPMENT_TOOLS.md)** - Test analysis and optimization tools
@@ -128,9 +134,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 8. **Use [UX Compliant Testing](UX_COMPLIANT_TESTING.md)** - UX compliance and accessibility testing
 
 #### **OAuth2 & Authentication Development**
-1. **Follow [OAuth2 Setup Guide](oauth2-setup-guide.md)** - Provider configuration
-2. **Use [OAuth2 Testing Plan](oauth2-testing-plan.md)** - Testing strategies
-3. **Reference [OAuth2 Frontend Integration](oauth2-frontend-integration.md)** - UI implementation
+1. **Follow [OAuth2 Guide](OAUTH2_GUIDE.md)** - Comprehensive OAuth2 setup, testing, and integration
 
 #### **Setup & Configuration**
 1. **Start with [Quick Start](QUICK_START.md)** - Initial setup
@@ -156,7 +160,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 #### **Always Reference**
 - **[User Rules](user-rules.md)** - Before starting any development work
 - **[Implementation Plan](implementation-plan.md)** - To understand current project status
-- **[Testing Guide](TESTING.md)** - When writing or modifying tests
+- **[Testing Strategy](testing-strategy.md)** - When writing or modifying tests
 - **[Development Tools](DEVELOPMENT_TOOLS.md)** - For development workflow automation
 - **[UX Specification](UX_SPEC.md)** - For all UX and frontend development
 
@@ -164,8 +168,8 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **API Development**: [API Reference](API_REFERENCE.md) + [Security Guide](SECURITY_GUIDE.md)
 - **Frontend Development**: [UX Specification](UX_SPEC.md) + [UX Compliant Testing](UX_COMPLIANT_TESTING.md) + [UI Pages](UI_PAGES.md) + [User Guide](USER_GUIDE.md) + [Secrets Vault UX Guide](SECRETS_VAULT_UX_GUIDE.md)
 - **Architecture Changes**: [Architecture](ARCHITECTURE.md) + [Development Guide](DEVELOPMENT_GUIDE.md)
-- **OAuth2 Implementation**: [OAuth2 Setup Guide](oauth2-setup-guide.md) + [OAuth2 Testing Plan](oauth2-testing-plan.md)
-- **Testing & Debugging**: [Development Tools](DEVELOPMENT_TOOLS.md) + [Testing Guide](TESTING.md) + [E2E Test Evaluation Guide](E2E_TEST_EVALUATION_GUIDE.md) + [UX Compliant Testing](UX_COMPLIANT_TESTING.md)
+- **OAuth2 Implementation**: [OAuth2 Guide](OAUTH2_GUIDE.md)
+- **Testing & Debugging**: [Development Tools](DEVELOPMENT_TOOLS.md) + [Testing Strategy](testing-strategy.md) + [E2E Test Evaluation Guide](E2E_TEST_EVALUATION_GUIDE.md) + [UX Compliant Testing](UX_COMPLIANT_TESTING.md)
 - **Production Deployment**: [Production Deployment Checklist](PRODUCTION_DEPLOYMENT_CHECKLIST.md) + [Deployment Guide](DEPLOYMENT_GUIDE.md)
 - **UX Development**: [UX Specification](UX_SPEC.md) + [UX Compliant Testing](UX_COMPLIANT_TESTING.md) + [Secrets Vault UX Guide](SECRETS_VAULT_UX_GUIDE.md) + [UI Pages](UI_PAGES.md)
 - **Security UX**: [Secrets Vault UX Guide](SECRETS_VAULT_UX_GUIDE.md) + [UX Specification](UX_SPEC.md) + [Security Guide](SECURITY_GUIDE.md)
@@ -181,7 +185,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 ## 📊 **DOCUMENTATION METRICS**
 
 ### Document Sizes & Complexity
-- **Largest Documents**: [Testing Guide](TESTING.md) (77KB), [Development Guide](DEVELOPMENT_GUIDE.md) (54KB), [API Reference](API_REFERENCE.md) (47KB)
+- **Largest Documents**: [Development Guide](DEVELOPMENT_GUIDE.md) (60KB), [API Reference](API_REFERENCE.md) (32KB), [UX Compliant Testing](UX_COMPLIANT_TESTING.md) (26KB)
 - **Core Planning**: [PRD](prd.md) (25KB), [Implementation Plan](implementation-plan.md) (38KB)
 - **Architecture**: [Architecture](ARCHITECTURE.md) (47KB)
 - **Development Tools**: [Development Tools](DEVELOPMENT_TOOLS.md) (22KB) - New comprehensive tools documentation
@@ -193,8 +197,8 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - ✅ **Product Vision**: Complete with PRD and implementation plans
 - ✅ **Technical Architecture**: Comprehensive architecture and development guides
 - ✅ **Development Tools**: Complete documentation of all development scripts and tools
-- ✅ **Testing Strategy**: Extensive testing documentation with optimization guides
-- ✅ **Security**: Complete security guide and OAuth2 documentation
+- ✅ **Testing Strategy**: Extensive testing documentation with optimization guides and consolidated index
+- ✅ **Security**: Complete security guide and consolidated OAuth2 documentation
 - ✅ **User Experience**: Comprehensive UX specification, testing guide, and security UX patterns
 - ✅ **Operations**: Troubleshooting and deployment guides
 - ✅ **Production Deployment**: Comprehensive deployment checklist and procedures

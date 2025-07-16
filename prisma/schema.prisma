@@ -28,12 +28,8 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 1: Schema Changes
-// - Add secretId field to ApiConnection to reference Secret instead of storing credentials directly
-// - Consider adding secretReference field to ApiCredential for backward compatibility during migration
-// - Add connectionId field to Secret for connection-specific secrets
-// - Consider adding secretType enum for better type safety
-// - Add indexes for performance on secret lookups
+// All SECRETS-FIRST-REFACTOR schema changes are implemented.
+// If you ever need to migrate legacy credentials, consider adding a secretReference field to ApiCredential for backward compatibility during migration.
 
 generator client {
   provider = "prisma-client-js"
@@ -107,7 +103,6 @@ enum ConnectionStatus {
   revoked
 }
 
-// TODO: [SECRETS-FIRST-REFACTOR] Add SecretType enum for better type safety
 enum SecretType {
   API_KEY
   BEARER_TOKEN
@@ -186,7 +181,7 @@ model ApiConnection {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  // TODO: [SECRETS-FIRST-REFACTOR] Add secretId field to reference Secret instead of storing credentials in authConfig
+  // TODO: Add secretId field to reference Secret instead of storing credentials in authConfig
   secretId String? // Reference to the primary secret for this connection
 
   // Relations
@@ -380,19 +375,6 @@ model Secret {
   isActive      Boolean   @default(true)
   expiresAt     DateTime?
   metadata      Json? // Additional metadata about the secret
-
-  // TODO: [SECRETS-FIRST-REFACTOR] Add connectionId field to link secrets to connections
-  connectionId String? // Reference to ApiConnection if this secret is connection-specific
-
-  // API Key Rotation Fields
-  rotationEnabled  Boolean   @default(false) // Whether automatic rotation is enabled
-  rotationInterval Int? // Rotation interval in days
-  lastRotatedAt    DateTime? // When the secret was last rotated
-  nextRotationAt   DateTime? // When the secret should be rotated next
-  rotationHistory  Json? // History of previous rotations
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

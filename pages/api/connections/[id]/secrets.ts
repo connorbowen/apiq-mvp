@@ -5,18 +5,7 @@ import { logInfo, logError } from '../../../../src/utils/logger';
 import { requireAuth, AuthenticatedRequest } from '../../../../src/lib/auth/session';
 import { secretsVault } from '../../../../src/lib/secrets/secretsVault';
 import { CreateSecretRequest } from '../../../../src/types';
-
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 4: Connection Secrets API
-// - Add validation for connection-secret relationships
-// - Add connection status updates based on secret health
-// - Add secret rotation endpoints for connections
-// - Add connection-secret dependency validation
-// - Add audit logging for connection-secret operations
-// - Add bulk operations for connection-secret management
-// - Add connection-specific secret validation rules
-// - Add connection-secret migration endpoints
-// - Add connection status tracking in secret responses
-// - Consider adding connection-secret health monitoring
+import { updateConnectionStatusBasedOnSecrets, validateConnectionSecrets } from '../../../../src/lib/services/connectionService';
 
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
@@ -78,7 +67,6 @@ async function handleGetConnectionSecrets(
   try {
     // Get secrets linked to this connection
     const secrets = await secretsVault.getSecretsForConnection(userId, connectionId);
-    
     // Get connection-specific secret metadata
     const connectionSecrets = secrets.map(secret => ({
       id: secret.id,
@@ -98,6 +86,18 @@ async function handleGetConnectionSecrets(
       connectionName: secret.connectionName
     }));
 
+    // --- Add connection status tracking ---
+    let connectionStatus = apiConnection.connectionStatus;
+    // Optionally, revalidate status based on secrets
+    const requiredTypes = getRequiredSecretTypesForAuthType(apiConnection.authType);
+    const { isValid, missing, issues } = await validateConnectionSecrets(userId, connectionId, requiredTypes);
+    if (!isValid) {
+      connectionStatus = 'error';
+    } else {
+      connectionStatus = 'connected';
+    }
+    // --- End connection status tracking ---
+
     logInfo('Retrieved connection secrets', {
       userId,
       connectionId,
@@ -111,7 +111,11 @@ async function handleGetConnectionSecrets(
           id: apiConnection.id,
           name: apiConnection.name,
           authType: apiConnection.authType,
-          secretId: apiConnection.secretId
+          secretId: apiConnection.secretId,
+          connectionStatus,
+          secretStatus: isValid ? 'healthy' : 'error',
+          missingSecrets: missing,
+          secretIssues: issues
         },
         secrets: connectionSecrets,
         total: connectionSecrets.length,
@@ -124,7 +128,6 @@ async function handleGetConnectionSecrets(
       userId,
       connectionId
     });
-    
     return res.status(500).json({
       success: false,
       error: 'Failed to retrieve connection secrets',
@@ -174,6 +177,7 @@ async function handleCreateConnectionSecret(
       });
     }
 
+    // --- Dependency validation: check for required secrets after creation ---
     // Create the secret with connection reference
     const secret = await secretsVault.storeSecret(
       userId,
@@ -201,6 +205,9 @@ async function handleCreateConnectionSecret(
         data: { secretId: secret.id }
       });
     }
+
+    // After secret creation, update connection status based on secret health
+    await updateConnectionStatusBasedOnSecrets(userId, connectionId);
 
     // Create audit log entry
     await prisma.auditLog.create({
@@ -259,7 +266,6 @@ async function handleCreateConnectionSecret(
       userId,
       connectionId
     });
-    
     return res.status(500).json({
       success: false,
       error: 'Failed to create connection secret',
@@ -289,4 +295,22 @@ function validateSecretTypeCompatibility(secretType: string, authType: string): 
 
   const compatibleAuthTypes = compatibilityMap[secretType] || [];
   return compatibleAuthTypes.includes(authType);
+}
+
+// Helper: get required secret types for a given auth type
+function getRequiredSecretTypesForAuthType(authType: string): (
+  'API_KEY' | 'BEARER_TOKEN' | 'CUSTOM' | 'BASIC_AUTH_USERNAME' | 'BASIC_AUTH_PASSWORD' | 'OAUTH2_CLIENT_ID' | 'OAUTH2_CLIENT_SECRET' | 'OAUTH2_ACCESS_TOKEN' | 'OAUTH2_REFRESH_TOKEN' | 'WEBHOOK_SECRET' | 'SSH_KEY' | 'CERTIFICATE'
+)[] {
+  switch (authType) {
+    case 'API_KEY':
+      return ['API_KEY'];
+    case 'BEARER_TOKEN':
+      return ['BEARER_TOKEN'];
+    case 'BASIC_AUTH':
+      return ['BASIC_AUTH_USERNAME', 'BASIC_AUTH_PASSWORD'];
+    case 'OAUTH2':
+      return ['OAUTH2_CLIENT_ID', 'OAUTH2_CLIENT_SECRET', 'OAUTH2_ACCESS_TOKEN', 'OAUTH2_REFRESH_TOKEN'];
+    default:
+      return [];
+  }
 } 

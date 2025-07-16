@@ -26,7 +26,7 @@ export const Errors = {
   
   // Validation errors
   VALIDATION_ERROR: (message: string, details?: Record<string, any>) => 
-    new ApplicationError(message, 400, 'VALIDATION_ERROR', details),
+    new ApplicationError(message, 400, 'VALIDATION_ERROR'),
   
   // Resource errors
   NOT_FOUND: (message: string = 'Resource not found') => 
@@ -56,7 +56,7 @@ export const Errors = {
   
   // Workflow errors
   WORKFLOW_ERROR: (message: string, details?: Record<string, any>) => 
-    new ApplicationError(message, 400, 'WORKFLOW_ERROR', details),
+    new ApplicationError(message, 400, 'WORKFLOW_ERROR'),
   
   // OpenAI errors
   OPENAI_ERROR: (message: string = 'OpenAI service error') => 

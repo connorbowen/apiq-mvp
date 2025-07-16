@@ -2,18 +2,8 @@ import { WorkflowStep, WorkflowExecution, ExecutionLog, ApiConnection } from '..
 import { logError, logInfo, logDebug, logWorkflowExecution } from '../../utils/logger';
 import { prisma } from '../../../lib/database/client';
 import { apiClient } from '../api/client';
-
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 7: Workflow Step Runner Updates
-// - Update API connection authentication to use secrets instead of direct authConfig
-// - Add methods to retrieve secrets for API connections during workflow execution
-// - Add connection-secret validation before API calls
-// - Add error handling for missing or invalid secrets during workflow execution
-// - Add connection status validation based on secret availability
-// - Add secret rotation handling during workflow execution
-// - Add audit logging for secret-based API calls in workflows
-// - Add connection health checks based on secret status
-// - Add fallback mechanisms for secret retrieval failures
-// - Consider adding connection-secret dependency validation in workflow steps
+import { getSecretsForConnection, validateConnectionSecrets } from '../services/connectionService';
+import { secretsVault } from '../secrets/secretsVault';
 
 // Step execution context - data passed between steps
 export interface ExecutionContext {
@@ -69,6 +59,32 @@ export class ApiCallStepExecutor implements StepExecutor {
           throw new Error(`API connection not found: ${step.apiConnectionId}`);
         }
 
+        // --- SECRETS-FIRST-REFACTOR: Retrieve and validate secrets ---
+        const userId = context.userId;
+        const connectionId = apiConnection.id;
+        // Determine required secret types based on authType
+        let requiredTypes: string[] = [];
+        switch (apiConnection.authType) {
+          case 'API_KEY':
+            requiredTypes = ['API_KEY']; break;
+          case 'BEARER_TOKEN':
+            requiredTypes = ['BEARER_TOKEN']; break;
+          case 'BASIC_AUTH':
+            requiredTypes = ['BASIC_AUTH_USERNAME', 'BASIC_AUTH_PASSWORD']; break;
+          case 'OAUTH2':
+            requiredTypes = ['OAUTH2_CLIENT_ID', 'OAUTH2_CLIENT_SECRET', 'OAUTH2_ACCESS_TOKEN']; break;
+          default:
+            requiredTypes = [];
+        }
+        const { isValid, missing, issues } = await validateConnectionSecrets(userId, connectionId, requiredTypes as any);
+        if (!isValid) {
+          throw new Error(`Missing or invalid secrets for connection: ${missing.join(', ')}; Issues: ${issues.join(', ')}`);
+        }
+        const secrets = await getSecretsForConnection(userId, connectionId);
+        // Map secret type to value
+        const secretMap = Object.fromEntries(secrets.map(s => [s.type, s]));
+        // --- END SECRETS-FIRST-REFACTOR ---
+
         // Require method and endpoint
         const method = step.method;
         const path = step.endpoint;
@@ -79,8 +95,37 @@ export class ApiCallStepExecutor implements StepExecutor {
         // Prepare request parameters with context substitution
         const requestParams = this.prepareRequestParams(step.parameters, context);
 
+        // --- SECRETS-FIRST-REFACTOR: Use secrets for authentication ---
+        // Build auth headers using secrets
+        let authHeaders: Record<string, string> = {};
+        switch (apiConnection.authType) {
+          case 'API_KEY':
+            if (secretMap['API_KEY']) {
+              authHeaders['x-api-key'] = (await secretsVault.getSecret(userId, secretMap['API_KEY'].name)).value;
+            }
+            break;
+          case 'BEARER_TOKEN':
+            if (secretMap['BEARER_TOKEN']) {
+              authHeaders['Authorization'] = `Bearer ${(await secretsVault.getSecret(userId, secretMap['BEARER_TOKEN'].name)).value}`;
+            }
+            break;
+          case 'BASIC_AUTH':
+            if (secretMap['BASIC_AUTH_USERNAME'] && secretMap['BASIC_AUTH_PASSWORD']) {
+              const username = (await secretsVault.getSecret(userId, secretMap['BASIC_AUTH_USERNAME'].name)).value;
+              const password = (await secretsVault.getSecret(userId, secretMap['BASIC_AUTH_PASSWORD'].name)).value;
+              authHeaders['Authorization'] = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
+            }
+            break;
+          case 'OAUTH2':
+            if (secretMap['OAUTH2_ACCESS_TOKEN']) {
+              authHeaders['Authorization'] = `Bearer ${(await secretsVault.getSecret(userId, secretMap['OAUTH2_ACCESS_TOKEN'].name)).value}`;
+            }
+            break;
+        }
+        // --- END SECRETS-FIRST-REFACTOR ---
+
         // Make API call
-        const response = await this.makeApiCall(apiConnection, method, path, requestParams);
+        const response = await this.makeApiCall(apiConnection, method, path, { ...requestParams, headers: { ...authHeaders, ...requestParams.headers } });
 
         const duration = Date.now() - startTime;
         
@@ -244,7 +289,6 @@ export class ApiCallStepExecutor implements StepExecutor {
       method,
       headers: {
         'Content-Type': 'application/json',
-        ...this.buildAuthHeaders(apiConnection),
         ...params.headers
       },
       body: method !== 'GET' ? JSON.stringify(params.body) : undefined

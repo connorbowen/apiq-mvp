@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../lib/api/client';
 
 interface WorkflowShare {
@@ -24,13 +24,7 @@ export default function WorkflowShareModal({ workflowId, isOpen, onClose }: Work
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    if (isOpen) {
-      loadShares();
-    }
-  }, [isOpen, workflowId]);
-
-  const loadShares = async () => {
+  const loadShares = useCallback(async () => {
     try {
       const response = await fetch(`/api/workflows/${workflowId}/share`, {
         method: 'GET',
@@ -43,7 +37,13 @@ export default function WorkflowShareModal({ workflowId, isOpen, onClose }: Work
     } catch (error) {
       console.error('Failed to load shares:', error);
     }
-  };
+  }, [workflowId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadShares();
+    }
+  }, [isOpen, loadShares]);
 
   const addShare = async (e: React.FormEvent) => {
     e.preventDefault();

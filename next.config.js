@@ -1,16 +1,12 @@
 /** @type {import('next').NextConfig} */
 
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 14: Configuration Updates
-// - Add environment variables for secrets vault configuration
-// - Add security headers for secrets management routes
-// - Add CSP headers for secrets-related operations
-// - Add configuration for secrets vault encryption keys
-// - Add environment-specific secrets configuration
-// - Add secrets vault health check configuration
-// - Add connection-secret validation configuration
-// - Add secrets rotation configuration
-// - Add audit logging configuration for secrets
-// - Consider adding secrets vault monitoring configuration
+// Secrets Vault Configuration (see .env.example for details)
+// - ENCRYPTION_MASTER_KEY, ENCRYPTION_KEY
+// - SECRETS_VAULT_HEALTHCHECK_ENABLED
+// - SECRETS_CONNECTION_VALIDATION_ENABLED
+// - SECRETS_ROTATION_ENABLED
+// - SECRETS_AUDIT_LOGGING_ENABLED
+// - SECRETS_VAULT_MONITORING_ENABLED
 
 const nextConfig = {
   /* config options here */
@@ -39,9 +35,40 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // Global security headers
       {
         source: '/(.*)',
         headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'same-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      // Secrets management API: add extra security and CSP headers
+      {
+        source: '/api/secrets/(.*)',
+        headers: [
+          { key: 'Content-Security-Policy', value: "default-src 'none'; frame-ancestors 'none';" },
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'same-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      // Connection-specific secrets API
+      {
+        source: '/api/connections/:id/secrets(.*)',
+        headers: [
+          { key: 'Content-Security-Policy', value: "default-src 'none'; frame-ancestors 'none';" },
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Pragma', value: 'no-cache' },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'same-origin' },

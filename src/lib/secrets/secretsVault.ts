@@ -7,17 +7,12 @@ import { logError, logInfo } from '../../utils/logger';
  * Enhanced Secrets Vault with master key rotation
  * Supports multiple encryption keys and automatic key rotation
  * 
- * TODO: [SECRETS-FIRST-REFACTOR] Phase 1: Secrets Vault Enhancements
- * - Add connection reference fields to SecretMetadata interface
- * - Add methods to link secrets to connections (setConnectionId, getSecretsForConnection)
- * - Add methods to create secrets from connection data (createSecretFromConnection)
- * - Add validation to ensure secrets are properly linked to connections
- * - Add methods to migrate existing connection credentials to secrets
- * - Add connection-specific secret retrieval methods
- * - Update encryption to handle connection-specific metadata
- * - Add audit logging for connection-secret operations
- * - Add methods to validate secret-connection relationships
- * - Consider adding connection status tracking in secret metadata
+ * Features:
+ * - Connection-secret linking and management
+ * - OAuth2 token storage and rotation
+ * - Comprehensive audit logging
+ * - Health monitoring and validation
+ * - Migration tools for existing credentials
  */
 
 export interface SecretMetadata {
@@ -36,7 +31,6 @@ export interface SecretMetadata {
   lastRotatedAt?: Date;
   nextRotationAt?: Date;
   rotationHistory?: any[];
-  // TODO: [SECRETS-FIRST-REFACTOR] Add connection reference fields to SecretMetadata interface
   connectionId?: string; // Reference to ApiConnection if this secret is connection-specific
   connectionName?: string; // Human-readable connection name for display
 }
@@ -736,7 +730,6 @@ export class SecretsVault {
     }
   }
 
-  // TODO: [SECRETS-FIRST-REFACTOR] Add methods to link secrets to connections
   /**
    * Link a secret to a connection
    */

@@ -21,13 +21,6 @@
  * - Update response types to include onboarding information
  * - Ensure backward compatibility with existing methods
  */
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 3: API Client Updates
-// - Update createConnection to handle secret creation
-// - Add secret management methods
-// - Update connection testing to use secrets
-// - Add secret reference handling
-// - Update OAuth2 flow to use secrets
-// - Add rollback mechanisms for failed operations
 
 import axios, { AxiosResponse } from 'axios';
 
@@ -47,7 +40,6 @@ export interface OAuth2Provider {
   userInfoUrl: string;
 }
 
-// TODO: [SECRETS-FIRST-REFACTOR] Update API types to support secrets
 export interface CreateConnectionRequest {
   name: string;
   description?: string;
@@ -67,7 +59,6 @@ export interface CreateConnectionRequest {
   };
 }
 
-// TODO: [SECRETS-FIRST-REFACTOR] Add secret creation interface
 export interface CreateSecretRequest {
   name: string;
   type: 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH_USERNAME' | 'BASIC_AUTH_PASSWORD' | 'OAUTH2_CLIENT_ID' | 'OAUTH2_CLIENT_SECRET' | 'OAUTH2_ACCESS_TOKEN' | 'OAUTH2_REFRESH_TOKEN' | 'WEBHOOK_SECRET' | 'SSH_KEY' | 'CERTIFICATE' | 'CUSTOM';
@@ -101,7 +92,6 @@ export interface ApiConnection {
   };
 }
 
-// TODO: [SECRETS-FIRST-REFACTOR] Add Secret interface
 export interface Secret {
   id: string;
   name: string;
@@ -120,7 +110,6 @@ export interface Secret {
   updatedAt: string;
 }
 
-// TODO: [SECRETS-FIRST-REFACTOR] Update API client methods
 class ApiClient {
   private baseURL: string;
 
@@ -169,7 +158,6 @@ class ApiClient {
     }
   }
 
-  // TODO: [SECRETS-FIRST-REFACTOR] Update createConnection to handle secrets
   async createConnection(data: CreateConnectionRequest): Promise<ApiResponse<{ connection: ApiConnection }>> {
     console.log('🔍 DEBUG: apiClient.createConnection called');
     console.log('🔍 DEBUG: Request data:', {
@@ -277,7 +265,6 @@ class ApiClient {
     return response;
   }
 
-  // TODO: [SECRETS-FIRST-REFACTOR] Add secret management methods
   async createSecret(data: CreateSecretRequest): Promise<ApiResponse<{ secret: Secret }>> {
     return this.request({
       method: 'POST',
@@ -322,7 +309,6 @@ class ApiClient {
     });
   }
 
-  // TODO: [SECRETS-FIRST-REFACTOR] Add connection-specific secret methods
   async getSecretsForConnection(connectionId: string): Promise<ApiResponse<{ secrets: Secret[] }>> {
     return this.request({
       method: 'GET',
@@ -338,7 +324,6 @@ class ApiClient {
     });
   }
 
-  // TODO: [SECRETS-FIRST-REFACTOR] Update test connection to use secrets
   async testConnectionConfig(config: any): Promise<ApiResponse<any>> {
     // TODO: Implement test using secrets instead of direct credentials
     // This method should retrieve secrets and use them for testing
@@ -386,6 +371,22 @@ class ApiClient {
       method: 'POST',
       url: '/api/auth/reset-password',
       data: { token, password },
+    });
+  }
+
+  async resendVerification(email: string): Promise<ApiResponse<{ message: string }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/auth/resend-verification',
+      data: { email },
+    });
+  }
+
+  async verifyEmail(token: string): Promise<ApiResponse<{ message: string; accessToken: string; refreshToken: string; user: any }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/auth/verify',
+      data: { token },
     });
   }
 

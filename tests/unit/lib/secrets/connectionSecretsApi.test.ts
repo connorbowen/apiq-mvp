@@ -1,9 +1,3 @@
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 5: Test Updates
-// - Test connection-specific secrets API endpoints
-// - Test secret creation for connections
-// - Test secret retrieval for connections
-// - Test secret validation and error handling
-
 import { createMocks } from 'node-mocks-http';
 import { prisma } from '../../../../lib/database/client';
 import { secretsVault } from '../../../../src/lib/secrets/secretsVault';

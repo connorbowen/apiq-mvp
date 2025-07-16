@@ -27,18 +27,10 @@
  * - Maintain existing API and functionality
  */
 
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 8: UI Component Updates
-// - Update connections tab to show secret information
-// - Add secret management UI integration
-// - Display secret rotation status
-// - Add secret creation during connection setup
-// - Update connection testing to use secrets
-// - Add secret-connection relationship display
-
 'use client';
 
 import { useState, useEffect, memo } from 'react';
-import { apiClient, ApiConnection } from '../../lib/api/client';
+import { apiClient, ApiConnection, Secret } from '../../lib/api/client';
 import CreateConnectionModal from './CreateConnectionModal';
 import EditConnectionModal from './EditConnectionModal';
 
@@ -72,6 +64,15 @@ function ConnectionsTab({
   // Add state for test results and response times
   const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string }>>({});
   const [responseTimes, setResponseTimes] = useState<Record<string, number>>({});
+  // Add state for secrets per connection
+  const [connectionSecrets, setConnectionSecrets] = useState<Record<string, Secret[]>>({});
+  const [secretsLoading, setSecretsLoading] = useState<Record<string, boolean>>({});
+  const [secretsError, setSecretsError] = useState<Record<string, string>>({});
+  // Add state for secret management actions
+  const [rotatingSecretId, setRotatingSecretId] = useState<string | null>(null);
+  const [rotateError, setRotateError] = useState<Record<string, string>>({});
+  const [rotateSuccess, setRotateSuccess] = useState<Record<string, string>>({});
+  const [viewingSecret, setViewingSecret] = useState<Secret | null>(null);
 
   // Add debugging for connections prop
   console.info('[connections-tab] ConnectionsTab rendered with connections:', {
@@ -92,6 +93,41 @@ function ConnectionsTab({
     count: connections.length,
     connections: connections.map(c => ({ id: c.id, name: c.name, authType: c.authType }))
   });
+
+  // Fetch secrets for all connections on mount or when connections change
+  useEffect(() => {
+    const fetchAllSecrets = async () => {
+      const newSecrets: Record<string, Secret[]> = {};
+      const newLoading: Record<string, boolean> = {};
+      const newError: Record<string, string> = {};
+      await Promise.all(
+        connections.map(async (connection) => {
+          newLoading[connection.id] = true;
+          try {
+            const response = await apiClient.getSecretsForConnection(connection.id);
+            if (response.success && response.data) {
+              newSecrets[connection.id] = response.data.secrets || [];
+              newError[connection.id] = '';
+            } else {
+              newSecrets[connection.id] = [];
+              newError[connection.id] = response.error || 'Failed to fetch secrets';
+            }
+          } catch (e) {
+            newSecrets[connection.id] = [];
+            newError[connection.id] = 'Failed to fetch secrets';
+          } finally {
+            newLoading[connection.id] = false;
+          }
+        })
+      );
+      setConnectionSecrets(newSecrets);
+      setSecretsLoading(newLoading);
+      setSecretsError(newError);
+    };
+    if (connections.length > 0) {
+      fetchAllSecrets();
+    }
+  }, [connections]);
 
   const getStatusColor = (connection: ApiConnection) => {
     // For OAuth2 connections, use connectionStatus instead of status
@@ -263,6 +299,57 @@ function ConnectionsTab({
   console.info('[connections] Search term:', searchTerm);
   console.info('[connections] Filter type:', filterType);
 
+  // Helper to get secret health/rotation status
+  const getSecretHealth = (secret: Secret) => {
+    if (!secret.isActive) return 'Inactive';
+    if (secret.expiresAt && new Date(secret.expiresAt) < new Date()) return 'Expired';
+    if (secret.nextRotationAt && new Date(secret.nextRotationAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)) return 'Expiring Soon';
+    return 'Healthy';
+  };
+
+  // Helper to get secret-connection relationship
+  const getSecretRelationship = (secret: Secret, connectionId: string) => {
+    if (!secret.connectionId) return 'Shared';
+    if (secret.connectionId === connectionId) return 'Unique';
+    return 'Shared';
+  };
+
+  // Handler for rotating a secret
+  const handleRotateSecret = async (secret: Secret, connectionId: string) => {
+    setRotatingSecretId(secret.id);
+    setRotateError(prev => ({ ...prev, [secret.id]: '' }));
+    setRotateSuccess(prev => ({ ...prev, [secret.id]: '' }));
+    try {
+      const response = await apiClient.rotateSecret(secret.id);
+      if (response.success && response.data) {
+        setRotateSuccess(prev => ({ ...prev, [secret.id]: 'Rotated!' }));
+        // Refresh secrets for this connection
+        const secretsResp = await apiClient.getSecretsForConnection(connectionId);
+        setConnectionSecrets(prev => ({ ...prev, [connectionId]: secretsResp.data?.secrets || [] }));
+      } else {
+        setRotateError(prev => ({ ...prev, [secret.id]: response.error || 'Failed to rotate secret' }));
+      }
+    } catch (e) {
+      setRotateError(prev => ({ ...prev, [secret.id]: 'Failed to rotate secret' }));
+    } finally {
+      setRotatingSecretId(null);
+      setTimeout(() => {
+        setRotateSuccess(prev => ({ ...prev, [secret.id]: '' }));
+        setRotateError(prev => ({ ...prev, [secret.id]: '' }));
+      }, 2000);
+    }
+  };
+
+  // Handler for viewing a secret (metadata only)
+  const handleViewSecret = (secret: Secret) => {
+    setViewingSecret(secret);
+  };
+
+  // Handler to close view modal
+  const handleCloseViewSecret = () => {
+    setViewingSecret(null);
+  };
+
   return (
     <div data-testid="connections-management">
       {/* Header */}
@@ -375,6 +462,58 @@ function ConnectionsTab({
                           </span>
                         </div>
                         <p className="text-sm text-gray-500">{connection.description}</p>
+                        {/* Secrets summary */}
+                        <div className="mt-2">
+                          <span className="font-semibold text-xs text-gray-700">Secrets:</span>
+                          {secretsLoading[connection.id] ? (
+                            <span className="ml-2 text-xs text-gray-400">Loading...</span>
+                          ) : secretsError[connection.id] ? (
+                            <span className="ml-2 text-xs text-red-500">{secretsError[connection.id]}</span>
+                          ) : (connectionSecrets[connection.id] && connectionSecrets[connection.id].length > 0 ? (
+                            <ul className="ml-2 inline">
+                              {connectionSecrets[connection.id].map(secret => (
+                                <li key={secret.id} className="inline-block mr-2">
+                                  <span className="px-2 py-0.5 rounded bg-gray-100 text-xs font-mono">
+                                    {secret.type}
+                                  </span>
+                                  <span className={`ml-1 text-xs ${getSecretHealth(secret) === 'Healthy' ? 'text-green-600' : getSecretHealth(secret) === 'Expiring Soon' ? 'text-yellow-600' : getSecretHealth(secret) === 'Expired' ? 'text-red-600' : 'text-gray-500'}`}>({getSecretHealth(secret)})</span>
+                                  {secret.nextRotationAt && (
+                                    <span className="ml-1 text-xs text-blue-500">rotates {new Date(secret.nextRotationAt).toLocaleDateString()}</span>
+                                  )}
+                                  {/* Secret-connection relationship badge */}
+                                  <span className={`ml-1 text-xs ${getSecretRelationship(secret, connection.id) === 'Unique' ? 'text-indigo-600' : 'text-gray-500'}`}
+                                        title={getSecretRelationship(secret, connection.id) === 'Unique' ? 'Unique to this connection' : 'Shared with other connections'}>
+                                    {getSecretRelationship(secret, connection.id) === 'Unique' ? 'Unique' : 'Shared'}
+                                  </span>
+                                  {/* Secret management actions */}
+                                  <button
+                                    className="ml-2 text-xs text-blue-600 hover:underline focus:outline-none"
+                                    onClick={() => handleViewSecret(secret)}
+                                    title="View secret metadata"
+                                  >
+                                    View
+                                  </button>
+                                  <button
+                                    className="ml-2 text-xs text-green-600 hover:underline focus:outline-none disabled:opacity-50"
+                                    onClick={() => handleRotateSecret(secret, connection.id)}
+                                    disabled={rotatingSecretId === secret.id}
+                                    title="Rotate secret"
+                                  >
+                                    {rotatingSecretId === secret.id ? 'Rotating...' : 'Rotate'}
+                                  </button>
+                                  {rotateSuccess[secret.id] && (
+                                    <span className="ml-1 text-xs text-green-600">{rotateSuccess[secret.id]}</span>
+                                  )}
+                                  {rotateError[secret.id] && (
+                                    <span className="ml-1 text-xs text-red-600">{rotateError[secret.id]}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className="ml-2 text-xs text-gray-400">No secrets linked</span>
+                          ))}
+                        </div>
                         {/* Performance metric */}
                         <div className="mt-1 flex items-center text-sm text-gray-500">
                           <span className="mr-4">Type: {getAuthTypeLabel(connection.authType)}</span>
@@ -675,7 +814,7 @@ function ConnectionsTab({
             <div className="mt-3 text-center">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Confirm Deletion</h3>
               <p className="text-sm text-gray-500 mb-6">
-                Are you sure you want to delete the connection "{deleteConfirmDialog.connectionName}"?
+                Are you sure you want to delete the connection &quot;{deleteConfirmDialog.connectionName}&quot;?
               </p>
               <div className="flex justify-center space-x-4">
                 <button
@@ -694,6 +833,34 @@ function ConnectionsTab({
                   {isLoading ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Secret view modal */}
+      {viewingSecret && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[70]">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Secret Metadata</h3>
+              <div className="text-sm text-gray-700 mb-4 text-left">
+                <div><strong>Name:</strong> {viewingSecret.name}</div>
+                <div><strong>Type:</strong> {viewingSecret.type}</div>
+                <div><strong>Description:</strong> {viewingSecret.description || '—'}</div>
+                <div><strong>Created:</strong> {new Date(viewingSecret.createdAt).toLocaleString()}</div>
+                <div><strong>Updated:</strong> {new Date(viewingSecret.updatedAt).toLocaleString()}</div>
+                <div><strong>Rotation Enabled:</strong> {viewingSecret.rotationEnabled ? 'Yes' : 'No'}</div>
+                <div><strong>Next Rotation:</strong> {viewingSecret.nextRotationAt ? new Date(viewingSecret.nextRotationAt).toLocaleString() : '—'}</div>
+                <div><strong>Expires At:</strong> {viewingSecret.expiresAt ? new Date(viewingSecret.expiresAt).toLocaleString() : '—'}</div>
+                <div><strong>Relationship:</strong> {getSecretRelationship(viewingSecret, viewingSecret.connectionId || '')}</div>
+              </div>
+              <button
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={handleCloseViewSecret}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { errorHandler, corsMiddleware } from '../../src/middleware/errorHandler';
 import { rateLimiters } from '../../src/middleware/rateLimiter';
 import { healthCheck as dbHealthCheck } from '../../src/database/init';
-import { openaiService } from '../../src/services/openaiService';
+import { OpenAIService } from '../../src/services/openaiService';
 import { encryptionService } from '../../src/utils/encryption';
 import { logInfo } from '../../src/utils/logger';
 
@@ -51,7 +51,9 @@ export async function healthHandler(req: NextApiRequest, res: NextApiResponse) {
         console.log('OPENAI_API_KEY length:', process.env.OPENAI_API_KEY?.length || 0);
         console.log('OPENAI_MODEL:', process.env.OPENAI_MODEL || 'not set');
         try {
-          const openaiHealth = openaiService.validateConfig();
+          // For health check, we'll just validate the configuration without creating a full instance
+          const hasApiKey = !!process.env.OPENAI_API_KEY;
+          const openaiHealth = hasApiKey;
           console.log('OpenAI health result:', openaiHealth);
           
           // In test environment, consider it healthy if the service is available

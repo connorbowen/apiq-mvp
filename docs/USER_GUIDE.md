@@ -299,33 +299,46 @@ The API Explorer helps you understand what each connected API can do:
 
 ### Natural Language Workflows
 
-The easiest way to create workflows is using natural language:
+The easiest way to create workflows is using natural language! Simply describe what you want to happen in plain English, and our AI will create the workflow for you.
 
-1. **Start a Conversation**
-   - Click "New Workflow" or "Chat"
-   - Type your request in plain English
-   - Be specific about what you want to accomplish
+#### How It Works:
+1. **Start a Conversation** - Click "New Workflow" or "Chat"
+2. **Describe Your Workflow** - Tell us what you want to happen, for example:
+   - "When a new GitHub issue is created, send a Slack notification"
+   - "When a Trello card is moved to 'Done', create a Google Calendar event"
+   - "When a new email arrives in Gmail, create a task in Todoist"
+   - "Every Monday at 9 AM, check our Google Analytics and send a summary to Slack"
+3. **Review & Confirm** - We'll generate a workflow and show you exactly what will happen
+4. **Customize if Needed** - Modify any steps or add conditions before saving
+5. **Save & Activate** - Your workflow is ready to run!
 
-2. **Example Requests**
-   ```
-   "Get the latest customer data from CRM API and then post a welcome message via the Messaging API"
-   
-   "Fetch the top 10 customers from Sales API, then get their recent interactions from Marketing API"
-   
-   "When a new customer is created in CRM, automatically create a project in PM tool and notify via Slack"
-   ```
+#### Example Workflows:
+```
+"When someone creates a new GitHub issue with the label 'bug', 
+send a message to the #bugs Slack channel with the issue details"
+```
 
-3. **AI Analysis**
-   - APIQ analyzes your request
-   - Identifies required API calls
-   - Plans the execution sequence
-   - Handles data flow between steps
+```
+"When a new customer signs up through our website form, 
+add them to our Mailchimp list and create a welcome email"
+```
 
-4. **Review and Confirm**
-   - Review the proposed workflow
-   - Check each step and its parameters
-   - Modify if needed
-   - Confirm to save the workflow
+```
+"Every Monday at 9 AM, check our Google Analytics for the previous week 
+and send a summary report to our team Slack channel"
+```
+
+#### Advanced Features:
+- **Alternative Suggestions** - If we can't create exactly what you want, we'll suggest alternatives
+- **Workflow Validation** - We'll check your workflow for potential issues and suggest improvements
+- **Context Awareness** - The AI remembers your previous requests and can build on them
+- **Confidence Scoring** - We'll tell you how confident we are in the generated workflow
+
+#### AI Analysis Process:
+- APIQ analyzes your request
+- Identifies required API calls
+- Plans the execution sequence
+- Handles data flow between steps
 
 ### Visual Workflow Builder
 
@@ -364,6 +377,26 @@ Use pre-built templates to get started quickly:
 - Save your workflows as templates
 - Share templates with your team
 - Create organization-wide standards
+
+## Managing Secrets 🆕
+
+The Secrets Vault provides secure storage for your API keys, OAuth2 tokens, and other sensitive data.
+
+### Adding Secrets
+1. **Go to Secrets Tab** - Access the secrets management section in your dashboard
+2. **Create New Secret** - Click "Create Secret" and choose the type:
+   - **API Key** - For API authentication
+   - **OAuth2 Token** - For OAuth2 connections
+   - **Webhook Secret** - For webhook security
+   - **Custom Secret** - For any other sensitive data
+3. **Configure Settings** - Set expiration dates and rotation intervals
+4. **Save Securely** - Your secret is encrypted and stored safely
+
+### Secret Management Features
+- **Automatic Rotation** - Set up automatic secret rotation for enhanced security
+- **Version History** - Track all versions of your secrets
+- **Expiration Management** - Set expiration dates for temporary secrets
+- **Secure Access** - Secrets are never logged or exposed in error messages
 
 ## Executing Workflows
 
@@ -656,5 +689,11 @@ Use pre-built templates to get started quickly:
 - Concurrent execution limits
 - Priority queuing
 - Load balancing
+
+### Execution Control 🆕
+- **Pause/Resume** - Pause running workflows and resume them later
+- **Cancel Execution** - Stop workflows that are currently running
+- **Real-time Progress** - Monitor workflow execution step by step
+- **Execution Logs** - View detailed logs for debugging and monitoring
 
 This user guide provides comprehensive coverage of all APIQ features and functionality. For additional help, refer to the in-app documentation or contact support. 

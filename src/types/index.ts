@@ -1,17 +1,5 @@
 // Core application types for APIQ MVP
 
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 9: Type System Updates
-// - Add Secret interface and related types
-// - Update ApiConnection interface to reference secrets instead of authConfig
-// - Add connection-secret relationship types
-// - Add secret metadata and rotation types
-// - Update credential types to be secret-based
-// - Add connection status types based on secret health
-// - Add secret validation and error types
-// - Add migration types for credential-to-secret conversion
-// - Add connection-secret dependency types
-// - Consider adding secret audit and logging types
-
 // User and Authentication
 export interface User {
   id: string;
@@ -50,7 +38,6 @@ export interface ApiConnection {
   createdAt: string;
   updatedAt: string;
   authConfig?: any;
-  // TODO: [SECRETS-FIRST-REFACTOR] Add secret reference fields
   secretId?: string;
   secretReference?: {
     id: string;
@@ -76,7 +63,6 @@ export interface CreateApiConnectionRequest {
   clientId?: string;
   clientSecret?: string;
   redirectUri?: string;
-  // TODO: [SECRETS-FIRST-REFACTOR] Add secret-related fields
   secretIds?: string[];
   secretReferences?: {
     apiKey?: string;
@@ -232,7 +218,7 @@ export interface Secret {
   rotationEnabled: boolean;
   rotationInterval?: number;
   lastRotatedAt?: Date;
-  nextRotationAt?: Date;
+  nextRotatedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

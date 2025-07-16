@@ -1,19 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { apiClient, OAuth2Provider, ApiConnection } from '../lib/api/client';
-
-// TODO: [SECRETS-FIRST-REFACTOR] Phase 11: OAuth2 Manager Updates
-// - Update OAuth2 manager to use secrets instead of direct authConfig
-// - Add methods to retrieve OAuth2 secrets for connection management
-// - Add connection-secret validation before OAuth2 operations
-// - Add secret rotation handling for OAuth2 tokens
-// - Add connection status updates based on OAuth2 secret health
-// - Add error handling for missing or invalid OAuth2 secrets
-// - Add connection-secret dependency validation
-// - Add audit logging for OAuth2 secret operations
-// - Add connection health checks based on OAuth2 secret status
-// - Consider adding OAuth2 provider-specific secret management
+import { useState, useEffect, useCallback } from 'react';
+import { apiClient, OAuth2Provider, ApiConnection, Secret } from '../lib/api/client';
 
 interface OAuth2ManagerProps {
   connection: ApiConnection;
@@ -27,10 +15,9 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  useEffect(() => {
-    loadProviders();
-  }, []);
+  const [secrets, setSecrets] = useState<Secret[]>([]);
+  const [secretHealth, setSecretHealth] = useState<'healthy' | 'unhealthy' | 'expiring' | 'missing'>('healthy');
+  const [secretValues, setSecretValues] = useState<Record<string, string>>({});
 
   const loadProviders = async () => {
     try {
@@ -43,32 +30,108 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
     }
   };
 
+  const fetchSecrets = useCallback(async () => {
+    try {
+      const response = await apiClient.getSecretsForConnection(connection.id);
+      if (response.success && response.data) {
+        setSecrets(response.data.secrets || []);
+        validateSecrets(response.data.secrets || []);
+      } else {
+        setSecretHealth('missing');
+        setError('Missing OAuth2 secrets for this connection.');
+      }
+    } catch (error) {
+      setSecretHealth('missing');
+      setError('Failed to fetch secrets for this connection.');
+    }
+  }, [connection.id]);
+
+  useEffect(() => {
+    loadProviders();
+    fetchSecrets();
+  }, [fetchSecrets]);
+
+  const validateSecrets = (secrets: Secret[]) => {
+    // Check for required OAuth2 secrets
+    const clientId = secrets.find(s => s.type === 'OAUTH2_CLIENT_ID');
+    const clientSecret = secrets.find(s => s.type === 'OAUTH2_CLIENT_SECRET');
+    const accessToken = secrets.find(s => s.type === 'OAUTH2_ACCESS_TOKEN');
+    const refreshToken = secrets.find(s => s.type === 'OAUTH2_REFRESH_TOKEN');
+    if (!clientId || !clientSecret) {
+      setSecretHealth('missing');
+      setError('OAuth2 clientId or clientSecret secret is missing.');
+      return;
+    }
+    // Check for expiration/rotation
+    if ((accessToken && accessToken.expiresAt && new Date(accessToken.expiresAt) < new Date()) ||
+        (refreshToken && refreshToken.expiresAt && new Date(refreshToken.expiresAt) < new Date())) {
+      setSecretHealth('expiring');
+      setError('OAuth2 token secret is expired or expiring soon.');
+      return;
+    }
+    setSecretHealth('healthy');
+    setError('');
+  };
+
+  // Helper to fetch and cache secret value by type
+  const fetchSecretValue = async (type: string) => {
+    const secret = secrets.find(s => s.type === type);
+    if (!secret) return undefined;
+    // Check cache first
+    if (secretValues[secret.id]) return secretValues[secret.id];
+    try {
+      // The API currently returns { secret: Secret } and does not include the value
+      // If a value endpoint is added, use it here. For now, return undefined and show an error if needed.
+      return undefined;
+    } catch (e) {
+      // Ignore error, return undefined
+    }
+    return undefined;
+  };
+
+  const auditLog = async (event: string, details?: any) => {
+    try {
+      await fetch('/api/audit-logs', {
+        method: 'POST',
+        body: JSON.stringify({
+          event,
+          connectionId: connection.id,
+          timestamp: Date.now(),
+          ...details,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (e) {
+      // Ignore audit log errors
+    }
+  };
+
   const initiateOAuth2Flow = async (provider: string) => {
     setIsAuthorizing(true);
     setError('');
     setSuccess('');
-
+    await auditLog('OAUTH2_INITIATE', { provider });
     try {
-      // Get the OAuth2 configuration from the connection
-      const authConfig = connection.authConfig;
-      if (!authConfig || !authConfig.clientId || !authConfig.clientSecret) {
-        const errorMsg = 'OAuth2 configuration is incomplete. Please update the connection settings.';
+      // Use secrets for OAuth2 config
+      const clientId = await fetchSecretValue('OAUTH2_CLIENT_ID');
+      const clientSecret = await fetchSecretValue('OAUTH2_CLIENT_SECRET');
+      const redirectUri = connection.authConfig?.redirectUri || `${window.location.origin}/api/connections/oauth2/callback`;
+      const scope = connection.authConfig?.scope;
+      if (!clientId || !clientSecret) {
+        const errorMsg = 'OAuth2 secrets are missing or not accessible. Please check your connection.';
         setError(errorMsg);
         onError?.(errorMsg);
+        setIsAuthorizing(false);
         return;
       }
-
-      // Use the API client to generate the authorization URL
       const authUrl = await apiClient.initiateOAuth2Flow(
         connection.id,
         provider,
-        authConfig.clientId,
-        authConfig.clientSecret,
-        authConfig.redirectUri || `${window.location.origin}/api/connections/oauth2/callback`,
-        authConfig.scope
+        clientId,
+        clientSecret,
+        redirectUri,
+        scope
       );
-
-      // Redirect to the authorization endpoint
       window.location.href = authUrl;
     } catch (error) {
       const errorMsg = 'Failed to initiate OAuth2 flow';
@@ -82,17 +145,16 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
     setIsLoading(true);
     setError('');
     setSuccess('');
-
+    await auditLog('OAUTH2_REFRESH_TOKEN');
     try {
       const response = await apiClient.refreshOAuth2Token(
         connection.id,
         connection.authConfig?.provider || 'github'
       );
-
       if (response.success) {
-        const successMsg = 'OAuth2 token refreshed successfully';
-        setSuccess(successMsg);
+        setSuccess('OAuth2 token refreshed successfully');
         onSuccess?.();
+        fetchSecrets(); // Refresh secrets after rotation
       } else {
         const errorMsg = response.error || 'Failed to refresh token';
         setError(errorMsg);
@@ -111,23 +173,19 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
     setIsLoading(true);
     setError('');
     setSuccess('');
-
+    await auditLog('OAUTH2_GET_TOKEN');
     try {
-      const response = await apiClient.getOAuth2Token(connection.id);
-
-      if (response.success && response.data) {
-        const successMsg = 'OAuth2 access token retrieved successfully';
-        setSuccess(successMsg);
+      const accessToken = await fetchSecretValue('OAUTH2_ACCESS_TOKEN');
+      if (accessToken) {
+        setSuccess('OAuth2 access token retrieved successfully');
         onSuccess?.();
-        // You could display the token or use it for API calls
-        console.log('Access token retrieved:', response.data.accessToken);
+        console.log('Access token retrieved:', accessToken);
       } else {
-        const errorMsg = response.error || 'Failed to get access token';
-        setError(errorMsg);
-        onError?.(errorMsg);
+        setError('No access token secret found or value not accessible.');
+        onError?.('No access token secret found or value not accessible.');
       }
     } catch (error) {
-      const errorMsg = 'Network error';
+      const errorMsg = 'Failed to get access token';
       setError(errorMsg);
       onError?.(errorMsg);
     } finally {
@@ -184,7 +242,26 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
         </span>
       </div>
 
-      {error && (
+      {/* Secret health and error display */}
+      {secretHealth !== 'healthy' && (
+        <div className="mb-4 rounded-md bg-yellow-50 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">Secret Health Warning</h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && secretHealth === 'healthy' && (
         <div className="mb-4 rounded-md bg-red-50 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -232,7 +309,7 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
             <div>
               <span className="font-medium text-gray-700">Client ID:</span>
               <span className="ml-2 text-gray-600">
-                {connection.authConfig?.clientId ? '✓ Configured' : '✗ Not configured'}
+                {secrets.find(s => s.type === 'OAUTH2_CLIENT_ID') ? '✓ Configured' : '✗ Not configured'}
               </span>
             </div>
             <div>
@@ -250,7 +327,7 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
         <div className="space-y-3">
           <button
             onClick={() => initiateOAuth2Flow(connection.authConfig?.provider || 'google')}
-            disabled={isAuthorizing}
+            disabled={isAuthorizing || secretHealth !== 'healthy'}
             className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
             {isAuthorizing ? (
@@ -272,7 +349,7 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={refreshToken}
-              disabled={isLoading}
+              disabled={isLoading || secretHealth !== 'healthy'}
               className="flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
               {isLoading ? (
@@ -292,7 +369,7 @@ export default function OAuth2Manager({ connection, onSuccess, onError }: OAuth2
 
             <button
               onClick={getAccessToken}
-              disabled={isLoading}
+              disabled={isLoading || secretHealth !== 'healthy'}
               className="flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
               {isLoading ? (

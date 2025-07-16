@@ -5,8 +5,6 @@ import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session
 import { errorHandler } from '../../../src/middleware/errorHandler';
 import { OpenAIService } from '../../../src/services/openaiService';
 
-const openaiService = new OpenAIService();
-
 async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
     const user = await requireAuth(req, res);
@@ -57,6 +55,9 @@ async function handleChatRequest(req: NextApiRequest, res: NextApiResponse, user
     });
 
     try {
+      // Create OpenAI service instance
+      const openaiService = await OpenAIService.create(userId);
+      
       // Generate workflow using OpenAI
       const workflowResponse = await openaiService.generateWorkflow({
         description: message,
