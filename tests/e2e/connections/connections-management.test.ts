@@ -123,20 +123,23 @@ test.describe('Connections Management E2E Tests', () => {
     // Add UX compliance validation for dashboard
     await uxHelper.validateHeadingHierarchy(['Dashboard']);
     
-    // Navigate to connections tab
-    console.log('🪵 Navigating to connections tab...');
-    await page.click('[data-testid="tab-connections"]');
+    // Navigate to settings tab (connections moved here in UX simplification)
+    console.log('🪵 Navigating to settings tab...');
+    await page.click('[data-testid="tab-settings"]');
     
-    // Wait for the connections tab to load
+    // Wait for the settings tab to load
     await page.waitForLoadState('networkidle', { timeout: 10000 });
     
+    // Navigate to connections section within settings
+    await page.click('[data-testid="connections-section"]');
+    
     // Add comprehensive UX compliance validation
-    await uxHelper.validateHeadingHierarchy(['Dashboard', 'API Connections']);
+    await uxHelper.validateHeadingHierarchy(['Dashboard', 'Settings', 'API Connections']);
     await uxHelper.validateFormAccessibility();
     
     // Validate UX compliance - heading hierarchy
     await expect(page.locator('h1')).toHaveText('Dashboard');
-    await expect(page.locator('h2')).toHaveText('API Connections');
+    await expect(page.getByText('API Connections')).toBeVisible();
     
     console.log('🪵 Login and navigation completed successfully');
     
@@ -967,7 +970,8 @@ test.describe('Connections Management E2E Tests', () => {
       
       const startTime = Date.now();
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.click('[data-testid="tab-connections"]');
+      await page.click('[data-testid="tab-settings"]');
+      await page.click('[data-testid="connections-section"]');
       const loadTime = Date.now() - startTime;
       expect(loadTime).toBeLessThan(3000);
       
@@ -991,7 +995,8 @@ test.describe('Connections Management E2E Tests', () => {
         await newPage.context().addCookies(cookies);
         promises.push(
           newPage.goto(`${BASE_URL}/dashboard`).then(async () => {
-            await newPage.click('[data-testid="tab-connections"]');
+            await newPage.click('[data-testid="tab-settings"]');
+            await newPage.click('[data-testid="connections-section"]');
             await newPage.click('[data-testid="primary-action create-connection-header-btn"]');
             await newPage.fill('[data-testid="connection-name-input"]', `Test API ${i}`);
           })

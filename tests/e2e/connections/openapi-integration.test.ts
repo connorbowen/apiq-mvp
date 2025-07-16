@@ -103,8 +103,9 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
     // Use secure cookie-based authentication
     await authenticateE2EPage(page, testUser);
     
-    // Navigate to connections tab
-    await page.click('[data-testid="tab-connections"]');
+    // Navigate to connections tab (now in settings)
+    await page.click('[data-testid="tab-settings"]');
+    await page.click('[data-testid="connections-section"]');
     
     // Wait for connections tab to load
     await page.waitForLoadState('networkidle');
@@ -775,7 +776,8 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
     test('should meet page load performance requirements', async ({ page }) => {
       const startTime = Date.now();
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.click('[data-testid="tab-connections"]');
+      await page.click('[data-testid="tab-settings"]');
+      await page.click('[data-testid="connections-section"]');
       const loadTime = Date.now() - startTime;
       expect(loadTime).toBeLessThan(3000);
     });
@@ -787,7 +789,8 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
         const newPage = await context.newPage();
         promises.push(
           newPage.goto(`${BASE_URL}/dashboard`).then(async () => {
-            await newPage.click('[data-testid="tab-connections"]');
+            await newPage.click('[data-testid="tab-settings"]');
+            await newPage.click('[data-testid="connections-section"]');
             await newPage.getByTestId('primary-action create-connection-header-btn').click();
             await newPage.fill('[data-testid="connection-name-input"]', `Test API ${i}`);
           })

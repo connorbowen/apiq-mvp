@@ -3,30 +3,6 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
-/**
- * TODO: UX SIMPLIFICATION - VERIFY PAGE PHASE 2.3 CHANGES - @connorbowen 2024-12-19
- * 
- * PHASE 2.3: Streamline onboarding flow
- * - [ ] Make email verification optional (don't block access)
- * - [ ] Allow users to proceed to dashboard without verification
- * - [ ] Simplify verification success flow
- * - [ ] Redirect directly to Chat interface after verification
- * - [ ] Add tests: tests/e2e/auth/authentication-session.test.ts - test optional verification
- * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test verification flow
- * - [ ] Add tests: tests/unit/app/verify/page.test.tsx - test simplified verification
- * 
- * PHASE 2.4: Guided tour integration
- * - [ ] Redirect to guided tour after verification for new users
- * - [ ] Add welcome message for verified users
- * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test verification to tour flow
- * 
- * IMPLEMENTATION NOTES:
- * - Update verification logic to not block dashboard access
- * - Simplify success message and redirect flow
- * - Update redirect to /dashboard?tab=chat
- * - Add onboarding state check for tour redirection
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -36,6 +12,7 @@ export default function VerifyPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [welcomeMessage, setWelcomeMessage] = useState('');
   const [isVerifying, setIsVerifying] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -54,13 +31,30 @@ export default function VerifyPage() {
         localStorage.setItem('refreshToken', response.data.refreshToken);
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
-        setSuccess('Email verified successfully! Welcome to APIQ!');
-        setIsVerifying(false);
+        // Check user onboarding state to determine redirect destination
+        const user = response.data.user;
+        const onboardingStage = user.onboardingStage;
         
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
+        if (onboardingStage === 'NEW_USER' || onboardingStage === null) {
+          // New user - show welcome message and redirect to guided tour
+          setWelcomeMessage('Welcome to APIQ! Your email has been verified. Let\'s get you started with a quick tour.');
+          setSuccess('Email verified successfully!');
+          setIsVerifying(false);
+          
+          // Redirect to guided tour after 2 seconds
+          setTimeout(() => {
+            router.push('/dashboard?tour=true');
+          }, 2000);
+        } else {
+          // Returning user - redirect directly to Chat interface
+          setSuccess('Email verified successfully! Welcome back to APIQ!');
+          setIsVerifying(false);
+          
+          // Redirect directly to Chat interface after 1 second
+          setTimeout(() => {
+            router.push('/dashboard?tab=chat');
+          }, 1000);
+        }
       } else {
         setError(response.error || 'Email verification failed. Please try again.');
         setIsVerifying(false);
@@ -119,6 +113,20 @@ export default function VerifyPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Verify your email address to complete your registration
           </p>
+          {welcomeMessage && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-blue-800">{welcomeMessage}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Success Message */}
@@ -137,7 +145,7 @@ export default function VerifyPage() {
               <div className="ml-3">
                 <p className="text-sm font-medium text-green-800">{success}</p>
                 <p className="mt-1 text-sm text-green-700">
-                  Redirecting to dashboard...
+                  {welcomeMessage ? 'Redirecting to guided tour...' : 'Redirecting to dashboard...'}
                 </p>
               </div>
             </div>
@@ -161,7 +169,7 @@ export default function VerifyPage() {
                 <p data-testid="verify-error" className="text-sm font-medium text-red-800">{error === 'No verification token provided' ? 'No verification token provided' : 'Email verification failed'}</p>
                 <p className="mt-1 text-sm text-red-700">
                   The verification link may be invalid or expired.{' '}
-                  <Link href="/resend-verification" className="text-indigo-600 hover:text-indigo-500 underline">
+                  <Link href="/resend-verification" className="text-indigo-600 hover:text-indigo-500 underline transition-colors duration-200">
                     Resend verification email
                   </Link>
                 </p>
@@ -176,7 +184,7 @@ export default function VerifyPage() {
               Didn&apos;t receive the verification email?{' '}
               <Link
                 href="/resend-verification"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
               >
                 Resend verification email
               </Link>
@@ -184,9 +192,18 @@ export default function VerifyPage() {
           </div>
 
           <div className="text-center">
+            <button
+              onClick={() => router.push('/dashboard?tab=chat')}
+              className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
+            >
+              Continue without verification
+            </button>
+          </div>
+
+          <div className="text-center">
             <Link
               href="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
             >
               Back to sign in
             </Link>
@@ -195,7 +212,7 @@ export default function VerifyPage() {
           <div className="text-center">
             <Link
               href="/signup"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
             >
               Create a new account
             </Link>

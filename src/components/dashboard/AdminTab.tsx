@@ -1,30 +1,18 @@
 /**
- * TODO: UX SIMPLIFICATION - ADMIN TAB PHASE 1.1 CHANGES - @connorbowen 2024-12-19
+ * AdminTab Component
  * 
- * PHASE 1.1: Hide non-essential tabs for regular users
- * - [ ] HIDE: AdminTab will be hidden for non-admin users
- * - [ ] Add role-based visibility logic
- * - [ ] Maintain functionality for admin users
- * - [ ] Update navigation to filter admin tabs
- * - [ ] Add tests: tests/unit/components/dashboard/AdminTab.test.tsx - test role-based visibility
- * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test admin tab hidden for regular users
+ * Provides administrative functions for system management.
+ * Features:
+ * - Master key rotation with confirmation
+ * - Queue monitoring and performance metrics
+ * - Security settings management
+ * - System health monitoring
  * 
- * PHASE 2.1: Redesign dashboard layout with 3-tab structure
- * - [ ] ADMIN OVERRIDE: Admin users see additional admin tab
- * - [ ] Maintain admin functionality in new structure
- * - [ ] Update admin navigation and routing
- * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test admin tab in 3-tab structure
+ * Note: This component is accessible through the UserDropdown for admin users
+ * as part of the UX simplification plan (Phase 2.1).
  * 
- * PHASE 3.1: Mobile optimization
- * - [ ] Optimize admin interface for mobile screens
- * - [ ] Improve mobile admin interactions
- * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile admin
- * 
- * IMPLEMENTATION NOTES:
- * - Only show for users with role === 'ADMIN'
- * - Maintain all existing admin functionality
- * - Update tab filtering logic in dashboard
- * - Preserve admin audit and management features
+ * Usage:
+ * <AdminTab user={adminUser} />
  */
 
 'use client';

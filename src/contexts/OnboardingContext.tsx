@@ -1,31 +1,30 @@
 /**
- * TODO: UX SIMPLIFICATION - ONBOARDING CONTEXT PHASE 2.2 IMPLEMENTATION - @connorbowen 2024-12-19
+ * OnboardingContext
  * 
- * PHASE 2.2: Implement progressive disclosure
- * - [ ] Create OnboardingContext for state management
- * - [ ] Add onboarding stage tracking
- * - [ ] Add progressive feature unlocking logic
- * - [ ] Add guided tour state management
- * - [ ] Add tests: tests/unit/contexts/OnboardingContext.test.tsx
- * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test context integration
+ * Provides comprehensive onboarding state management for progressive disclosure
+ * and guided tour functionality. Manages user onboarding stages, feature availability,
+ * and tour progression to create a personalized user experience.
  * 
- * PHASE 2.4: Guided tour integration
- * - [ ] Add tour step management
- * - [ ] Add tour completion tracking
- * - [ ] Add tour skip/resume functionality
- * - [ ] Add tests: tests/unit/contexts/OnboardingContext.test.tsx - test tour features
+ * Features:
+ * - Progressive disclosure based on onboarding stage
+ * - Guided tour state management
+ * - Feature availability control
+ * - Local storage persistence
+ * - Tour step navigation
+ * - Onboarding completion tracking
  * 
- * PHASE 2.3: Streamline onboarding flow
- * - [ ] Add onboarding completion tracking
- * - [ ] Add onboarding state persistence
- * - [ ] Add tests: tests/unit/contexts/OnboardingContext.test.tsx - test onboarding flow
+ * Onboarding Stages:
+ * - new_user: Basic chat functionality only
+ * - first_connection: Connections and workflows unlocked
+ * - first_workflow: Secrets management unlocked
+ * - completed: All features available
  * 
- * IMPLEMENTATION NOTES:
- * - Create context with onboarding state management
- * - Add progressive disclosure logic
- * - Integrate with API client for state persistence
- * - Support tour step management
- * - Add localStorage persistence for offline support
+ * Usage:
+ * <OnboardingProvider>
+ *   <App />
+ * </OnboardingProvider>
+ * 
+ * const { state, isFeatureAvailable, updateStage } = useOnboarding();
  */
 
 'use client';

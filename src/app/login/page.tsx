@@ -1,28 +1,6 @@
-/**
- * TODO: UX SIMPLIFICATION - LOGIN PAGE PHASE 2.3 CHANGES - @connorbowen 2024-12-19
- * 
- * PHASE 2.3: Streamline onboarding flow
- * - [ ] Redirect directly to Chat interface after successful login
- * - [ ] Remove complex error handling for faster login
- * - [ ] Simplify OAuth2 error messages
- * - [ ] Add tests: tests/e2e/auth/authentication-session.test.ts - test streamlined login
- * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test simplified login
- * - [ ] Add tests: tests/unit/app/login/page.test.tsx - test simplified error handling
- * 
- * PHASE 2.4: Guided tour integration
- * - [ ] Check if user is new and redirect to guided tour
- * - [ ] Add welcome back message for returning users
- * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test login to tour flow
- * 
- * IMPLEMENTATION NOTES:
- * - Update success redirect to /dashboard?tab=chat
- * - Simplify error message display
- * - Add onboarding state check
- */
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '../../lib/api/client';
@@ -34,6 +12,7 @@ export default function LoginPage() {
     email: '',
     password: ''
   });
+  const [welcomeMessage, setWelcomeMessage] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
   const reason = searchParams?.get('reason');
@@ -52,9 +31,17 @@ export default function LoginPage() {
         // Store user data in localStorage for client-side access
         localStorage.setItem('user', JSON.stringify(response.data.user));
         
-        // Tokens are now stored in HTTP-only cookies by the server
-        // Redirect to dashboard
-        router.push('/dashboard');
+        // Check user onboarding state to determine redirect destination
+        const user = response.data.user;
+        const onboardingStage = user.onboardingStage;
+        
+        if (onboardingStage === 'NEW_USER' || onboardingStage === null) {
+          // New user - redirect to guided tour
+          router.push('/dashboard?tour=true');
+        } else {
+          // Returning user - redirect directly to Chat interface
+          router.push('/dashboard?tab=chat');
+        }
       } else {
         setError(response.error || 'Login failed');
         // Clear password for security
@@ -101,6 +88,21 @@ export default function LoginPage() {
     }
   };
 
+  // Check if user is returning (has email in localStorage)
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user.email === formData.email) {
+          setWelcomeMessage(`Welcome back, ${user.name || user.email}!`);
+        }
+      } catch (error) {
+        // Invalid stored user data, ignore
+      }
+    }
+  }, [formData.email]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -116,6 +118,11 @@ export default function LoginPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Multi-API Orchestrator
           </p>
+          {welcomeMessage && (
+            <p className="mt-2 text-center text-sm text-green-600 font-medium">
+              {welcomeMessage}
+            </p>
+          )}
         </div>
 
         {/* Auth redirect alert */}
@@ -144,11 +151,8 @@ export default function LoginPage() {
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">
-                  OAuth2 Error: {oauth2Error}
+                  Sign in failed. Please try again.
                 </h3>
-                {oauth2ErrorDetails && (
-                  <p className="text-sm text-red-700 mt-1">{oauth2ErrorDetails}</p>
-                )}
               </div>
             </div>
           </div>
@@ -162,7 +166,7 @@ export default function LoginPage() {
             data-testid="primary-action google-oauth2-btn"
             aria-label="Continue with Google"
             aria-describedby="oauth2-description"
-            className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors duration-200"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -221,7 +225,7 @@ export default function LoginPage() {
                 aria-required="true"
                 aria-invalid={error ? "true" : "false"}
                 aria-describedby={error ? "email-error" : undefined}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200"
                 placeholder="Enter your email"
               />
             </div>
@@ -240,13 +244,13 @@ export default function LoginPage() {
                 aria-required="true"
                 aria-invalid={error ? "true" : "false"}
                 aria-describedby={error ? "password-error" : undefined}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200"
                 placeholder="Enter your password"
               />
             </div>
             <div className="flex justify-between text-sm">
-              <Link href="/forgot-password" className="text-indigo-600 hover:text-indigo-500">Forgot password?</Link>
-              <Link href="/resend-verification" className="text-indigo-600 hover:text-indigo-500">Resend verification email?</Link>
+              <Link href="/forgot-password" className="text-indigo-600 hover:text-indigo-500 transition-colors duration-200">Forgot password?</Link>
+              <Link href="/resend-verification" className="text-indigo-600 hover:text-indigo-500 transition-colors duration-200">Resend verification email?</Link>
             </div>
           </div>
 
@@ -255,7 +259,7 @@ export default function LoginPage() {
               type="submit"
               data-testid="primary-action signin-btn"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px]"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px] transition-colors duration-200"
             >
               {isLoading ? (
                 <>
@@ -273,13 +277,13 @@ export default function LoginPage() {
 
           <div className="text-center space-y-2">
             <div>
-              <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-500">
+              <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-500 transition-colors duration-200">
                 Back to home
               </Link>
             </div>
             <div>
               <span className="text-sm text-gray-600">Don&apos;t have an account? </span>
-              <Link href="/signup" className="text-sm text-indigo-600 hover:text-indigo-500">
+              <Link href="/signup" className="text-sm text-indigo-600 hover:text-indigo-500 transition-colors duration-200">
                 Sign up
               </Link>
             </div>

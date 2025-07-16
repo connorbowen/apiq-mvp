@@ -1,27 +1,3 @@
-/**
- * TODO: UX SIMPLIFICATION - REGISTRATION API PHASE 2.3 CHANGES - @connorbowen 2024-12-19
- * 
- * PHASE 2.3: Streamline onboarding flow
- * - [ ] Simplify registration to email + password only (remove name requirement)
- * - [ ] Make email verification optional (don't block access)
- * - [ ] Allow immediate dashboard access after registration
- * - [ ] Simplify validation logic
- * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test simplified registration
- * - [ ] Add tests: tests/unit/api/auth/register.test.ts - test simplified validation
- * 
- * PHASE 2.4: Guided tour integration
- * - [ ] Add onboarding state tracking to user creation
- * - [ ] Set user onboarding stage to 'new_user'
- * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test onboarding state
- * 
- * IMPLEMENTATION NOTES:
- * - Remove name field requirement and validation
- * - Set isActive to true by default (no verification required)
- * - Simplify password requirements
- * - Add onboarding state to user model
- * - Update response to include onboarding information
- */
-
 import { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -42,9 +18,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { email, name, password } = req.body;
 
-    // Validate required fields
-    if (!email || !name || !password) {
-      throw badRequest('Email, name, and password are required', 'MISSING_FIELDS');
+    // Validate required fields (name is now optional for simplified registration)
+    if (!email || !password) {
+      throw badRequest('Email and password are required', 'MISSING_FIELDS');
     }
 
     // Validate email format
@@ -58,10 +34,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw badRequest('Password must be at least 8 characters long', 'WEAK_PASSWORD');
     }
 
-    // Validate name format - allow letters (including accented), numbers, spaces, basic punctuation
-    const nameRegex = /^[a-zA-ZÀ-ÿ0-9\s\-'.]{2,50}$/;
-    if (!nameRegex.test(name)) {
-      throw badRequest('Name contains invalid characters', 'INVALID_NAME');
+    // Validate name format if provided (optional for simplified registration)
+    if (name) {
+      const nameRegex = /^[a-zA-ZÀ-ÿ0-9\s\-'.]{2,50}$/;
+      if (!nameRegex.test(name)) {
+        throw badRequest('Name contains invalid characters', 'INVALID_NAME');
+      }
     }
 
     // Check if user already exists
@@ -80,14 +58,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Create user (initially inactive until email verification)
+    // Create user (active by default for simplified onboarding)
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
-        name,
+        name: name || `User ${email.split('@')[0]}`, // Generate default name if not provided
         password: hashedPassword,
         role: 'USER',
-        isActive: false // Will be activated after email verification
+        isActive: true, // Active immediately for simplified onboarding
+        onboardingStage: 'NEW_USER',
+        onboardingCompletedAt: null,
+        guidedTourCompleted: false
       }
     });
 
@@ -102,8 +83,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Send verification email
     try {
-             const emailService = new EmailService();
-       const emailSent = await emailService.sendVerificationEmail(
+      const emailService = new EmailService();
+      const emailSent = await emailService.sendVerificationEmail(
         email.toLowerCase(),
         verificationToken,
         name
@@ -165,12 +146,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       name
     });
 
-    // Return success response (don't include sensitive data)
+    // Return success response for simplified onboarding
     res.status(201).json({
       success: true,
       data: {
-        message: 'Registration successful. Please check your email to verify your account.',
-        userId: user.id
+        message: 'Registration successful! Welcome to APIQ.',
+        userId: user.id,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          isActive: user.isActive,
+          onboardingStage: user.onboardingStage,
+          onboardingCompletedAt: user.onboardingCompletedAt,
+          guidedTourCompleted: user.guidedTourCompleted
+        }
       }
     });
 

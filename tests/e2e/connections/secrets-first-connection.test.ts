@@ -130,9 +130,9 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
     // Add UX compliance validation for dashboard
     await uxHelper.validateHeadingHierarchy(['Dashboard']);
     
-    // Navigate to connections tab
-    console.log('🪵 Navigating to connections tab...');
-    await page.click('[data-testid="tab-connections"]');
+    // Navigate to connections tab (now in settings)
+    await page.click('[data-testid="tab-settings"]');
+    await page.click('[data-testid="connections-section"]');
     
     // Wait for the connections tab to load
     await page.waitForLoadState('networkidle', { timeout: 10000 });

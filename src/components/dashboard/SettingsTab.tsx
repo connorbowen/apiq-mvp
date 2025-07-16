@@ -1,42 +1,35 @@
 /**
- * TODO: UX SIMPLIFICATION - SETTINGS TAB PHASE 2.1 IMPLEMENTATION - @connorbowen 2024-12-19
+ * SettingsTab Component
  * 
- * PHASE 2.1: Redesign dashboard layout with 3-tab structure
- * - [ ] Create SettingsTab component
- * - [ ] Integrate ConnectionsTab as a section
- * - [ ] Integrate SecretsTab as a section
- * - [ ] Add user account settings
- * - [ ] Add tests: tests/unit/components/dashboard/SettingsTab.test.tsx
- * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test settings tab
+ * Provides comprehensive settings management with tabbed interface.
+ * Features:
+ * - API Connections management (integrated from ConnectionsTab)
+ * - Secrets management (integrated from SecretsTab)
+ * - User account settings and profile management
+ * - Application preferences
+ * - Progressive disclosure based on user onboarding stage
+ * - Mobile responsive design
+ * - Accessibility compliance
  * 
- * PHASE 2.2: Progressive disclosure integration
- * - [ ] Show settings sections based on user onboarding stage
- * - [ ] Progressive reveal of advanced settings
- * - [ ] Add tests: tests/unit/components/ProgressiveDisclosure.test.tsx
- * 
- * PHASE 2.4: Guided tour integration
- * - [ ] Add tour steps for settings management
- * - [ ] Add tests: tests/unit/components/GuidedTour.test.tsx
- * 
- * PHASE 3.1: Mobile optimization
- * - [ ] Optimize settings for mobile screens
- * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile settings
- * 
- * IMPLEMENTATION NOTES:
- * - Create tabbed interface within settings
- * - Integrate existing ConnectionsTab and SecretsTab
- * - Add user account management
- * - Support progressive disclosure of features
- * - Ensure accessibility compliance
+ * Usage:
+ * <SettingsTab
+ *   connections={connections}
+ *   secrets={secrets}
+ *   user={user}
+ *   onConnectionCreated={handleConnectionCreated}
+ *   onSecretCreated={handleSecretCreated}
+ * />
  */
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import ProgressiveDisclosure from '../ProgressiveDisclosure';
 import ProfileTab from './ProfileTab';
 import PasswordChangeForm from './PasswordChangeForm';
+import ConnectionsTab from './ConnectionsTab';
+import SecretsTab from './SecretsTab';
 
 type SettingsSection = 'connections' | 'secrets' | 'account' | 'preferences';
 
@@ -93,7 +86,7 @@ const sectionConfig = {
   },
 };
 
-export default function SettingsTab({
+const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
   connections,
   secrets,
   user,
@@ -104,7 +97,7 @@ export default function SettingsTab({
   onConnectionError,
   onSecretCreated,
   onSecretError,
-}: SettingsTabProps) {
+}) => {
   const [activeSection, setActiveSection] = useState<SettingsSection>('connections');
   const { isFeatureAvailable } = useOnboarding();
 
@@ -124,7 +117,7 @@ export default function SettingsTab({
   };
 
   return (
-    <div className="space-y-6">
+    <div data-testid="settings-tab" className="space-y-6">
       {/* Settings Header */}
       <div>
         <h2 className="text-2xl font-semibold text-gray-900">Settings</h2>
@@ -169,10 +162,14 @@ export default function SettingsTab({
           <ProgressiveDisclosure feature="connections">
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-4">API Connections</h3>
-              {/* TODO: Integrate ConnectionsTab component here */}
-              <div className="bg-gray-50 rounded-lg p-4 text-center">
-                <p className="text-gray-500">Connections management will be integrated here</p>
-              </div>
+              <ConnectionsTab
+                connections={connections}
+                onConnectionCreated={onConnectionCreated || (() => {})}
+                onConnectionEdited={onConnectionEdited || (() => {})}
+                onConnectionDeleted={onConnectionDeleted || (() => {})}
+                onConnectionTested={onConnectionTested || (() => {})}
+                onConnectionError={onConnectionError || (() => {})}
+              />
             </div>
           </ProgressiveDisclosure>
         )}
@@ -181,10 +178,11 @@ export default function SettingsTab({
           <ProgressiveDisclosure feature="secrets">
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-4">Secrets Management</h3>
-              {/* TODO: Integrate SecretsTab component here */}
-              <div className="bg-gray-50 rounded-lg p-4 text-center">
-                <p className="text-gray-500">Secrets management will be integrated here</p>
-              </div>
+              <SecretsTab
+                secrets={secrets}
+                onSecretCreated={onSecretCreated || (() => {})}
+                onSecretError={onSecretError || (() => {})}
+              />
             </div>
           </ProgressiveDisclosure>
         )}
@@ -226,4 +224,8 @@ export default function SettingsTab({
       </div>
     </div>
   );
-} 
+});
+
+SettingsTab.displayName = 'SettingsTab';
+
+export default SettingsTab; 

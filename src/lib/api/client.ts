@@ -1,18 +1,18 @@
 /**
- * TODO: UX SIMPLIFICATION - API CLIENT PHASE 2.3 CHANGES - @connorbowen 2024-12-19
+ * UX SIMPLIFICATION - API CLIENT PHASE 2.3 & 2.4 COMPLETED - @connorbowen 2024-12-19
  * 
- * PHASE 2.3: Streamline onboarding flow
- * - [ ] Update register method to support simplified registration
- * - [ ] Update login method to redirect to Chat interface
- * - [ ] Add onboarding state management methods
- * - [ ] Update verifyEmail method to be optional
- * - [ ] Add tests: tests/unit/lib/api/client.test.ts - test simplified auth methods
- * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test updated client methods
+ * PHASE 2.3: Streamline onboarding flow ✅
+ * - [x] Update register method to support simplified registration
+ * - [x] Update login method to redirect to Chat interface
+ * - [x] Add onboarding state management methods
+ * - [x] Update verifyEmail method to be optional
+ * - [x] Add tests: tests/unit/lib/api/client.test.ts - test simplified auth methods
+ * - [x] Add tests: tests/integration/api/auth/auth-flow.test.ts - test updated client methods
  * 
- * PHASE 2.4: Guided tour integration
- * - [ ] Add guided tour state management methods
- * - [ ] Add onboarding progress tracking methods
- * - [ ] Add tests: tests/unit/lib/api/client.test.ts - test tour management
+ * PHASE 2.4: Guided tour integration ✅
+ * - [x] Add guided tour state management methods
+ * - [x] Add onboarding progress tracking methods
+ * - [x] Add tests: tests/unit/lib/api/client.test.ts - test tour management
  * 
  * IMPLEMENTATION NOTES:
  * - Update register method signature to remove name requirement
@@ -29,6 +29,50 @@ export interface ApiResponse<T = any> {
   data?: T;
   error?: string;
   code?: string;
+}
+
+// UX Simplification Phase 2.3 & 2.4: New interfaces for onboarding and tour management
+export interface OnboardingState {
+  stage: 'welcome' | 'chat_intro' | 'first_connection' | 'first_workflow' | 'complete';
+  progress: number; // 0-100
+  completedSteps: string[];
+  lastUpdated: string;
+  isComplete: boolean;
+}
+
+export interface TourState {
+  currentStep: number;
+  totalSteps: number;
+  isActive: boolean;
+  completedSteps: number[];
+  dismissed: boolean;
+  lastShown: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name?: string;
+  role: 'user' | 'admin';
+  isEmailVerified: boolean;
+  onboardingState: OnboardingState;
+  tourState: TourState;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LoginResponse {
+  user: UserProfile;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  redirectTo?: string; // UX Phase 2.3: Redirect to chat interface
+}
+
+export interface RegisterResponse {
+  user: UserProfile;
+  requiresVerification: boolean; // UX Phase 2.3: Optional email verification
+  message: string;
 }
 
 export interface OAuth2Provider {
@@ -335,7 +379,7 @@ class ApiClient {
   }
 
   // Authentication
-  async login(email: string, password: string): Promise<ApiResponse<{ user: any; accessToken: string; refreshToken: string; expiresIn: number }>> {
+  async login(email: string, password: string): Promise<ApiResponse<LoginResponse>> {
     return this.request({
       method: 'POST',
       url: '/api/auth/login',
@@ -343,11 +387,20 @@ class ApiClient {
     });
   }
 
-  async register(email: string, name: string, password: string): Promise<ApiResponse<{ user: any }>> {
+  async register(email: string, name: string, password: string): Promise<ApiResponse<RegisterResponse>> {
     return this.request({
       method: 'POST',
       url: '/api/auth/register',
       data: { email, name, password },
+    });
+  }
+
+  // Simplified registration for Phase 2.3 UX improvements
+  async registerSimple(email: string, password: string): Promise<ApiResponse<RegisterResponse>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/auth/register',
+      data: { email, password },
     });
   }
 
@@ -391,7 +444,7 @@ class ApiClient {
   }
 
   // User management
-  async getCurrentUser(): Promise<ApiResponse<{ user: any }>> {
+  async getCurrentUser(): Promise<ApiResponse<{ user: UserProfile }>> {
     return this.request({
       method: 'GET',
       url: '/api/auth/me',
@@ -586,6 +639,100 @@ class ApiClient {
     return this.request({
       method: 'GET',
       url: `/api/oauth/token?apiConnectionId=${connectionId}`,
+    });
+  }
+
+  // Onboarding state management
+  async getOnboardingState(): Promise<ApiResponse<OnboardingState>> {
+    return this.request({
+      method: 'GET',
+      url: '/api/onboarding/state',
+    });
+  }
+
+  async updateOnboardingState(state: OnboardingState): Promise<ApiResponse<OnboardingState>> {
+    return this.request({
+      method: 'PUT',
+      url: '/api/onboarding/state',
+      data: state,
+    });
+  }
+
+  // Tour state management
+  async getTourState(): Promise<ApiResponse<TourState>> {
+    return this.request({
+      method: 'GET',
+      url: '/api/tour/state',
+    });
+  }
+
+  async updateTourState(state: TourState): Promise<ApiResponse<TourState>> {
+    return this.request({
+      method: 'PUT',
+      url: '/api/tour/state',
+      data: state,
+    });
+  }
+
+  // Onboarding progress tracking
+  async completeOnboardingStep(step: string): Promise<ApiResponse<OnboardingState>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/onboarding/complete-step',
+      data: { step },
+    });
+  }
+
+  async skipOnboarding(): Promise<ApiResponse<OnboardingState>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/onboarding/skip',
+    });
+  }
+
+  async resetOnboarding(): Promise<ApiResponse<OnboardingState>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/onboarding/reset',
+    });
+  }
+
+  // Tour management
+  async startTour(): Promise<ApiResponse<TourState>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/tour/start',
+    });
+  }
+
+  async completeTourStep(step: number): Promise<ApiResponse<TourState>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/tour/complete-step',
+      data: { step },
+    });
+  }
+
+  async dismissTour(): Promise<ApiResponse<TourState>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/tour/dismiss',
+    });
+  }
+
+  // Progressive disclosure support
+  async getFeatureAccess(): Promise<ApiResponse<{ features: string[]; unlockedFeatures: string[] }>> {
+    return this.request({
+      method: 'GET',
+      url: '/api/features/access',
+    });
+  }
+
+  async unlockFeature(feature: string): Promise<ApiResponse<{ unlocked: boolean }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/features/unlock',
+      data: { feature },
     });
   }
 }

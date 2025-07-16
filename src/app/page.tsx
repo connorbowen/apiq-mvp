@@ -1,38 +1,32 @@
-/**
- * TODO: UX SIMPLIFICATION - LANDING PAGE PHASE 2.4 CHANGES - @connorbowen 2024-12-19
- * 
- * PHASE 2.4: Guided tour integration
- * - [ ] Update "Try Chat" button to redirect to guided tour for new users
- * - [ ] Update "Start Chatting" CTA to include onboarding flow
- * - [ ] Add onboarding state detection for returning users
- * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test landing page to tour flow
- * - [ ] Add tests: tests/unit/app/page.test.tsx - test CTA behavior
- * 
- * PHASE 2.3: Streamline onboarding flow
- * - [ ] Update signup link to use simplified registration
- * - [ ] Update login link to redirect to Chat interface
- * - [ ] Add tests: tests/e2e/auth/authentication-session.test.ts - test landing page auth flow
- * 
- * PHASE 3.1: Mobile optimization
- * - [ ] Optimize landing page for mobile screens
- * - [ ] Improve mobile CTA buttons
- * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile landing page
- * 
- * IMPLEMENTATION NOTES:
- * - Update "Try Chat" button to check user onboarding state
- * - Redirect new users to guided tour, returning users to Chat
- * - Update signup/login links to use streamlined flows
- * - Ensure mobile responsiveness of all CTAs
- */
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [healthStatus, setHealthStatus] = useState<any>(null);
+  const [userOnboardingStage, setUserOnboardingStage] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Check user onboarding state on component mount
+  useEffect(() => {
+    const checkUserState = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        if (response.ok) {
+          const data = await response.json();
+          setUserOnboardingStage(data.user?.onboardingStage || null);
+        }
+      } catch (error) {
+        // User not logged in or error - treat as new user
+        setUserOnboardingStage(null);
+      }
+    };
+
+    checkUserState();
+  }, []);
 
   const checkHealth = async () => {
     setIsLoading(true);
@@ -51,6 +45,14 @@ export default function Home() {
     }
   };
 
+  // Determine the appropriate destination based on user state
+  const getChatDestination = () => {
+    if (userOnboardingStage === 'NEW_USER' || userOnboardingStage === null) {
+      return '/dashboard?tour=true'; // Redirect to guided tour for new users
+    }
+    return '/dashboard'; // Direct to chat for returning users
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
@@ -67,14 +69,14 @@ export default function Home() {
             </div>
             <div className="flex items-center space-x-4">
               <Link
-                href="/dashboard"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                href={getChatDestination()}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
               >
-                Try Chat
+                {userOnboardingStage === 'NEW_USER' || userOnboardingStage === null ? 'Start Tour' : 'Try Chat'}
               </Link>
               <Link
                 href="/login"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
               >
                 Sign In
               </Link>
@@ -97,16 +99,16 @@ export default function Home() {
             <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
               <div className="rounded-md shadow">
                 <Link
-                  href="/dashboard"
-                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10"
+                  href={getChatDestination()}
+                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition-colors duration-200"
                 >
-                  Start Chatting
+                  {userOnboardingStage === 'NEW_USER' || userOnboardingStage === null ? 'Start Your Journey' : 'Start Chatting'}
                 </Link>
               </div>
               <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
                 <a
                   href="#examples"
-                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10"
+                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10 transition-colors duration-200"
                 >
                   See Examples
                 </a>
@@ -169,7 +171,7 @@ export default function Home() {
           <div className="mt-12">
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {/* Example 1 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
                 <div className="text-sm text-gray-600 mb-4">
                   &quot;Get the latest orders from our e-commerce API and update our inventory system&quot;
                 </div>
@@ -179,7 +181,7 @@ export default function Home() {
               </div>
 
               {/* Example 2 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
                 <div className="text-sm text-gray-600 mb-4">
                   &quot;Monitor our GitHub repository for new issues and create Trello cards&quot;
                 </div>
@@ -189,7 +191,7 @@ export default function Home() {
               </div>
 
               {/* Example 3 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
                 <div className="text-sm text-gray-600 mb-4">
                   &quot;Send me a daily summary of our sales data and customer feedback&quot;
                 </div>
@@ -216,7 +218,7 @@ export default function Home() {
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {/* Feature 1 */}
               <div className="pt-6">
-                <div className="flow-root bg-white rounded-lg px-6 pb-8">
+                <div className="flow-root bg-white rounded-lg px-6 pb-8 hover:shadow-md transition-shadow duration-200">
                   <div className="-mt-6">
                     <div>
                       <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
@@ -235,7 +237,7 @@ export default function Home() {
 
               {/* Feature 2 */}
               <div className="pt-6">
-                <div className="flow-root bg-white rounded-lg px-6 pb-8">
+                <div className="flow-root bg-white rounded-lg px-6 pb-8 hover:shadow-md transition-shadow duration-200">
                   <div className="-mt-6">
                     <div>
                       <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
@@ -254,7 +256,7 @@ export default function Home() {
 
               {/* Feature 3 */}
               <div className="pt-6">
-                <div className="flow-root bg-white rounded-lg px-6 pb-8">
+                <div className="flow-root bg-white rounded-lg px-6 pb-8 hover:shadow-md transition-shadow duration-200">
                   <div className="-mt-6">
                     <div>
                       <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">

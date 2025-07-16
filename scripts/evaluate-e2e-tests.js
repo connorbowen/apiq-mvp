@@ -2481,15 +2481,37 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Add TODO item
+   * Add TODO item (with duplicate detection)
    */
   addTodo(file, priority, description, code) {
-    this.todos.push({
-      file,
-      priority,
-      description,
-      code
-    });
+    // Check if a similar TODO already exists for this file
+    const existingTodo = this.todos.find(todo => 
+      todo.file === file && 
+      todo.description.toLowerCase().includes(description.toLowerCase().split(' ').slice(0, 3).join(' '))
+    );
+    
+    // Check if TODO already exists in file content (only if file exists)
+    let hasExistingTodo = false;
+    try {
+      const fileContent = fs.readFileSync(file, 'utf8');
+      const descriptionKeywords = description.toLowerCase().split(' ').slice(0, 3).join(' ');
+      hasExistingTodo = fileContent.toLowerCase().includes(descriptionKeywords) && 
+                       fileContent.includes('// TODO:');
+    } catch (error) {
+      // File doesn't exist or can't be read, continue without duplicate check
+      hasExistingTodo = false;
+    }
+    
+    if (!existingTodo && !hasExistingTodo) {
+      this.todos.push({
+        file,
+        priority,
+        description,
+        code
+      });
+    } else {
+      console.log(`  ⚠️  Skipping duplicate TODO: ${description}`);
+    }
   }
 
   /**

@@ -78,11 +78,9 @@ test.describe('OAuth2 Flow E2E Tests', () => {
     // Wait for dashboard to be fully loaded
     await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
     
-    // Wait for the connections tab to be visible before clicking
-    await page.waitForSelector('[data-testid="tab-connections"]', { timeout: 10000, state: 'visible' });
-    
-    // Navigate to connections tab
-    await page.click('[data-testid="tab-connections"]');
+    // Navigate to connections tab (now in settings)
+    await page.click('[data-testid="tab-settings"]');
+    await page.click('[data-testid="connections-section"]');
     
     // Validate comprehensive UX compliance for connections page
     const uxHelper = createUXComplianceHelper(page);
@@ -809,8 +807,9 @@ test.describe('OAuth2 Flow E2E Tests', () => {
         // Wait for successful login and redirect to dashboard
         await expect(page).toHaveURL(/.*dashboard/);
         
-        // Navigate to connections tab
-        await page.click('[data-testid="tab-connections"]');
+        // Navigate to connections tab (now in settings)
+        await page.click('[data-testid="tab-settings"]');
+        await page.click('[data-testid="connections-section"]');
         
         // Try to create OAuth2 connection via API
         const response = await page.request.post('/api/connections', {
@@ -1589,8 +1588,9 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       // Wait for dashboard to be fully loaded
       await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
       
-      // Navigate to connections tab
-      await page.click('[data-testid="tab-connections"]');
+      // Navigate to connections tab (now in settings)
+      await page.click('[data-testid="tab-settings"]');
+      await page.click('[data-testid="connections-section"]');
       
       // Wait a moment for any initial loadConnections calls
       await page.waitForTimeout(2000);

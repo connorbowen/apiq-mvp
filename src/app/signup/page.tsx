@@ -1,27 +1,3 @@
-/**
- * TODO: UX SIMPLIFICATION - SIGNUP PAGE PHASE 2.3 CHANGES - @connorbowen 2024-12-19
- * 
- * PHASE 2.3: Streamline onboarding flow
- * - [ ] Simplify form to email + password only (remove name requirement)
- * - [ ] Make email verification optional (don't block access)
- * - [ ] Redirect directly to Chat interface after successful registration
- * - [ ] Remove complex validation for faster signup
- * - [ ] Add tests: tests/e2e/auth/authentication-session.test.ts - test streamlined signup
- * - [ ] Add tests: tests/integration/api/auth/auth-flow.test.ts - test simplified registration
- * - [ ] Add tests: tests/unit/app/signup/page.test.tsx - test simplified form validation
- * 
- * PHASE 2.4: Guided tour integration
- * - [ ] Add welcome message after successful signup
- * - [ ] Redirect to guided tour instead of dashboard
- * - [ ] Add tests: tests/e2e/onboarding/user-journey.test.ts - test signup to tour flow
- * 
- * IMPLEMENTATION NOTES:
- * - Remove name field validation complexity
- * - Simplify password requirements
- * - Make email verification non-blocking
- * - Update success redirect to /dashboard?tab=chat
- */
-
 'use client';
 
 import { useState } from 'react';
@@ -30,7 +6,6 @@ import Link from 'next/link';
 import { apiClient } from '../../lib/api/client';
 
 interface FieldErrors {
-  name?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -42,22 +17,15 @@ export default function SignupPage() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formData, setFormData] = useState({
     email: '',
-    name: '',
     password: '',
     confirmPassword: ''
   });
+  const [welcomeMessage, setWelcomeMessage] = useState('');
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateField = (name: string, value: string): string => {
     switch (name) {
-      case 'name':
-        if (!value.trim()) return 'name is required';
-        if (value.trim().length < 2) return 'Full name must be at least 2 characters';
-        // Validate name format - allow letters, numbers, spaces, basic punctuation
-            const nameRegex = /^[a-zA-ZÀ-ÿ0-9\s\-'.]{2,50}$/;
-    if (!nameRegex.test(value.trim())) return 'Name contains invalid characters';
-        return '';
       case 'email':
         if (!value.trim()) return 'email is required';
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -66,9 +34,6 @@ export default function SignupPage() {
       case 'password':
         if (!value) return 'password is required';
         if (value.length < 8) return 'password must be at least 8 characters';
-        if (!/(?=.*[a-z])/.test(value)) return 'Password must contain at least one lowercase letter';
-        if (!/(?=.*[A-Z])/.test(value)) return 'Password must contain at least one uppercase letter';
-        if (!/(?=.*\d)/.test(value)) return 'Password must contain at least one number';
         return '';
       case 'confirmPassword':
         if (!value) return 'Please confirm your password';
@@ -123,12 +88,21 @@ export default function SignupPage() {
     }
 
     try {
-      const response = await apiClient.register(formData.email, formData.name, formData.password);
+      const response = await apiClient.registerSimple(formData.email, formData.password);
 
       if (response.success) {
+        // Show welcome message
+        setWelcomeMessage('Welcome to APIQ! Let\'s get you started with a quick tour.');
+        
+        // Store user data in localStorage for client-side access
+        if (response.data?.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        
+        // Redirect to guided tour for new users
         setTimeout(() => {
-          router.push(`/signup-success?email=${encodeURIComponent(formData.email)}`);
-        }, 150); // Small delay to guarantee Playwright sees disabled state
+          router.push('/dashboard?tour=true');
+        }, 1500); // Show welcome message for 1.5 seconds before redirecting
       } else {
         if (response.error?.toLowerCase().includes('already exists') || 
             response.error?.toLowerCase().includes('already registered')) {
@@ -146,7 +120,7 @@ export default function SignupPage() {
 
   const handleOAuth2Signup = (provider: string) => {
     // Redirect to OAuth2 provider for signup
-            window.location.href = `/api/auth/sso/google?provider=${provider}&action=signup`;
+    window.location.href = `/api/auth/sso/google?provider=${provider}&action=signup`;
   };
 
   const hasErrors = error || Object.values(fieldErrors).some(err => err);
@@ -165,6 +139,20 @@ export default function SignupPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Start orchestrating APIs with natural language
           </p>
+          {welcomeMessage && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-green-800">{welcomeMessage}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* OAuth2 Signup Buttons */}
@@ -174,7 +162,7 @@ export default function SignupPage() {
             onClick={() => handleOAuth2Signup('google')}
             aria-label="Continue with Google"
             aria-describedby="oauth2-signup-description"
-            className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -213,7 +201,7 @@ export default function SignupPage() {
                 </div>
                 {error.toLowerCase().includes('verify') && (
                   <div className="mt-2">
-                    <Link href="/resend-verification" className="text-indigo-600 hover:text-indigo-500 underline text-sm">
+                    <Link href="/resend-verification" className="text-indigo-600 hover:text-indigo-500 underline text-sm transition-colors duration-200">
                       Resend verification email
                     </Link>
                   </div>
@@ -225,28 +213,6 @@ export default function SignupPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
           <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full name <span className="text-red-500" aria-label="required">*</span>
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                required
-                aria-required="true"
-                aria-invalid={fieldErrors.name ? 'true' : 'false'}
-                value={formData.name}
-                onChange={(e) => handleFieldChange('name', e.target.value)}
-                onBlur={() => handleBlur('name')}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
-                  fieldErrors.name ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Enter your full name"
-              />
-            </div>
-
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address <span className="text-red-500" aria-label="required">*</span>
@@ -262,7 +228,7 @@ export default function SignupPage() {
                 value={formData.email}
                 onChange={(e) => handleFieldChange('email', e.target.value)}
                 onBlur={() => handleBlur('email')}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200 ${
                   fieldErrors.email ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Enter your email address"
@@ -285,13 +251,13 @@ export default function SignupPage() {
                 value={formData.password}
                 onChange={(e) => handleFieldChange('password', e.target.value)}
                 onBlur={() => handleBlur('password')}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200 ${
                   fieldErrors.password ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Create a strong password"
               />
               <div id="password-requirements" className="mt-1 text-xs text-gray-500">
-                Password must be at least 8 characters with uppercase, lowercase, and number
+                Password must be at least 8 characters
               </div>
             </div>
 
@@ -310,7 +276,7 @@ export default function SignupPage() {
                 value={formData.confirmPassword}
                 onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
                 onBlur={() => handleBlur('confirmPassword')}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${
+                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200 ${
                   fieldErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Confirm your password"
@@ -323,7 +289,7 @@ export default function SignupPage() {
               data-testid="primary-action signup-btn"
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] primary-action"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] primary-action transition-colors duration-200"
             >
               {isSubmitting ? 'Creating account...' : 'Create account'}
             </button>
@@ -331,13 +297,13 @@ export default function SignupPage() {
 
           <div className="text-center space-y-2">
             <div>
-              <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-500">
+              <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-500 transition-colors duration-200">
                 Back to home
               </Link>
             </div>
             <div>
               <span className="text-sm text-gray-600">Already have an account? </span>
-              <Link href="/login" className="text-sm text-indigo-600 hover:text-indigo-500">
+              <Link href="/login" className="text-sm text-indigo-600 hover:text-indigo-500 transition-colors duration-200">
                 Sign in
               </Link>
             </div>

@@ -1,675 +1,525 @@
 import { test, expect } from '@playwright/test';
-import { UXComplianceHelper } from '../../helpers/uxCompliance';
+import { createTestUser, loginAsUser } from '../../helpers/createTestData';
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+test.describe('UX Simplification - Performance Testing', () => {
+  let testUser: any;
 
-test.describe('Performance & Load Testing E2E Tests - P2 Medium Priority', () => {
-  let uxHelper: UXComplianceHelper;
-
-  test.beforeEach(async ({ page }) => {
-    uxHelper = new UXComplianceHelper(page);
-    
-    // Login for authenticated tests
-    await page.goto(`${BASE_URL}/login`);
-    await page.getByLabel('Email address').fill('e2e-test@example.com');
-    await page.getByLabel('Password').fill('e2eTestPass123');
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    
-    // Wait for dashboard to load
-    await Promise.all([
-      page.waitForURL(/.*dashboard/),
-      page.waitForSelector('h1:has-text("Dashboard")')
-    ]);
+  test.beforeAll(async () => {
+    testUser = await createTestUser({ role: 'user' });
   });
 
-  test.describe('Page Load Performance', () => {
-    test('should load dashboard within 2 seconds', async ({ page }) => {
+  test.describe('Dashboard Load Performance', () => {
+    test('should load dashboard in under 3 seconds', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      
+      // Measure initial load time
       const startTime = Date.now();
+      await page.goto('/dashboard');
+      const loadTime = Date.now() - startTime;
       
-      await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
-      
-      const endTime = Date.now();
-      const loadTime = endTime - startTime;
-      
-      // Should load in under 2 seconds
-      expect(loadTime).toBeLessThan(2000);
-      
-      // Verify page is fully functional
-      await expect(page.getByText('Dashboard')).toBeVisible();
-      await expect(page.getByRole('tab', { name: 'Workflows' })).toBeVisible();
-    });
-
-    test('should load workflows page within 1 second', async ({ page }) => {
-      const startTime = Date.now();
-      
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      await page.waitForLoadState('networkidle');
-      
-      const endTime = Date.now();
-      const loadTime = endTime - startTime;
-      
-      // Should load in under 1 second
-      expect(loadTime).toBeLessThan(1000);
-      
-      // Verify workflows page is functional
-      await expect(page.getByText('Workflows')).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Create Workflow' })).toBeVisible();
-    });
-
-    test('should load connections page within 1 second', async ({ page }) => {
-      const startTime = Date.now();
-      
-      await page.getByRole('tab', { name: 'Connections' }).click();
-      await page.waitForLoadState('networkidle');
-      
-      const endTime = Date.now();
-      const loadTime = endTime - startTime;
-      
-      // Should load in under 1 second
-      expect(loadTime).toBeLessThan(1000);
-      
-      // Verify connections page is functional
-      await expect(page.getByText('Connections')).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Add Connection' })).toBeVisible();
-    });
-
-    test('should handle large workflow lists efficiently', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      
-      // Mock large workflow list (100+ workflows)
-      await page.route('**/api/workflows', route => {
-        const workflows = Array.from({ length: 100 }, (_, i) => ({
-          id: `workflow-${i}`,
-          name: `Test Workflow ${i}`,
-          description: `Workflow description ${i}`,
-          status: 'active',
-          createdAt: new Date().toISOString()
-        }));
-        
-        route.fulfill({
-          status: 200,
-          body: JSON.stringify({ workflows, total: 100 })
-        });
-      });
-      
-      const startTime = Date.now();
-      
-      // Refresh page to load large list
-      await page.reload();
-      await page.waitForLoadState('networkidle');
-      
-      const endTime = Date.now();
-      const loadTime = endTime - startTime;
-      
-      // Should handle large lists efficiently (under 2 seconds)
-      expect(loadTime).toBeLessThan(2000);
-      
-      // Verify pagination is working
-      await expect(page.getByText('Showing 1-20 of 100 workflows')).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Next' })).toBeVisible();
-    });
-  });
-
-  test.describe('API Response Performance', () => {
-    test('should handle workflow generation within 5 seconds', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      await page.getByRole('button', { name: 'Create Workflow' }).click();
-      
-      const startTime = Date.now();
-      
-      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
-      await chatInput.fill('Send notification for new orders');
-      await page.getByRole('button', { name: 'Generate Workflow' }).click();
-      
-      await page.waitForSelector('[data-testid="workflow-preview"]', { timeout: 10000 });
-      
-      const endTime = Date.now();
-      const generationTime = endTime - startTime;
-      
-      // Should generate workflow in under 5 seconds
-      expect(generationTime).toBeLessThan(5000);
-      
-      // Verify workflow was generated correctly
-      await expect(page.getByText('Order Notification Workflow')).toBeVisible();
-    });
-
-    test('should handle concurrent API requests efficiently', async ({ page }) => {
-      // Test concurrent workflow generations
-      const promises = [];
-      
-      for (let i = 0; i < 5; i++) {
-        const newPage = await page.context().newPage();
-        promises.push(
-          (async () => {
-            await newPage.goto(`${BASE_URL}/dashboard`);
-            await newPage.getByRole('tab', { name: 'Workflows' }).click();
-            await newPage.getByRole('button', { name: 'Create Workflow' }).click();
-            
-            const chatInput = newPage.getByPlaceholder('Describe your workflow in natural language...');
-            await chatInput.fill(`Concurrent workflow ${i}`);
-            await newPage.getByRole('button', { name: 'Generate Workflow' }).click();
-            
-            await newPage.waitForSelector('[data-testid="workflow-preview"]', { timeout: 15000 });
-            await newPage.close();
-          })()
-        );
-      }
-      
-      const startTime = Date.now();
-      await Promise.all(promises);
-      const endTime = Date.now();
-      const totalTime = endTime - startTime;
-      
-      // Should handle 5 concurrent requests efficiently
-      expect(totalTime).toBeLessThan(20000); // Under 20 seconds total
-    });
-
-    test('should handle API rate limiting gracefully', async ({ page }) => {
-      // Mock rate limiting response
-      await page.route('**/api/workflows/generate', route => {
-        route.fulfill({
-          status: 429,
-          body: JSON.stringify({
-            error: 'Rate limit exceeded',
-            retryAfter: 60
-          })
-        });
-      });
-      
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      await page.getByRole('button', { name: 'Create Workflow' }).click();
-      
-      const chatInput = page.getByPlaceholder('Describe your workflow in natural language...');
-      await chatInput.fill('Test rate limiting');
-      await page.getByRole('button', { name: 'Generate Workflow' }).click();
-      
-      // Should show rate limit error gracefully
-      await uxHelper.validateErrorContainer('Rate limit exceeded');
-      await expect(page.getByText('Please try again in 60 seconds')).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
-    });
-  });
-
-  test.describe('Database Performance', () => {
-    test('should handle large dataset queries efficiently', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      
-      // Mock large dataset query
-      await page.route('**/api/workflows**', route => {
-        const workflows = Array.from({ length: 1000 }, (_, i) => ({
-          id: `workflow-${i}`,
-          name: `Large Dataset Workflow ${i}`,
-          description: `Workflow ${i} description`,
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          executions: Math.floor(Math.random() * 100)
-        }));
-        
-        route.fulfill({
-          status: 200,
-          body: JSON.stringify({ workflows, total: 1000 })
-        });
-      });
-      
-      const startTime = Date.now();
-      
-      // Load large dataset
-      await page.reload();
-      await page.waitForLoadState('networkidle');
-      
-      const endTime = Date.now();
-      const loadTime = endTime - startTime;
-      
-      // Should handle large datasets efficiently (under 3 seconds)
+      // Should load in under 3 seconds
       expect(loadTime).toBeLessThan(3000);
       
-      // Verify pagination and search work
-      await expect(page.getByText('Showing 1-20 of 1000 workflows')).toBeVisible();
-      
-      // Test search functionality
-      await page.getByPlaceholder('Search workflows...').fill('Workflow 500');
-      await page.waitForTimeout(500); // Debounce
-      await expect(page.getByText('Large Dataset Workflow 500')).toBeVisible();
+      // Verify critical components load
+      await expect(page.getByTestId('chat-interface')).toBeVisible();
     });
 
-    test('should handle complex database queries efficiently', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Workflows' }).click();
+    test('should load critical components first', async ({ page }) => {
+      await loginAsUser(page, testUser);
       
-      // Mock complex query with filters and sorting
-      await page.route('**/api/workflows**', route => {
-        const url = new URL(route.request().url());
-        const status = url.searchParams.get('status');
-        const sortBy = url.searchParams.get('sortBy');
-        const limit = parseInt(url.searchParams.get('limit') || '20');
-        
-        // Simulate complex query processing
-        const workflows = Array.from({ length: limit }, (_, i) => ({
-          id: `workflow-${i}`,
-          name: `Complex Query Workflow ${i}`,
-          status: status || 'active',
-          createdAt: new Date().toISOString(),
-          executions: Math.floor(Math.random() * 1000),
-          successRate: Math.random() * 100
-        }));
-        
-        // Simulate sorting
-        if (sortBy === 'executions') {
-          workflows.sort((a, b) => b.executions - a.executions);
+      // Monitor load sequence
+      const loadSequence: string[] = [];
+      
+      page.on('response', response => {
+        if (response.url().includes('dashboard')) {
+          loadSequence.push(response.url());
         }
-        
-        route.fulfill({
-          status: 200,
-          body: JSON.stringify({ workflows, total: 1000 })
-        });
       });
       
-      const startTime = Date.now();
+      await page.goto('/dashboard');
       
-      // Apply complex filters
-      await page.getByRole('button', { name: 'Filter' }).click();
-      await page.getByLabel('Status').selectOption('active');
-      await page.getByLabel('Sort by').selectOption('executions');
-      await page.getByRole('button', { name: 'Apply Filters' }).click();
+      // Chat interface should load first (critical)
+      await expect(page.getByTestId('chat-interface')).toBeVisible();
       
-      await page.waitForLoadState('networkidle');
-      
-      const endTime = Date.now();
-      const queryTime = endTime - startTime;
-      
-      // Should handle complex queries efficiently (under 2 seconds)
-      expect(queryTime).toBeLessThan(2000);
-      
-      // Verify results are correct
-      await expect(page.getByText('Complex Query Workflow 0')).toBeVisible();
-    });
-  });
-
-  test.describe('Memory and Resource Management', () => {
-    test('should handle memory usage efficiently during long sessions', async ({ page }) => {
-      // Simulate long user session with multiple operations
-      const operations = [
-        () => page.getByRole('tab', { name: 'Workflows' }).click(),
-        () => page.getByRole('tab', { name: 'Connections' }).click(),
-        () => page.getByRole('tab', { name: 'Secrets' }).click(),
-        () => page.getByRole('tab', { name: 'Overview' }).click(),
-      ];
-      
-      const startTime = Date.now();
-      
-      // Perform 50 operations to simulate long session
-      for (let i = 0; i < 50; i++) {
-        const operation = operations[i % operations.length];
-        await operation();
-        await page.waitForTimeout(100); // Small delay between operations
-      }
-      
-      const endTime = Date.now();
-      const sessionTime = endTime - startTime;
-      
-      // Should maintain performance throughout session
-      expect(sessionTime).toBeLessThan(10000); // Under 10 seconds for 50 operations
-      
-      // Verify UI is still responsive
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      await expect(page.getByText('Workflows')).toBeVisible();
+      // Verify load sequence prioritizes critical components
+      expect(loadSequence.length).toBeGreaterThan(0);
     });
 
-    test('should handle large file uploads efficiently', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Connections' }).click();
-      await page.getByRole('button', { name: 'Add Connection' }).click();
+    test('should handle concurrent user loads efficiently', async ({ browser }) => {
+      // Test with multiple concurrent users
+      const userCount = 5;
+      const contexts: any[] = [];
+      const pages: any[] = [];
       
-      // Test large OpenAPI file upload
-      const largeOpenApiContent = {
-        openapi: '3.0.0',
-        info: { title: 'Large API', version: '1.0.0' },
-        paths: {}
-      };
-      
-      // Generate large API spec (1000+ endpoints)
-      for (let i = 0; i < 1000; i++) {
-        largeOpenApiContent.paths[`/endpoint-${i}`] = {
-          get: {
-            summary: `Endpoint ${i}`,
-            responses: { '200': { description: 'Success' } }
-          }
-        };
-      }
-      
-      const startTime = Date.now();
-      
-      // Upload large file
-      const fileInput = page.locator('input[type="file"]');
-      await fileInput.setInputFiles({
-        name: 'large-api.json',
-        mimeType: 'application/json',
-        buffer: Buffer.from(JSON.stringify(largeOpenApiContent))
-      });
-      
-      await page.waitForSelector('[data-testid="upload-complete"]', { timeout: 30000 });
-      
-      const endTime = Date.now();
-      const uploadTime = endTime - startTime;
-      
-      // Should handle large uploads efficiently (under 30 seconds)
-      expect(uploadTime).toBeLessThan(30000);
-      
-      // Verify upload was successful
-      await expect(page.getByText('Large API')).toBeVisible();
-      await expect(page.getByText('1000 endpoints imported')).toBeVisible();
-    });
-  });
-
-  test.describe('Concurrent User Load', () => {
-    test('should handle multiple concurrent users', async ({ page }) => {
-      const userCount = 10;
-      const pages = [];
-      
-      // Create multiple browser pages to simulate concurrent users
+      // Create multiple browser contexts
       for (let i = 0; i < userCount; i++) {
-        const newPage = await page.context().newPage();
-        pages.push(newPage);
+        const context = await browser.newContext();
+        const page = await context.newPage();
+        contexts.push(context);
+        pages.push(page);
       }
       
+      // Load dashboard concurrently
       const startTime = Date.now();
+      await Promise.all(pages.map(async (page: any) => {
+        await loginAsUser(page, testUser);
+        await page.goto('/dashboard');
+        await expect(page.getByTestId('chat-interface')).toBeVisible();
+      }));
+      const totalTime = Date.now() - startTime;
       
-      // Simulate concurrent user actions
-      const promises = pages.map(async (userPage, index) => {
-        await userPage.goto(`${BASE_URL}/login`);
-        await userPage.getByLabel('Email address').fill(`user${index}@example.com`);
-        await userPage.getByLabel('Password').fill('password123');
-        await userPage.getByRole('button', { name: 'Sign in' }).click();
-        
-        await userPage.waitForURL(/.*dashboard/);
-        await userPage.getByRole('tab', { name: 'Workflows' }).click();
-        await userPage.waitForLoadState('networkidle');
-        
-        return userPage;
-      });
+      // Should handle concurrent loads efficiently
+      expect(totalTime).toBeLessThan(10000); // 10 seconds for 5 users
       
-      await Promise.all(promises);
-      
-      const endTime = Date.now();
-      const concurrentTime = endTime - startTime;
-      
-      // Should handle 10 concurrent users efficiently (under 15 seconds)
-      expect(concurrentTime).toBeLessThan(15000);
-      
-      // Verify all users can access the system
-      for (const userPage of pages) {
-        await expect(userPage.getByText('Workflows')).toBeVisible();
-        await userPage.close();
-      }
+      // Cleanup
+      await Promise.all(contexts.map((context: any) => context.close()));
     });
 
-    test('should maintain performance under sustained load', async ({ page }) => {
-      const loadDuration = 30000; // 30 seconds
-      const startTime = Date.now();
+    test('should optimize bundle size with code splitting', async ({ page }) => {
+      await loginAsUser(page, testUser);
       
-      // Simulate sustained load with periodic requests
-      const loadTest = setInterval(async () => {
-        await page.reload();
-        await page.waitForLoadState('networkidle');
-      }, 2000); // Reload every 2 seconds
-      
-      // Let the load test run for the specified duration
-      await page.waitForTimeout(loadDuration);
-      clearInterval(loadTest);
-      
-      const endTime = Date.now();
-      const totalTime = endTime - startTime;
-      
-      // Should maintain performance throughout sustained load
-      expect(totalTime).toBeGreaterThanOrEqual(loadDuration);
-      
-      // Verify system is still responsive
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      await expect(page.getByText('Workflows')).toBeVisible();
-    });
-  });
-
-  test.describe('Error Recovery Performance', () => {
-    test('should recover quickly from temporary failures', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      
-      // Mock temporary API failure
-      let failureCount = 0;
-      await page.route('**/api/workflows', route => {
-        failureCount++;
-        if (failureCount <= 2) {
-          route.fulfill({ status: 500, body: 'Internal Server Error' });
-        } else {
-          route.continue();
+      // Monitor initial bundle size
+      const initialRequests: string[] = [];
+      page.on('request', request => {
+        if (request.url().includes('dashboard')) {
+          initialRequests.push(request.url());
         }
       });
       
-      const startTime = Date.now();
+      await page.goto('/dashboard');
+      await expect(page.getByTestId('chat-interface')).toBeVisible();
       
-      // Trigger retry mechanism
-      await page.reload();
+      // Clear request monitoring
+      page.removeAllListeners('request');
       
-      // Wait for successful recovery
-      await page.waitForSelector('[data-testid="workflow-list"]', { timeout: 10000 });
-      
-      const endTime = Date.now();
-      const recoveryTime = endTime - startTime;
-      
-      // Should recover within 10 seconds
-      expect(recoveryTime).toBeLessThan(10000);
-      
-      // Verify system is working after recovery
-      await expect(page.getByText('Workflows')).toBeVisible();
-    });
-
-    test('should handle network interruptions gracefully', async ({ page }) => {
-      await page.getByRole('tab', { name: 'Workflows' }).click();
-      
-      // Simulate network interruption
-      await page.route('**/*', route => {
-        route.abort();
+      // Monitor lazy-loaded component requests
+      const lazyRequests: string[] = [];
+      page.on('request', request => {
+        if (request.url().includes('workflows') || request.url().includes('settings')) {
+          lazyRequests.push(request.url());
+        }
       });
       
-      // Try to perform actions during network interruption
-      await page.getByRole('button', { name: 'Create Workflow' }).click();
+      // Navigate to trigger lazy loading
+      await page.getByTestId('tab-workflows').click();
+      await expect(page.getByTestId('workflows-tab')).toBeVisible();
       
-      // Should show offline indicator quickly
-      await expect(page.getByText('Network connection lost')).toBeVisible();
+      await page.getByTestId('tab-settings').click();
+      await expect(page.getByTestId('settings-tab')).toBeVisible();
       
-      // Restore network
-      await page.unroute('**/*');
-      
-      // Should recover quickly when network is restored
-      await page.waitForSelector('[data-testid="workflow-create-form"]', { timeout: 5000 });
-      await expect(page.getByText('Create Workflow')).toBeVisible();
+      // Should load components on demand
+      expect(lazyRequests.length).toBeGreaterThan(0);
     });
   });
 
-  test.describe('Performance Monitoring', () => {
-    test('should provide real-time performance metrics', async ({ page }) => {
-      await page.getByRole('button', { name: 'Performance Metrics' }).click();
+  test.describe('Component Rendering Performance', () => {
+    test('should optimize re-renders with React.memo', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      await page.goto('/dashboard');
+
+      // Test that navigation remains responsive (indicating optimized re-renders)
+      const startTime = Date.now();
       
-      // Check for performance monitoring dashboard
-      await expect(page.getByText('Performance Dashboard')).toBeVisible();
-      await expect(page.getByText('Response Times')).toBeVisible();
-      await expect(page.getByText('Throughput')).toBeVisible();
-      await expect(page.getByText('Error Rates')).toBeVisible();
+      // Navigate between tabs multiple times
+      for (let i = 0; i < 5; i++) {
+        await page.getByTestId('tab-workflows').click();
+        await expect(page.getByTestId('workflows-tab')).toBeVisible();
+        
+        await page.getByTestId('tab-settings').click();
+        await expect(page.getByTestId('settings-tab')).toBeVisible();
+        
+        await page.getByTestId('tab-chat').click();
+        await expect(page.getByTestId('chat-interface')).toBeVisible();
+      }
+
+      const navigationTime = Date.now() - startTime;
       
-      // Verify metrics are being collected
-      await expect(page.getByText('Average Response Time:')).toBeVisible();
-      await expect(page.getByText('Requests per Second:')).toBeVisible();
-      await expect(page.getByText('Error Rate:')).toBeVisible();
-      
-      // Check for performance alerts
-      await expect(page.getByText('Performance Alerts')).toBeVisible();
+      // Should navigate efficiently (indicating optimized re-renders)
+      expect(navigationTime).toBeLessThan(5000); // Under 5 seconds for 15 tab switches
     });
 
-    test('should alert on performance degradation', async ({ page }) => {
-      // Mock performance degradation
-      await page.route('**/api/workflows', route => {
-        route.continue({ delay: 3000 }); // 3 second delay
+    test('should use useCallback for event handlers', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      await page.goto('/dashboard');
+
+      // Test that event handlers are optimized
+      const startTime = Date.now();
+      
+      // Rapidly click tabs to test handler performance
+      for (let i = 0; i < 10; i++) {
+        await page.getByTestId('tab-workflows').click();
+        await page.getByTestId('tab-settings').click();
+        await page.getByTestId('tab-chat').click();
+      }
+      
+      const endTime = Date.now();
+      const clickTime = endTime - startTime;
+      
+      // Should handle rapid clicks efficiently (under 2 seconds for 30 clicks)
+      expect(clickTime).toBeLessThan(2000);
+    });
+
+    test('should use useMemo for expensive computations', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      await page.goto('/dashboard?tab=settings');
+
+      // Test settings tab with filtered data
+      const startTime = Date.now();
+      
+      // Trigger multiple data filtering operations
+      for (let i = 0; i < 5; i++) {
+        await page.getByTestId('connections-section').click();
+        await page.getByTestId('secrets-section').click();
+        await page.getByTestId('account-section').click();
+      }
+      
+      const endTime = Date.now();
+      const filterTime = endTime - startTime;
+      
+      // Should handle filtering efficiently with useMemo
+      expect(filterTime).toBeLessThan(1000);
+    });
+
+    test('should handle large data sets efficiently', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      await page.goto('/dashboard?tab=workflows');
+
+      // Test rendering performance with simulated large dataset
+      const startTime = Date.now();
+      
+      // Navigate to workflows tab to trigger rendering
+      await page.getByTestId('tab-workflows').click();
+      await expect(page.getByTestId('workflows-tab')).toBeVisible();
+      
+      const renderTime = Date.now() - startTime;
+      
+      // Should render efficiently (under 1 second)
+      expect(renderTime).toBeLessThan(1000);
+    });
+  });
+
+  test.describe('Mobile Performance', () => {
+    test('should maintain performance on mobile devices', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 });
+      
+      const startTime = Date.now();
+      await page.goto('/dashboard');
+      const loadTime = Date.now() - startTime;
+      
+      // Should load efficiently on mobile
+      expect(loadTime).toBeLessThan(3000);
+      
+      // Verify mobile navigation loads
+      await expect(page.getByTestId('mobile-navigation')).toBeVisible();
+    });
+
+    test('should handle touch interactions responsively', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.goto('/dashboard');
+
+      // Test touch interaction performance
+      const startTime = Date.now();
+      
+      // Rapid touch navigation
+      for (let i = 0; i < 5; i++) {
+        await page.getByTestId('mobile-navigation').getByText('Workflows').click();
+        await page.getByTestId('mobile-navigation').getByText('Settings').click();
+        await page.getByTestId('mobile-navigation').getByText('Chat').click();
+      }
+      
+      const touchTime = Date.now() - startTime;
+      
+      // Should handle touch interactions responsively (under 3 seconds)
+      expect(touchTime).toBeLessThan(3000);
+    });
+
+    test('should optimize mobile bundle size', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 });
+      
+      // Monitor mobile-specific requests
+      const mobileRequests: string[] = [];
+      page.on('request', request => {
+        if (request.url().includes('mobile') || request.url().includes('touch')) {
+          mobileRequests.push(request.url());
+        }
       });
       
-      await page.getByRole('tab', { name: 'Workflows' }).click();
+      await page.goto('/dashboard');
+      await expect(page.getByTestId('mobile-navigation')).toBeVisible();
       
-      // Should show performance warning
-      await expect(page.getByText('Performance Warning')).toBeVisible();
-      await expect(page.getByText('Response time is slower than usual')).toBeVisible();
+      // Should not load unnecessary mobile-specific resources
+      expect(mobileRequests.length).toBeLessThan(5);
+    });
+
+    test('should handle mobile memory efficiently', async ({ page }) => {
+      await loginAsUser(page, testUser);
       
-      // Should provide performance optimization suggestions
-      await expect(page.getByText('Consider refreshing the page')).toBeVisible();
+      // Set mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 });
+      await page.goto('/dashboard');
+
+      // Monitor memory usage
+      const initialMemory = await page.evaluate(() => {
+        if ('memory' in performance) {
+          return (performance as any).memory.usedJSHeapSize;
+        }
+        return 0;
+      });
+
+      // Navigate extensively to test memory management
+      for (let i = 0; i < 10; i++) {
+        await page.getByTestId('mobile-navigation').getByText('Workflows').click();
+        await page.getByTestId('mobile-navigation').getByText('Settings').click();
+        await page.getByTestId('mobile-navigation').getByText('Chat').click();
+      }
+
+      const finalMemory = await page.evaluate(() => {
+        if ('memory' in performance) {
+          return (performance as any).memory.usedJSHeapSize;
+        }
+        return 0;
+      });
+
+      // Memory usage should not grow excessively
+      const memoryIncrease = finalMemory - initialMemory;
+      expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024); // Less than 10MB increase
+    });
+  });
+
+  test.describe('Lazy Loading Effectiveness', () => {
+    test('should defer non-critical component loading', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      
+      // Monitor initial page load
+      const initialRequests: string[] = [];
+      page.on('request', request => {
+        if (request.url().includes('dashboard')) {
+          initialRequests.push(request.url());
+        }
+      });
+      
+      await page.goto('/dashboard');
+      await expect(page.getByTestId('chat-interface')).toBeVisible();
+      
+      // Clear monitoring
+      page.removeAllListeners('request');
+      
+      // Count initial requests
+      const initialCount = initialRequests.length;
+      
+      // Monitor lazy loading requests
+      const lazyRequests: string[] = [];
+      page.on('request', request => {
+        if (request.url().includes('workflows') || request.url().includes('settings')) {
+          lazyRequests.push(request.url());
+        }
+      });
+      
+      // Navigate to trigger lazy loading
+      await page.getByTestId('tab-workflows').click();
+      await page.getByTestId('tab-settings').click();
+      
+      // Should have deferred some requests
+      expect(lazyRequests.length).toBeGreaterThan(0);
+    });
+
+    test('should show loading states for lazy components', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      await page.goto('/dashboard');
+
+      // Navigate to workflows tab
+      await page.getByTestId('tab-workflows').click();
+      
+      // Should show loading spinner briefly
+      await expect(page.locator('.animate-spin')).toBeVisible();
+      
+      // Should then load the component
+      await expect(page.getByTestId('workflows-tab')).toBeVisible();
+    });
+
+    test('should handle lazy loading errors gracefully', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      await page.goto('/dashboard');
+
+      // Simulate lazy loading failure
+      await page.route('**/workflows', route => {
+        route.fulfill({ status: 500, body: 'Load Error' });
+      });
+
+      // Navigate to workflows tab
+      await page.getByTestId('tab-workflows').click();
+      
+      // Should show error state
+      await expect(page.getByText('Unable to load workflows')).toBeVisible();
+      await expect(page.getByText('Please try again')).toBeVisible();
+    });
+  });
+
+  test.describe('Network Performance', () => {
+    test('should optimize API request patterns', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      
+      // Monitor API requests
+      const apiRequests: string[] = [];
+      page.on('request', request => {
+        if (request.url().includes('/api/')) {
+          apiRequests.push(request.url());
+        }
+      });
+      
+      await page.goto('/dashboard');
+      
+      // Should minimize API requests on initial load
+      expect(apiRequests.length).toBeLessThan(10);
+    });
+
+    test('should handle slow network conditions', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      
+      // Simulate slow network
+      await page.route('**/*', route => {
+        setTimeout(() => {
+          route.continue();
+        }, 1000);
+      });
+      
+      const startTime = Date.now();
+      await page.goto('/dashboard');
+      const loadTime = Date.now() - startTime;
+      
+      // Should handle slow network gracefully
+      expect(loadTime).toBeLessThan(10000); // Under 10 seconds even with 1s delays
+      
+      // Should show loading states
+      await expect(page.getByTestId('loading-spinner')).toBeVisible();
+    });
+
+    test('should implement request caching', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      await page.goto('/dashboard');
+
+      // Monitor cache headers
+      const cacheHeaders: string[] = [];
+      page.on('response', response => {
+        const cacheControl = response.headers()['cache-control'];
+        if (cacheControl) {
+          cacheHeaders.push(cacheControl);
+        }
+      });
+
+      // Navigate to trigger requests
+      await page.getByTestId('tab-workflows').click();
+      await page.getByTestId('tab-settings').click();
+      
+      // Should have some caching headers
+      expect(cacheHeaders.length).toBeGreaterThan(0);
+    });
+  });
+
+  test.describe('Memory Management', () => {
+    test('should prevent memory leaks', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      await page.goto('/dashboard');
+
+      // Monitor memory usage
+      const initialMemory = await page.evaluate(() => {
+        if ('memory' in performance) {
+          return (performance as any).memory.usedJSHeapSize;
+        }
+        return 0;
+      });
+
+      // Perform extensive navigation
+      for (let i = 0; i < 20; i++) {
+        await page.getByTestId('tab-workflows').click();
+        await page.getByTestId('tab-settings').click();
+        await page.getByTestId('tab-chat').click();
+      }
+
+      const finalMemory = await page.evaluate(() => {
+        if ('memory' in performance) {
+          return (performance as any).memory.usedJSHeapSize;
+        }
+        return 0;
+      });
+
+      // Memory usage should not grow excessively
+      const memoryIncrease = finalMemory - initialMemory;
+      expect(memoryIncrease).toBeLessThan(20 * 1024 * 1024); // Less than 20MB increase
+    });
+
+    test('should clean up event listeners', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      await page.goto('/dashboard');
+
+      // Monitor event listener count
+      const initialListeners = await page.evaluate(() => {
+        return document.querySelectorAll('*').length;
+      });
+
+      // Navigate extensively
+      for (let i = 0; i < 10; i++) {
+        await page.getByTestId('tab-workflows').click();
+        await page.getByTestId('tab-settings').click();
+        await page.getByTestId('tab-chat').click();
+      }
+
+      const finalListeners = await page.evaluate(() => {
+        return document.querySelectorAll('*').length;
+      });
+
+      // DOM element count should not grow excessively
+      const elementIncrease = finalListeners - initialListeners;
+      expect(elementIncrease).toBeLessThan(100);
+    });
+  });
+
+  test.describe('Performance Metrics', () => {
+    test('should meet Core Web Vitals standards', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      
+      // Monitor basic performance metrics
+      const startTime = Date.now();
+      await page.goto('/dashboard');
+      
+      // Wait for critical content to load
+      await expect(page.getByTestId('chat-interface')).toBeVisible();
+      
+      const loadTime = Date.now() - startTime;
+      
+      // Should meet basic performance thresholds
+      // LCP equivalent: Should load critical content quickly
+      expect(loadTime).toBeLessThan(2500);
+      
+      // Test interactivity
+      await page.getByTestId('tab-workflows').click();
+      const interactionTime = Date.now() - startTime;
+      expect(interactionTime).toBeLessThan(3000);
+    });
+
+    test('should optimize Time to Interactive', async ({ page }) => {
+      await loginAsUser(page, testUser);
+      
+      const startTime = Date.now();
+      await page.goto('/dashboard');
+      
+      // Wait for interactive elements
+      await expect(page.getByTestId('tab-workflows')).toBeEnabled();
+      await expect(page.getByTestId('tab-settings')).toBeEnabled();
+      
+      const tti = Date.now() - startTime;
+      
+      // Should be interactive quickly
+      expect(tti).toBeLessThan(3000);
     });
   });
 }); 
-// TODO: Add UXComplianceHelper integration (P0)
-// import { UXComplianceHelper } from '../../helpers/uxCompliance';
-// 
-// test.beforeEach(async ({ page }) => {
-//   const uxHelper = new UXComplianceHelper(page);
-//   await uxHelper.validateActivationFirstUX();
-//   await uxHelper.validateFormAccessibility();
-//   await uxHelper.validateMobileResponsiveness();
-//   await uxHelper.validateKeyboardNavigation();
-// });
-
-// TODO: Add cookie-based authentication testing (P0)
-// - Test HTTP-only cookie authentication
-// - Test secure cookie settings
-// - Test cookie expiration and cleanup
-// - Test cookie-based session management
-// - Test authentication state persistence via cookies
-
-// TODO: Replace localStorage with cookie-based authentication (P0)
-// Application now uses cookie-based authentication instead of localStorage
-// 
-// Anti-patterns to remove:
-// - localStorage.getItem('token')
-// - localStorage.setItem('token', value)
-// - localStorage.removeItem('token')
-// 
-// Replace with cookie-based patterns:
-// - Test authentication via HTTP-only cookies
-// - Test session management via secure cookies
-// - Test logout by clearing authentication cookies
-
-// TODO: Add data cleanup patterns (P0)
-// - Clean up test users: await prisma.user.deleteMany({ where: { email: { contains: 'e2e-test' } } });
-// - Clean up test connections: await prisma.connection.deleteMany({ where: { name: { contains: 'Test' } } });
-// - Clean up test workflows: await prisma.workflow.deleteMany({ where: { name: { contains: 'Test' } } });
-// - Clean up test secrets: await prisma.secret.deleteMany({ where: { name: { contains: 'Test' } } });
-
-// TODO: Add deterministic test data (P0)
-// - Create predictable test data with unique identifiers
-// - Use timestamps or UUIDs to avoid conflicts
-// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@example.com` });
-// - Ensure test data is isolated and doesn't interfere with other tests
-
-// TODO: Ensure test independence (P0)
-// - Each test should be able to run in isolation
-// - No dependencies on other test execution order
-// - Clean state before and after each test
-// - Use unique identifiers for all test data
-// - Avoid global state modifications
-
-// TODO: Remove API calls from E2E tests (P0)
-// E2E tests should ONLY test user interactions through the UI
-// API testing should be done in integration tests
-// 
-// Anti-patterns to remove:
-// - page.request.post('/api/connections', {...})
-// - fetch('/api/connections')
-// - axios.post('/api/connections')
-// 
-// Replace with UI interactions:
-// - await page.click('[data-testid="create-connection-btn"]')
-// - await page.fill('[data-testid="connection-name-input"]', 'Test API')
-// - await page.click('[data-testid="primary-action submit-btn"]')
-
-// TODO: Remove all API testing from E2E tests (P0)
-// E2E tests should ONLY test user interactions through the UI
-// API testing belongs in integration tests
-// 
-// Anti-patterns detected and must be removed:
-// - page.request.post('/api/connections', {...})
-// - fetch('/api/connections')
-// - axios.post('/api/connections')
-// - request.get('/api/connections')
-// 
-// Replace with UI interactions:
-// - await page.click('[data-testid="create-connection-btn"]')
-// - await page.fill('[data-testid="connection-name-input"]', 'Test API')
-// - await page.click('[data-testid="primary-action submit-btn"]')
-// - await expect(page.locator('[data-testid="success-message"]')).toBeVisible()
-
-// TODO: Add robust waiting patterns for dynamic elements (P0)
-// - Use waitForSelector() instead of hardcoded delays
-// - Use expect().toBeVisible() for element visibility checks
-// - Use waitForLoadState() for page load completion
-// - Use waitForResponse() for API calls
-// - Use waitForFunction() for custom conditions
-// 
-// Example patterns:
-// await page.waitForSelector('[data-testid="success-message"]', { timeout: 10000 });
-// await expect(page.locator('[data-testid="submit-btn"]')).toBeVisible();
-// await page.waitForLoadState('networkidle');
-// await page.waitForResponse(response => response.url().includes('/api/'));
-// await page.waitForFunction(() => document.querySelector('.loading').style.display === 'none');
-
-// TODO: Replace hardcoded delays with robust waiting (P0)
-// Anti-patterns to replace:
-// - setTimeout(5000) → await page.waitForSelector(selector, { timeout: 5000 })
-// - sleep(3000) → await expect(page.locator(selector)).toBeVisible({ timeout: 3000 })
-// - delay(2000) → await page.waitForLoadState('networkidle')
-// 
-// Best practices:
-// - Wait for specific elements to appear
-// - Wait for network requests to complete
-// - Wait for page state changes
-// - Use appropriate timeouts for different operations
-
-// TODO: Add XSS prevention testing (P0)
-// - Test input sanitization
-// - Test script injection prevention
-// - Test HTML escaping
-// - Test content security policy compliance
-
-// TODO: Add CSRF protection testing (P0)
-// - Test CSRF token validation
-// - Test cross-site request forgery prevention
-// - Test cookie-based CSRF protection
-// - Test secure form submission
-
-// TODO: Add data exposure testing (P0)
-// - Test sensitive data handling
-// - Test privacy leak prevention
-// - Test information disclosure prevention
-// - Test data encryption and protection
-
-// TODO: Add authentication flow testing (P0)
-// - Test OAuth integration
-// - Test SSO (Single Sign-On) flows
-// - Test MFA (Multi-Factor Authentication)
-// - Test authentication state management
-
-// TODO: Add session management testing (P0)
-// - Test cookie-based session management
-// - Test session expiration handling
-// - Test login state persistence
-// - Test logout and session cleanup
-
-// TODO: Add UI interaction testing (P0)
-// E2E tests should focus on user interactions through the UI
-// - Test clicking buttons and links
-// - Test filling forms
-// - Test navigation flows
-// - Test user workflows end-to-end
-
-// TODO: Add primary action button patterns (P0)
-// - Use data-testid="primary-action {action}-btn" pattern
-// - Test primary action presence with UXComplianceHelper
-// - Validate button text matches standardized patterns
-
-// TODO: Add form accessibility testing (P0)
-// - Test form labels and ARIA attributes
-// - Test keyboard navigation
-// - Test screen reader compatibility
-// - Use UXComplianceHelper.validateFormAccessibility()

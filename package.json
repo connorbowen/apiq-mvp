@@ -96,7 +96,11 @@
     "test:e2e:workflow-engine:core-generation": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/core-workflow-generation.test.ts",
     "test:e2e:workflow-engine:multi-step-generation": "./scripts/kill-port-3000.sh && playwright test tests/e2e/workflow-engine/multi-step-workflow-generation.test.ts",
     "test:e2e:performance:load-testing": "./scripts/kill-port-3000.sh && playwright test tests/e2e/performance/load-testing.test.ts",
-    "test:e2e:onboarding:user-journey": "./scripts/kill-port-3000.sh && playwright test tests/e2e/onboarding/user-journey.test.ts"
+    "test:e2e:onboarding:user-journey": "./scripts/kill-port-3000.sh && playwright test tests/e2e/onboarding/user-journey.test.ts",
+    "test:evaluate": "node scripts/evaluate-all-tests.js",
+    "test:evaluate:e2e": "node scripts/evaluate-all-tests.js e2e",
+    "test:evaluate:integration": "node scripts/evaluate-all-tests.js integration",
+    "test:evaluate:unit": "node scripts/evaluate-all-tests.js unit"
   },
   "keywords": [
     "api",

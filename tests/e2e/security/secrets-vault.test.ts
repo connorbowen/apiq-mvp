@@ -134,10 +134,9 @@ test.describe('Secrets Vault E2E Tests', () => {
     // Wait for page to be stable
     await page.waitForLoadState('networkidle');
     
-    // Navigate to secrets tab - ensure it exists and is visible
-    const secretsTab = page.locator('[data-testid="tab-secrets"]');
-    await expect(secretsTab).toBeVisible({ timeout: 10000 });
-    await secretsTab.click();
+    // Navigate to secrets tab (now in settings)
+    await page.click('[data-testid="tab-settings"]');
+    await page.click('[data-testid="secrets-section"]');
     
     // Wait for secrets tab to load
     await page.waitForLoadState('networkidle');
@@ -672,8 +671,9 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Wait for the page to load
       await page.waitForLoadState('networkidle');
       
-      // Navigate to secrets tab again after reload
-      await page.click('[data-testid="tab-secrets"]');
+      // Navigate to secrets tab again after reload (now in settings)
+      await page.click('[data-testid="tab-settings"]');
+      await page.click('[data-testid="secrets-section"]');
       
       // Wait for secrets to load
       await page.waitForTimeout(2000);
