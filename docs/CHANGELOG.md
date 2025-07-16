@@ -1895,3 +1895,25 @@ _Updated by AI assistant, 2025-07-11_
     - `src/services/openApiService.ts` - Added TODO comments for discovery logic
     - `src/lib/api/parser.ts` - Added TODO comments for validation
   - **Next Steps**: Ready for implementation with comprehensive test coverage and E2E testing plan
+
+## [2025-07-16] - Secrets-First Refactor & E2E Enhancements
+
+### 🆕 Secrets-First Connection Management
+- All API connection creation, management, and rotation now use secrets vault by default
+- New `/api/connections/[id]/secrets` endpoint for per-connection secret management
+- Database schema: `Secret` model linked to `ApiConnection` with rotation and audit logging
+- UI/UX: Connection forms and management UI updated for secrets-first flows
+- E2E: `secrets-first-connection.test.ts` and updated `connections-management.test.ts` for secrets-first
+
+### 🆕 E2E Test Suite Enhancements
+- Added comprehensive E2E tests for secrets-first flows (creation, linking, rotation, rollback, audit)
+- New test scripts: `test:e2e:secrets-first` for targeted secrets-first runs
+
+### 🆕 Bug Fixes & Infrastructure
+- Fixed audit log errors (undefined IDs)
+- Expanded `CreateApiConnectionRequest` type for secrets-first
+- Improved error handling and rollback logic in backend
+
+### 🆕 Documentation
+- Updated all core documentation files for secrets-first, E2E, and implementation status
+- Synchronized test counts, pass rates, and compliance metrics
