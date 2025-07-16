@@ -43,12 +43,20 @@ export interface ApiConnection {
   baseUrl: string;
   authType: 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM';
   status: 'ACTIVE' | 'INACTIVE' | 'ERROR' | 'PENDING';
+  connectionStatus?: 'draft' | 'disconnected' | 'connecting' | 'connected' | 'error' | 'revoked';
   ingestionStatus: 'SUCCEEDED' | 'PENDING' | 'FAILED';
   endpointCount: number;
   lastUsed?: string;
   createdAt: string;
   updatedAt: string;
   authConfig?: any;
+  // TODO: [SECRETS-FIRST-REFACTOR] Add secret reference fields
+  secretId?: string;
+  secretReference?: {
+    id: string;
+    name: string;
+    type: string;
+  };
 }
 
 export interface CreateApiConnectionRequest {
@@ -63,6 +71,16 @@ export interface CreateApiConnectionRequest {
   clientId?: string;
   clientSecret?: string;
   redirectUri?: string;
+  // TODO: [SECRETS-FIRST-REFACTOR] Add secret-related fields
+  secretIds?: string[];
+  secretReferences?: {
+    apiKey?: string;
+    bearerToken?: string;
+    username?: string;
+    password?: string;
+    clientId?: string;
+    clientSecret?: string;
+  };
 }
 
 export interface UpdateApiConnectionRequest {
@@ -194,7 +212,37 @@ export interface AuditLog {
   createdAt: Date;
 }
 
-// API Credentials
+// Secrets Management
+export interface Secret {
+  id: string;
+  userId: string;
+  name: string;
+  type: 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH_USERNAME' | 'BASIC_AUTH_PASSWORD' | 'OAUTH2_CLIENT_ID' | 'OAUTH2_CLIENT_SECRET' | 'OAUTH2_ACCESS_TOKEN' | 'OAUTH2_REFRESH_TOKEN' | 'WEBHOOK_SECRET' | 'SSH_KEY' | 'CERTIFICATE' | 'CUSTOM';
+  description?: string;
+  connectionId?: string;
+  connectionName?: string;
+  version: number;
+  isActive: boolean;
+  expiresAt?: Date;
+  rotationEnabled: boolean;
+  rotationInterval?: number;
+  lastRotatedAt?: Date;
+  nextRotationAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateSecretRequest {
+  name: string;
+  type: 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH_USERNAME' | 'BASIC_AUTH_PASSWORD' | 'OAUTH2_CLIENT_ID' | 'OAUTH2_CLIENT_SECRET' | 'OAUTH2_ACCESS_TOKEN' | 'OAUTH2_REFRESH_TOKEN' | 'WEBHOOK_SECRET' | 'SSH_KEY' | 'CERTIFICATE' | 'CUSTOM';
+  value: string;
+  description?: string;
+  connectionId?: string;
+  enableRotation?: boolean;
+  rotationInterval?: number;
+}
+
+// API Credentials (Legacy - will be migrated to secrets)
 export interface ApiCredential {
   id: string;
   userId: string;

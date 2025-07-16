@@ -56,27 +56,27 @@ export interface CreateConnectionRequest {
   documentationUrl?: string;
   authConfig: any;
   // TODO: Add secret-related fields
-  // secretIds?: string[];
-  // secretReferences?: {
-  //   apiKey?: string;
-  //   bearerToken?: string;
-  //   username?: string;
-  //   password?: string;
-  //   clientId?: string;
-  //   clientSecret?: string;
-  // };
+  secretIds?: string[];
+  secretReferences?: {
+    apiKey?: string;
+    bearerToken?: string;
+    username?: string;
+    password?: string;
+    clientId?: string;
+    clientSecret?: string;
+  };
 }
 
 // TODO: [SECRETS-FIRST-REFACTOR] Add secret creation interface
-// export interface CreateSecretRequest {
-//   name: string;
-//   type: string;
-//   value: string;
-//   description?: string;
-//   connectionId?: string;
-//   enableRotation?: boolean;
-//   rotationInterval?: number;
-// }
+export interface CreateSecretRequest {
+  name: string;
+  type: 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH_USERNAME' | 'BASIC_AUTH_PASSWORD' | 'OAUTH2_CLIENT_ID' | 'OAUTH2_CLIENT_SECRET' | 'OAUTH2_ACCESS_TOKEN' | 'OAUTH2_REFRESH_TOKEN' | 'WEBHOOK_SECRET' | 'SSH_KEY' | 'CERTIFICATE' | 'CUSTOM';
+  value: string;
+  description?: string;
+  connectionId?: string;
+  enableRotation?: boolean;
+  rotationInterval?: number;
+}
 
 export interface ApiConnection {
   id: string;
@@ -93,31 +93,32 @@ export interface ApiConnection {
   updatedAt: string;
   authConfig?: any;
   // TODO: Add secret reference fields
-  // secretId?: string;
-  // secretReference?: {
-  //   id: string;
-  //   name: string;
-  //   type: string;
-  // };
+  secretId?: string;
+  secretReference?: {
+    id: string;
+    name: string;
+    type: string;
+  };
 }
 
 // TODO: [SECRETS-FIRST-REFACTOR] Add Secret interface
-// export interface Secret {
-//   id: string;
-//   name: string;
-//   type: string;
-//   description?: string;
-//   connectionId?: string;
-//   version: number;
-//   isActive: boolean;
-//   expiresAt?: string;
-//   rotationEnabled: boolean;
-//   rotationInterval?: number;
-//   lastRotatedAt?: string;
-//   nextRotationAt?: string;
-//   createdAt: string;
-//   updatedAt: string;
-// }
+export interface Secret {
+  id: string;
+  name: string;
+  type: 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH_USERNAME' | 'BASIC_AUTH_PASSWORD' | 'OAUTH2_CLIENT_ID' | 'OAUTH2_CLIENT_SECRET' | 'OAUTH2_ACCESS_TOKEN' | 'OAUTH2_REFRESH_TOKEN' | 'WEBHOOK_SECRET' | 'SSH_KEY' | 'CERTIFICATE' | 'CUSTOM';
+  description?: string;
+  connectionId?: string;
+  connectionName?: string;
+  version: number;
+  isActive: boolean;
+  expiresAt?: string;
+  rotationEnabled: boolean;
+  rotationInterval?: number;
+  lastRotatedAt?: string;
+  nextRotationAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // TODO: [SECRETS-FIRST-REFACTOR] Update API client methods
 class ApiClient {
@@ -181,15 +182,95 @@ class ApiClient {
       hasDocumentationUrl: !!data.documentationUrl
     });
     
-    // TODO: Implement secret-first connection creation
-    // 1. Create secrets based on auth type
-    // 2. Create connection with secret references
-    // 3. Handle rollback on failure
+    // Implement secret-first connection creation
+    const secretsToCreate: CreateSecretRequest[] = [];
+    const secretIds: string[] = [];
+    
+    // Create secrets based on auth type
+    if (data.authType === 'API_KEY' && data.authConfig?.apiKey) {
+      secretsToCreate.push({
+        name: `${data.name}_api_key`,
+        type: 'API_KEY',
+        value: data.authConfig.apiKey,
+        description: `API key for ${data.name}`,
+        enableRotation: false
+      });
+    } else if (data.authType === 'BEARER_TOKEN' && data.authConfig?.token) {
+      secretsToCreate.push({
+        name: `${data.name}_bearer_token`,
+        type: 'BEARER_TOKEN',
+        value: data.authConfig.token,
+        description: `Bearer token for ${data.name}`,
+        enableRotation: false
+      });
+    } else if (data.authType === 'BASIC_AUTH') {
+      if (data.authConfig?.username) {
+        secretsToCreate.push({
+          name: `${data.name}_username`,
+          type: 'BASIC_AUTH_USERNAME',
+          value: data.authConfig.username,
+          description: `Username for ${data.name}`,
+          enableRotation: false
+        });
+      }
+      if (data.authConfig?.password) {
+        secretsToCreate.push({
+          name: `${data.name}_password`,
+          type: 'BASIC_AUTH_PASSWORD',
+          value: data.authConfig.password,
+          description: `Password for ${data.name}`,
+          enableRotation: false
+        });
+      }
+    } else if (data.authType === 'OAUTH2') {
+      if (data.authConfig?.clientId) {
+        secretsToCreate.push({
+          name: `${data.name}_client_id`,
+          type: 'OAUTH2_CLIENT_ID',
+          value: data.authConfig.clientId,
+          description: `OAuth2 client ID for ${data.name}`,
+          enableRotation: false
+        });
+      }
+      if (data.authConfig?.clientSecret) {
+        secretsToCreate.push({
+          name: `${data.name}_client_secret`,
+          type: 'OAUTH2_CLIENT_SECRET',
+          value: data.authConfig.clientSecret,
+          description: `OAuth2 client secret for ${data.name}`,
+          enableRotation: false
+        });
+      }
+    }
+    
+    // Create secrets first
+    for (const secretData of secretsToCreate) {
+      const secretResponse = await this.createSecret(secretData);
+      if (secretResponse.success && secretResponse.data?.secret) {
+        secretIds.push(secretResponse.data.secret.id);
+      } else {
+        // Rollback: delete any created secrets
+        for (const createdSecretId of secretIds) {
+          await this.deleteSecret(createdSecretId);
+        }
+        return {
+          success: false,
+          error: `Failed to create secret: ${secretResponse.error}`
+        };
+      }
+    }
+    
+    // Update connection data to include secret references
+    const connectionData = {
+      ...data,
+      secretIds,
+      authConfig: {} // Clear sensitive data from authConfig
+    };
     
     const response = await this.request<{ connection: ApiConnection }>({
       method: 'POST',
       url: '/api/connections',
-      data,
+      data: connectionData,
     });
     
     console.log('🔍 DEBUG: apiClient.createConnection response:', response);
@@ -197,7 +278,7 @@ class ApiClient {
   }
 
   // TODO: [SECRETS-FIRST-REFACTOR] Add secret management methods
-  async createSecret(data: any): Promise<ApiResponse<{ secret: any }>> {
+  async createSecret(data: CreateSecretRequest): Promise<ApiResponse<{ secret: Secret }>> {
     return this.request({
       method: 'POST',
       url: '/api/secrets',
@@ -205,21 +286,21 @@ class ApiClient {
     });
   }
 
-  async getSecrets(): Promise<ApiResponse<{ secrets: any[] }>> {
+  async getSecrets(): Promise<ApiResponse<{ secrets: Secret[] }>> {
     return this.request({
       method: 'GET',
       url: '/api/secrets',
     });
   }
 
-  async getSecret(id: string): Promise<ApiResponse<{ secret: any }>> {
+  async getSecret(id: string): Promise<ApiResponse<{ secret: Secret }>> {
     return this.request({
       method: 'GET',
       url: `/api/secrets/${id}`,
     });
   }
 
-  async updateSecret(id: string, data: any): Promise<ApiResponse<{ secret: any }>> {
+  async updateSecret(id: string, data: Partial<CreateSecretRequest>): Promise<ApiResponse<{ secret: Secret }>> {
     return this.request({
       method: 'PUT',
       url: `/api/secrets/${id}`,
@@ -234,19 +315,36 @@ class ApiClient {
     });
   }
 
-  async rotateSecret(id: string): Promise<ApiResponse<{ secret: any }>> {
+  async rotateSecret(id: string): Promise<ApiResponse<{ secret: Secret }>> {
     return this.request({
       method: 'POST',
       url: `/api/secrets/${id}/rotate`,
     });
   }
 
+  // TODO: [SECRETS-FIRST-REFACTOR] Add connection-specific secret methods
+  async getSecretsForConnection(connectionId: string): Promise<ApiResponse<{ secrets: Secret[] }>> {
+    return this.request({
+      method: 'GET',
+      url: `/api/connections/${connectionId}/secrets`,
+    });
+  }
+
+  async linkSecretToConnection(secretId: string, connectionId: string): Promise<ApiResponse<{ secret: Secret }>> {
+    return this.request({
+      method: 'POST',
+      url: `/api/secrets/${secretId}/link`,
+      data: { connectionId },
+    });
+  }
+
   // TODO: [SECRETS-FIRST-REFACTOR] Update test connection to use secrets
   async testConnectionConfig(config: any): Promise<ApiResponse<any>> {
     // TODO: Implement test using secrets instead of direct credentials
+    // This method should retrieve secrets and use them for testing
     return this.request({
       method: 'POST',
-      url: '/api/connections/test-config',
+      url: '/api/connections/test',
       data: config,
     });
   }

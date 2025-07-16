@@ -20,7 +20,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
 import { handleApiError } from '../../../src/middleware/errorHandler';
 import { logInfo, logError } from '../../../src/utils/logger';
-import { CreateApiConnectionRequest } from '../../../src/types';
+import { CreateApiConnectionRequest, CreateSecretRequest } from '../../../src/types';
 import { parseOpenApiSpecData, ParseError } from '../../../src/lib/api/parser';
 import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
@@ -29,6 +29,101 @@ import { ConnectionStatus } from '../../../src/generated/prisma';
 import { validateOpenApiConnection, validateOpenApiSpec } from '../../../src/lib/api/validation';
 import { rateLimiters } from '../../../src/middleware/rateLimiter';
 import { createRateLimiter } from '../../../src/middleware/rateLimiter';
+import { secretsVault } from '../../../src/lib/secrets/secretsVault';
+
+/**
+ * Create secrets from connection authentication data
+ */
+async function createSecretsFromConnection(
+  userId: string,
+  connectionName: string,
+  authType: string,
+  authConfig: any
+): Promise<{ secretIds: string[]; errors: string[] }> {
+  const secretIds: string[] = [];
+  const errors: string[] = [];
+
+  try {
+    const secretsToCreate: CreateSecretRequest[] = [];
+
+    // Create secrets based on auth type
+    if (authType === 'API_KEY' && authConfig?.apiKey) {
+      secretsToCreate.push({
+        name: `${connectionName}_api_key`,
+        type: 'API_KEY',
+        value: authConfig.apiKey,
+        description: `API key for ${connectionName}`,
+        enableRotation: false
+      });
+    } else if (authType === 'BEARER_TOKEN' && authConfig?.token) {
+      secretsToCreate.push({
+        name: `${connectionName}_bearer_token`,
+        type: 'BEARER_TOKEN',
+        value: authConfig.token,
+        description: `Bearer token for ${connectionName}`,
+        enableRotation: false
+      });
+    } else if (authType === 'BASIC_AUTH') {
+      if (authConfig?.username) {
+        secretsToCreate.push({
+          name: `${connectionName}_username`,
+          type: 'BASIC_AUTH_USERNAME',
+          value: authConfig.username,
+          description: `Username for ${connectionName}`,
+          enableRotation: false
+        });
+      }
+      if (authConfig?.password) {
+        secretsToCreate.push({
+          name: `${connectionName}_password`,
+          type: 'BASIC_AUTH_PASSWORD',
+          value: authConfig.password,
+          description: `Password for ${connectionName}`,
+          enableRotation: false
+        });
+      }
+    } else if (authType === 'OAUTH2') {
+      if (authConfig?.clientId) {
+        secretsToCreate.push({
+          name: `${connectionName}_client_id`,
+          type: 'OAUTH2_CLIENT_ID',
+          value: authConfig.clientId,
+          description: `OAuth2 client ID for ${connectionName}`,
+          enableRotation: false
+        });
+      }
+      if (authConfig?.clientSecret) {
+        secretsToCreate.push({
+          name: `${connectionName}_client_secret`,
+          type: 'OAUTH2_CLIENT_SECRET',
+          value: authConfig.clientSecret,
+          description: `OAuth2 client secret for ${connectionName}`,
+          enableRotation: false
+        });
+      }
+    }
+
+    // Create secrets
+    for (const secretData of secretsToCreate) {
+      try {
+        const secret = await secretsVault.storeSecret(
+          userId,
+          secretData.name,
+          { value: secretData.value, metadata: { description: secretData.description } },
+          secretData.type
+        );
+        secretIds.push(secret.id);
+      } catch (error) {
+        errors.push(`Failed to create secret ${secretData.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
+    return { secretIds, errors };
+  } catch (error) {
+    errors.push(`Secret creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return { secretIds, errors };
+  }
+}
 
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   console.log('🔍 Handler called with method:', req.method);
@@ -90,7 +185,10 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         lastUsed: connection.lastTested || connection.updatedAt,
         // Metadata fields
         createdAt: connection.createdAt,
-        updatedAt: connection.updatedAt
+        updatedAt: connection.updatedAt,
+        // TODO: [SECRETS-FIRST-REFACTOR] Include secret information
+        secretId: connection.secretId,
+        hasSecrets: !!connection.secretId
       }));
 
       logInfo('Retrieved API connections', { 
@@ -246,16 +344,37 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       // Create the API connection with PENDING ingestion status
       let newConnection: any;
       let endpointCount: number = 0;
+      let createdSecretIds: string[] = [];
 
       try {
         // Use a transaction to ensure atomicity
         await prisma.$transaction(async (tx) => {
+          // TODO: [SECRETS-FIRST-REFACTOR] Create secrets first if auth data is provided
+          if (connectionData.authConfig && Object.keys(connectionData.authConfig).length > 0) {
+            const { secretIds, errors } = await createSecretsFromConnection(
+              user.id,
+              connectionData.name,
+              connectionData.authType,
+              connectionData.authConfig
+            );
+            
+            if (errors.length > 0) {
+              logError('Secret creation errors during connection creation', new Error(errors.join('; ')), {
+                userId: user.id,
+                connectionName: connectionData.name,
+                errors
+              });
+            }
+            
+            createdSecretIds = secretIds;
+          }
+
           // Determine initial connection status based on auth type
           const initialConnectionStatus = connectionData.authType === 'OAUTH2' 
             ? ConnectionStatus.disconnected 
             : ConnectionStatus.connected;
 
-          // Create the API connection
+          // Create the API connection with secret reference
           newConnection = await tx.apiConnection.create({
             data: {
               userId: user.id,
@@ -267,7 +386,9 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               documentationUrl: connectionData.documentationUrl,
               status: 'ACTIVE',
               connectionStatus: initialConnectionStatus,
-              ingestionStatus: 'PENDING'
+              ingestionStatus: 'PENDING',
+              // TODO: [SECRETS-FIRST-REFACTOR] Link to primary secret if created
+              secretId: createdSecretIds.length > 0 ? createdSecretIds[0] : null
             }
           });
 
@@ -376,7 +497,10 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
             createdAt: finalConnection?.createdAt,
             updatedAt: finalConnection?.updatedAt,
             endpointCount,
-            lastUsed: finalConnection?.updatedAt
+            lastUsed: finalConnection?.updatedAt,
+            // TODO: [SECRETS-FIRST-REFACTOR] Include secret information
+            secretId: finalConnection?.secretId,
+            createdSecretIds
           },
           message: 'API connection created successfully'
         });

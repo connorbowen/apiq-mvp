@@ -37,7 +37,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { apiClient, ApiConnection } from '../../lib/api/client';
 import CreateConnectionModal from './CreateConnectionModal';
 import EditConnectionModal from './EditConnectionModal';
@@ -51,7 +51,7 @@ interface ConnectionsTabProps {
   onConnectionError: (error: string) => void;
 }
 
-export default function ConnectionsTab({ 
+function ConnectionsTab({ 
   connections, 
   onConnectionCreated, 
   onConnectionEdited, 
@@ -75,6 +75,20 @@ export default function ConnectionsTab({
 
   // Add debugging for connections prop
   console.info('[connections-tab] ConnectionsTab rendered with connections:', {
+    count: connections.length,
+    connections: connections.map(c => ({ id: c.id, name: c.name, authType: c.authType }))
+  });
+
+  // Add useEffect to monitor connections prop changes
+  useEffect(() => {
+    console.info('[connections-tab] Connections prop changed:', {
+      count: connections.length,
+      connections: connections.map(c => ({ id: c.id, name: c.name, authType: c.authType }))
+    });
+  }, [connections]);
+
+  // Add debugging to see when component re-renders
+  console.info('[connections-tab] ConnectionsTab re-rendered with connections:', {
     count: connections.length,
     connections: connections.map(c => ({ id: c.id, name: c.name, authType: c.authType }))
   });
@@ -686,4 +700,6 @@ export default function ConnectionsTab({
       )}
     </div>
   );
-} 
+}
+
+export default memo(ConnectionsTab); 

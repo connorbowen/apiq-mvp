@@ -24,7 +24,7 @@ export interface SecretMetadata {
   id: string;
   userId: string;
   name: string;
-  type: 'api_key' | 'oauth2_token' | 'webhook_secret' | 'database_password' | 'password' | 'ssh_key' | 'certificate' | 'custom';
+  type: 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH_USERNAME' | 'BASIC_AUTH_PASSWORD' | 'OAUTH2_CLIENT_ID' | 'OAUTH2_CLIENT_SECRET' | 'OAUTH2_ACCESS_TOKEN' | 'OAUTH2_REFRESH_TOKEN' | 'WEBHOOK_SECRET' | 'SSH_KEY' | 'CERTIFICATE' | 'CUSTOM';
   keyId: string;
   isActive: boolean;
   expiresAt?: Date;
@@ -36,6 +36,9 @@ export interface SecretMetadata {
   lastRotatedAt?: Date;
   nextRotationAt?: Date;
   rotationHistory?: any[];
+  // TODO: [SECRETS-FIRST-REFACTOR] Add connection reference fields to SecretMetadata interface
+  connectionId?: string; // Reference to ApiConnection if this secret is connection-specific
+  connectionName?: string; // Human-readable connection name for display
 }
 
 export interface SecretData {
@@ -165,7 +168,7 @@ export class SecretsVault {
     userId: string,
     name: string,
     secretData: SecretData,
-    type: SecretMetadata['type'] = 'custom',
+    type: SecretMetadata['type'] = 'CUSTOM',
     expiresAt?: Date,
     rotationConfig?: {
       rotationEnabled?: boolean;
@@ -173,7 +176,9 @@ export class SecretsVault {
       lastRotatedAt?: Date;
       nextRotationAt?: Date;
       rotationHistory?: any[];
-    }
+    },
+    connectionId?: string,
+    connectionName?: string
   ): Promise<SecretMetadata> {
     try {
       // Validate and sanitize inputs
@@ -187,7 +192,7 @@ export class SecretsVault {
       this.checkRateLimit(userId);
 
       // Validate type
-      const validTypes = ['api_key', 'oauth2_token', 'webhook_secret', 'database_password', 'password', 'ssh_key', 'certificate', 'custom'];
+      const validTypes = ['API_KEY', 'BEARER_TOKEN', 'BASIC_AUTH_USERNAME', 'BASIC_AUTH_PASSWORD', 'OAUTH2_CLIENT_ID', 'OAUTH2_CLIENT_SECRET', 'OAUTH2_ACCESS_TOKEN', 'OAUTH2_REFRESH_TOKEN', 'WEBHOOK_SECRET', 'SSH_KEY', 'CERTIFICATE', 'CUSTOM'];
       if (!validTypes.includes(type)) {
         throw new Error(`Invalid secret type: must be one of ${validTypes.join(', ')}`);
       }
@@ -247,7 +252,9 @@ export class SecretsVault {
             rotationInterval: rotationConfig?.rotationInterval ?? null,
             lastRotatedAt: rotationConfig?.lastRotatedAt ?? new Date(),
             nextRotationAt: rotationConfig?.nextRotationAt ?? null,
-            rotationHistory: rotationConfig?.rotationHistory ? JSON.parse(JSON.stringify(rotationConfig.rotationHistory)) : []
+            rotationHistory: rotationConfig?.rotationHistory ? JSON.parse(JSON.stringify(rotationConfig.rotationHistory)) : [],
+            connectionId,
+            metadata: connectionName ? { connectionName } : undefined
           }
         });
 
@@ -593,6 +600,7 @@ export class SecretsVault {
    */
   private mapToSecretMetadata(secret: any, type: SecretMetadata['type']): SecretMetadata & { description?: string } {
     let description: string | undefined = undefined;
+    let connectionName: string | undefined = undefined;
     try {
       if (secret.encryptedData && secret.keyId) {
         const decrypted = this.decrypt(secret.encryptedData, secret.keyId);
@@ -600,6 +608,10 @@ export class SecretsVault {
         if (parsed && typeof parsed === 'object' && parsed.metadata && parsed.metadata.description) {
           description = parsed.metadata.description;
         }
+      }
+      // Extract connection name from metadata
+      if (secret.metadata && typeof secret.metadata === 'object') {
+        connectionName = secret.metadata.connectionName;
       }
     } catch (e) {
       // Ignore decryption/parse errors for description
@@ -620,6 +632,8 @@ export class SecretsVault {
       lastRotatedAt: secret.lastRotatedAt,
       nextRotationAt: secret.nextRotationAt,
       rotationHistory: secret.rotationHistory,
+      connectionId: secret.connectionId,
+      connectionName,
       ...(description ? { description } : {})
     };
   }
@@ -657,8 +671,12 @@ export class SecretsVault {
         }
       });
 
-      console.log('Audit log entry created successfully:', auditLog.id);
-      logInfo('Audit log entry created', { auditLogId: auditLog.id, userId, action: actionText, resource: secretName });
+      if (auditLog && auditLog.id) {
+        console.log('Audit log entry created successfully:', auditLog.id);
+        logInfo('Audit log entry created', { auditLogId: auditLog.id, userId, action: actionText, resource: secretName });
+      } else {
+        console.log('Audit log entry created successfully: undefined');
+      }
     } catch (error) {
       console.error('Failed to create audit log entry:', error);
       logError('Failed to log secret access', error instanceof Error ? error : new Error(String(error)));
@@ -715,6 +733,257 @@ export class SecretsVault {
         keyCount: 0,
         activeSecrets: 0
       };
+    }
+  }
+
+  // TODO: [SECRETS-FIRST-REFACTOR] Add methods to link secrets to connections
+  /**
+   * Link a secret to a connection
+   */
+  async linkSecretToConnection(
+    userId: string,
+    secretName: string,
+    connectionId: string,
+    connectionName?: string
+  ): Promise<SecretMetadata> {
+    try {
+      // Validate inputs
+      if (!userId || !secretName || !connectionId) {
+        throw new Error('userId, secretName, and connectionId are required');
+      }
+
+      // Check if connection exists
+      const connection = await this.prisma.apiConnection.findUnique({
+        where: { id: connectionId, userId }
+      });
+
+      if (!connection) {
+        throw new Error(`Connection ${connectionId} not found`);
+      }
+
+      // Update the secret with connection reference
+      const updatedSecret = await this.prisma.secret.update({
+        where: { userId_name: { userId, name: secretName } },
+        data: {
+          connectionId,
+          metadata: {
+            ...(connectionName && { connectionName }),
+            linkedAt: new Date().toISOString()
+          }
+        }
+      });
+
+      // Log the action
+      await this.logSecretAccess(userId, 'SECRET_LINKED', secretName);
+
+      return this.mapToSecretMetadata(updatedSecret, updatedSecret.type as SecretMetadata['type']);
+    } catch (error) {
+      logError('Failed to link secret to connection', error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
+  }
+
+  /**
+   * Get all secrets for a specific connection
+   */
+  async getSecretsForConnection(userId: string, connectionId: string): Promise<SecretMetadata[]> {
+    try {
+      const secrets = await this.prisma.secret.findMany({
+        where: {
+          userId,
+          connectionId,
+          isActive: true
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      return secrets.map(secret => 
+        this.mapToSecretMetadata(secret, secret.type as SecretMetadata['type'])
+      );
+    } catch (error) {
+      logError('Failed to get secrets for connection', error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
+  }
+
+  /**
+   * Create a secret from connection data
+   */
+  async createSecretFromConnection(
+    userId: string,
+    connectionId: string,
+    secretName: string,
+    secretData: SecretData,
+    type: SecretMetadata['type'],
+    connectionName?: string
+  ): Promise<SecretMetadata> {
+    try {
+      // Validate connection exists
+      const connection = await this.prisma.apiConnection.findUnique({
+        where: { id: connectionId, userId }
+      });
+
+      if (!connection) {
+        throw new Error(`Connection ${connectionId} not found`);
+      }
+
+      // Create the secret with connection reference
+      const secret = await this.storeSecret(
+        userId,
+        secretName,
+        secretData,
+        type,
+        undefined, // expiresAt
+        undefined, // rotationConfig
+        connectionId,
+        connectionName || connection.name
+      );
+
+      return secret;
+    } catch (error) {
+      logError('Failed to create secret from connection', error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
+  }
+
+  /**
+   * Validate secret-connection relationship
+   */
+  async validateSecretConnectionRelationship(
+    userId: string,
+    secretName: string,
+    connectionId: string
+  ): Promise<{ isValid: boolean; issues: string[] }> {
+    const issues: string[] = [];
+
+    try {
+      // Check if secret exists and belongs to user
+      const secret = await this.prisma.secret.findUnique({
+        where: { userId_name: { userId, name: secretName } }
+      });
+
+      if (!secret) {
+        issues.push(`Secret ${secretName} not found`);
+        return { isValid: false, issues };
+      }
+
+      // Check if connection exists and belongs to user
+      const connection = await this.prisma.apiConnection.findUnique({
+        where: { id: connectionId, userId }
+      });
+
+      if (!connection) {
+        issues.push(`Connection ${connectionId} not found`);
+        return { isValid: false, issues };
+      }
+
+      // Check if secret is already linked to this connection
+      if (secret.connectionId && secret.connectionId !== connectionId) {
+        issues.push(`Secret is already linked to connection ${secret.connectionId}`);
+      }
+
+      // Check if connection already has a secret of this type
+      const existingSecret = await this.prisma.secret.findFirst({
+        where: {
+          userId,
+          connectionId,
+          type: secret.type,
+          isActive: true
+        }
+      });
+
+      if (existingSecret && existingSecret.name !== secretName) {
+        issues.push(`Connection already has a ${secret.type} secret: ${existingSecret.name}`);
+      }
+
+      return {
+        isValid: issues.length === 0,
+        issues
+      };
+    } catch (error) {
+      issues.push(`Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return { isValid: false, issues };
+    }
+  }
+
+  /**
+   * Migrate existing connection credentials to secrets
+   */
+  async migrateConnectionCredentialsToSecrets(userId: string, connectionId: string): Promise<{
+    success: boolean;
+    secretsCreated: string[];
+    errors: string[];
+  }> {
+    const secretsCreated: string[] = [];
+    const errors: string[] = [];
+
+    try {
+      // Get the connection with its credentials
+      const connection = await this.prisma.apiConnection.findUnique({
+        where: { id: connectionId, userId },
+        include: {
+          credentials: true
+        }
+      });
+
+      if (!connection) {
+        errors.push(`Connection ${connectionId} not found`);
+        return { success: false, secretsCreated, errors };
+      }
+
+      // Migrate each credential to a secret
+      for (const credential of connection.credentials) {
+        try {
+          // Decrypt the credential data
+          const decryptedData = this.decrypt(credential.encryptedData, credential.keyId);
+          const parsedData = JSON.parse(decryptedData);
+
+          // Create a secret name based on connection and credential type
+          const secretName = `${connection.name}_${credential.id}`;
+
+          // Determine secret type based on auth type
+          let secretType: SecretMetadata['type'] = 'CUSTOM';
+          switch (connection.authType) {
+            case 'API_KEY':
+              secretType = 'API_KEY';
+              break;
+            case 'BEARER_TOKEN':
+              secretType = 'BEARER_TOKEN';
+              break;
+            case 'BASIC_AUTH':
+              secretType = 'BASIC_AUTH_USERNAME'; // We'll create separate secrets for username/password
+              break;
+            case 'OAUTH2':
+              secretType = 'OAUTH2_CLIENT_ID';
+              break;
+            default:
+              secretType = 'CUSTOM';
+          }
+
+          // Create the secret
+          await this.createSecretFromConnection(
+            userId,
+            connectionId,
+            secretName,
+            { value: parsedData.value || parsedData, metadata: parsedData.metadata },
+            secretType,
+            connection.name
+          );
+
+          secretsCreated.push(secretName);
+        } catch (error) {
+          errors.push(`Failed to migrate credential ${credential.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      return {
+        success: errors.length === 0,
+        secretsCreated,
+        errors
+      };
+    } catch (error) {
+      errors.push(`Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return { success: false, secretsCreated, errors };
     }
   }
 }

@@ -94,12 +94,12 @@ describe('SecretsVault', () => {
 
     it('should validate secret type', async () => {
       await expect(secretsVault.storeSecret(testUserId, testSecretName, { value: testSecretValue }, 'invalid_type' as any))
-        .rejects.toThrow('Invalid secret type: must be one of api_key, oauth2_token, webhook_secret, database_password, password, ssh_key, certificate, custom');
+        .rejects.toThrow('Invalid secret type: must be one of API_KEY, BEARER_TOKEN, BASIC_AUTH_USERNAME, BASIC_AUTH_PASSWORD, OAUTH2_CLIENT_ID, OAUTH2_CLIENT_SECRET, OAUTH2_ACCESS_TOKEN, OAUTH2_REFRESH_TOKEN, WEBHOOK_SECRET, SSH_KEY, CERTIFICATE, CUSTOM');
     });
 
     it('should validate expiration date is in the future', async () => {
       const pastDate = new Date(Date.now() - 1000);
-      await expect(secretsVault.storeSecret(testUserId, testSecretName, { value: testSecretValue }, 'api_key', pastDate))
+      await expect(secretsVault.storeSecret(testUserId, testSecretName, { value: testSecretValue }, 'API_KEY', pastDate))
         .rejects.toThrow('Expiration date must be in the future');
     });
   });
@@ -111,7 +111,7 @@ describe('SecretsVault', () => {
         id: 'secret-1',
         userId: testUserId,
         name: testSecretName,
-        type: 'api_key',
+        type: 'API_KEY',
         encryptedData: 'encrypted-data',
         keyId: 'key-1',
         isActive: true,
@@ -131,7 +131,7 @@ describe('SecretsVault', () => {
         id: 'secret-1',
         userId: testUserId,
         name: testSecretName,
-        type: 'api_key',
+        type: 'API_KEY',
         encryptedData: 'encrypted-data',
         keyId: 'key-1',
         isActive: true,
@@ -160,7 +160,7 @@ describe('SecretsVault', () => {
         id: 'secret-1',
         userId: testUserId,
         name: testSecretName,
-        type: 'api_key',
+        type: 'API_KEY',
         encryptedData: 'encrypted-data',
         keyId: 'key-1',
         isActive: true,
@@ -199,7 +199,7 @@ describe('SecretsVault', () => {
         id: 'secret-1',
         userId: testUserId,
         name: testSecretName,
-        type: 'api_key',
+        type: 'API_KEY',
         encryptedData: 'encrypted-data',
         keyId: 'key-1',
         isActive: true,
@@ -265,7 +265,7 @@ describe('SecretsVault', () => {
         id: 'secret-1',
         userId: testUserId,
         name: testSecretName,
-        type: 'api_key',
+        type: 'API_KEY',
         encryptedData: 'encrypted-data',
         keyId: 'key-1',
         isActive: true,

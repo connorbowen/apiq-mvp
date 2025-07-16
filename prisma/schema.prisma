@@ -108,20 +108,20 @@ enum ConnectionStatus {
 }
 
 // TODO: [SECRETS-FIRST-REFACTOR] Add SecretType enum for better type safety
-// enum SecretType {
-//   API_KEY
-//   BEARER_TOKEN
-//   BASIC_AUTH_USERNAME
-//   BASIC_AUTH_PASSWORD
-//   OAUTH2_CLIENT_ID
-//   OAUTH2_CLIENT_SECRET
-//   OAUTH2_ACCESS_TOKEN
-//   OAUTH2_REFRESH_TOKEN
-//   WEBHOOK_SECRET
-//   SSH_KEY
-//   CERTIFICATE
-//   CUSTOM
-// }
+enum SecretType {
+  API_KEY
+  BEARER_TOKEN
+  BASIC_AUTH_USERNAME
+  BASIC_AUTH_PASSWORD
+  OAUTH2_CLIENT_ID
+  OAUTH2_CLIENT_SECRET
+  OAUTH2_ACCESS_TOKEN
+  OAUTH2_REFRESH_TOKEN
+  WEBHOOK_SECRET
+  SSH_KEY
+  CERTIFICATE
+  CUSTOM
+}
 
 // User Management
 model User {
@@ -135,6 +135,19 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  // Profile fields
+  firstName    String?
+  lastName     String?
+  avatar       String? // URL to profile picture
+  timezone     String? @default("UTC")
+  language     String? @default("en")
+  emailVerified Boolean @default(false)
+  emailVerifiedAt DateTime?
+  
+  // Preferences
+  notificationsEnabled Boolean @default(true)
+  marketingEmailsEnabled Boolean @default(false)
+  
   // SSO Provider Integration
   provider       String? // "okta" | "google" | "azure" | "generic" | "credentials"
   providerUserId String? // External user ID from provider
@@ -175,8 +188,7 @@ model ApiConnection {
   updatedAt        DateTime         @updatedAt
 
   // TODO: [SECRETS-FIRST-REFACTOR] Add secretId field to reference Secret instead of storing credentials in authConfig
-  // secretId String? // Reference to the primary secret for this connection
-  // secretReference Secret? @relation(fields: [secretId], references: [id])
+  secretId String? // Reference to the primary secret for this connection
 
   // Relations
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -362,7 +374,7 @@ model Secret {
   id            String    @id @default(cuid())
   userId        String
   name          String
-  type          String // api_key, oauth2_token, webhook_secret, custom
+  type          SecretType // Use the SecretType enum for better type safety
   encryptedData String // Encrypted secret data
   keyId         String // Encryption key identifier
   version       Int       @default(1) // Secret version for rotation tracking
@@ -371,8 +383,7 @@ model Secret {
   metadata      Json? // Additional metadata about the secret
 
   // TODO: [SECRETS-FIRST-REFACTOR] Add connectionId field to link secrets to connections
-  // connectionId String? // Reference to ApiConnection if this secret is connection-specific
-  // connection   ApiConnection? @relation(fields: [connectionId], references: [id])
+  connectionId String? // Reference to ApiConnection if this secret is connection-specific
 
   // API Key Rotation Fields
   rotationEnabled  Boolean   @default(false) // Whether automatic rotation is enabled
@@ -388,6 +399,9 @@ model Secret {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, name])
+  @@index([userId, type]) // Index for filtering secrets by user and type
+  @@index([connectionId]) // Index for connection-specific secret lookups
+  @@index([userId, connectionId]) // Composite index for user's connection secrets
   @@map("secrets")
 }
 

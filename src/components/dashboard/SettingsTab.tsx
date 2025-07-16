@@ -35,6 +35,8 @@
 import React, { useState } from 'react';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 import ProgressiveDisclosure from '../ProgressiveDisclosure';
+import ProfileTab from './ProfileTab';
+import PasswordChangeForm from './PasswordChangeForm';
 
 type SettingsSection = 'connections' | 'secrets' | 'account' | 'preferences';
 
@@ -177,39 +179,9 @@ export default function SettingsTab({
         )}
 
         {activeSection === 'account' && (
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Account Settings</h3>
-            <div className="bg-white shadow rounded-lg p-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <input
-                    type="text"
-                    value={user?.name || ''}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    value={user?.email || ''}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Role</label>
-                  <input
-                    type="text"
-                    value={user?.role || ''}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
+          <div className="space-y-8">
+            <ProfileTab user={user} onProfileUpdated={onConnectionCreated} />
+            <PasswordChangeForm onPasswordChanged={onConnectionCreated} />
           </div>
         )}
 

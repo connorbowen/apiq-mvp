@@ -248,7 +248,11 @@ export class NaturalLanguageWorkflowService {
                 id: { type: 'string', description: 'Unique step ID' },
                 name: { type: 'string', description: 'Step name' },
                 type: { type: 'string', enum: ['api_call', 'data_transform', 'condition', 'webhook'], description: 'Step type' },
-                apiConnectionId: { type: 'string', description: 'API connection ID (if applicable)' },
+                apiConnectionId: { 
+                  type: 'string', 
+                  description: 'API connection ID (must be one of the available connection IDs)',
+                  enum: connections.map(conn => conn.id)
+                },
                 endpoint: { type: 'string', description: 'API endpoint (if applicable)' },
                 method: { type: 'string', description: 'HTTP method (if applicable)' },
                 parameters: { type: 'object', description: 'Parameters for the step' },
@@ -285,7 +289,7 @@ export class NaturalLanguageWorkflowService {
         }
         functions.push({
           name: finalFunctionName,
-          description: `${endpoint.summary} using ${connection.name}`,
+          description: `${endpoint.summary} using ${connection.name} (Connection ID: ${connection.id})`,
           parameters: {
             type: 'object',
             properties: {
@@ -455,12 +459,15 @@ export class NaturalLanguageWorkflowService {
 
 IMPORTANT: Always generate MULTI-STEP workflows for complex requests. Break down complex workflows into 2-5 logical steps.
 
+CRITICAL: When creating API call steps, you MUST use the exact connection IDs provided in the available connections. The apiConnectionId field must match one of the connection IDs from the available connections list.
+
 WORKFLOW PLANNING RULES:
 1. For complex requests, create multiple steps (2-5 steps)
 2. Each step should have a clear purpose and action
 3. Steps should flow logically from one to the next
 4. Use data mapping between steps when possible
 5. Include conditional logic when appropriate
+6. For API calls, use the exact connection ID from the available connections
 
 COMMON WORKFLOW PATTERNS:
 - Webhook → Transform → Action (3 steps)
@@ -469,7 +476,7 @@ COMMON WORKFLOW PATTERNS:
 - Trigger → Validate → Execute → Confirm (4 steps)
 
 STEP TYPES:
-- api_call: Make an API request
+- api_call: Make an API request (requires valid apiConnectionId)
 - data_transform: Transform data between steps
 - condition: Add conditional logic
 - webhook: Set up webhook monitoring
@@ -479,28 +486,34 @@ DATA FLOW:
 - Use JSON path expressions for data mapping
 - Include data validation between steps
 
+CONNECTION ID REQUIREMENTS:
+- For api_call steps, the apiConnectionId must be one of the available connection IDs
+- Do not use hardcoded or example connection IDs
+- Use the exact connection ID from the available connections list
+
 EXAMPLES:
 User: "When a new GitHub issue is created, send a Slack notification and create a Trello card"
 Steps:
 1. Monitor GitHub issues (webhook)
-2. Send Slack notification (api_call)
-3. Create Trello card (api_call)
+2. Send Slack notification (api_call with correct connection ID)
+3. Create Trello card (api_call with correct connection ID)
 
 User: "When a customer places an order, create invoice, send email, update inventory"
 Steps:
 1. Monitor orders (webhook)
-2. Create invoice in QuickBooks (api_call)
-3. Send confirmation email (api_call)
-4. Update inventory in Shopify (api_call)
+2. Create invoice in QuickBooks (api_call with correct connection ID)
+3. Send confirmation email (api_call with correct connection ID)
+4. Update inventory in Shopify (api_call with correct connection ID)
 
-Available API endpoints are provided as functions. Use the most appropriate endpoints for each step.
+Available API endpoints are provided as functions. Use the most appropriate endpoints for each step and ensure you use the correct connection IDs.
 
 Generate workflows that are:
 - Practical and executable
 - Well-structured with clear step purposes
 - Include proper data flow between steps
 - Handle errors gracefully
-- Follow best practices for workflow automation`;
+- Follow best practices for workflow automation
+- Use valid connection IDs for all API calls`;
   }
 
   /**

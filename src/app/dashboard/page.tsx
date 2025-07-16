@@ -159,7 +159,11 @@ export default function DashboardPage() {
           authType: c.authType,
           status: c.status
         })));
+        
+        // Add debugging to see if setConnections is actually called
+        console.info('[dashboard] About to call setConnections with', connections.length, 'connections');
         setConnections(connections);
+        console.info('[dashboard] setConnections called successfully');
         
         // Clear any error messages if connections load successfully
         if (connections.length > 0) {
@@ -248,6 +252,14 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Monitor connections state changes
+  useEffect(() => {
+    console.info('[dashboard] Connections state changed:', {
+      count: connections.length,
+      connections: connections.map(c => ({ id: c.id, name: c.name, authType: c.authType }))
+    });
+  }, [connections]);
+
   // Load initial data
   useEffect(() => {
     console.info('[dashboard] DashboardPage useEffect triggered - loading initial data');
@@ -257,7 +269,7 @@ export default function DashboardPage() {
     loadUser();
   }, [loadConnections, loadWorkflows, loadSecrets, loadUser]);
 
-  // Real-time updates with faster polling for immediate feedback
+  // Real-time updates with slower polling to avoid conflicts
   useEffect(() => {
     // Initial load
     loadConnections();
@@ -265,30 +277,15 @@ export default function DashboardPage() {
     loadSecrets();
     handleOAuth2Callback();
     
-    // Fast polling for real-time updates (every 2 seconds for first 30 seconds)
-    const fastInterval = setInterval(() => {
+    // Slower polling to avoid conflicts with manual updates
+    const interval = setInterval(() => {
       loadConnections();
       loadWorkflows();
       loadSecrets();
-    }, 2000);
-    
-    // Slower polling after initial period (every 30 seconds)
-    let slowInterval: NodeJS.Timeout;
-    const slowTimeout = setTimeout(() => {
-      clearInterval(fastInterval);
-      slowInterval = setInterval(() => {
-        loadConnections();
-        loadWorkflows();
-        loadSecrets();
-      }, 30000);
-    }, 30000);
+    }, 30000); // Poll every 30 seconds
     
     return () => {
-      clearInterval(fastInterval);
-      clearTimeout(slowTimeout);
-      if (slowInterval) {
-        clearInterval(slowInterval);
-      }
+      clearInterval(interval);
     };
   }, [loadConnections, loadWorkflows, loadSecrets, handleOAuth2Callback]);
 
@@ -735,73 +732,42 @@ export default function DashboardPage() {
             />
           )}
           {activeTab === 'connections' && (
-            <ConnectionsTab
-              connections={connections}
-              onConnectionCreated={() => {
-                console.info('[dashboard] onConnectionCreated fired');
-                
-                // Immediately try to load connections first
-                console.info('[dashboard] onConnectionCreated: immediate loadConnections call');
-                loadConnections();
-                
-                // Use a more robust retry mechanism instead of setTimeout
-                const retryLoadConnections = async (attempt = 1, maxAttempts = 10) => {
-                  console.info(`[dashboard] onConnectionCreated: calling loadConnections (attempt ${attempt}/${maxAttempts})`);
+            <>
+              {console.info('[dashboard] Rendering ConnectionsTab with connections:', connections.length)}
+              <ConnectionsTab
+                connections={connections}
+                onConnectionCreated={() => {
+                  console.info('[dashboard] onConnectionCreated fired');
                   
-                  try {
-                    const response = await apiClient.getConnections();
-                    console.info(`[dashboard] loadConnections API response (attempt ${attempt}):`, JSON.stringify(response, null, 2));
-                    
-                    if (response.success && response.data) {
-                      const freshConnections = response.data.connections || [];
-                      console.info(`[dashboard] Fresh connections count: ${freshConnections.length}`);
-                      
-                      // Update the connections state
-                      setConnections(freshConnections);
-                      
-                      // If we have connections, we're done
-                      if (freshConnections.length > 0) {
-                        console.info('[dashboard] Connections loaded successfully');
-                        return;
-                      }
-                    }
-                    
-                    // If we haven't reached max attempts, retry after a delay
-                    if (attempt < maxAttempts) {
-                      const delay = Math.min(500 * attempt, 2000); // Progressive delay: 500ms, 1000ms, 1500ms, 2000ms...
-                      console.info(`[dashboard] No connections found, retrying in ${delay}ms`);
-                      setTimeout(() => retryLoadConnections(attempt + 1, maxAttempts), delay);
-                    } else {
-                      console.warn('[dashboard] Max retry attempts reached, giving up');
-                    }
-                  } catch (error) {
-                    console.error('[dashboard] Error loading connections:', error);
-                    if (attempt < maxAttempts) {
-                      const delay = Math.min(500 * attempt, 2000);
-                      setTimeout(() => retryLoadConnections(attempt + 1, maxAttempts), delay);
-                    }
-                  }
-                };
-                
-                // Start the retry mechanism
-                setTimeout(() => retryLoadConnections(), 1000); // Add a small delay
-                setSuccessMessage('Connection created successfully!');
-              }}
-              onConnectionEdited={() => {
-                loadConnections();
-                setSuccessMessage('Connection updated successfully');
-              }}
-              onConnectionDeleted={() => {
-                loadConnections();
-                setSuccessMessage('Connection deleted successfully');
-              }}
-              onConnectionTested={() => {
-                setSuccessMessage('Connection test successful');
-              }}
-              onConnectionError={(error) => {
-                setErrorMessage(error);
-              }}
-            />
+                  // Immediately try to load connections
+                  console.info('[dashboard] onConnectionCreated: immediate loadConnections call');
+                  loadConnections();
+                  
+                  // Set success message
+                  setSuccessMessage('Connection created successfully!');
+                  
+                  // Add a small delay and try again to ensure UI updates
+                  setTimeout(() => {
+                    console.info('[dashboard] onConnectionCreated: delayed loadConnections call');
+                    loadConnections();
+                  }, 500);
+                }}
+                onConnectionEdited={() => {
+                  loadConnections();
+                  setSuccessMessage('Connection updated successfully');
+                }}
+                onConnectionDeleted={() => {
+                  loadConnections();
+                  setSuccessMessage('Connection deleted successfully');
+                }}
+                onConnectionTested={() => {
+                  setSuccessMessage('Connection test successful');
+                }}
+                onConnectionError={(error) => {
+                  setErrorMessage(error);
+                }}
+              />
+            </>
           )}
           {activeTab === 'workflows' && (
             <div id="workflows-section">

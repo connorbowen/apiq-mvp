@@ -147,19 +147,45 @@ export class ApiCallStepExecutor implements StepExecutor {
     console.log('🔍 [ApiCallStepExecutor] Getting API connection:', apiConnectionId);
     
     try {
-      const response = await apiClient.getConnection(apiConnectionId);
-      console.log('🔍 [ApiCallStepExecutor] API connection response:', {
-        success: response.success,
-        hasData: !!response.data,
-        error: response.error
+      // Use Prisma directly instead of API client for server-side operations
+      const { prisma } = await import('../singletons/prisma');
+      const connection = await prisma.apiConnection.findUnique({
+        where: { id: apiConnectionId },
+        include: {
+          endpoints: {
+            where: { isActive: true }
+          }
+        }
       });
       
-      if (!response.success) {
-        console.error('❌ [ApiCallStepExecutor] Failed to get API connection:', response.error);
+      if (!connection) {
+        console.error('❌ [ApiCallStepExecutor] API connection not found:', apiConnectionId);
         return null;
       }
       
-      return response.data || null;
+      console.log('🔍 [ApiCallStepExecutor] API connection found:', {
+        id: connection.id,
+        name: connection.name,
+        baseUrl: connection.baseUrl,
+        authType: connection.authType,
+        endpointCount: connection.endpoints.length
+      });
+      
+      // Convert to ApiConnection format
+      return {
+        id: connection.id,
+        name: connection.name,
+        description: connection.description || '',
+        baseUrl: connection.baseUrl,
+        authType: connection.authType,
+        status: connection.status,
+        connectionStatus: connection.connectionStatus,
+        ingestionStatus: connection.ingestionStatus,
+        endpointCount: connection.endpoints.length,
+        createdAt: connection.createdAt.toISOString(),
+        updatedAt: connection.updatedAt.toISOString(),
+        authConfig: connection.authConfig
+      };
     } catch (error) {
       console.error('❌ [ApiCallStepExecutor] Error getting API connection:', error);
       logError('Failed to get API connection', error as Error);
