@@ -73,7 +73,7 @@ export default function ProfileTab({ user, onProfileUpdated }: ProfileTabProps) 
     setIsLoading(true);
     try {
       const response = await fetch('/api/profile', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -85,38 +85,20 @@ export default function ProfileTab({ user, onProfileUpdated }: ProfileTabProps) 
         setProfile(result.profile);
         setIsEditing(false);
         toast.success('Profile updated successfully');
-        onProfileUpdated?.();
+        if (onProfileUpdated) {
+          onProfileUpdated();
+        }
       } else {
         const error = await response.json();
-        toast.error(error.error || 'Failed to update profile');
+        toast.error(error.message || 'Failed to update profile');
       }
     } catch (error) {
-      console.error('Profile update error:', error);
+      console.error('Failed to update profile:', error);
       toast.error('Failed to update profile');
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleCancel = () => {
-    reset({
-      firstName: profile?.firstName || '',
-      lastName: profile?.lastName || '',
-      timezone: profile?.timezone || 'UTC',
-      language: profile?.language || 'en',
-      notificationsEnabled: profile?.notificationsEnabled ?? true,
-      marketingEmailsEnabled: profile?.marketingEmailsEnabled ?? false,
-    });
-    setIsEditing(false);
-  };
-
-  if (!profile) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -139,70 +121,52 @@ export default function ProfileTab({ user, onProfileUpdated }: ProfileTabProps) 
       {/* Profile Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="bg-white shadow rounded-lg p-6">
-          {/* Basic Information */}
-          <div className="space-y-4">
-            <h4 className="text-md font-medium text-gray-900">Basic Information</h4>
-            
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  id="firstName"
-                  {...register('firstName', { maxLength: 50 })}
-                  disabled={!isEditing}
-                  className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    !isEditing ? 'bg-gray-50' : ''
-                  }`}
-                />
-                {errors.firstName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  id="lastName"
-                  {...register('lastName', { maxLength: 50 })}
-                  disabled={!isEditing}
-                  className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
-                    !isEditing ? 'bg-gray-50' : ''
-                  }`}
-                />
-                {errors.lastName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
-                )}
-              </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                First Name
+              </label>
+              <input
+                type="text"
+                id="firstName"
+                {...register('firstName')}
+                disabled={!isEditing}
+                className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                  !isEditing ? 'bg-gray-50' : ''
+                }`}
+              />
             </div>
 
             <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                Last Name
+              </label>
+              <input
+                type="text"
+                id="lastName"
+                {...register('lastName')}
+                disabled={!isEditing}
+                className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm ${
+                  !isEditing ? 'bg-gray-50' : ''
+                }`}
+              />
+            </div>
+
+            <div className="sm:col-span-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email Address
               </label>
               <input
                 type="email"
                 id="email"
-                value={profile.email}
+                value={user?.email || ''}
                 disabled
                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 sm:text-sm"
               />
-              <p className="mt-1 text-sm text-gray-500">
-                {profile.emailVerified ? (
-                  <span className="text-green-600">✓ Email verified</span>
-                ) : (
-                  <span className="text-yellow-600">⚠ Email not verified</span>
-                )}
-              </p>
+              <p className="mt-1 text-sm text-gray-500">Email address cannot be changed</p>
             </div>
           </div>
 
-          {/* Preferences */}
           <div className="mt-8 space-y-4">
             <h4 className="text-md font-medium text-gray-900">Preferences</h4>
             
@@ -248,7 +212,6 @@ export default function ProfileTab({ user, onProfileUpdated }: ProfileTabProps) 
                   <option value="fr">French</option>
                   <option value="de">German</option>
                   <option value="ja">Japanese</option>
-                  <option value="zh">Chinese</option>
                 </select>
               </div>
             </div>
@@ -283,64 +246,55 @@ export default function ProfileTab({ user, onProfileUpdated }: ProfileTabProps) 
           </div>
 
           {/* Account Information */}
-          <div className="mt-8 space-y-4">
-            <h4 className="text-md font-medium text-gray-900">Account Information</h4>
-            
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <h4 className="text-md font-medium text-gray-900 mb-4">Account Information</h4>
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Account Type</label>
-                <input
-                  type="text"
-                  value={profile.provider === 'credentials' ? 'Email/Password' : profile.provider || 'Email/Password'}
-                  disabled
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 sm:text-sm"
-                />
+                <dt className="text-sm font-medium text-gray-500">Account ID</dt>
+                <dd className="mt-1 text-sm text-gray-900">{user?.id || 'N/A'}</dd>
               </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Role</dt>
+                <dd className="mt-1 text-sm text-gray-900 capitalize">{user?.role?.toLowerCase() || 'N/A'}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Member Since</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : 'N/A'}
+                </dd>
+              </div>
+            </dl>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Member Since</label>
-                <input
-                  type="text"
-                  value={new Date(profile.createdAt).toLocaleDateString()}
-                  disabled
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 sm:text-sm"
-                />
-              </div>
+          {/* Form Actions */}
+          {isEditing && (
+            <div className="mt-8 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(false);
+                  reset();
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              >
+                {isLoading ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
-
-            {profile.lastLogin && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Last Login</label>
-                <input
-                  type="text"
-                  value={new Date(profile.lastLogin).toLocaleString()}
-                  disabled
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 sm:text-sm"
-                />
-              </div>
-            )}
-          </div>
+          )}
         </div>
-
-        {/* Form Actions */}
-        {isEditing && (
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            >
-              {isLoading ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
-        )}
       </form>
     </div>
   );

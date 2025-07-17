@@ -19,11 +19,12 @@ test.describe('UX Simplification - Navigation', () => {
       // Verify 3-tab structure
       await expect(page.getByTestId('tab-chat')).toBeVisible();
       await expect(page.getByTestId('tab-workflows')).toBeVisible();
-      await expect(page.getByTestId('tab-settings')).toBeVisible();
+      await expect(page.getByTestId('tab-connections')).toBeVisible();
 
       // Verify no old tabs are present
       await expect(page.getByText('Overview')).not.toBeVisible();
-      await expect(page.getByText('Connections')).not.toBeVisible();
+      await expect(page.getByText('Settings')).not.toBeVisible();
+      await expect(page.getByText('Profile')).not.toBeVisible();
       await expect(page.getByText('Secrets')).not.toBeVisible();
       await expect(page.getByText('Admin')).not.toBeVisible();
       await expect(page.getByText('Audit')).not.toBeVisible();
@@ -36,11 +37,12 @@ test.describe('UX Simplification - Navigation', () => {
       // Verify 3-tab structure
       await expect(page.getByTestId('tab-chat')).toBeVisible();
       await expect(page.getByTestId('tab-workflows')).toBeVisible();
-      await expect(page.getByTestId('tab-settings')).toBeVisible();
+      await expect(page.getByTestId('tab-connections')).toBeVisible();
 
       // Verify no old tabs are present
       await expect(page.getByText('Overview')).not.toBeVisible();
-      await expect(page.getByText('Connections')).not.toBeVisible();
+      await expect(page.getByText('Settings')).not.toBeVisible();
+      await expect(page.getByText('Profile')).not.toBeVisible();
       await expect(page.getByText('Secrets')).not.toBeVisible();
       await expect(page.getByText('Admin')).not.toBeVisible();
       await expect(page.getByText('Audit')).not.toBeVisible();
@@ -67,10 +69,10 @@ test.describe('UX Simplification - Navigation', () => {
       await expect(page.getByTestId('tab-workflows')).toHaveClass(/bg-indigo-100/);
       await expect(page).toHaveURL(/.*tab=workflows/);
 
-      // Navigate to Settings tab
-      await page.getByTestId('tab-settings').click();
-      await expect(page.getByTestId('tab-settings')).toHaveClass(/bg-indigo-100/);
-      await expect(page).toHaveURL(/.*tab=settings/);
+      // Navigate to Connections tab
+      await page.getByTestId('tab-connections').click();
+      await expect(page.getByTestId('tab-connections')).toHaveClass(/bg-indigo-100/);
+      await expect(page).toHaveURL(/.*tab=connections/);
 
       // Navigate back to Chat tab
       await page.getByTestId('tab-chat').click();
@@ -103,11 +105,12 @@ test.describe('UX Simplification - Navigation', () => {
       await page.getByTestId('user-dropdown-toggle').click();
 
       // Verify admin functions are present
-      await expect(page.getByText('Admin Panel')).toBeVisible();
-      await expect(page.getByText('Audit Logs')).toBeVisible();
-      await expect(page.getByText('Profile')).toBeVisible();
-      await expect(page.getByText('Help')).toBeVisible();
-      await expect(page.getByText('Logout')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-audit')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-profile')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-settings')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-secrets')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-help')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-logout')).toBeVisible();
     });
 
     test('should not show admin functions in user dropdown for regular users', async ({ page }) => {
@@ -118,13 +121,14 @@ test.describe('UX Simplification - Navigation', () => {
       await page.getByTestId('user-dropdown-toggle').click();
 
       // Verify admin functions are NOT present
-      await expect(page.getByText('Admin Panel')).not.toBeVisible();
-      await expect(page.getByText('Audit Logs')).not.toBeVisible();
+      await expect(page.getByTestId('user-dropdown-audit')).not.toBeVisible();
 
       // Verify regular functions are present
-      await expect(page.getByText('Profile')).toBeVisible();
-      await expect(page.getByText('Help')).toBeVisible();
-      await expect(page.getByText('Logout')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-profile')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-settings')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-secrets')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-help')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-logout')).toBeVisible();
     });
 
     test('should navigate to admin panel from dropdown', async ({ page }) => {
@@ -144,13 +148,40 @@ test.describe('UX Simplification - Navigation', () => {
       await loginAsAdmin(page, adminUser);
       await page.goto('/dashboard');
 
-      // Open user dropdown and click Audit Logs
+      // Open user dropdown and click Audit Log
       await page.getByTestId('user-dropdown-toggle').click();
-      await page.getByText('Audit Logs').click();
+      await page.getByTestId('user-dropdown-audit').click();
 
       // Verify navigation to audit logs
-      await expect(page).toHaveURL(/.*tab=audit/);
-      await expect(page.getByTestId('audit-tab')).toBeVisible();
+      await expect(page).toHaveURL(/.*tab=settings&section=audit/);
+      await expect(page.getByTestId('settings-tab')).toBeVisible();
+    });
+
+    test('should navigate to profile from dropdown', async ({ page }) => {
+      await loginAsUser(page, regularUser);
+      await page.goto('/dashboard');
+
+      // Open user dropdown and click Profile
+      await page.getByTestId('user-dropdown-toggle').click();
+      await page.getByTestId('user-dropdown-profile').click();
+
+      // Verify navigation to profile
+      await expect(page).toHaveURL(/.*tab=profile/);
+      await expect(page.getByTestId('profile-tab')).toBeVisible();
+    });
+
+    test('should not show Settings/Profile as main tabs', async ({ page }) => {
+      await loginAsUser(page, regularUser);
+      await page.goto('/dashboard');
+
+      // Main navigation should not have Settings/Profile tabs
+      await expect(page.getByTestId('tab-settings')).not.toBeVisible();
+      await expect(page.getByTestId('tab-profile')).not.toBeVisible();
+
+      // Settings/Profile should be accessible via dropdown
+      await page.getByTestId('user-dropdown-toggle').click();
+      await expect(page.getByTestId('user-dropdown-settings')).toBeVisible();
+      await expect(page.getByTestId('user-dropdown-profile')).toBeVisible();
     });
   });
 

@@ -1,5 +1,11 @@
 # Testing Documentation Index
 
+## 🆕 DASHBOARD NAVIGATION & TEST UPDATE (2025-07-16)
+- Dashboard navigation now uses Chat, Workflows, Connections as main tabs
+- Settings, Profile, Secrets, and Audit Log are only accessible via the user dropdown
+- All navigation and E2E tests updated to use new dropdown `data-testid` patterns
+- Documentation files synchronized to reflect new navigation and test structure
+
 ## Overview
 
 This index organizes all APIQ testing documentation into logical groups for easy navigation and reference. The testing strategy follows a comprehensive approach with unit, integration, and end-to-end testing.

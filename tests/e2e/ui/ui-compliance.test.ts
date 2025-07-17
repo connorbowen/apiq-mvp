@@ -11,7 +11,9 @@ test.describe('UX Simplification - UI Compliance', () => {
   test.describe('Message Banner Accessibility', () => {
     test('should announce messages to screen readers', async ({ page }) => {
       await loginAsUser(page, testUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Trigger a success message
       await page.getByTestId('create-connection-btn').click();
@@ -26,7 +28,9 @@ test.describe('UX Simplification - UI Compliance', () => {
 
     test('should have proper ARIA labels for message actions', async ({ page }) => {
       await loginAsUser(page, testUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Trigger an error message
       await page.getByTestId('create-connection-btn').click();
@@ -40,7 +44,9 @@ test.describe('UX Simplification - UI Compliance', () => {
 
     test('should support keyboard navigation for message dismissal', async ({ page }) => {
       await loginAsUser(page, testUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Trigger a message
       await page.getByTestId('create-connection-btn').click();
@@ -59,7 +65,9 @@ test.describe('UX Simplification - UI Compliance', () => {
 
     test('should auto-clear messages with proper timing', async ({ page }) => {
       await loginAsUser(page, testUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Trigger a success message
       await page.getByTestId('create-connection-btn').click();
@@ -78,7 +86,9 @@ test.describe('UX Simplification - UI Compliance', () => {
 
     test('should handle multiple message types correctly', async ({ page }) => {
       await loginAsUser(page, testUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Test success message
       await page.getByTestId('create-connection-btn').click();
@@ -128,8 +138,8 @@ test.describe('UX Simplification - UI Compliance', () => {
       await page.getByTestId('mobile-navigation').getByText('Workflows').click();
       await expect(page).toHaveURL(/.*tab=workflows/);
 
-      await page.getByTestId('mobile-navigation').getByText('Settings').click();
-      await expect(page).toHaveURL(/.*tab=settings/);
+      await page.getByTestId('mobile-navigation').getByText('Connections').click();
+      await expect(page).toHaveURL(/.*tab=connections/);
 
       await page.getByTestId('mobile-navigation').getByText('Chat').click();
       await expect(page).toHaveURL(/.*tab=chat/);
@@ -226,8 +236,8 @@ test.describe('UX Simplification - UI Compliance', () => {
         await page.getByTestId('tab-workflows').click();
         await expect(page.getByTestId('workflows-tab')).toBeVisible();
         
-        await page.getByTestId('tab-settings').click();
-        await expect(page.getByTestId('settings-tab')).toBeVisible();
+        await page.getByTestId('tab-connections').click();
+        await expect(page.getByTestId('connections-management')).toBeVisible();
         
         await page.getByTestId('tab-chat').click();
         await expect(page.getByTestId('chat-interface')).toBeVisible();
@@ -251,7 +261,7 @@ test.describe('UX Simplification - UI Compliance', () => {
 
       // Navigate to different tabs to trigger lazy loading
       await page.getByTestId('tab-workflows').click();
-      await page.getByTestId('tab-settings').click();
+      await page.getByTestId('tab-connections').click();
       await page.getByTestId('tab-chat').click();
 
       // Should not load all components at once
@@ -320,11 +330,11 @@ test.describe('UX Simplification - UI Compliance', () => {
       await expect(page.getByTestId('tab-workflows')).toBeFocused();
 
       await page.keyboard.press('ArrowRight');
-      await expect(page.getByTestId('tab-settings')).toBeFocused();
+      await expect(page.getByTestId('tab-connections')).toBeFocused();
 
       // Test activation
       await page.keyboard.press('Enter');
-      await expect(page.getByTestId('tab-settings')).toHaveClass(/bg-indigo-100/);
+      await expect(page.getByTestId('tab-connections')).toHaveClass(/bg-indigo-100/);
     });
 
     test('should provide skip links for accessibility', async ({ page }) => {
@@ -403,8 +413,8 @@ test.describe('UX Simplification - UI Compliance', () => {
         await page.getByTestId('tab-workflows').click();
         await expect(page.getByTestId('workflows-tab')).toBeVisible();
 
-        await page.getByTestId('tab-settings').click();
-        await expect(page.getByTestId('settings-tab')).toBeVisible();
+        await page.getByTestId('tab-connections').click();
+        await expect(page.getByTestId('connections-management')).toBeVisible();
 
         await page.getByTestId('tab-chat').click();
         await expect(page.getByTestId('chat-interface')).toBeVisible();
@@ -460,14 +470,14 @@ test.describe('UX Simplification - UI Compliance', () => {
       // Test core functionality that should work in all browsers
       await expect(page.getByTestId('chat-interface')).toBeVisible();
       await expect(page.getByTestId('tab-workflows')).toBeVisible();
-      await expect(page.getByTestId('tab-settings')).toBeVisible();
+      await expect(page.getByTestId('tab-connections')).toBeVisible();
 
       // Test navigation
       await page.getByTestId('tab-workflows').click();
       await expect(page).toHaveURL(/.*tab=workflows/);
 
-      await page.getByTestId('tab-settings').click();
-      await expect(page).toHaveURL(/.*tab=settings/);
+      await page.getByTestId('tab-connections').click();
+      await expect(page).toHaveURL(/.*tab=connections/);
     });
   });
 });

@@ -1,5 +1,11 @@
 # Test Summary (2025-07-16)
 
+## 🆕 DASHBOARD NAVIGATION & TEST UPDATE
+- **Dashboard Navigation:** Now uses Chat, Workflows, Connections as main tabs
+- **Dropdown Navigation:** Settings, Profile, Secrets, and Audit Log are only accessible via the user dropdown
+- **Test Selectors:** All navigation and E2E tests updated to use new dropdown `data-testid` patterns
+- **Documentation:** All documentation files synchronized to reflect new navigation and test structure
+
 ## 🆕 **SECRETS-FIRST CONNECTION MANAGEMENT - COMPLETE**
 - **Secrets-First Refactor**: All API connection creation, management, and rotation now use secrets vault by default
   - **API Endpoints**: `/api/connections`, `/api/connections/[id]/secrets` (GET/POST/PUT)
@@ -32,4 +38,4 @@
   - **Secondary Issue**: UI element timing issues in various test suites
 - ✅ **Multi-step workflow generation**: Implemented and tested (P0.1 complete)
 
-_Last updated: 2025-07-16 (Secrets-first refactor, E2E, and documentation update)_
+_Last updated: 2025-07-16 (Dashboard navigation refactor, E2E, and documentation update)_

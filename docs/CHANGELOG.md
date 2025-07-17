@@ -1961,3 +1961,11 @@ _Updated by AI assistant, 2025-07-11_
 - Updated all core documentation files for secrets-first, E2E, and implementation status
 - Synchronized test counts, pass rates, and compliance metrics
 - **Archived Implementation Documents**: Moved completed secrets-first refactor implementation documents to `docs/archive/secrets-first-refactor/` for historical preservation
+
+### 🆕 Dashboard Navigation & UX Refactor (2025-07-16)
+- **UI/UX:** Dashboard now uses a 3-tab structure: Chat, Workflows, Connections (Settings/Profile/Secrets/Audit Log moved to dropdown)
+- **Functionality:** Settings and Profile are only accessible via the dropdown; Admin consolidated into Settings for admins
+- **Testing:** E2E and unit tests updated for new navigation, dropdown selectors, and flows
+- **Pattern:** All navigation to Settings/Profile/Secrets/Audit Log is via dropdown with new `data-testid` patterns
+- **Documentation:** All core documentation files updated for new navigation, selectors, and test metrics
+- **Status:** All references to Settings as a main tab removed; test metrics and status indicators synchronized

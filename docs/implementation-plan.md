@@ -99,7 +99,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 **Market Position**: Differentiates from complex enterprise tools by being approachable and user-friendly ✅ **ACHIEVED**
 
 **Current State**: Dashboard had 7 tabs (Overview, Connections, Workflows, Secrets, Chat, Admin, Audit) which created cognitive overload
-**Target State**: 3-tab structure (Chat, Workflows, Settings) with progressive disclosure and guided onboarding ✅ **ACHIEVED**
+**Target State**: 3-tab structure (Chat, Workflows, Connections) with progressive disclosure and guided onboarding ✅ ACHIEVED
 
 ### **PHASE 1: CORE HAPPY PATH** ✅ **COMPLETED**
 
@@ -215,19 +215,19 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 **Goal**: Implement the new simplified 3-tab structure
 
 **Actions**:
-- [x] **Create New Tab Configuration** ✅ **COMPLETED**
-  - [x] Replace 7-tab system with 3-tab system: Chat, Workflows, Settings ✅
-  - [x] Create new tab configuration object ✅
+- [x] **Create New Tab Configuration** ✅ COMPLETED
+  - [x] Replace 7-tab system with 3-tab system: Chat, Workflows, Connections ✅
+  - [x] Move Settings, Profile, Secrets, Audit Log to dropdown navigation ✅
   - [x] Update tab rendering logic ✅
-  - [x] Move Connections and Secrets to Settings tab ✅
   - [x] Add tests: `tests/unit/app/dashboard/page.test.tsx` - test 3-tab structure ✅
   - [x] Add tests: `tests/e2e/ui/navigation.test.ts` - test simplified navigation ✅
   - [x] Add tests: `tests/e2e/onboarding/user-journey.test.ts` - test new user flow ✅
 
 **Success Criteria**:
-- [x] Dashboard displays only 3 tabs: Chat, Workflows, Settings ✅
-- [x] Connections and Secrets are accessible through Settings tab ✅
+- [x] Dashboard displays only 3 tabs: Chat, Workflows, Connections ✅
+- [x] Settings, Profile, Secrets, and Audit Log are accessible through dropdown ✅
 - [x] All existing functionality preserved in new structure ✅
+- [x] All tests and documentation updated for new navigation ✅
 - [x] All tests pass with 100% reliability ✅
 
 #### **2.2 Hide Non-Essential Tabs for Regular Users** ✅ **COMPLETED**
@@ -242,7 +242,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
   - [x] Add tests: `tests/e2e/ui/navigation.test.ts` - test admin-only tabs hidden for regular users ✅
 
 **Success Criteria**:
-- [x] Regular users see only 3 tabs (Chat, Workflows, Settings) ✅
+- [x] Regular users see only 3 tabs (Chat, Workflows, Connections) ✅
 - [x] Admin users see all tabs including Admin/Audit ✅
 - [x] Tab filtering works correctly based on user role ✅
 - [x] All tests pass with 100% reliability ✅

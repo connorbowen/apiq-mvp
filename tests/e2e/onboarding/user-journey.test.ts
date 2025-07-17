@@ -125,7 +125,9 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
 
     test('should show appropriate unlock messaging', async ({ page }) => {
       await loginAsUser(page, newUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Verify locked features show unlock messaging
       await expect(page.getByText('Complete your profile to unlock')).toBeVisible();
@@ -134,7 +136,9 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
 
     test('should handle different feature types', async ({ page }) => {
       await loginAsUser(page, newUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Test different feature types
       await expect(page.getByTestId('feature-connections')).toHaveClass(/locked/);
@@ -144,7 +148,9 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
 
     test('should show fallback content when provided', async ({ page }) => {
       await loginAsUser(page, newUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Verify fallback content is shown for locked features
       await expect(page.getByTestId('fallback-content')).toBeVisible();
@@ -232,7 +238,7 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
   test.describe('Feature Unlocking Logic', () => {
     test('should unlock features based on onboarding stage', async ({ page }) => {
       await loginAsUser(page, newUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
 
       // Test different onboarding stages
       const stages = ['new', 'profile_completed', 'tour_completed', 'completed'];
@@ -257,7 +263,7 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
 
     test('should handle feature dependencies correctly', async ({ page }) => {
       await loginAsUser(page, newUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
 
       // Verify dependent features are locked until prerequisites are met
       await expect(page.getByTestId('feature-advanced')).toHaveClass(/locked/);
@@ -283,7 +289,9 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
 
     test('should have proper ARIA labels for progressive disclosure', async ({ page }) => {
       await loginAsUser(page, newUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Verify ARIA labels for locked features
       await expect(page.getByTestId('feature-connections')).toHaveAttribute('aria-describedby');
@@ -292,7 +300,9 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
 
     test('should provide clear unlock instructions', async ({ page }) => {
       await loginAsUser(page, newUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Verify clear instructions for unlocking features
       await expect(page.getByText('Complete your profile to unlock this feature')).toBeVisible();

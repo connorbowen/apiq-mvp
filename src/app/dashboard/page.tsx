@@ -11,7 +11,7 @@ import SupportModal from '../../components/dashboard/SupportModal';
 import MessageBanner from '../../components/MessageBanner';
 import MobileNavigation from '../../components/MobileNavigation';
 import { OnboardingProvider, useOnboarding } from '../../contexts/OnboardingContext';
-import { useGuidedTour } from '../../components/GuidedTour';
+import { useGuidedTour, GuidedTour } from '../../components/GuidedTour';
 
 // Lazy load non-critical components
 const WorkflowsTab = dynamic(() => import('../../components/dashboard/WorkflowsTab'), {
@@ -34,17 +34,27 @@ const CreateConnectionModal = dynamic(() => import('../../components/dashboard/C
   ssr: false,
 });
 
+const ConnectionsTab = dynamic(() => import('../../components/dashboard/ConnectionsTab'), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
+  ssr: false,
+});
+
+const ProfileTab = dynamic(() => import('../../components/dashboard/ProfileTab'), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
+  ssr: false,
+});
+
 interface User {
   id: string;
   email: string;
-  name: string;
+  name?: string;
   role: string;
   firstName?: string;
   lastName?: string;
 }
 
 // New 3-tab configuration
-type TabType = 'chat' | 'workflows' | 'settings';
+type TabType = 'chat' | 'workflows' | 'connections' | 'settings' | 'profile';
 
 const tabConfig = {
   chat: {
@@ -67,6 +77,16 @@ const tabConfig = {
     testId: 'tab-workflows',
     adminOnly: false,
   },
+  connections: {
+    label: 'Connections',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    ),
+    testId: 'tab-connections',
+    adminOnly: false,
+  },
   settings: {
     label: 'Settings',
     icon: (
@@ -78,10 +98,20 @@ const tabConfig = {
     testId: 'tab-settings',
     adminOnly: false,
   },
+  profile: {
+    label: 'Profile',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      </svg>
+    ),
+    testId: 'tab-profile',
+    adminOnly: false,
+  },
 };
 
-export default function DashboardPage() {
-  console.info('[dashboard] DashboardPage rendered');
+function DashboardContent() {
+  console.info('[dashboard] DashboardContent rendered');
   
   const [user, setUser] = useState<User | null>(null);
   const [connections, setConnections] = useState<ApiConnection[]>([]);
@@ -99,7 +129,7 @@ export default function DashboardPage() {
   const [showSupportModal, setShowSupportModal] = useState(false);
   const router = useRouter();
 
-  // Guided Tour integration
+  // Guided Tour integration - now safely within OnboardingProvider
   const { state: onboardingState } = useOnboarding();
   const {
     isTourOpen,
@@ -126,7 +156,7 @@ export default function DashboardPage() {
     try {
       const userResponse = await apiClient.getCurrentUser();
       if (userResponse.success && userResponse.data) {
-        setUser(userResponse.data.user);
+        setUser({ ...userResponse.data.user, name: userResponse.data.user.name || userResponse.data.user.email });
         setIsLoading(false);
       } else {
         setIsLoading(false); // Stop loading before redirect
@@ -306,17 +336,30 @@ export default function DashboardPage() {
   const filteredTabs = useMemo(() => {
     if (!user) return Object.keys(tabConfig) as TabType[];
     
-    return (Object.keys(tabConfig) as TabType[]).filter(tab => {
+    // Filter tabs: only show main navigation tabs (not settings)
+    const mainTabs = (Object.keys(tabConfig) as TabType[]).filter(tab => {
       const config = tabConfig[tab];
-      return !config.adminOnly || user.role === 'admin';
+      return tab !== 'settings' && tab !== 'profile' && (!config.adminOnly || user.role === 'admin');
     });
-  }, [user]);
+    
+    // If settings tab is active (accessed via dropdown), include it
+    if (activeTab === 'settings') {
+      mainTabs.push('settings');
+    }
+    
+    // If profile tab is active (accessed via dropdown), include it
+    if (activeTab === 'profile') {
+      mainTabs.push('profile');
+    }
+    
+    return mainTabs;
+  }, [user, activeTab]);
 
   // Initialize tab from URL on component mount
   useEffect(() => {
     const url = new URL(window.location.href);
     const tabParam = url.searchParams.get('tab');
-    if (tabParam && ['chat', 'workflows', 'settings'].includes(tabParam)) {
+    if (tabParam && ['chat', 'workflows', 'connections', 'settings', 'profile'].includes(tabParam)) {
       setActiveTab(tabParam as TabType);
     } else if (!tabParam) {
       // If no tab parameter, default to chat and update URL
@@ -335,68 +378,68 @@ export default function DashboardPage() {
   }
 
   return (
-    <OnboardingProvider>
-      <main role="main" className="min-h-screen bg-gray-50">
-        <SupportModal open={showSupportModal} onClose={() => setShowSupportModal(false)} user={user || { email: '', name: '' }} />
-      
-      {/* Skip link for accessibility */}
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
-        Skip to main content
-      </a>
-      
-      {/* Additional skip links for better accessibility */}
-      <a href="#workflows-section" className="sr-only focus:not-sr-only focus:absolute focus:top-16 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
-        Skip to workflows
-      </a>
-      <a href="#admin-section" className="sr-only focus:not-sr-only focus:absolute focus:top-28 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
-        Skip to admin
-      </a>
-      
-      <header role="banner" className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <div className="flex items-center space-x-4">
-            {user && <UserDropdown user={user} onLogout={handleLogout} onHelp={() => setShowSupportModal(true)} />}
-          </div>
+    <main role="main" className="min-h-screen bg-gray-50">
+      <SupportModal open={showSupportModal} onClose={() => setShowSupportModal(false)} user={user ? { email: user.email, name: user.name || user.email } : { email: '', name: '' }} />
+    
+    {/* Skip link for accessibility */}
+    <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
+      Skip to main content
+    </a>
+    
+    {/* Additional skip links for better accessibility */}
+    <a href="#workflows-section" className="sr-only focus:not-sr-only focus:absolute focus:top-16 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
+      Skip to workflows
+    </a>
+    <a href="#admin-section" className="sr-only focus:not-sr-only focus:absolute focus:top-28 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
+      Skip to admin
+    </a>
+    
+    <header role="banner" className="bg-white shadow">
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <div className="flex items-center space-x-4">
+          {user && <UserDropdown user={{ ...user, name: user.name || user.email }} onLogout={handleLogout} onHelp={() => setShowSupportModal(true)} />}
         </div>
-      </header>
+      </div>
+    </header>
 
-      <section id="main-content" className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Message Banner - only render when there's a message */}
-        {(successMessage || errorMessage) && (
-          <MessageBanner
-            type={successMessage ? 'success' : 'error'}
-            message={successMessage || errorMessage || ''}
-            onClose={() => {
-              setSuccessMessage(null);
-              setErrorMessage(null);
-            }}
-          />
-        )}
+    <section id="main-content" className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      {/* Message Banner - only render when there's a message */}
+      {(successMessage || errorMessage) && (
+        <MessageBanner
+          type={successMessage ? 'success' : 'error'}
+          message={successMessage || errorMessage || ''}
+          onClose={() => {
+            setSuccessMessage(null);
+            setErrorMessage(null);
+          }}
+        />
+      )}
 
-        {/* Tab Navigation */}
-        {user && (
-          <div className="mb-6 hidden lg:block">
-            <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm" aria-label="Tabs">
-              {filteredTabs.map((tab) => (
-                <button
-                  key={tab}
-                  data-testid={tabConfig[tab].testId}
-                  className={`px-4 py-2 font-medium text-sm rounded-md transition-colors min-h-[44px] ${
-                    activeTab === tab 
-                      ? 'bg-indigo-100 text-indigo-700' 
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => handleTabChange(tab)}
-                >
-                  {tabConfig[tab].label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        )}
+      {/* Tab Navigation */}
+      {user && !['profile', 'settings'].includes(activeTab) && (
+        <div className="mb-6 hidden lg:block">
+          <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm" aria-label="Tabs">
+            {filteredTabs.map((tab) => (
+              <button
+                key={tab}
+                data-testid={tabConfig[tab].testId}
+                className={`px-4 py-2 font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                  activeTab === tab 
+                    ? 'bg-indigo-100 text-indigo-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => handleTabChange(tab)}
+              >
+                {tabConfig[tab].label}
+              </button>
+            ))}
+          </nav>
+        </div>
+      )}
 
-        {/* Mobile Menu Toggle */}
+      {/* Mobile Menu Toggle */}
+      {!["profile", "settings"].includes(activeTab) && (
         <div className="mb-6 lg:hidden">
           <button
             data-testid="mobile-menu-toggle"
@@ -411,96 +454,84 @@ export default function DashboardPage() {
             </svg>
           </button>
         </div>
+      )}
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div id="mobile-menu" data-testid="mobile-menu" className="mb-6 lg:hidden bg-white border border-gray-300 rounded-md shadow-sm">
-            <nav className="flex flex-col p-1" aria-label="Mobile Tabs">
-              <button
-                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
-                  activeTab === 'chat' 
-                    ? 'bg-indigo-100 text-indigo-700' 
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-                onClick={() => {
-                  handleTabChange('chat');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                {tabConfig.chat.label}
-              </button>
-              <button
-                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
-                  activeTab === 'workflows' 
-                    ? 'bg-indigo-100 text-indigo-700' 
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-                onClick={() => {
-                  handleTabChange('workflows');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                {tabConfig.workflows.label}
-              </button>
-              <button
-                className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
-                  activeTab === 'settings' 
-                    ? 'bg-indigo-100 text-indigo-700' 
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-                onClick={() => {
-                  handleTabChange('settings');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                {tabConfig.settings.label}
-              </button>
-            </nav>
-          </div>
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && !["profile", "settings"].includes(activeTab) && (
+        <div id="mobile-menu" data-testid="mobile-menu" className="mb-6 lg:hidden bg-white border border-gray-300 rounded-md shadow-sm">
+          <nav className="flex flex-col p-1" aria-label="Mobile Tabs">
+            <button
+              className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                activeTab === 'chat' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => {
+                handleTabChange('chat');
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              {tabConfig.chat.label}
+            </button>
+            <button
+              className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                activeTab === 'workflows' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => {
+                handleTabChange('workflows');
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              {tabConfig.workflows.label}
+            </button>
+            <button
+              className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                activeTab === 'connections' 
+                  ? 'bg-indigo-100 text-indigo-700' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => {
+                handleTabChange('connections');
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              {tabConfig.connections.label}
+            </button>
+          </nav>
+        </div>
+      )}
+
+      {/* Tab Content */}
+      <div className="tab-content">
+        {activeTab === 'chat' && (
+          <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
         )}
-
-        {/* Tab Content */}
-        <div className="tab-content">
-          {activeTab === 'chat' && (
-            <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
-          )}
-          {activeTab === 'workflows' && (
-            <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-              <div id="workflows-section">
-                <WorkflowsTab
-                  workflows={workflows}
-                  onWorkflowCreated={() => {
-                    loadWorkflows();
-                    setSuccessMessage('Workflow created successfully!');
-                  }}
-                  onWorkflowError={(error) => {
-                    setErrorMessage(error);
-                  }}
-                />
-              </div>
-            </Suspense>
-          )}
-          {activeTab === 'settings' && (
-            <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-              <SettingsTab
+        {activeTab === 'workflows' && (
+          <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <div id="workflows-section">
+              <WorkflowsTab
+                workflows={workflows}
+                onWorkflowCreated={() => {
+                  loadWorkflows();
+                  setSuccessMessage('Workflow created successfully!');
+                }}
+                onWorkflowError={(error) => {
+                  setErrorMessage(error);
+                }}
+              />
+            </div>
+          </Suspense>
+        )}
+        {activeTab === 'connections' && (
+          <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <div id="connections-section">
+              <ConnectionsTab
                 connections={connections}
-                secrets={secrets}
-                user={user}
                 onConnectionCreated={() => {
-                  console.info('[dashboard] onConnectionCreated fired');
-                  
-                  // Immediately try to load connections
-                  console.info('[dashboard] onConnectionCreated: immediate loadConnections call');
                   loadConnections();
-                  
-                  // Set success message
                   setSuccessMessage('Connection created successfully!');
-                  
-                  // Add a small delay and try again to ensure UI updates
-                  setTimeout(() => {
-                    console.info('[dashboard] onConnectionCreated: delayed loadConnections call');
-                    loadConnections();
-                  }, 500);
                 }}
                 onConnectionEdited={() => {
                   loadConnections();
@@ -516,39 +547,85 @@ export default function DashboardPage() {
                 onConnectionError={(error) => {
                   setErrorMessage(error);
                 }}
-                onSecretCreated={() => {
-                  loadSecrets();
-                  setSuccessMessage('Secret created successfully!');
-                }}
-                onSecretError={(error) => {
-                  setErrorMessage(error);
-                }}
               />
-            </Suspense>
-          )}
-        </div>
-      </section>
-      
-      {/* Mobile Navigation */}
-      <MobileNavigation
-        activeTab={activeTab}
-        onTabChange={(tab: string) => handleTabChange(tab as TabType)}
-      />
-      
-      {/* Bottom padding for mobile navigation */}
-      <div className="h-20 md:hidden" />
-      
-      {/* Guided Tour */}
-      <GuidedTour
-        steps={fullTourSteps}
-        isOpen={isTourOpen}
-        onClose={closeTour}
-        onComplete={completeTour}
-        onSkip={skipTour}
-      />
-      
-    </main>
-  </OnboardingProvider>
+            </div>
+          </Suspense>
+        )}
+        {activeTab === 'settings' && (
+          <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <SettingsTab
+              connections={connections}
+              secrets={secrets}
+              user={user}
+              onConnectionCreated={() => {
+                loadConnections();
+                setSuccessMessage('Connection created successfully!');
+              }}
+              onConnectionEdited={() => {
+                loadConnections();
+                setSuccessMessage('Connection updated successfully');
+              }}
+              onConnectionDeleted={() => {
+                loadConnections();
+                setSuccessMessage('Connection deleted successfully');
+              }}
+              onConnectionTested={() => {
+                setSuccessMessage('Connection test successful');
+              }}
+              onConnectionError={(error) => {
+                setErrorMessage(error);
+              }}
+              onSecretCreated={() => {
+                loadSecrets();
+                setSuccessMessage('Secret created successfully!');
+              }}
+              onSecretError={(error) => {
+                setErrorMessage(error);
+              }}
+            />
+          </Suspense>
+        )}
+        {activeTab === 'profile' && (
+          <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <ProfileTab
+              user={user}
+              onProfileUpdated={() => {
+                setSuccessMessage('Profile updated successfully!');
+              }}
+            />
+          </Suspense>
+        )}
+      </div>
+    </section>
+    
+    {/* Mobile Navigation */}
+    <MobileNavigation
+      activeTab={activeTab}
+      onTabChange={(tab: string) => handleTabChange(tab as TabType)}
+    />
+    
+    {/* Bottom padding for mobile navigation */}
+    <div className="h-20 md:hidden" />
+    
+    {/* Guided Tour */}
+    <GuidedTour
+      steps={fullTourSteps}
+      isOpen={isTourOpen}
+      onClose={closeTour}
+      onComplete={completeTour}
+      onSkip={skipTour}
+    />
+    
+  </main>
+  );
+}
+
+// Wrapper component that provides the OnboardingProvider context
+export default function DashboardPage() {
+  return (
+    <OnboardingProvider>
+      <DashboardContent />
+    </OnboardingProvider>
   );
 }
 

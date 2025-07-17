@@ -235,7 +235,7 @@ class E2ETestEvaluator {
 // - Test ${feature} functionality
 // - Test ${feature} integration with other features
 // - Test ${feature} error scenarios
-// - Test ${feature} user workflows`);
+// - Test ${feature} user workflows`, context);
       }
     });
 
@@ -262,7 +262,7 @@ class E2ETestEvaluator {
 // - Test successful form submissions
 // - Test successful navigation flows
 // - Test successful data operations
-// - Validate expected outcomes and state changes`);
+// - Validate expected outcomes and state changes`, context);
     }
 
     if (hasFailureScenarios) {
@@ -274,7 +274,7 @@ class E2ETestEvaluator {
 // - Test invalid input handling
 // - Test network error scenarios
 // - Test authentication failures
-// - Test validation error messages`);
+// - Test validation error messages`, context);
     }
 
     // Performance requirements (only for performance-focused tests or comprehensive tests)
@@ -289,7 +289,7 @@ class E2ETestEvaluator {
 // - Test page load times
 // - Test API response times
 // - Test UI responsiveness
-// - Test memory usage patterns`);
+// - Test memory usage patterns`, context);
       }
     } else if (hasPerformanceTesting) {
       result.compliant.push('✅ Includes performance testing (bonus for non-performance test)');
@@ -305,7 +305,7 @@ class E2ETestEvaluator {
         `// TODO: Add business logic validation tests for ${fileName} (${context.type} test)
 // - Test ${context.type} functionality
 // - Test ${context.type} error scenarios
-// - Test ${context.type} user workflows`);
+// - Test ${context.type} user workflows`, context);
     }
 
     // Calculate score based on context
@@ -387,7 +387,7 @@ class E2ETestEvaluator {
 // - Use real authentication cookies
 // - Use real API endpoints
 // - Use real database operations
-// - Remove all jest.mock() and vi.mock() calls`);
+// - Remove all jest.mock() and vi.mock() calls`, context);
     }
 
     // Error handling and edge cases - always required
@@ -401,7 +401,7 @@ class E2ETestEvaluator {
 // - Test network failures
 // - Test invalid input scenarios
 // - Test timeout scenarios
-// - Test rate limiting scenarios`);
+// - Test rate limiting scenarios`, context);
     }
 
     // Integration with other features - context dependent
@@ -416,7 +416,7 @@ class E2ETestEvaluator {
 // - Test integration with other features
 // - Test setup and teardown procedures
 // - Test data flow between components
-// - Test cross-feature dependencies`);
+// - Test cross-feature dependencies`, context);
       }
     } else if (hasIntegration) {
       result.compliant.push('✅ Tests integration with other features (bonus for focused test)');
@@ -454,7 +454,7 @@ class E2ETestEvaluator {
         `// TODO: Add primary action button patterns to ${fileName}
 // - Use data-testid="primary-action {action}-btn" pattern
 // - Test primary action presence with UXComplianceHelper
-// - Validate button text matches standardized patterns`);
+// - Validate button text matches standardized patterns`, context);
     }
 
     // Form accessibility
@@ -470,7 +470,7 @@ class E2ETestEvaluator {
 // - Test form labels and ARIA attributes
 // - Test keyboard navigation
 // - Test screen reader compatibility
-// - Use UXComplianceHelper.validateFormAccessibility()`);
+// - Use UXComplianceHelper.validateFormAccessibility()`, context);
     }
 
     // Error/success message containers
@@ -484,7 +484,7 @@ class E2ETestEvaluator {
 // - Test error message display and content
 // - Test success message display and content
 // - Test message container accessibility
-// - Test message timing and persistence`);
+// - Test message timing and persistence`, context);
     }
 
     // Loading states and feedback
@@ -498,7 +498,7 @@ class E2ETestEvaluator {
 // - Test loading spinner visibility
 // - Test loading state transitions
 // - Test loading timeout scenarios
-// - Test loading state accessibility`);
+// - Test loading state accessibility`, context);
     }
 
     // Mobile responsiveness
@@ -514,7 +514,7 @@ class E2ETestEvaluator {
 // - Test mobile viewport (375x667)
 // - Test touch interactions
 // - Test responsive layout
-// - Use UXComplianceHelper.validateMobileResponsiveness()`);
+// - Use UXComplianceHelper.validateMobileResponsiveness()`, context);
     }
 
     // Keyboard navigation
@@ -530,7 +530,7 @@ class E2ETestEvaluator {
 // - Test tab navigation
 // - Test focus management
 // - Test keyboard shortcuts
-// - Use UXComplianceHelper.validateKeyboardNavigation()`);
+// - Use UXComplianceHelper.validateKeyboardNavigation()`, context);
     }
 
     // Screen reader compatibility
@@ -546,7 +546,7 @@ class E2ETestEvaluator {
 // - Test ARIA landmarks and roles
 // - Test semantic HTML structure
 // - Test screen reader announcements
-// - Use UXComplianceHelper.validateScreenReaderCompatibility()`);
+// - Use UXComplianceHelper.validateScreenReaderCompatibility()`, context);
     }
 
     result.score = (hasPrimaryActionPatterns ? 0.3 : 0) + 
@@ -616,7 +616,7 @@ class E2ETestEvaluator {
 // await expect(page.locator('[data-testid="submit-btn"]')).toBeVisible();
 // await page.waitForLoadState('networkidle');
 // await page.waitForResponse(response => response.url().includes('/api/'));
-// await page.waitForFunction(() => document.querySelector('.loading').style.display === 'none');`);
+// await page.waitForFunction(() => document.querySelector('.loading').style.display === 'none');`, context);
     }
 
     // Check for hardcoded delays (anti-pattern)
@@ -655,7 +655,7 @@ class E2ETestEvaluator {
 // - Wait for specific elements to appear
 // - Wait for network requests to complete
 // - Wait for page state changes
-// - Use appropriate timeouts for different operations`);
+// - Use appropriate timeouts for different operations`, context);
     }
 
     // Check for performance measurement anti-patterns
@@ -694,7 +694,7 @@ class E2ETestEvaluator {
 // Then separately measure user interaction time if needed:
 // const interactionStartTime = Date.now();
 // await page.click('[data-testid="tab-connections"]');
-// const interactionTime = Date.now() - interactionStartTime;`);
+// const interactionTime = Date.now() - interactionStartTime;`, context);
     }
 
     // Check for proper timeout configurations
@@ -710,7 +710,7 @@ class E2ETestEvaluator {
 // test.setTimeout(30000); // Global test timeout
 // await page.waitForSelector(selector, { timeout: 10000 }); // Element timeout
 // await expect(page.locator(selector)).toBeVisible({ timeout: 5000 }); // Expect timeout
-// await page.waitForResponse(response => response.url().includes('/api/'), { timeout: 15000 }); // API timeout`);
+// await page.waitForResponse(response => response.url().includes('/api/'), { timeout: 15000 }); // API timeout`, context);
     }
 
     // Check for conditional waiting (waiting for specific states)
@@ -748,7 +748,7 @@ class E2ETestEvaluator {
 // Examples:
 // await page.waitForFunction(() => document.querySelector('.status').textContent === 'Complete');
 // await expect(page.locator('.status')).toHaveText('Complete');
-// await page.waitForResponse(response => response.url().includes('/api/workflow') && response.status() === 200);`);
+// await page.waitForResponse(response => response.url().includes('/api/workflow') && response.status() === 200);`, context);
     }
 
     // Check for network-aware waiting
@@ -782,7 +782,7 @@ class E2ETestEvaluator {
 // Examples:
 // await page.waitForLoadState('networkidle');
 // await page.waitForResponse(response => response.url().includes('/api/'));
-// await page.waitForLoadState('domcontentloaded');`);
+// await page.waitForLoadState('domcontentloaded');`, context);
     }
 
     // Check for element state waiting
@@ -820,7 +820,7 @@ class E2ETestEvaluator {
 // await expect(page.locator('[data-testid="submit-btn"]')).toBeVisible();
 // await expect(page.locator('[data-testid="loading"]')).toBeHidden();
 // await expect(page.locator('[data-testid="input"]')).toBeEnabled();
-// await expect(page.locator('[data-testid="checkbox"]')).toHaveAttribute('checked');`);
+// await expect(page.locator('[data-testid="checkbox"]')).toHaveAttribute('checked');`, context);
     }
 
     // Calculate score based on all waiting strategy criteria
@@ -860,7 +860,7 @@ class E2ETestEvaluator {
 // - Test modal opening and closing
 // - Test modal form interactions
 // - Test modal loading states
-// - Test modal success/error feedback`);
+// - Test modal success/error feedback`, context);
       result.score = 0;
       this.results[fileName].compliance.modalBehavior = result;
       return;
@@ -878,7 +878,7 @@ class E2ETestEvaluator {
 // - Test button text changes to "Creating..." or similar
 // - Test button remains disabled until operation completes
 // - Test loading indicator/spinner on button
-// - Enforce minimum loading state duration (800ms)`);
+// - Enforce minimum loading state duration (800ms)`, context);
     }
 
     // Check for minimum loading state duration
@@ -892,7 +892,7 @@ class E2ETestEvaluator {
 // - Enforce minimum 800ms loading state duration
 // - Example: await new Promise(resolve => setTimeout(resolve, 800));
 // - Ensure users see loading feedback even for fast operations
-// - Prevent flickering loading states`);
+// - Prevent flickering loading states`, context);
     }
 
     // Check for success message testing in modal
@@ -907,7 +907,7 @@ class E2ETestEvaluator {
 // - Test success message is visible and readable
 // - Test button text changes to "Success!" or similar
 // - Test success message timing and persistence
-// - Test success state before modal closes`);
+// - Test success state before modal closes`, context);
     }
 
     // Check for modal delay before closing
@@ -922,7 +922,7 @@ class E2ETestEvaluator {
 // - Test user can see success message before modal closes
 // - Test modal closes automatically after delay
 // - Test modal remains open on error for user correction
-// - Example: setTimeout(() => closeModal(), 1500);`);
+// - Example: setTimeout(() => closeModal(), 1500);`, context);
     }
 
     // Check for error handling in modal
@@ -936,7 +936,7 @@ class E2ETestEvaluator {
 // - Test modal stays open on error
 // - Test error message appears in modal
 // - Test submit button re-enables on error
-// - Test user can correct errors and retry`);
+// - Test user can correct errors and retry`, context);
     }
 
     // Check for modal accessibility
@@ -950,7 +950,7 @@ class E2ETestEvaluator {
 // - Test focus trap within modal
 // - Test escape key closes modal
 // - Test ARIA attributes and roles
-// - Test screen reader announcements`);
+// - Test screen reader announcements`, context);
     }
 
     // Check for modal state transitions
@@ -965,7 +965,7 @@ class E2ETestEvaluator {
 // - Test modal loading state during submission
 // - Test modal success state with message
 // - Test modal error state with error message
-// - Test modal closing state`);
+// - Test modal closing state`, context);
     }
 
     // Check for form validation in modal
@@ -979,7 +979,7 @@ class E2ETestEvaluator {
 // - Test real-time form validation
 // - Test validation error messages in modal
 // - Test submit button disabled until form valid
-// - Test validation state persistence`);
+// - Test validation state persistence`, context);
     }
 
     // Check for form loading state transitions
@@ -994,7 +994,7 @@ class E2ETestEvaluator {
 // - Test loading spinner appears on form
 // - Test form transitions from loading to success/error
 // - Test minimum loading duration (800ms) for all forms
-// - Test form state persistence during loading`);
+// - Test form state persistence during loading`, context);
     }
 
     // Calculate score based on modal behavior criteria
@@ -2336,7 +2336,7 @@ class E2ETestEvaluator {
     }
 
     // Check for deterministic test data
-    const hasDeterministicData = /createTestData|setupTestData|seed.*data|fixture/.test(content);
+    const hasDeterministicData = /createTestData|setupTestData|seed.*data|fixture|TestDataUtils\.createTestUserData|TestDataUtils\.generateTestId/.test(content);
     if (hasDeterministicData) {
       result.compliant.push('✅ Uses deterministic test data');
     } else {
@@ -2364,7 +2364,7 @@ class E2ETestEvaluator {
     }
 
     // Check for error handling and recovery
-    const hasErrorRecovery = /try.*catch|error.*handling|recovery|fallback/.test(content);
+    const hasErrorRecovery = /try.*catch|error.*handling|recovery|fallback|ErrorHandling\.validateError|ErrorHandling\.validateSuccess/.test(content);
     if (hasErrorRecovery) {
       result.compliant.push('✅ Has error handling and recovery');
     } else {
@@ -2481,9 +2481,15 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Add TODO item (with duplicate detection)
+   * Add TODO item (with duplicate detection and context awareness)
    */
-  addTodo(file, priority, description, code) {
+  addTodo(file, priority, description, code, context = null) {
+    // Check if TODO is appropriate for this test context
+    if (context && !this.isTodoAppropriateForContext(description, context)) {
+      console.log(`  ⚠️  Skipping context-inappropriate TODO: ${description} (for ${context.type} test)`);
+      return;
+    }
+
     // Check if a similar TODO already exists for this file
     const existingTodo = this.todos.find(todo => 
       todo.file === file && 
@@ -2507,7 +2513,8 @@ class E2ETestEvaluator {
         file,
         priority,
         description,
-        code
+        code,
+        context: context?.type || 'general'
       });
     } else {
       console.log(`  ⚠️  Skipping duplicate TODO: ${description}`);
@@ -2515,38 +2522,516 @@ class E2ETestEvaluator {
   }
 
   /**
-   * Implement TODOs in the test file
+   * Check if a TODO is appropriate for the given test context
    */
-  async implementTodos(testFilePath) {
+  isTodoAppropriateForContext(description, context) {
+    const lowerDescription = description.toLowerCase();
+    
+    // Context-specific filtering rules
+    if (context.type === 'authentication') {
+      // Skip TODOs that are not relevant for authentication tests
+      const inappropriateForAuth = [
+        'workflow testing',
+        'workflow execution',
+        'natural language workflow',
+        'api connection management',
+        'secrets vault',
+        'dashboard functionality',
+        'memory leak testing',
+        'concurrent operations testing',
+        'api performance testing',
+        'service worker',
+        'app manifest',
+        'push notification',
+        'background sync',
+        'event tracking',
+        'business metrics',
+        'structured data',
+        'sitemap'
+      ];
+      
+      return !inappropriateForAuth.some(term => lowerDescription.includes(term));
+    }
+    
+    if (context.type === 'workflow') {
+      // Skip TODOs that are not relevant for workflow tests
+      const inappropriateForWorkflow = [
+        'api connection management',
+        'secrets vault',
+        'authentication flows',
+        'oauth2',
+        'sso',
+        'mfa',
+        'service worker',
+        'app manifest',
+        'push notification',
+        'background sync',
+        'event tracking',
+        'business metrics',
+        'structured data',
+        'sitemap'
+      ];
+      
+      return !inappropriateForWorkflow.some(term => lowerDescription.includes(term));
+    }
+    
+    if (context.type === 'connection') {
+      // Skip TODOs that are not relevant for connection tests
+      const inappropriateForConnection = [
+        'workflow execution',
+        'natural language workflow',
+        'secrets vault',
+        'authentication flows',
+        'oauth2',
+        'sso',
+        'mfa',
+        'service worker',
+        'app manifest',
+        'push notification',
+        'background sync',
+        'event tracking',
+        'business metrics',
+        'structured data',
+        'sitemap'
+      ];
+      
+      return !inappropriateForConnection.some(term => lowerDescription.includes(term));
+    }
+    
+    if (context.type === 'secrets') {
+      // Skip TODOs that are not relevant for secrets tests
+      const inappropriateForSecrets = [
+        'workflow execution',
+        'natural language workflow',
+        'api connection management',
+        'authentication flows',
+        'oauth2',
+        'sso',
+        'mfa',
+        'service worker',
+        'app manifest',
+        'push notification',
+        'background sync',
+        'event tracking',
+        'business metrics',
+        'structured data',
+        'sitemap'
+      ];
+      
+      return !inappropriateForSecrets.some(term => lowerDescription.includes(term));
+    }
+    
+    if (context.type === 'ui') {
+      // Skip TODOs that are not relevant for UI tests
+      const inappropriateForUI = [
+        'workflow execution',
+        'natural language workflow',
+        'api connection management',
+        'secrets vault',
+        'authentication flows',
+        'oauth2',
+        'sso',
+        'mfa',
+        'memory leak testing',
+        'concurrent operations testing',
+        'api performance testing',
+        'service worker',
+        'app manifest',
+        'push notification',
+        'background sync',
+        'event tracking',
+        'business metrics',
+        'structured data',
+        'sitemap'
+      ];
+      
+      return !inappropriateForUI.some(term => lowerDescription.includes(term));
+    }
+    
+    if (context.type === 'performance') {
+      // Performance tests should focus on performance-related TODOs
+      const appropriateForPerformance = [
+        'performance',
+        'load time',
+        'memory leak',
+        'concurrent',
+        'network',
+        'timeout',
+        'budget',
+        'threshold'
+      ];
+      
+      return appropriateForPerformance.some(term => lowerDescription.includes(term));
+    }
+    
+    if (context.type === 'security') {
+      // Security tests should focus on security-related TODOs
+      const appropriateForSecurity = [
+        'security',
+        'xss',
+        'csrf',
+        'authentication',
+        'authorization',
+        'permission',
+        'access',
+        'encryption',
+        'data exposure',
+        'privacy'
+      ];
+      
+      return appropriateForSecurity.some(term => lowerDescription.includes(term));
+    }
+    
+    // For comprehensive tests, allow all TODOs
+    if (context.type === 'comprehensive') {
+      return true;
+    }
+    
+    // For general tests, be more conservative
+    const inappropriateForGeneral = [
+      'workflow execution',
+      'natural language workflow',
+      'api connection management',
+      'secrets vault',
+      'service worker',
+      'app manifest',
+      'push notification',
+      'background sync',
+      'event tracking',
+      'business metrics',
+      'structured data',
+      'sitemap'
+    ];
+    
+    return !inappropriateForGeneral.some(term => lowerDescription.includes(term));
+  }
+
+  /**
+   * Implement TODOs in the test file at appropriate locations
+   */
+  async implementTodos(testFilePath, priorityFilter = null) {
     const fileName = path.basename(testFilePath);
-    const fileTodos = this.todos.filter(todo => todo.file === fileName);
+    let fileTodos = this.todos.filter(todo => todo.file === fileName);
+    
+    // Filter by priority if specified
+    if (priorityFilter) {
+      fileTodos = fileTodos.filter(todo => todo.priority === priorityFilter);
+    }
     
     if (fileTodos.length === 0) {
-      console.log(`✅ No TODOs to implement for ${fileName}`);
+      console.log(`✅ No ${priorityFilter || ''} TODOs to implement for ${fileName}`);
       return;
     }
 
-    console.log(`🔧 Implementing ${fileTodos.length} TODOs for ${fileName}`);
+    console.log(`🔧 Implementing ${fileTodos.length} ${priorityFilter || ''} TODOs for ${fileName}`);
     
     let content = fs.readFileSync(testFilePath, 'utf8');
+    const lines = content.split('\n');
     
     // Sort TODOs by priority (P0 first, then P1, then P2)
     const priorityOrder = { 'P0': 0, 'P1': 1, 'P2': 2 };
     fileTodos.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
-    // Add TODOs to the file
-    fileTodos.forEach(todo => {
-      const todoComment = `\n${todo.code}\n`;
+    // Process TODOs in reverse order to maintain line numbers
+    const sortedTodos = [...fileTodos].reverse();
+    let insertedLines = 0;
+
+    sortedTodos.forEach(todo => {
+      const todoLocation = this.findTodoLocation(todo, lines);
       
-      // Add TODO at the end of the file
-      content += todoComment;
-      
-      console.log(`  ✅ Added ${todo.priority} TODO: ${todo.description}`);
+      if (todoLocation !== -1) {
+        // Insert TODO at the appropriate location
+        const insertIndex = todoLocation + insertedLines;
+        const todoLines = todo.code.split('\n');
+        
+        // Insert the TODO lines
+        lines.splice(insertIndex, 0, ...todoLines);
+        insertedLines += todoLines.length;
+        
+        console.log(`  ✅ Added ${todo.priority} TODO at line ${todoLocation + 1}: ${todo.description}`);
+      } else {
+        // Fallback: add at the end of the file
+        lines.push(...todo.code.split('\n'));
+        console.log(`  ✅ Added ${todo.priority} TODO at end of file: ${todo.description}`);
+      }
     });
 
     // Write the updated content back to the file
-    fs.writeFileSync(testFilePath, content);
-    console.log(`✅ Updated ${testFilePath} with ${fileTodos.length} TODOs`);
+    const updatedContent = lines.join('\n');
+    fs.writeFileSync(testFilePath, updatedContent);
+    console.log(`✅ Updated ${testFilePath} with ${fileTodos.length} ${priorityFilter || ''} TODOs`);
+  }
+
+  /**
+   * Find the appropriate location for a TODO within the file
+   */
+  findTodoLocation(todo, lines) {
+    const description = todo.description.toLowerCase();
+    const code = todo.code.toLowerCase();
+    
+    // Look for specific patterns to determine where to place the TODO
+    
+    // Test setup and isolation TODOs
+    if (description.includes('test isolation') || description.includes('setup') || description.includes('beforeeach')) {
+      return this.findTestSetupLocation(lines);
+    }
+    
+    // Data cleanup TODOs
+    if (description.includes('cleanup') || description.includes('aftereach') || description.includes('delete')) {
+      return this.findTestCleanupLocation(lines);
+    }
+    
+    // Waiting strategy TODOs
+    if (description.includes('waiting') || description.includes('delay') || description.includes('timeout')) {
+      return this.findWaitingStrategyLocation(lines);
+    }
+    
+    // Modal/dialog TODOs
+    if (description.includes('modal') || description.includes('dialog') || description.includes('submit button')) {
+      return this.findModalLocation(lines);
+    }
+    
+    // Form accessibility TODOs
+    if (description.includes('accessibility') || description.includes('form') || description.includes('aria')) {
+      return this.findFormLocation(lines);
+    }
+    
+    // Authentication TODOs
+    if (description.includes('authentication') || description.includes('login') || description.includes('session')) {
+      return this.findAuthenticationLocation(lines);
+    }
+    
+    // Error handling TODOs
+    if (description.includes('error') || description.includes('failure') || description.includes('invalid')) {
+      return this.findErrorHandlingLocation(lines);
+    }
+    
+    // Performance TODOs
+    if (description.includes('performance') || description.includes('load time') || description.includes('memory')) {
+      return this.findPerformanceLocation(lines);
+    }
+    
+    // Security TODOs
+    if (description.includes('security') || description.includes('xss') || description.includes('csrf')) {
+      return this.findSecurityLocation(lines);
+    }
+    
+    // Default: place after the last test.describe block
+    return this.findDefaultLocation(lines);
+  }
+
+  /**
+   * Find location for test setup TODOs
+   */
+  findTestSetupLocation(lines) {
+    // Look for beforeEach or beforeAll blocks
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('beforeEach') || lines[i].includes('beforeAll')) {
+        return i;
+      }
+    }
+    
+    // Look for test.describe blocks to place setup TODOs
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('test.describe')) {
+        return i + 1;
+      }
+    }
+    
+    return -1;
+  }
+
+  /**
+   * Find location for test cleanup TODOs
+   */
+  findTestCleanupLocation(lines) {
+    // Look for afterEach or afterAll blocks
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('afterEach') || lines[i].includes('afterAll')) {
+        return i;
+      }
+    }
+    
+    // Look for the end of test.describe blocks
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (lines[i].includes('});') && i > 0 && lines[i-1].includes('test.describe')) {
+        return i;
+      }
+    }
+    
+    return -1;
+  }
+
+  /**
+   * Find location for waiting strategy TODOs
+   */
+  findWaitingStrategyLocation(lines) {
+    // Look for existing waiting patterns
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('waitFor') || lines[i].includes('expect') || lines[i].includes('timeout')) {
+        return i + 1;
+      }
+    }
+    
+    // Look for test blocks
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('test(')) {
+        return i + 1;
+      }
+    }
+    
+    return -1;
+  }
+
+  /**
+   * Find location for modal TODOs
+   */
+  findModalLocation(lines) {
+    // Look for existing modal/dialog code
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('modal') || lines[i].includes('dialog') || lines[i].includes('popup')) {
+        return i + 1;
+      }
+    }
+    
+    // Look for form submission code
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('click') && lines[i].includes('submit')) {
+        return i + 1;
+      }
+    }
+    
+    return -1;
+  }
+
+  /**
+   * Find location for form accessibility TODOs
+   */
+  findFormLocation(lines) {
+    // Look for existing form code
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('getByLabel') || lines[i].includes('getByRole') || lines[i].includes('fill(')) {
+        return i + 1;
+      }
+    }
+    
+    // Look for input fields
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('input') || lines[i].includes('form')) {
+        return i + 1;
+      }
+    }
+    
+    return -1;
+  }
+
+  /**
+   * Find location for authentication TODOs
+   */
+  findAuthenticationLocation(lines) {
+    // Look for existing authentication code
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('login') || lines[i].includes('signup') || lines[i].includes('password')) {
+        return i + 1;
+      }
+    }
+    
+    // Look for cookie/session code
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('cookie') || lines[i].includes('session') || lines[i].includes('auth')) {
+        return i + 1;
+      }
+    }
+    
+    return -1;
+  }
+
+  /**
+   * Find location for error handling TODOs
+   */
+  findErrorHandlingLocation(lines) {
+    // Look for existing error handling code
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('error') || lines[i].includes('catch') || lines[i].includes('invalid')) {
+        return i + 1;
+      }
+    }
+    
+    // Look for expect statements that might be error-related
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('expect') && (lines[i].includes('error') || lines[i].includes('invalid'))) {
+        return i + 1;
+      }
+    }
+    
+    return -1;
+  }
+
+  /**
+   * Find location for performance TODOs
+   */
+  findPerformanceLocation(lines) {
+    // Look for existing performance code
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('performance') || lines[i].includes('load') || lines[i].includes('time')) {
+        return i + 1;
+      }
+    }
+    
+    // Look for Date.now() usage
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('Date.now()')) {
+        return i + 1;
+      }
+    }
+    
+    return -1;
+  }
+
+  /**
+   * Find location for security TODOs
+   */
+  findSecurityLocation(lines) {
+    // Look for existing security code
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('security') || lines[i].includes('xss') || lines[i].includes('csrf')) {
+        return i + 1;
+      }
+    }
+    
+    // Look for input validation
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('validation') || lines[i].includes('sanitize')) {
+        return i + 1;
+      }
+    }
+    
+    return -1;
+  }
+
+  /**
+   * Find default location (after last test.describe block)
+   */
+  findDefaultLocation(lines) {
+    // Look for the last test.describe block
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (lines[i].includes('test.describe')) {
+        // Find the closing brace of this describe block
+        let braceCount = 0;
+        for (let j = i; j < lines.length; j++) {
+          if (lines[j].includes('{')) braceCount++;
+          if (lines[j].includes('}')) {
+            braceCount--;
+            if (braceCount === 0) {
+              return j + 1;
+            }
+          }
+        }
+      }
+    }
+    
+    // If no test.describe found, place at the end
+    return lines.length;
   }
 
   /**
@@ -2992,6 +3477,23 @@ async function main() {
   if (args.length === 0) {
     // Evaluate all test files
     await evaluator.evaluateAllTests();
+    
+    // Ask if user wants to implement P0 TODOs for all files
+    const p0Todos = evaluator.todos.filter(todo => todo.priority === 'P0');
+    if (p0Todos.length > 0) {
+      console.log(`\n🔧 Found ${p0Todos.length} P0 (Critical) TODOs. Would you like to implement them? (y/n)`);
+      process.stdin.once('data', async (data) => {
+        const answer = data.toString().trim().toLowerCase();
+        if (answer === 'y' || answer === 'yes') {
+          const testFiles = evaluator.findTestFiles(TEST_DIR);
+          for (const testFile of testFiles) {
+            await evaluator.implementTodos(testFile, 'P0');
+          }
+          console.log('\n✅ All P0 TODOs have been implemented!');
+        }
+        process.exit(0);
+      });
+    }
   } else {
     // Evaluate specific test file
     const testFilePath = args[0];

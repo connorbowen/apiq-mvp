@@ -2,9 +2,17 @@
 // Tests the complete connection management functionality including secrets-first refactor
 
 import { test, expect } from '../../helpers/serverHealthCheck';
-import { createTestUser, cleanupTestUser, generateTestId, TestUser } from '../../helpers/testUtils';
+import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUtils';
 import { UXComplianceHelper } from '../../helpers/uxCompliance';
 import { createTestOAuth2State } from '../../helpers/oauth2TestUtils';
+import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton } from '../../helpers/e2eHelpers';
+import { createE2EUser } from '../../helpers/authHelpers';
+import { validateUXCompliance, waitForDashboard } from '../../helpers/uiHelpers';
+import { createTestData, cleanupTestData } from '../../helpers/dataHelpers';
+import { testModalSubmitLoading, testModalSuccessMessage, testModalErrorHandling, testModalDelayBeforeClosing } from '../../helpers/modalHelpers';
+import { testPageLoadTime, testAPIPerformance } from '../../helpers/performanceHelpers';
+import { testDataExposure, testXSSPrevention } from '../../helpers/securityHelpers';
+import { testFormAccessibility, testPrimaryActionPatterns } from '../../helpers/accessibilityHelpers';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -15,12 +23,11 @@ const createdConnectionIds: string[] = [];
 test.describe('Connections Management E2E Tests', () => {
   test.beforeAll(async () => {
     // Create a real test user and get JWT
-    testUser = await createTestUser(
-      `e2e-conn-${generateTestId('user')}@example.com`,
-      'e2eTestPass123',
-      'ADMIN',
-      'E2E Connections Test User'
-    );
+    testUser = await createE2EUser('ADMIN', {
+      email: `e2e-conn-${generateTestId('user')}@example.com`,
+      password: 'e2eTestPass123',
+      name: 'E2E Connections Test User'
+    });
     jwt = testUser.accessToken;
   });
 
@@ -40,185 +47,62 @@ test.describe('Connections Management E2E Tests', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    const uxHelper = new UXComplianceHelper(page);
-    
-    // Clean up any existing modals first (with timeout and always continue)
-    try {
-      const modalOverlay = page.locator('.fixed.inset-0.bg-gray-600.bg-opacity-50');
-      // Only wait up to 1s for modal to appear
-      if (await modalOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
-        // Try multiple ways to close the modal
-        const closeButton = page.locator('button[aria-label="Close modal"]');
-        const cancelButton = page.locator('button:has-text("Cancel")');
-        if (await closeButton.isVisible({ timeout: 500 }).catch(() => false)) {
-          await closeButton.click();
-        } else if (await cancelButton.isVisible({ timeout: 500 }).catch(() => false)) {
-          await cancelButton.click();
-        } else {
-          await page.keyboard.press('Escape');
-        }
-        // Wait for modal to close, but don't hang if it doesn't
-        await modalOverlay.isHidden({ timeout: 2000 }).catch(() => {});
-      }
-    } catch (error) {
-      // Ignore cleanup errors
-    }
-    
-    // Login before each test with better error handling
-    console.log('🪵 Starting login process for user:', testUser.email);
-    await page.goto(`${BASE_URL}/login`);
-    
-    // Wait for page to load completely
-    await page.waitForLoadState('networkidle');
-    
-    // Add UX compliance validation for login page
-    await uxHelper.validatePageTitle('APIQ');
-    await uxHelper.validateHeadingHierarchy(['Sign in to APIQ']);
-    await uxHelper.validateFormAccessibility();
-    
-    // Fill login form with debug output
-    console.log('🪵 Filling login form...');
-    await page.fill('input[name="email"]', testUser.email);
-    await page.fill('input[name="password"]', 'e2eTestPass123');
-    
-    // Check if login button is enabled
-    const loginButton = page.getByTestId('primary-action signin-btn');
-    const isEnabled = await loginButton.isEnabled();
-    console.log('🪵 Login button enabled:', isEnabled);
-    
-    if (!isEnabled) {
-      console.error('🪵 Login button is disabled!');
-      throw new Error('Login button is disabled');
-    }
-    
-    // Click login button
-    console.log('🪵 Clicking login button...');
-    await loginButton.click();
-    
-    // Wait for successful login and redirect to dashboard with longer timeout
-    console.log('🪵 Waiting for redirect to dashboard...');
-    try {
-      await expect(page).toHaveURL(/.*dashboard/, { timeout: 15000 });
-      console.log('🪵 Successfully redirected to dashboard');
-    } catch (error) {
-      console.error('🪵 Failed to redirect to dashboard. Current URL:', await page.url());
-      
-      // Check if there's an error message on the login page
-      const errorElement = page.locator('[role="alert"]');
-      if (await errorElement.isVisible()) {
-        const errorText = await errorElement.textContent();
-        console.error('🪵 Login error message:', errorText);
-      }
-      
-      // Check if we're still on the login page
-      const currentUrl = await page.url();
-      if (currentUrl.includes('/login')) {
-        console.error('🪵 Still on login page after login attempt');
-        throw new Error(`Login failed - still on login page. Current URL: ${currentUrl}`);
-      }
-      
-      throw error;
-    }
-    
-    // Add UX compliance validation for dashboard
-    await uxHelper.validateHeadingHierarchy(['Dashboard']);
-    
-    // Navigate to settings tab (connections moved here in UX simplification)
-    console.log('🪵 Navigating to settings tab...');
-    await page.click('[data-testid="tab-settings"]');
-    
-    // Wait for the settings tab to load
-    await page.waitForLoadState('networkidle', { timeout: 10000 });
-    
-    // Navigate to connections section within settings
-    await page.click('[data-testid="connections-section"]');
-    
-    // Add comprehensive UX compliance validation
-    await uxHelper.validateHeadingHierarchy(['Dashboard', 'Settings', 'API Connections']);
-    await uxHelper.validateFormAccessibility();
-    
-    // Validate UX compliance - heading hierarchy
-    await expect(page.locator('h1')).toHaveText('Dashboard');
-    await expect(page.getByText('API Connections')).toBeVisible();
-    
-    console.log('🪵 Login and navigation completed successfully');
-    
-    // Clear any rate limiting state that might persist between tests
-    await page.evaluate(() => {
-      (window as any).lastConnectionSubmission = 0;
-      (window as any).connectionSubmissionCount = 0;
-      (window as any).lastRateLimitReset = 0;
+    // Use new E2E helper for complete setup
+    await setupE2E(page, testUser, {
+      tab: 'settings',
+      section: 'connections',
+      validateUX: true
     });
     
-    // Reset server-side rate limits
-    try {
-      await page.request.post('/api/test/reset-rate-limits');
-    } catch (error) {
-      // Ignore if endpoint doesn't exist in non-test environment
-      console.log('Rate limit reset endpoint not available:', error);
+    // Enhanced debug: Check for 'API Connections' section button
+    const sectionButton = await page.$('button:has-text("API Connections")');
+    if (sectionButton) {
+      const isVisible = await sectionButton.isVisible();
+      console.log('🪵 API Connections section button found. Visible:', isVisible);
+      if (isVisible) {
+        await sectionButton.click();
+      } else {
+        console.log('🪵 API Connections section button is not visible.');
+      }
+    } else {
+      console.log('🪵 API Connections section button NOT found. Listing all button texts in Settings tab:');
+      const buttonTexts = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('button')).map(b => b.textContent?.trim())
+      );
+      console.log('🪵 All button texts:', buttonTexts);
     }
+    // Debug: Print all visible headings before UX compliance check
+    const headings = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('h1, h2, h3, h4'))
+        .filter(el => (el as HTMLElement).offsetParent !== null)
+        .map(el => `${el.tagName}: \"${el.textContent?.trim()}\"`);
+    });
+    console.log('🪵 Visible headings at UX check:', headings);
+    // Wait for the API Connections heading to be visible
+    await page.waitForSelector('h2:has-text("API Connections")', { timeout: 10000 });
+    
+    await validateUXCompliance(page, {
+      title: 'APIQ',
+      headings: 'Dashboard, Settings, API Connections',
+      validateForm: true,
+      validateAccessibility: true
+    });
   });
 
   test.afterEach(async ({ page }) => {
     // Clean up any open modals to prevent test isolation issues
-    try {
-      // Check if any modal is open and close it
-      const modalOverlay = page.locator('.fixed.inset-0.bg-gray-600.bg-opacity-50');
-      if (await modalOverlay.isVisible()) {
-        // Try multiple ways to close the modal
-        const closeButton = page.locator('button[aria-label="Close modal"]');
-        const cancelButton = page.locator('button:has-text("Cancel")');
-        
-        if (await closeButton.isVisible()) {
-          await closeButton.click();
-        } else if (await cancelButton.isVisible()) {
-          await cancelButton.click();
-        } else {
-          // Last resort: press Escape key multiple times
-          await page.keyboard.press('Escape');
-          await page.waitForTimeout(100);
-          await page.keyboard.press('Escape');
-        }
-        
-        // Wait for modal to close with a longer timeout
-        await expect(modalOverlay).not.toBeVisible({ timeout: 10000 });
-      }
-    } catch (error) {
-      // Try one more aggressive cleanup
-      try {
-        await page.evaluate(() => {
-          // Force close any modals by removing them from DOM
-          const modals = document.querySelectorAll('.fixed.inset-0.bg-gray-600.bg-opacity-50');
-          modals.forEach(modal => modal.remove());
-        });
-      } catch (cleanupError) {
-        // Ignore cleanup errors - modal might already be closed
-        console.log('Modal cleanup warning:', error);
-      }
-    }
+    await closeAllModals(page);
     
-    // Clear any rate limiting state that might persist between tests
-    await page.evaluate(() => {
-      (window as any).lastConnectionSubmission = 0;
-      (window as any).connectionSubmissionCount = 0;
-      (window as any).lastRateLimitReset = 0;
-    });
-    
-    // Reset server-side rate limits
-    try {
-      await page.request.post('/api/test/reset-rate-limits');
-    } catch (error) {
-      // Ignore if endpoint doesn't exist in non-test environment
-      console.log('Rate limit reset endpoint not available:', error);
-    }
+    // Reset rate limits for test isolation
+    await resetRateLimits(page);
   });
 
   test.describe('Connection CRUD Operations', () => {
     test('should create a new API connection with UX compliance', async ({ page }) => {
       const uxHelper = new UXComplianceHelper(page);
       
-      // Click create connection button
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      // Click create connection button using helper
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       console.log('🪵 Clicked create connection button');
       
       // Wait for modal to appear
@@ -242,13 +126,19 @@ test.describe('Connections Management E2E Tests', () => {
         submitBtn: await debugSubmitBtn.count()
       });
       
-      // Add comprehensive UX compliance validation
-      await uxHelper.validateHeadingHierarchy(['Add API Connection']);
-      await uxHelper.validateFormAccessibility();
-      await uxHelper.validateActivationFirstUX();
+      // Add comprehensive UX compliance validation using helpers
+      await validateUXCompliance(page, {
+        title: 'APIQ',
+        headings: 'Add API Connection',
+        validateForm: true,
+        validateAccessibility: true
+      });
       
-      // Validate UX compliance - heading hierarchy for create form
-      await expect(page.locator('h2:has-text("Add API Connection")')).toBeVisible();
+      // Test form accessibility using helper
+      await testFormAccessibility(page, '[role="dialog"] form');
+      
+      // Test primary action patterns
+      await testPrimaryActionPatterns(page, 'create-connection-header');
       
       // Validate UX compliance - accessible form fields
       const nameInput = page.locator('[data-testid="connection-name-input"]');
@@ -270,73 +160,40 @@ test.describe('Connections Management E2E Tests', () => {
       await page.fill('[data-testid="connection-apikey-input"]', 'test-key');
       console.log('🪵 Filled API key');
       
-      // Check if submit button is enabled
-      const submitBtn = page.locator('[data-testid="primary-action submit-connection-btn"]');
+      // Check if submit button is enabled using helper
+      const submitBtn = getPrimaryActionButton(page, 'submit-connection');
       const isEnabled = await submitBtn.isEnabled();
       console.log('🪵 Submit button enabled:', isEnabled);
       await expect(submitBtn).toBeEnabled();
       
-      // Add network request monitoring
-      const requestPromise = page.waitForRequest(request => 
-        request.url().includes('/api/connections') && request.method() === 'POST'
-      );
+      // Test API performance using helper
+      const apiPerformance = await testAPIPerformance(page, '/api/connections', { 
+        timeout: 10000,
+        threshold: 5000 
+      });
+      console.log('🪵 API performance:', apiPerformance, 'ms');
+      
+      // Test data exposure prevention
+      await testDataExposure(page, [
+        '[data-testid="connection-apikey-input"]',
+        '[data-testid="connection-clientsecret-input"]'
+      ]);
       
       console.log('🪵 About to click submit button');
       await submitBtn.click();
       console.log('🪵 Clicked submit button');
       
-      // Wait for the API request to complete
-      try {
-        const request = await requestPromise;
-        console.log('🪵 API request made:', request.url());
-        console.log('🪵 Request method:', request.method());
-        console.log('🪵 Request headers:', request.headers());
-        console.log('🪵 Request post data:', request.postData());
-      } catch (e) {
-        console.log('🪵 No API request detected within timeout');
-      }
-      
       // Wait for form processing with debug output
       console.log('🪵 Waiting for form processing...');
       
-      // Wait for modal to close (indicating success)
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
-      
-      // Check for success message in dashboard (not in modal)
-      const successMessage = page.locator('[data-testid="success-message"]');
-      try {
-        await expect(successMessage).toBeVisible({ timeout: 5000 });
-        console.log('🪵 Success message visible:', await successMessage.isVisible());
-        console.log('🪵 Success message text:', await successMessage.textContent());
-      } catch (e) {
-        console.warn('🪵 Success message did not appear within timeout');
-        
-        // Check for error messages instead
-        const errorMessage = page.locator('[data-testid="error-message"]');
-        const hasError = await errorMessage.count() > 0;
-        if (hasError) {
-          console.log('🪵 Error message found:', await errorMessage.textContent());
-        }
-        
-        // Check if modal is still open
-        const modalStillOpen = await page.locator('[role="dialog"]').isVisible();
-        console.log('🪵 Modal still open:', modalStillOpen);
-        
-        // Check for any alerts or notifications
-        const alerts = page.locator('[role="alert"], [role="status"]');
-        const alertCount = await alerts.count();
-        console.log('🪵 Alert/status elements found:', alertCount);
-        if (alertCount > 0) {
-          for (let i = 0; i < alertCount; i++) {
-            const alert = alerts.nth(i);
-            console.log(`🪵 Alert ${i + 1}:`, await alert.textContent());
-          }
-        }
-      }
+      // Test modal submit loading and success message
+      await testModalSubmitLoading(page, '[data-testid="primary-action submit-connection-btn"]');
+      await testModalDelayBeforeClosing(page, '[role="dialog"]');
+      await testModalSuccessMessage(page, '[data-testid="success-message"]', 'Connection created successfully');
     });
 
     test('should create connection with Bearer token auth', async ({ page }) => {
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       await page.fill('[data-testid="connection-name-input"]', 'Bearer Token Connection');
       await page.fill('[data-testid="connection-description-input"]', 'Bearer token test connection');
@@ -344,7 +201,7 @@ test.describe('Connections Management E2E Tests', () => {
       await page.selectOption('[data-testid="connection-authtype-select"]', 'BEARER_TOKEN');
       await page.fill('[data-testid="connection-bearertoken-input"]', 'test-bearer-token-123');
       
-      await page.click('[data-testid="primary-action submit-connection-btn"]');
+      await getPrimaryActionButton(page, 'submit-connection').click();
       
       // Wait for modal to close (indicating success)
       await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
@@ -379,7 +236,7 @@ test.describe('Connections Management E2E Tests', () => {
     });
 
     test('should create connection with Basic auth', async ({ page }) => {
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       await page.fill('[data-testid="connection-name-input"]', 'Basic Auth Connection');
       await page.fill('[data-testid="connection-description-input"]', 'Basic auth test connection');
@@ -388,7 +245,7 @@ test.describe('Connections Management E2E Tests', () => {
       await page.fill('[data-testid="connection-username-input"]', 'testuser');
       await page.fill('[data-testid="connection-password-input"]', 'testpass');
       
-      await page.click('[data-testid="primary-action submit-connection-btn"]');
+      await getPrimaryActionButton(page, 'submit-connection').click();
       
       // Wait for modal to close (indicating success)
       await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
@@ -399,7 +256,7 @@ test.describe('Connections Management E2E Tests', () => {
     });
 
     test('should create connection with OAuth2 provider selection', async ({ page }) => {
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       await page.fill('[data-testid="connection-name-input"]', 'GitHub OAuth2 Connection');
       await page.fill('[data-testid="connection-description-input"]', 'GitHub OAuth2 test connection');
@@ -417,7 +274,7 @@ test.describe('Connections Management E2E Tests', () => {
       await page.fill('[data-testid="connection-clientid-input"]', 'test-github-client-id');
       await page.fill('[data-testid="connection-clientsecret-input"]', 'test-github-client-secret');
       
-      await page.click('[data-testid="primary-action submit-connection-btn"]');
+      await getPrimaryActionButton(page, 'submit-connection').click();
       
       // Wait for modal to close (indicating success)
       await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
@@ -433,7 +290,7 @@ test.describe('Connections Management E2E Tests', () => {
         request.url().includes('/api/connections') && request.method() === 'POST'
       );
       
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       await page.fill('[data-testid="connection-name-input"]', 'Custom OAuth2 Connection');
       await page.fill('[data-testid="connection-description-input"]', 'Custom OAuth2 test connection');
@@ -449,101 +306,58 @@ test.describe('Connections Management E2E Tests', () => {
       await page.fill('[data-testid="connection-redirecturi-input"]', 'http://localhost:3000/api/connections/oauth2/callback');
       await page.fill('[data-testid="connection-scope-input"]', 'read write');
       
-      // Check for validation errors before submitting
-      const validationErrors = page.locator('[data-testid="validation-errors"]');
-      const hasValidationErrors = await validationErrors.count() > 0;
-      if (hasValidationErrors) {
-        console.log('🪵 Validation errors found:', await validationErrors.textContent());
-      }
+      // Test form validation using helper
+      await testModalErrorHandling(page, '[data-testid="validation-errors"]');
       
-      await page.click('[data-testid="primary-action submit-connection-btn"]');
+      await getPrimaryActionButton(page, 'submit-connection').click();
       
-      // Wait for the API request to complete
-      try {
-        const request = await requestPromise;
-        console.log('🪵 API request made:', request.url());
-      } catch (e) {
-        console.log('🪵 No API request detected');
-      }
+      // Test modal error handling using helper
+      await testModalErrorHandling(page, '[data-testid="error-message"]', 'Connection creation failed');
       
-      // Wait for form processing and check for errors
-      await page.waitForTimeout(1000);
-      
-      // Check for error messages
-      const errorMessage = page.locator('[data-testid="error-message"]').first();
-      const hasError = await errorMessage.count() > 0;
-      if (hasError) {
-        console.log('🪵 Error message found:', await errorMessage.textContent());
-      }
-      
-      // Check for success message
-      const successMessage = page.locator('[data-testid="success-message"]');
-      const hasSuccess = await successMessage.count() > 0;
-      console.log('🪵 Success message found:', hasSuccess);
-      if (hasSuccess) {
-        console.log('🪵 Success message text:', await successMessage.textContent());
-      }
+      // Test success message using helper
+      await testModalSuccessMessage(page, '[data-testid="success-message"]', 'Connection created successfully');
       
       // Check for connection card
       const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Custom OAuth2 Connection")');
-      const hasCard = await connectionCard.count() > 0;
-      console.log('🪵 Connection card found:', hasCard);
-      
-      // If we have success, expect the card to be visible
-      if (hasSuccess) {
-        await expect(connectionCard).toBeVisible();
-      } else {
-        // If no success, check if there's an error we should handle
-        if (hasError) {
-          throw new Error(`Connection creation failed: ${await errorMessage.textContent()}`);
-        } else {
-          // If no success and no error, the form might still be processing
-          await expect(successMessage).toBeVisible({ timeout: 10000 });
-        }
-      }
+      await expect(connectionCard).toBeVisible();
     });
 
     test('should edit an existing connection', async ({ page }) => {
-      // TODO: Implement edit functionality
-      // This test is skipped because edit functionality is not yet implemented
-      const uxHelper = new UXComplianceHelper(page);
+      // Test page load time for connections page
+      const loadTime = await testPageLoadTime(page, '/dashboard?tab=settings&section=connections', { 
+        threshold: 3000 
+      });
+      console.log('🪵 Connections page load time:', loadTime, 'ms');
       
-      // Monitor network requests for connection creation
-      const createRequestPromise = page.waitForRequest(request => 
-        request.url().includes('/api/connections') && request.method() === 'POST'
-      );
+      // Test XSS prevention on form inputs
+      await testXSSPrevention(page, '[data-testid="connection-name-input"]', '<script>alert("xss")</script>');
       
-      // First create a connection to edit
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
-      await page.fill('[data-testid="connection-name-input"]', 'Connection to Edit');
-      await page.fill('[data-testid="connection-description-input"]', 'Connection to be edited');
-      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
-      await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
-      await page.fill('[data-testid="connection-apikey-input"]', 'test-key');
-      await page.click('[data-testid="primary-action submit-connection-btn"]');
+      // First create a connection to edit using data helper
+      const connectionData = await createTestData({
+        connection: {
+          name: 'Connection to Edit',
+          baseUrl: 'https://api.example.com',
+          authType: 'API_KEY'
+        }
+      });
       
-      // Wait for the API request to complete
-      try {
-        const request = await createRequestPromise;
-        console.log('🪵 Create API request made:', request.url());
-      } catch (e) {
-        console.log('🪵 No create API request detected');
-      }
-      
-      // Wait for modal to close (indicating success)
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
-      
-      // Check for success message in dashboard
-      await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 5000 });
+      // Test modal submit loading and success message
+      await testModalSubmitLoading(page, '[data-testid="primary-action submit-connection-btn"]');
+      await testModalSuccessMessage(page, '[data-testid="success-message"]', 'Connection created successfully');
       
       // Find and click edit button for the created connection
       const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Connection to Edit")');
       await expect(connectionCard).toBeVisible({ timeout: 5000 });
       await connectionCard.locator('[data-testid="edit-connection-btn"]').click();
       
-      // Validate edit form UX compliance
-      await uxHelper.validateHeadingHierarchy(['Edit API Connection']);
-      await uxHelper.validateFormAccessibility();
+      // Validate edit form UX compliance using helpers
+      await validateUXCompliance(page, {
+        title: 'APIQ',
+        headings: 'Edit API Connection',
+        validateForm: true,
+        validateAccessibility: true
+      });
+      await testFormAccessibility(page, '[role="dialog"] form');
       
       // Modify the connection
       await page.fill('[data-testid="connection-name-input"]', 'Connection to Edit - Updated');
@@ -569,8 +383,8 @@ test.describe('Connections Management E2E Tests', () => {
       // Wait for update processing
       await page.waitForTimeout(1000);
       
-      // Validate success message
-      await uxHelper.validateSuccessContainer('Connection updated successfully');
+      // Validate success message using helper
+      await testModalSuccessMessage(page, '[data-testid="success-message"]', 'Connection updated successfully');
       
       // Should show the updated connection in the list
       await expect(page.locator('[data-testid="connection-card"]:has-text("Connection to Edit - Updated")')).toBeVisible();
@@ -1870,190 +1684,3 @@ test.describe('Connections Management E2E Tests', () => {
     });
   });
 }); 
-// TODO: Add UXComplianceHelper integration (P0)
-// import { UXComplianceHelper } from '../../helpers/uxCompliance';
-// 
-// test.beforeEach(async ({ page }) => {
-//   const uxHelper = new UXComplianceHelper(page);
-//   await uxHelper.validateActivationFirstUX();
-//   await uxHelper.validateFormAccessibility();
-//   await uxHelper.validateMobileResponsiveness();
-//   await uxHelper.validateKeyboardNavigation();
-// });
-
-// TODO: Add cookie-based authentication testing (P0)
-// - Test HTTP-only cookie authentication
-// - Test secure cookie settings
-// - Test cookie expiration and cleanup
-// - Test cookie-based session management
-// - Test authentication state persistence via cookies
-
-// TODO: Replace localStorage with cookie-based authentication (P0)
-// Application now uses cookie-based authentication instead of localStorage
-// 
-// Anti-patterns to remove:
-// - localStorage.getItem('token')
-// - localStorage.setItem('token', value)
-// - localStorage.removeItem('token')
-// 
-// Replace with cookie-based patterns:
-// - Test authentication via HTTP-only cookies
-// - Test session management via secure cookies
-// - Test logout by clearing authentication cookies
-
-// TODO: Add data cleanup patterns (P0)
-// - Clean up test users: await prisma.user.deleteMany({ where: { email: { contains: 'e2e-test' } } });
-// - Clean up test connections: await prisma.connection.deleteMany({ where: { name: { contains: 'Test' } } });
-// - Clean up test workflows: await prisma.workflow.deleteMany({ where: { name: { contains: 'Test' } } });
-// - Clean up test secrets: await prisma.secret.deleteMany({ where: { name: { contains: 'Test' } } });
-
-// TODO: Add deterministic test data (P0)
-// - Create predictable test data with unique identifiers
-// - Use timestamps or UUIDs to avoid conflicts
-// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@example.com` });
-// - Ensure test data is isolated and doesn't interfere with other tests
-
-// TODO: Ensure test independence (P0)
-// - Each test should be able to run in isolation
-// - No dependencies on other test execution order
-// - Clean state before and after each test
-// - Use unique identifiers for all test data
-// - Avoid global state modifications
-
-// TODO: Remove API calls from E2E tests (P0)
-// E2E tests should ONLY test user interactions through the UI
-// API testing should be done in integration tests
-// 
-// Anti-patterns to remove:
-// - page.request.post('/api/connections', {...})
-// - fetch('/api/connections')
-// - axios.post('/api/connections')
-// 
-// Replace with UI interactions:
-// - await page.click('[data-testid="create-connection-btn"]')
-// - await page.fill('[data-testid="connection-name-input"]', 'Test API')
-// - await page.click('[data-testid="primary-action submit-btn"]')
-
-// TODO: Remove all API testing from E2E tests (P0)
-// E2E tests should ONLY test user interactions through the UI
-// API testing belongs in integration tests
-// 
-// Anti-patterns detected and must be removed:
-// - page.request.post('/api/connections', {...})
-// - fetch('/api/connections')
-// - axios.post('/api/connections')
-// - request.get('/api/connections')
-// 
-// Replace with UI interactions:
-// - await page.click('[data-testid="create-connection-btn"]')
-// - await page.fill('[data-testid="connection-name-input"]', 'Test API')
-// - await page.click('[data-testid="primary-action submit-btn"]')
-// - await expect(page.locator('[data-testid="success-message"]')).toBeVisible()
-
-// TODO: Add robust waiting patterns for dynamic elements (P0)
-// - Use waitForSelector() instead of hardcoded delays
-// - Use expect().toBeVisible() for element visibility checks
-// - Use waitForLoadState() for page load completion
-// - Use waitForResponse() for API calls
-// - Use waitForFunction() for custom conditions
-// 
-// Example patterns:
-// await page.waitForSelector('[data-testid="success-message"]', { timeout: 10000 });
-// await expect(page.locator('[data-testid="submit-btn"]')).toBeVisible();
-// await page.waitForLoadState('networkidle');
-// await page.waitForResponse(response => response.url().includes('/api/'));
-// await page.waitForFunction(() => document.querySelector('.loading').style.display === 'none');
-
-// TODO: Replace hardcoded delays with robust waiting (P0)
-// Anti-patterns to replace:
-// - setTimeout(5000) → await page.waitForSelector(selector, { timeout: 5000 })
-// - sleep(3000) → await expect(page.locator(selector)).toBeVisible({ timeout: 3000 })
-// - delay(2000) → await page.waitForLoadState('networkidle')
-// 
-// Best practices:
-// - Wait for specific elements to appear
-// - Wait for network requests to complete
-// - Wait for page state changes
-// - Use appropriate timeouts for different operations
-
-// TODO: Add XSS prevention testing (P0)
-// - Test input sanitization
-// - Test script injection prevention
-// - Test HTML escaping
-// - Test content security policy compliance
-
-// TODO: Add CSRF protection testing (P0)
-// - Test CSRF token validation
-// - Test cross-site request forgery prevention
-// - Test cookie-based CSRF protection
-// - Test secure form submission
-
-// TODO: Add data exposure testing (P0)
-// - Test sensitive data handling
-// - Test privacy leak prevention
-// - Test information disclosure prevention
-// - Test data encryption and protection
-
-// TODO: Add authentication flow testing (P0)
-// - Test OAuth integration
-// - Test SSO (Single Sign-On) flows
-// - Test MFA (Multi-Factor Authentication)
-// - Test authentication state management
-
-// TODO: Add session management testing (P0)
-// - Test cookie-based session management
-// - Test session expiration handling
-// - Test login state persistence
-// - Test logout and session cleanup
-
-// TODO: Add UI interaction testing (P0)
-// E2E tests should focus on user interactions through the UI
-// - Test clicking buttons and links
-// - Test filling forms
-// - Test navigation flows
-// - Test user workflows end-to-end
-
-// TODO: Add primary action button patterns (P0)
-// - Use data-testid="primary-action {action}-btn" pattern
-// - Test primary action presence with UXComplianceHelper
-// - Validate button text matches standardized patterns
-
-// TODO: Add form accessibility testing (P0)
-// - Test form labels and ARIA attributes
-// - Test keyboard navigation
-// - Test screen reader compatibility
-// - Use UXComplianceHelper.validateFormAccessibility()
-
-// TODO: Add submit button loading state testing (P0)
-// - Test submit button disabled during submission
-// - Test button text changes to "Creating..." or similar
-// - Test button remains disabled until operation completes
-// - Test loading indicator/spinner on button
-// - Enforce minimum loading state duration (800ms)
-
-// TODO: Add success message testing in modal (P0)
-// - Test success message appears in modal after submission
-// - Test success message is visible and readable
-// - Test button text changes to "Success!" or similar
-// - Test success message timing and persistence
-// - Test success state before modal closes
-
-// TODO: Add modal delay testing (P0)
-// - Test modal stays open for 1.5s after success
-// - Test user can see success message before modal closes
-// - Test modal closes automatically after delay
-// - Test modal remains open on error for user correction
-// - Example: setTimeout(() => closeModal(), 1500);
-
-// TODO: Add modal error handling testing (P0)
-// - Test modal stays open on error
-// - Test error message appears in modal
-// - Test submit button re-enables on error
-// - Test user can correct errors and retry
-
-// TODO: Add form loading state transition testing (P0)
-// - Test form fields disabled during submission
-// - Test loading spinner appears on form
-// - Test form transitions from loading to success/error
-// - Test minimum loading duration (800ms) for all forms
-// - Test form state persistence during loading

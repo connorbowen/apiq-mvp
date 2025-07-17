@@ -161,7 +161,9 @@ test.describe('UX Simplification - Performance Testing', () => {
 
     test('should use useMemo for expensive computations', async ({ page }) => {
       await loginAsUser(page, testUser);
-      await page.goto('/dashboard?tab=settings');
+      await page.goto('/dashboard');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-settings"]');
 
       // Test settings tab with filtered data
       const startTime = Date.now();

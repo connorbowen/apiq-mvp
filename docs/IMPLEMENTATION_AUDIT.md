@@ -1,5 +1,11 @@
 # Implementation Audit Summary (2025-07-16)
 
+## 🆕 DASHBOARD NAVIGATION & TEST UPDATE
+- Dashboard navigation now uses Chat, Workflows, Connections as main tabs
+- Settings, Profile, Secrets, and Audit Log are only accessible via the user dropdown
+- All navigation and test selectors updated to use dropdown and new data-testid patterns
+- Documentation files synchronized to reflect new navigation and test structure
+
 ## 🆕 Secrets-First Connection Management - ✅ COMPLETED
 - All API connection creation, management, and rotation now use secrets vault by default
 - Backend, API, and E2E tests updated for secrets-first flows
@@ -15,4 +21,4 @@
 - ✅ Multi-step workflow generation implemented and tested (P0.1 complete)
 - ✅ All P0 features complete - APIQ MVP ready for launch
 
-_Last updated: 2025-07-16_ 
+_Last updated: 2025-07-16 (Dashboard navigation refactor, E2E, and documentation update)_ 

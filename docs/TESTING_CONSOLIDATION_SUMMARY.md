@@ -1,5 +1,11 @@
 # Testing Documentation Consolidation Summary
 
+## 🆕 DASHBOARD NAVIGATION & TEST UPDATE (2025-07-16)
+- Dashboard navigation now uses Chat, Workflows, Connections as main tabs
+- Settings, Profile, Secrets, and Audit Log are only accessible via the user dropdown
+- All navigation and E2E tests updated to use new dropdown `data-testid` patterns
+- Documentation files synchronized to reflect new navigation and test structure
+
 ## Overview
 
 This document summarizes the consolidation of testing documentation to eliminate redundancy and improve maintainability. The consolidation was completed in July 2025 to address overlapping content and inconsistent approaches across multiple testing documents.

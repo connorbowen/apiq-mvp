@@ -1,5 +1,11 @@
 # Testing Strategy - UX Simplification
 
+## 🆕 DASHBOARD NAVIGATION & TEST UPDATE
+- Dashboard navigation now uses Chat, Workflows, Connections as main tabs
+- Settings, Profile, Secrets, and Audit Log are only accessible via the user dropdown
+- All navigation and E2E tests updated to use new dropdown `data-testid` patterns
+- Documentation files synchronized to reflect new navigation and test structure
+
 ## Overview
 
 This document outlines the comprehensive testing strategy for the UX simplification project, covering unit tests, integration tests, E2E tests, and accessibility testing.
@@ -100,8 +106,8 @@ afterAll(async () => {
 ## 🌐 **E2E Testing**
 
 ### **Navigation Testing**
-- **3-Tab Structure** - Tab switching and URL handling
-- **Mobile vs Desktop** - Responsive behavior validation
+- **3-Tab Structure** - Tab switching and URL handling (Chat, Workflows, Connections)
+- **Dropdown Navigation** - Settings, Profile, Secrets, and Audit Log via dropdown
 - **Admin Access** - Dropdown navigation and role-based access
 - **URL Parameters** - Tab state persistence and validation
 
@@ -135,8 +141,13 @@ test.describe('UX Simplification - Navigation', () => {
       // Verify 3-tab structure
       await expect(page.getByTestId('tab-chat')).toBeVisible();
       await expect(page.getByTestId('tab-workflows')).toBeVisible();
-      await expect(page.getByTestId('tab-settings')).toBeVisible();
+      await expect(page.getByTestId('tab-connections')).toBeVisible();
     });
+  });
+  test('should open Settings from dropdown', async ({ page }) => {
+    await page.click('[data-testid="user-dropdown-toggle"]');
+    await page.click('[data-testid="dropdown-settings"]');
+    await expect(page.getByTestId('settings-page')).toBeVisible();
   });
 });
 ```

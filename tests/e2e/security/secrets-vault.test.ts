@@ -134,9 +134,9 @@ test.describe('Secrets Vault E2E Tests', () => {
     // Wait for page to be stable
     await page.waitForLoadState('networkidle');
     
-    // Navigate to secrets tab (now in settings)
-    await page.click('[data-testid="tab-settings"]');
-    await page.click('[data-testid="secrets-section"]');
+    // Open user dropdown and navigate to Secrets
+    await page.click('[data-testid="user-dropdown-toggle"]');
+    await page.click('[data-testid="user-dropdown-secrets"]');
     
     // Wait for secrets tab to load
     await page.waitForLoadState('networkidle');
@@ -672,8 +672,8 @@ test.describe('Secrets Vault E2E Tests', () => {
       await page.waitForLoadState('networkidle');
       
       // Navigate to secrets tab again after reload (now in settings)
-      await page.click('[data-testid="tab-settings"]');
-      await page.click('[data-testid="secrets-section"]');
+      await page.click('[data-testid="user-dropdown-toggle"]');
+      await page.click('[data-testid="user-dropdown-secrets"]');
       
       // Wait for secrets to load
       await page.waitForTimeout(2000);
