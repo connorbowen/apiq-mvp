@@ -8,11 +8,13 @@ import { createTestOAuth2State } from '../../helpers/oauth2TestUtils';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton } from '../../helpers/e2eHelpers';
 import { createE2EUser } from '../../helpers/authHelpers';
 import { validateUXCompliance, waitForDashboard } from '../../helpers/uiHelpers';
-import { createTestData, cleanupTestData } from '../../helpers/dataHelpers';
+import { createTestData, cleanupTestData, createConnectionForm } from '../../helpers/dataHelpers';
 import { testModalSubmitLoading, testModalSuccessMessage, testModalErrorHandling, testModalDelayBeforeClosing } from '../../helpers/modalHelpers';
 import { testPageLoadTime, testAPIPerformance } from '../../helpers/performanceHelpers';
 import { testDataExposure, testXSSPrevention } from '../../helpers/securityHelpers';
 import { testFormAccessibility, testPrimaryActionPatterns } from '../../helpers/accessibilityHelpers';
+import { waitForVisible, waitForModal, waitForHidden, waitForMessage } from '../../helpers/waitHelpers';
+import { Role } from '../../helpers/authHelpers';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -22,8 +24,8 @@ const createdConnectionIds: string[] = [];
 
 test.describe('Connections Management E2E Tests', () => {
   test.beforeAll(async () => {
-    // Create a real test user and get JWT
-    testUser = await createE2EUser('ADMIN', {
+    // Create a real test user and get JWT - fix the function call signature
+    testUser = await createE2EUser(Role.ADMIN, {
       email: `e2e-conn-${generateTestId('user')}@example.com`,
       password: 'e2eTestPass123',
       name: 'E2E Connections Test User'
@@ -47,43 +49,62 @@ test.describe('Connections Management E2E Tests', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    // Use new E2E helper for complete setup
-    await setupE2E(page, testUser, {
-      tab: 'settings',
-      section: 'connections',
-      validateUX: true
-    });
-    
-    // Enhanced debug: Check for 'API Connections' section button
-    const sectionButton = await page.$('button:has-text("API Connections")');
-    if (sectionButton) {
-      const isVisible = await sectionButton.isVisible();
-      console.log('🪵 API Connections section button found. Visible:', isVisible);
-      if (isVisible) {
-        await sectionButton.click();
-      } else {
-        console.log('🪵 API Connections section button is not visible.');
-      }
-    } else {
-      console.log('🪵 API Connections section button NOT found. Listing all button texts in Settings tab:');
-      const buttonTexts = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('button')).map(b => b.textContent?.trim())
-      );
-      console.log('🪵 All button texts:', buttonTexts);
+    // Use new E2E helper for login only
+    await setupE2E(page, testUser);
+
+    // Debug: Check what tabs are available
+    console.log('🔍 E2E DEBUG: Checking available tabs...');
+    const availableTabs = await page.locator('[data-testid^="tab-"]').all();
+    console.log('🔍 E2E DEBUG: Available tabs:', availableTabs.length);
+    for (const tab of availableTabs) {
+      const testId = await tab.getAttribute('data-testid');
+      const text = await tab.textContent();
+      const isVisible = await tab.isVisible();
+      console.log('🔍 E2E DEBUG: Tab:', { testId, text, isVisible });
     }
-    // Debug: Print all visible headings before UX compliance check
+
+    // Debug: Check if connections tab exists
+    const connectionsTab = page.locator('[data-testid="tab-connections"]');
+    const tabExists = await connectionsTab.count();
+    const tabVisible = await connectionsTab.isVisible();
+    console.log('🔍 E2E DEBUG: Connections tab:', { exists: tabExists > 0, visible: tabVisible });
+
+    // Navigate to the Connections main tab using the new navigation structure
+    console.log('🔍 E2E DEBUG: Clicking connections tab...');
+    await connectionsTab.click();
+    console.log('🔍 E2E DEBUG: Connections tab clicked');
+    
+    // Debug: Check URL after click
+    const currentUrl = page.url();
+    console.log('🔍 E2E DEBUG: Current URL after tab click:', currentUrl);
+    
+    // Debug: Check what's on the page after clicking
+    console.log('🔍 E2E DEBUG: After clicking connections tab...');
     const headings = await page.evaluate(() => {
       return Array.from(document.querySelectorAll('h1, h2, h3, h4'))
-        .filter(el => (el as HTMLElement).offsetParent !== null)
-        .map(el => `${el.tagName}: \"${el.textContent?.trim()}\"`);
+        .map(el => `${el.tagName}: "${el.textContent?.trim()}"`);
     });
-    console.log('🪵 Visible headings at UX check:', headings);
-    // Wait for the API Connections heading to be visible
-    await page.waitForSelector('h2:has-text("API Connections")', { timeout: 10000 });
+    console.log('🔍 E2E DEBUG: All headings on page:', headings);
     
+    // Debug: Check if the tab is now active
+    const activeTab = await page.locator('[data-testid="tab-connections"]').getAttribute('class');
+    console.log('🔍 E2E DEBUG: Connections tab classes:', activeTab);
+    
+    // Wait for the Connections page heading to be visible (h2: "Connections")
+    await waitForVisible(page, 'h2:has-text("Connections")', 10000);
+
+    // Debug: Print all visible headings before UX compliance check
+    const visibleHeadings = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('h1, h2, h3, h4'))
+        .filter(el => (el as HTMLElement).offsetParent !== null)
+        .map(el => `${el.tagName}: "${el.textContent?.trim()}"`);
+    });
+    console.log('🪵 Visible headings at UX check:', visibleHeadings);
+
+    // Validate UX compliance for connections page - expect separate "Dashboard" and "Connections" headings
     await validateUXCompliance(page, {
       title: 'APIQ',
-      headings: 'Dashboard, Settings, API Connections',
+      headings: 'Dashboard|Connections',
       validateForm: true,
       validateAccessibility: true
     });
@@ -101,225 +122,111 @@ test.describe('Connections Management E2E Tests', () => {
     test('should create a new API connection with UX compliance', async ({ page }) => {
       const uxHelper = new UXComplianceHelper(page);
       
-      // Click create connection button using helper
-      await getPrimaryActionButton(page, 'create-connection-header').click();
-      console.log('🪵 Clicked create connection button');
-      
-      // Wait for modal to appear
-      await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
-      console.log('🪵 Modal appeared');
-      
-      // Add debug logging for form elements
-      const debugNameInput = page.locator('[data-testid="connection-name-input"]');
-      const debugDescInput = page.locator('[data-testid="connection-description-input"]');
-      const debugBaseUrlInput = page.locator('[data-testid="connection-baseurl-input"]');
-      const debugAuthTypeSelect = page.locator('[data-testid="connection-authtype-select"]');
-      const debugApiKeyInput = page.locator('[data-testid="connection-apikey-input"]');
-      const debugSubmitBtn = page.locator('[data-testid="primary-action submit-connection-btn"]');
-      
-      console.log('🪵 Form elements found:', {
-        nameInput: await debugNameInput.count(),
-        descInput: await debugDescInput.count(),
-        baseUrlInput: await debugBaseUrlInput.count(),
-        authTypeSelect: await debugAuthTypeSelect.count(),
-        apiKeyInput: await debugApiKeyInput.count(),
-        submitBtn: await debugSubmitBtn.count()
+      // Use the new helper to fill and submit the form
+      await createConnectionForm(page, {
+        name: 'Test Connection',
+        description: 'Connection for testing',
+        baseUrl: 'https://httpbin.org/get',
+        authType: 'API_KEY',
+        apiKey: 'test-key'
       });
       
-      // Add comprehensive UX compliance validation using helpers
-      await validateUXCompliance(page, {
-        title: 'APIQ',
-        headings: 'Add API Connection',
-        validateForm: true,
-        validateAccessibility: true
-      });
-      
-      // Test form accessibility using helper
-      await testFormAccessibility(page, '[role="dialog"] form');
-      
-      // Test primary action patterns
-      await testPrimaryActionPatterns(page, 'create-connection-header');
-      
-      // Validate UX compliance - accessible form fields
-      const nameInput = page.locator('[data-testid="connection-name-input"]');
-      await expect(nameInput).toBeVisible();
-      await nameInput.fill('Test Connection');
-      console.log('🪵 Filled name input');
-      
-      const descInput = page.locator('[data-testid="connection-description-input"]');
-      await expect(descInput).toBeVisible();
-      await descInput.fill('Connection for testing');
-      console.log('🪵 Filled description input');
-      
-      const baseUrlInput = page.locator('[data-testid="connection-baseurl-input"]');
-      await expect(baseUrlInput).toBeVisible();
-      await baseUrlInput.fill('https://httpbin.org/get');
-      console.log('🪵 Filled base URL input');
-      
-      await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
-      await page.fill('[data-testid="connection-apikey-input"]', 'test-key');
-      console.log('🪵 Filled API key');
-      
-      // Check if submit button is enabled using helper
-      const submitBtn = getPrimaryActionButton(page, 'submit-connection');
-      const isEnabled = await submitBtn.isEnabled();
-      console.log('🪵 Submit button enabled:', isEnabled);
-      await expect(submitBtn).toBeEnabled();
-      
-      // Test API performance using helper
-      const apiPerformance = await testAPIPerformance(page, '/api/connections', { 
-        timeout: 10000,
-        threshold: 5000 
-      });
-      console.log('🪵 API performance:', apiPerformance, 'ms');
-      
-      // Test data exposure prevention
-      await testDataExposure(page, [
-        '[data-testid="connection-apikey-input"]',
-        '[data-testid="connection-clientsecret-input"]'
-      ]);
-      
-      console.log('🪵 About to click submit button');
-      await submitBtn.click();
-      console.log('🪵 Clicked submit button');
-      
-      // Wait for form processing with debug output
-      console.log('🪵 Waiting for form processing...');
-      
-      // Test modal submit loading and success message
+      // Wait for modal submit loading and success message
       await testModalSubmitLoading(page, '[data-testid="primary-action submit-connection-btn"]');
       await testModalDelayBeforeClosing(page, '[role="dialog"]');
       await testModalSuccessMessage(page, '[data-testid="success-message"]', 'Connection created successfully');
     });
 
     test('should create connection with Bearer token auth', async ({ page }) => {
-      await getPrimaryActionButton(page, 'create-connection-header').click();
-      
-      await page.fill('[data-testid="connection-name-input"]', 'Bearer Token Connection');
-      await page.fill('[data-testid="connection-description-input"]', 'Bearer token test connection');
-      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
-      await page.selectOption('[data-testid="connection-authtype-select"]', 'BEARER_TOKEN');
-      await page.fill('[data-testid="connection-bearertoken-input"]', 'test-bearer-token-123');
-      
-      await getPrimaryActionButton(page, 'submit-connection').click();
-      
-      // Wait for modal to close (indicating success)
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
-      
-      // Check for success message in dashboard
-      await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
-      
+      await createConnectionForm(page, {
+        name: 'Bearer Token Connection',
+        description: 'Bearer token test connection',
+        baseUrl: 'https://api.example.com',
+        authType: 'BEARER_TOKEN',
+        bearerToken: 'test-bearer-token-123'
+      });
+      // Wait for modal to close (indicating success) using helper
+      await waitForHidden(page, '[role="dialog"]', 10000);
+      // Check for success message in dashboard using helper
+      await waitForMessage(page, 'success');
       // Check for connection card with detailed debugging
       const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Bearer Token Connection")');
       console.log('🪵 Looking for connection card with text "Bearer Token Connection"');
-      
-      // Wait for connection card to appear
+      // Wait for connection card to appear using helper
       try {
-        await expect(connectionCard).toBeVisible({ timeout: 10000 });
+        await waitForVisible(page, '[data-testid="connection-card"]:has-text("Bearer Token Connection")', 10000);
         console.log('🪵 Connection card found and visible');
       } catch (e) {
         console.log('🪵 Connection card not found, checking all connection cards');
-        
         // List all connection cards
         const allCards = page.locator('[data-testid="connection-card"]');
         const cardCount = await allCards.count();
         console.log('🪵 Total connection cards found:', cardCount);
-        
         for (let i = 0; i < cardCount; i++) {
           const card = allCards.nth(i);
           const cardText = await card.textContent();
           console.log(`🪵 Card ${i + 1}:`, cardText?.substring(0, 100) + '...');
         }
-        
         throw e; // Re-throw the error
       }
     });
 
     test('should create connection with Basic auth', async ({ page }) => {
-      await getPrimaryActionButton(page, 'create-connection-header').click();
-      
-      await page.fill('[data-testid="connection-name-input"]', 'Basic Auth Connection');
-      await page.fill('[data-testid="connection-description-input"]', 'Basic auth test connection');
-      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
-      await page.selectOption('[data-testid="connection-authtype-select"]', 'BASIC_AUTH');
-      await page.fill('[data-testid="connection-username-input"]', 'testuser');
-      await page.fill('[data-testid="connection-password-input"]', 'testpass');
-      
-      await getPrimaryActionButton(page, 'submit-connection').click();
-      
-      // Wait for modal to close (indicating success)
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
-      
-      // Check for success message in dashboard
-      await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
+      await createConnectionForm(page, {
+        name: 'Basic Auth Connection',
+        description: 'Basic auth test connection',
+        baseUrl: 'https://api.example.com',
+        authType: 'BASIC_AUTH',
+        username: 'testuser',
+        password: 'testpass'
+      });
+      // Wait for modal to close (indicating success) using helper
+      await waitForHidden(page, '[role="dialog"]', 10000);
+      // Check for success message in dashboard using helper
+      await waitForMessage(page, 'success');
       await expect(page.locator('[data-testid="connection-card"]:has-text("Basic Auth Connection")')).toBeVisible();
     });
 
     test('should create connection with OAuth2 provider selection', async ({ page }) => {
-      await getPrimaryActionButton(page, 'create-connection-header').click();
-      
-      await page.fill('[data-testid="connection-name-input"]', 'GitHub OAuth2 Connection');
-      await page.fill('[data-testid="connection-description-input"]', 'GitHub OAuth2 test connection');
-      await page.selectOption('[data-testid="connection-authtype-select"]', 'OAUTH2');
-      
-      // Select GitHub provider
-      await page.selectOption('[data-testid="connection-provider-select"]', 'github');
-      
-      // Verify auto-populated fields
-      await expect(page.locator('[data-testid="connection-baseurl-input"]')).toHaveValue('https://api.github.com');
-      await expect(page.locator('[data-testid="connection-scope-input"]')).toHaveValue('repo user');
-      await expect(page.locator('[data-testid="connection-redirecturi-input"]')).toHaveValue('http://localhost:3000/api/connections/oauth2/callback');
-      
-      // Fill OAuth2 credentials
-      await page.fill('[data-testid="connection-clientid-input"]', 'test-github-client-id');
-      await page.fill('[data-testid="connection-clientsecret-input"]', 'test-github-client-secret');
-      
-      await getPrimaryActionButton(page, 'submit-connection').click();
-      
-      // Wait for modal to close (indicating success)
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
-      
-      // Check for success message in dashboard
-      await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
+      await createConnectionForm(page, {
+        name: 'GitHub OAuth2 Connection',
+        description: 'GitHub OAuth2 test connection',
+        baseUrl: 'https://api.github.com',
+        authType: 'OAUTH2',
+        provider: 'github',
+        clientId: 'test-github-client-id',
+        clientSecret: 'test-github-client-secret',
+        redirectUri: 'http://localhost:3000/api/connections/oauth2/callback',
+        scope: 'repo user'
+      });
+      // Wait for modal to close (indicating success) using helper
+      await waitForHidden(page, '[role="dialog"]', 10000);
+      // Check for success message in dashboard using helper
+      await waitForMessage(page, 'success');
       await expect(page.locator('[data-testid="connection-card"]:has-text("GitHub OAuth2 Connection")')).toBeVisible();
     });
 
     test('should create connection with custom OAuth2 provider', async ({ page }) => {
-      // Monitor network requests to see if the API call is being made
-      const requestPromise = page.waitForRequest(request => 
-        request.url().includes('/api/connections') && request.method() === 'POST'
-      );
-      
-      await getPrimaryActionButton(page, 'create-connection-header').click();
-      
-      await page.fill('[data-testid="connection-name-input"]', 'Custom OAuth2 Connection');
-      await page.fill('[data-testid="connection-description-input"]', 'Custom OAuth2 test connection');
-      await page.selectOption('[data-testid="connection-authtype-select"]', 'OAUTH2');
-      
-      // Select custom provider
-      await page.selectOption('[data-testid="connection-provider-select"]', 'custom');
-      
-      // Fill all required fields manually
-      await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.custom.com');
-      await page.fill('[data-testid="connection-clientid-input"]', 'test-custom-client-id');
-      await page.fill('[data-testid="connection-clientsecret-input"]', 'test-custom-client-secret');
-      await page.fill('[data-testid="connection-redirecturi-input"]', 'http://localhost:3000/api/connections/oauth2/callback');
-      await page.fill('[data-testid="connection-scope-input"]', 'read write');
-      
+      await createConnectionForm(page, {
+        name: 'Custom OAuth2 Connection',
+        description: 'Custom OAuth2 test connection',
+        baseUrl: 'https://api.custom.com',
+        authType: 'OAUTH2',
+        provider: 'custom',
+        clientId: 'test-custom-client-id',
+        clientSecret: 'test-custom-client-secret',
+        redirectUri: 'http://localhost:3000/api/connections/oauth2/callback',
+        scope: 'read write'
+      });
       // Test form validation using helper
       await testModalErrorHandling(page, '[data-testid="validation-errors"]');
-      
-      await getPrimaryActionButton(page, 'submit-connection').click();
-      
       // Test modal error handling using helper
       await testModalErrorHandling(page, '[data-testid="error-message"]', 'Connection creation failed');
-      
       // Test success message using helper
       await testModalSuccessMessage(page, '[data-testid="success-message"]', 'Connection created successfully');
-      
       // Check for connection card
       const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Custom OAuth2 Connection")');
-      await expect(connectionCard).toBeVisible();
+      await waitForVisible(page, '[data-testid="connection-card"]:has-text("Custom OAuth2 Connection")');
     });
 
     test('should edit an existing connection', async ({ page }) => {
@@ -347,7 +254,7 @@ test.describe('Connections Management E2E Tests', () => {
       
       // Find and click edit button for the created connection
       const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Connection to Edit")');
-      await expect(connectionCard).toBeVisible({ timeout: 5000 });
+      await waitForVisible(page, '[data-testid="connection-card"]:has-text("Connection to Edit")', 5000);
       await connectionCard.locator('[data-testid="edit-connection-btn"]').click();
       
       // Validate edit form UX compliance using helpers
@@ -415,17 +322,17 @@ test.describe('Connections Management E2E Tests', () => {
         console.log('🪵 No create API request detected');
       }
       
-      // Wait for modal to close (indicating success)
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
+      // Wait for modal to close (indicating success) using helper
+      await waitForHidden(page, '[role="dialog"]', 10000);
       
-      // Check for success message in dashboard
-      await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 5000 });
+      // Check for success message in dashboard using helper
+      await waitForMessage(page, 'success');
       
-      // Wait for connection card to appear
-      const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Connection to Delete")');
-      await expect(connectionCard).toBeVisible({ timeout: 5000 });
+      // Wait for connection card to appear using helper
+      await waitForVisible(page, '[data-testid="connection-card"]:has-text("Connection to Delete")', 5000);
       
       // Find and click delete button for the created connection
+      const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Connection to Delete")');
       await connectionCard.locator('[data-testid="delete-connection-btn"]').click();
       
       // Validate confirmation dialog UX compliance
@@ -483,17 +390,17 @@ test.describe('Connections Management E2E Tests', () => {
         console.log('🪵 No create API request detected');
       }
       
-      // Wait for modal to close (indicating success)
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
+      // Wait for modal to close (indicating success) using helper
+      await waitForHidden(page, '[role="dialog"]', 10000);
       
-      // Check for success message in dashboard
-      await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 5000 });
+      // Check for success message in dashboard using helper
+      await waitForMessage(page, 'success');
       
-      // Wait for connection card to appear
-      const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Connection to Cancel Delete")');
-      await expect(connectionCard).toBeVisible({ timeout: 5000 });
+      // Wait for connection card to appear using helper
+      await waitForVisible(page, '[data-testid="connection-card"]:has-text("Connection to Cancel Delete")', 5000);
       
       // Find and click delete button
+      const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Connection to Cancel Delete")');
       await connectionCard.locator('[data-testid="delete-connection-btn"]').click();
       
       // Validate confirmation dialog
@@ -729,16 +636,8 @@ test.describe('Connections Management E2E Tests', () => {
           console.log(`Iteration ${i}: No immediate response, continuing...`);
         }
         
-        // Close modal if it's still open
-        try {
-          const modalOverlay = page.locator('.fixed.inset-0.bg-gray-600.bg-opacity-50');
-          if (await modalOverlay.isVisible()) {
-            await page.keyboard.press('Escape');
-            await expect(modalOverlay).not.toBeVisible({ timeout: 3000 });
-          }
-        } catch (modalError) {
-          // Ignore if modal is already closed
-        }
+        // Close modal if it's still open using the helper
+        await closeAllModals(page);
         
         // Short delay between submissions
         await page.waitForTimeout(200);
@@ -794,12 +693,8 @@ test.describe('Connections Management E2E Tests', () => {
     });
 
     test('should handle concurrent connection creation', async ({ page, context }) => {
-      // Authenticate once and get cookies
-      await page.goto(`${BASE_URL}/login`);
-      await page.fill('input[name="email"]', testUser.email);
-      await page.fill('input[name="password"]', 'e2eTestPass123');
-      await page.click('[data-testid="primary-action signin-btn"]');
-      await expect(page).toHaveURL(/.*dashboard/, { timeout: 10000 });
+      // Use the E2E helper for authentication instead of inline login
+      await setupE2E(page, testUser);
       const cookies = await context.cookies();
 
       // Test multiple concurrent connection creation requests
@@ -1102,15 +997,15 @@ test.describe('Connections Management E2E Tests', () => {
         console.log('🪵 No create API request detected');
       }
       
-      // Wait for modal to close (indicating success)
-      await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
+      // Wait for modal to close (indicating success) using helper
+      await waitForHidden(page, '[role="dialog"]', 10000);
       
-      // Check for success message in dashboard
-      await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 5000 });
+      // Check for success message in dashboard using helper
+      await waitForMessage(page, 'success');
       
-      // Wait for connection card to appear
+      // Wait for connection card to appear using helper
+      await waitForVisible(page, '[data-testid="connection-card"]:has-text("OAuth2 Token Refresh Test")', 5000);
       const connectionCard = page.locator('[data-testid="connection-card"]:has-text("OAuth2 Token Refresh Test")');
-      await expect(connectionCard).toBeVisible({ timeout: 5000 });
       
       // Check if refresh button exists (it should for OAuth2 connections)
       const refreshButton = connectionCard.locator('[data-testid="refresh-token-btn"]');

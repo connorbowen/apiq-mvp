@@ -351,7 +351,7 @@ function ConnectionsTab({
     <div data-testid="connections-management">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">API Connections</h2>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Connections</h2>
         <p className="text-gray-600">Manage your API integrations and connections</p>
       </div>
 

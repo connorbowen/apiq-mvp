@@ -19,27 +19,42 @@ const WorkflowsTab = dynamic(() => import('../../components/dashboard/WorkflowsT
   ssr: false,
 });
 
-const SettingsTab = dynamic(() => import('../../components/dashboard/SettingsTab'), {
+const SettingsTab = dynamic(() => import('../../components/dashboard/SettingsTab').catch(err => {
+  console.error('Failed to load SettingsTab:', err);
+  return { default: () => <div>Error loading Settings</div> };
+}), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
   ssr: false,
 });
 
-const AdminTab = dynamic(() => import('../../components/dashboard/AdminTab'), {
+const AdminTab = dynamic(() => import('../../components/dashboard/AdminTab').catch(err => {
+  console.error('Failed to load AdminTab:', err);
+  return { default: () => <div>Error loading Admin</div> };
+}), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
   ssr: false,
 });
 
-const CreateConnectionModal = dynamic(() => import('../../components/dashboard/CreateConnectionModal'), {
+const CreateConnectionModal = dynamic(() => import('../../components/dashboard/CreateConnectionModal').catch(err => {
+  console.error('Failed to load CreateConnectionModal:', err);
+  return { default: () => <div>Error loading Connection Modal</div> };
+}), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
   ssr: false,
 });
 
-const ConnectionsTab = dynamic(() => import('../../components/dashboard/ConnectionsTab'), {
+const ConnectionsTab = dynamic(() => import('../../components/dashboard/ConnectionsTab').catch(err => {
+  console.error('Failed to load ConnectionsTab:', err);
+  return { default: () => <div>Error loading Connections</div> };
+}), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
   ssr: false,
 });
 
-const ProfileTab = dynamic(() => import('../../components/dashboard/ProfileTab'), {
+const ProfileTab = dynamic(() => import('../../components/dashboard/ProfileTab').catch(err => {
+  console.error('Failed to load ProfileTab:', err);
+  return { default: () => <div>Error loading Profile</div> };
+}), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
   ssr: false,
 });
@@ -51,6 +66,8 @@ interface User {
   role: string;
   firstName?: string;
   lastName?: string;
+  emailVerified?: boolean;
+  emailVerifiedAt?: string;
 }
 
 // New 3-tab configuration
@@ -130,7 +147,7 @@ function DashboardContent() {
   const router = useRouter();
 
   // Guided Tour integration - now safely within OnboardingProvider
-  const { state: onboardingState } = useOnboarding();
+  const { state: onboardingState, syncWithUserData } = useOnboarding();
   const {
     isTourOpen,
     openTour,
@@ -143,10 +160,32 @@ function DashboardContent() {
 
   // Auto-start tour for new users who haven't completed it
   useEffect(() => {
+    console.log('🎯 Dashboard: Guided tour effect triggered:', {
+      hasUser: !!user,
+      guidedTourCompleted: onboardingState.guidedTourCompleted,
+      isTourOpen,
+      userEmail: user?.email
+    });
+    
     if (user && !onboardingState.guidedTourCompleted && !isTourOpen) {
+      console.log('🎯 Dashboard: Scheduling guided tour to open in 1 second');
       // Small delay to ensure all components are rendered
       const timer = setTimeout(() => {
-        openTour(fullTourSteps);
+        // Re-evaluate conditions before opening tour to prevent race conditions
+        // This ensures we don't open the tour if the user data was loaded and synced
+        // after the effect was triggered but before the timeout executed
+        console.log('🎯 Dashboard: Timeout executed, re-evaluating tour conditions:', {
+          hasUser: !!user,
+          guidedTourCompleted: onboardingState.guidedTourCompleted,
+          isTourOpen
+        });
+        
+        if (user && !onboardingState.guidedTourCompleted && !isTourOpen) {
+          console.log('🎯 Dashboard: Opening guided tour');
+          openTour(fullTourSteps);
+        } else {
+          console.log('🎯 Dashboard: Tour conditions no longer met, skipping tour');
+        }
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -154,20 +193,38 @@ function DashboardContent() {
 
   const loadUser = useCallback(async () => {
     try {
+      console.log('👤 Dashboard: Loading user data...');
       const userResponse = await apiClient.getCurrentUser();
       if (userResponse.success && userResponse.data) {
-        setUser({ ...userResponse.data.user, name: userResponse.data.user.name || userResponse.data.user.email });
+        const userData = userResponse.data.user;
+        console.log('👤 Dashboard: User data loaded from API:', {
+          id: userData.id,
+          email: userData.email,
+          emailVerified: userData.emailVerified,
+          guidedTourCompleted: userData.guidedTourCompleted,
+          onboardingStage: userData.onboardingStage
+        });
+        
+        setUser({ ...userData, name: userData.name || userData.email });
+        
+        // Sync onboarding context with user data from database
+        console.log('🔄 Dashboard: Syncing onboarding context with user data');
+        syncWithUserData(userData);
+        
         setIsLoading(false);
-      } else {
-        setIsLoading(false); // Stop loading before redirect
-        router.push('/login');
+        return;
       }
     } catch (error: unknown) {
-      console.error('Failed to load user:', error);
-      setIsLoading(false); // Stop loading before redirect
-      router.push('/login');
+      console.log('👤 Dashboard: API call failed, but continuing with minimal user data:', error);
+      // Don't redirect to login immediately - the user might still be authenticated
+      // but the API call failed due to network issues or other problems
     }
-  }, [router]);
+    
+    // If API call fails, try to continue with minimal functionality
+    // The user might still be authenticated via cookies
+    console.log('👤 Dashboard: Continuing with minimal user data');
+    setIsLoading(false);
+  }, [syncWithUserData]);
 
   const loadConnections = useCallback(async (retryCount = 0) => {
     try {
@@ -220,16 +277,28 @@ function DashboardContent() {
 
   const loadSecrets = useCallback(async () => {
     try {
+      // Skip loading secrets for non-admin users to avoid rate limits
+      if (!user || user.role !== 'admin') {
+        return;
+      }
+      
       const response = await apiClient.getSecrets();
       if (response.success && response.data) {
         setSecrets(response.data.secrets || []);
       } else {
-        console.error('Failed to load secrets:', response.error);
+        // Only log error if it's not a rate limit issue
+        if (response.error && !response.error.includes('Rate limit')) {
+          console.error('Failed to load secrets:', response.error);
+        }
       }
     } catch (error: unknown) {
-      console.error('Error loading secrets:', error);
+      // Only log error if it's not a rate limit issue
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes('429') && !errorMessage.includes('Rate limit')) {
+        console.error('Error loading secrets:', error);
+      }
     }
-  }, []);
+  }, [user]);
 
   // Handle OAuth2 success messages from URL parameters
   useEffect(() => {
@@ -296,17 +365,20 @@ function DashboardContent() {
     loadSecrets();
     handleOAuth2Callback();
     
-    // Slower polling to avoid conflicts with manual updates
+    // Much slower polling to avoid rate limit issues
     const interval = setInterval(() => {
       loadConnections();
       loadWorkflows();
-      loadSecrets();
-    }, 30000); // Poll every 30 seconds
+      // Only load secrets if user has admin role to avoid rate limits
+      if (user?.role === 'admin') {
+        loadSecrets();
+      }
+    }, 60000); // Poll every 60 seconds instead of 30
     
     return () => {
       clearInterval(interval);
     };
-  }, [loadConnections, loadWorkflows, loadSecrets, handleOAuth2Callback]);
+  }, [loadConnections, loadWorkflows, loadSecrets, handleOAuth2Callback, user?.role]);
 
   const handleTabChange = useCallback((tab: TabType) => {
     setActiveTab(tab);
@@ -369,11 +441,9 @@ function DashboardContent() {
     }
   }, [user]);
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div data-testid="loading-spinner" className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
-      </div>
+      <div data-testid="dashboard-loading" />
     );
   }
 

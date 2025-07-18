@@ -48,3 +48,5 @@ playwright-report/
 jest-integration-summary.json
 debug-*.png
 debug-*.js
+*.trace
+trace-*.zip

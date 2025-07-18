@@ -126,6 +126,7 @@ tests/
     authHelpers.ts            # Authentication helpers (COMPLETED)
     uiHelpers.ts              # UI interaction helpers (COMPLETED)
     dataHelpers.ts            # Test data creation/cleanup (COMPLETED)
+      - createConnectionForm   # UI-based connection creation helper (NEW)
     waitHelpers.ts            # Robust waiting helpers (COMPLETED)
     
     # NEW: Address missing evaluation criteria
@@ -459,6 +460,33 @@ export interface UXExpectations {
 }
 
 /**
+ * Close the guided tour overlay if present
+ * 
+ * This helper function handles the common E2E testing issue where guided tour overlays
+ * can block user interactions. It attempts to close the overlay using multiple strategies:
+ * 1. First tries to find and click a close button
+ * 2. Falls back to pressing the Escape key
+ * 3. Waits for the overlay to disappear
+ * 
+ * @example
+ * ```typescript
+ * // Use before any UI interaction that might be blocked
+ * await closeGuidedTourIfPresent(page);
+ * await page.click('[data-testid="primary-action create-connection-btn"]');
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Use in test setup to ensure clean state
+ * test.beforeEach(async ({ page }) => {
+ *   await setupE2E(page, testUser);
+ *   await closeGuidedTourIfPresent(page);
+ * });
+ * ```
+ */
+export const closeGuidedTourIfPresent: (page: Page) => Promise<void>;
+
+/**
  * Wait for dashboard to be fully loaded
  */
 export const waitForDashboard = async (page: Page): Promise<void>
@@ -500,13 +528,40 @@ export const validateUXCompliance = async (
 
 #### 2. Refactor E2E Test Files
 
-**Migration Order (by usage frequency):**
-1. `tests/e2e/connections/connections-management.test.ts`
-2. `tests/e2e/workflow-engine/core-workflow-generation.test.ts`
-3. `tests/e2e/workflow-engine/workflow-management.test.ts`
-4. `tests/e2e/security/secrets-vault.test.ts`
-5. `tests/e2e/auth/authentication-session.test.ts`
-6. Remaining E2E test files
+**Migration Order (by Priority Tiers):**
+
+**Tier 1: Foundation (Fix First)**
+1. `tests/e2e/auth/authentication-session.test.ts` - Basic login/logout
+2. `tests/e2e/auth/password-reset.test.ts` - Password reset flow  
+3. `tests/e2e/ui/navigation.test.ts` - Basic navigation between tabs
+4. `tests/e2e/ui/ui-compliance.test.ts` - Accessibility and UX compliance
+
+**Tier 2: Core User Flows**
+5. `tests/e2e/auth/registration-verification.test.ts` - User signup and email verification
+6. `tests/e2e/onboarding/user-journey.test.ts` - New user onboarding flow
+7. `tests/e2e/connections/connections-management.test.ts` - Basic connection CRUD
+8. `tests/e2e/connections/oauth2-flows.test.ts` - OAuth2 integration (critical for API connections)
+
+**Tier 3: Advanced Features**
+9. `tests/e2e/workflow-engine/core-workflow-generation.test.ts` - Basic workflow creation
+10. `tests/e2e/workflow-engine/natural-language-workflow.test.ts` - AI-powered workflows
+11. `tests/e2e/workflow-engine/multi-step-workflow-generation.test.ts` - Complex workflows
+12. `tests/e2e/connections/secrets-first-connection.test.ts` - Secrets management
+13. `tests/e2e/connections/openapi-integration.test.ts` - OpenAPI integration
+
+**Tier 4: Workflow Engine Advanced**
+14. `tests/e2e/workflow-engine/workflow-management.test.ts` - Workflow CRUD operations
+15. `tests/e2e/workflow-engine/step-runner-engine.test.ts` - Workflow execution
+16. `tests/e2e/workflow-engine/pause-resume.test.ts` - Workflow state management
+17. `tests/e2e/workflow-engine/workflow-templates.test.ts` - Template functionality
+18. `tests/e2e/workflow-engine/workflow-planning.test.ts` - Workflow planning features
+19. `tests/e2e/workflow-engine/queue-concurrency.test.ts` - Concurrent execution
+
+**Tier 5: Security & Performance**
+20. `tests/e2e/security/secrets-vault.test.ts` - Secrets security
+21. `tests/e2e/security/rate-limiting.test.ts` - Rate limiting protection
+22. `tests/e2e/performance/load-testing.test.ts` - Performance under load
+23. `tests/e2e/ui/support-modal.e2e.test.ts` - Support functionality
 
 #### 3. Update Import Statements
 
@@ -598,7 +653,8 @@ For each E2 test file:
 - import statements
 - [ ] Replace `beforeEach` logic with `setupE2E()`
 - Replace `afterEach` logic with `cleanupE2E()`
-- lace modal cleanup with `closeAllModals()`
+- [ ] Ensure `closeGuidedTourIfPresent()` is called before any UI interaction that could be blocked by overlays (e.g., modals, guided tours)
+- [ ] Replace modal cleanup with `closeAllModals()`
 - [ ] Replace rate limit reset with `resetRateLimits()`
 - [ ] Replace primary action selectors with `getPrimaryActionButton()`
 - [ ] Replace waiting logic with specific wait helpers
@@ -609,43 +665,41 @@ For each E2 test file:
 
 For each E2E test file below, check off each item as you complete the migration:
 
-### connections/
-- [ ] connections-management.test.ts
-- [ ] secrets-first-connection.test.ts
-- [ ] openapi-integration.test.ts
-- [ ] oauth2-flows.test.ts
+### Tier 1: Foundation (Fix First)
+- [ ] auth/authentication-session.test.ts
+- [ ] auth/password-reset.test.ts
+- [ ] ui/navigation.test.ts
+- [ ] ui/ui-compliance.test.ts
 
-### workflow-engine/
-- [ ] workflow-templates.test.ts
-- [ ] workflow-planning.test.ts
-- [ ] workflow-management.test.ts
-- [ ] step-runner-engine.test.ts
-- [ ] queue-concurrency.test.ts
-- [ ] pause-resume.test.ts
-- [ ] natural-language-workflow.test.ts
-- [ ] multi-step-workflow-generation.test.ts
-- [ ] core-workflow-generation.test.ts
+### Tier 2: Core User Flows
+- [ ] auth/registration-verification.test.ts
+- [ ] onboarding/user-journey.test.ts
+- [ ] connections/connections-management.test.ts
+- [ ] connections/oauth2-flows.test.ts
 
-### ui/
-- [ ] ui-compliance.test.ts
-- [ ] support-modal.e2e.test.ts
-- [ ] navigation.test.ts
+### Tier 3: Advanced Features
+- [ ] workflow-engine/core-workflow-generation.test.ts
+- [ ] workflow-engine/natural-language-workflow.test.ts
+- [ ] workflow-engine/multi-step-workflow-generation.test.ts
+- [ ] connections/secrets-first-connection.test.ts
+- [ ] connections/openapi-integration.test.ts
 
-### security/
-- [ ] secrets-vault.test.ts
-- [ ] rate-limiting.test.ts
+### Tier 4: Workflow Engine Advanced
+- [ ] workflow-engine/workflow-management.test.ts
+- [ ] workflow-engine/step-runner-engine.test.ts
+- [ ] workflow-engine/pause-resume.test.ts
+- [ ] workflow-engine/workflow-templates.test.ts
+- [ ] workflow-engine/workflow-planning.test.ts
+- [ ] workflow-engine/queue-concurrency.test.ts
 
-### performance/
-- [ ] load-testing.test.ts
+### Tier 5: Security & Performance
+- [ ] security/secrets-vault.test.ts
+- [ ] security/rate-limiting.test.ts
+- [ ] performance/load-testing.test.ts
+- [ ] ui/support-modal.e2e.test.ts
 
-### onboarding/
-- [ ] user-journey.test.ts
-
-### auth/
-- [ ] registration-verification.test.ts
-- [ ] password-reset.test.ts
-- [ ] oauth2.test.ts
-- [ ] authentication-session.test.ts
+### Additional Auth Tests
+- [ ] auth/oauth2.test.ts
 
 #### For each file:
 - [ ] Update imports to use new helpers
@@ -773,6 +827,60 @@ import { waitForDashboard, getPrimaryActionButton } from '../../helpers/uiHelper
 
 await waitForDashboard(page);
 await getPrimaryActionButton(page, 'create-connection').click();
+```
+
+### Usage Examples
+
+```typescript
+import { closeGuidedTourIfPresent } from '../../helpers/uiHelpers';
+
+// Use before any UI interaction that might be blocked by overlays
+await closeGuidedTourIfPresent(page);
+await page.click('[data-testid="primary-action create-connection-btn"]');
+```
+
+### Guided Tour Testing Patterns
+
+**For Regular E2E Tests (Default):**
+```typescript
+import { createTestUser } from '../../helpers/testUtils';
+import { setupE2E } from '../../helpers/e2eHelpers';
+
+test.beforeAll(async () => {
+  // Default test user won't trigger guided tour
+  testUser = await createTestUser();
+});
+
+test.beforeEach(async ({ page }) => {
+  // No need to handle guided tour - user has guidedTourCompleted: true
+  await setupE2E(page, testUser);
+});
+```
+
+**For Guided Tour Testing:**
+```typescript
+import { createTestUserWithTour } from '../../helpers/testUtils';
+import { setupE2E } from '../../helpers/e2eHelpers';
+
+test.beforeAll(async () => {
+  // This user will trigger guided tour
+  testUser = await createTestUserWithTour();
+});
+
+test.beforeEach(async ({ page }) => {
+  // Skip closing guided tour to test tour functionality
+  await setupE2E(page, testUser, { skipCloseGuidedTour: true });
+});
+
+test('should show guided tour for new users', async ({ page }) => {
+  await setupE2E(page, testUser, { skipCloseGuidedTour: true });
+  
+  // Wait for tour to appear (1 second delay)
+  await page.waitForSelector('[data-testid="guided-tour-overlay"]', { timeout: 2000 });
+  
+  // Test tour functionality
+  await expect(page.getByTestId('guided-tour-tooltip')).toBeVisible();
+});
 ```
 
 ## Best Practices

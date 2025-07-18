@@ -382,15 +382,44 @@ export const handleGetCurrentUser = async (req: AuthenticatedRequest, res: NextA
     const user = await requireAuth(req, res);
     console.log('🔍 DEBUG: handleGetCurrentUser - requireAuth succeeded, user:', user.email);
     
+    // Get full user data including onboarding fields
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        // Onboarding fields
+        onboardingStage: true,
+        guidedTourCompleted: true,
+        onboardingCompletedAt: true,
+        // Profile fields
+        firstName: true,
+        lastName: true,
+        timezone: true,
+        language: true,
+        emailVerified: true,
+        emailVerifiedAt: true,
+        notificationsEnabled: true,
+        marketingEmailsEnabled: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    
+    if (!fullUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+    
     return res.status(200).json({
       success: true,
       data: {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role
-        }
+        user: fullUser
       }
     });
   } catch (error) {

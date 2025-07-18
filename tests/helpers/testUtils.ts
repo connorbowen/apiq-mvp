@@ -67,7 +67,71 @@ export const createTestUser = async (
       password: hashedPassword,
       name: testName,
       role: role,
-      isActive: true
+      isActive: true,
+      // Set onboarding fields to prevent guided tour in E2E tests
+      onboardingStage: 'COMPLETED',
+      guidedTourCompleted: true,
+      onboardingCompletedAt: new Date()
+    }
+  });
+
+  // Login to get real JWT tokens
+  const { req, res } = createMocks({
+    method: 'POST',
+    body: {
+      email: testEmail,
+      password: testPassword
+    }
+  });
+  req.env = {};
+  
+  await loginHandler(req as any, res as any);
+  
+  const loginData = JSON.parse(res._getData());
+  
+  if (!loginData.success) {
+    throw new Error(`Failed to login test user: ${JSON.stringify(loginData)}`);
+  }
+
+  return {
+    id: user.id,
+    email: testEmail,
+    password: testPassword,
+    name: testName,
+    role: role,
+    accessToken: loginData.data.accessToken,
+    refreshToken: loginData.data.refreshToken
+  };
+};
+
+/**
+ * Create a test user that will trigger the guided tour (for testing tour functionality)
+ */
+export const createTestUserWithTour = async (
+  email?: string,
+  password?: string,
+  role: Role = Role.USER,
+  name?: string
+): Promise<TestUser> => {
+  const testEmail = email || `test-tour-${generateTestId()}@example.com`;
+  const testPassword = password || 'testpass123';
+  const testName = name || `Test ${role} (Tour)`;
+
+  // Hash password with bcrypt
+  const hashedPassword = await bcrypt.hash(testPassword, 10);
+
+  // Create user that will trigger guided tour
+  const user = await prisma.user.create({
+    data: {
+      email: testEmail,
+      password: hashedPassword,
+      name: testName,
+      role: role,
+      isActive: true,
+      // Set onboarding fields to trigger guided tour
+      onboardingStage: 'NEW_USER',
+      guidedTourCompleted: false,
+      onboardingCompletedAt: null
     }
   });
 
@@ -360,6 +424,23 @@ export const createTestSuite = (suiteName: string) => {
       const testName = (global as any).expect?.getState?.().currentTestName || 'test';
       const uniqueEmail = email || `${getEmailPrefix(testName)}@example.com`;
       const user = await createTestUser(uniqueEmail, password, role, name);
+      testUsers.push(user);
+      return user;
+    },
+
+    /**
+     * Create a test user that will trigger the guided tour (for testing tour functionality)
+     */
+    createUserWithTour: async (
+      email?: string,
+      password?: string,
+      role: Role = Role.USER,
+      name?: string
+    ): Promise<TestUser> => {
+      // Use Jest's current test name if available
+      const testName = (global as any).expect?.getState?.().currentTestName || 'test';
+      const uniqueEmail = email || `${getEmailPrefix(testName)}@example.com`;
+      const user = await createTestUserWithTour(uniqueEmail, password, role, name);
       testUsers.push(user);
       return user;
     },

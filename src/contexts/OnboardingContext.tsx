@@ -63,6 +63,7 @@ interface OnboardingContextType {
   previousTourStep: () => void;
   skipTour: () => void;
   isFeatureAvailable: (feature: string) => boolean;
+  syncWithUserData: (userData: any) => void;
 }
 
 // Default onboarding state
@@ -172,6 +173,48 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Sync onboarding context with user data from the database
+  const syncWithUserData = (userData: any) => {
+    if (userData) {
+      console.log('🔄 OnboardingContext: Syncing with user data:', {
+        onboardingStage: userData.onboardingStage || userData.onboarding_stage,
+        guidedTourCompleted: userData.guidedTourCompleted || userData.guided_tour_completed,
+        onboardingCompletedAt: userData.onboardingCompletedAt || userData.onboarding_completed_at
+      });
+      
+      // Map database fields to context fields
+      const onboardingStage = userData.onboardingStage || userData.onboarding_stage;
+      const guidedTourCompleted = userData.guidedTourCompleted || userData.guided_tour_completed;
+      const onboardingCompletedAt = userData.onboardingCompletedAt || userData.onboarding_completed_at;
+      
+      if (onboardingStage) {
+        // Convert database enum to context enum
+        const stageMap: Record<string, OnboardingStage> = {
+          'NEW_USER': 'new_user',
+          'FIRST_CONNECTION': 'first_connection', 
+          'FIRST_WORKFLOW': 'first_workflow',
+          'COMPLETED': 'completed'
+        };
+        const mappedStage = stageMap[onboardingStage] || 'new_user';
+        setState(prev => ({ ...prev, stage: mappedStage }));
+      }
+      
+      // Explicitly handle guided tour completion state
+      if (guidedTourCompleted !== undefined) {
+        console.log('🔄 OnboardingContext: Setting guidedTourCompleted to:', guidedTourCompleted);
+        setState(prev => ({ ...prev, guidedTourCompleted: Boolean(guidedTourCompleted) }));
+      }
+      
+      if (onboardingCompletedAt) {
+        setState(prev => ({ 
+          ...prev, 
+          stage: 'completed',
+          completedAt: new Date(onboardingCompletedAt)
+        }));
+      }
+    }
+  };
+
   const value: OnboardingContextType = {
     state,
     updateStage,
@@ -182,6 +225,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     previousTourStep,
     skipTour,
     isFeatureAvailable,
+    syncWithUserData,
   };
 
   return (

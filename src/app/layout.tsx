@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import SessionProvider from "../components/SessionProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -38,9 +37,7 @@ export default function RootLayout({
         {/* Global ARIA live region for announcements */}
         <div id="aria-live-announcements" aria-live="assertive" aria-atomic="true" className="sr-only"></div>
         <div id="aria-live-polite" aria-live="polite" aria-atomic="true" className="sr-only"></div>
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+        {children}
       </body>
     </html>
   );

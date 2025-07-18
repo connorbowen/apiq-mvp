@@ -15,7 +15,7 @@ export default defineConfig({
   },
   use: {
     baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
+    trace: 'off', // Set to 'on-first-retry' when debugging test failures
     actionTimeout: 10000,
     navigationTimeout: 15000,
     launchOptions: {

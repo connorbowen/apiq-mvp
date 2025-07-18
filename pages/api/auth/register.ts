@@ -5,6 +5,7 @@ import { prisma } from '../../../src/lib/singletons/prisma';
 import { ApplicationError, badRequest, conflict, internalServerError } from '../../../src/lib/errors/ApplicationError';
 import { EmailService } from '../../../src/lib/services/emailService';
 import { logInfo, logError } from '../../../src/utils/logger';
+import { generateToken } from '../../../src/lib/auth/session';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -146,12 +147,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       name
     });
 
-    // Return success response for simplified onboarding
+    // Generate authentication tokens for auto-login
+    const accessToken = generateToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      isActive: user.isActive
+    });
+    const refreshToken = generateToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      isActive: user.isActive
+    }, 'refresh');
+
+    // Set secure HTTP-only cookies for tokens (auto-login)
+    res.setHeader('Set-Cookie', [
+      `accessToken=${accessToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${15 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`,
+      `refreshToken=${refreshToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`
+    ]);
+
+    // Return success response for simplified onboarding with tokens
     res.status(201).json({
       success: true,
       data: {
         message: 'Registration successful! Welcome to APIQ.',
         userId: user.id,
+        accessToken,
+        refreshToken,
+        expiresIn: 15 * 60, // 15 minutes
         user: {
           id: user.id,
           email: user.email,

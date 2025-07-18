@@ -54,9 +54,24 @@ export interface UserProfile {
   email: string;
   name?: string;
   role: 'user' | 'admin';
-  isEmailVerified: boolean;
-  onboardingState: OnboardingState;
-  tourState: TourState;
+  isActive: boolean;
+  // Onboarding fields
+  onboardingStage?: string;
+  guidedTourCompleted?: boolean;
+  onboardingCompletedAt?: string;
+  // Profile fields
+  firstName?: string;
+  lastName?: string;
+  timezone?: string;
+  language?: string;
+  emailVerified?: boolean;
+  emailVerifiedAt?: string;
+  notificationsEnabled?: boolean;
+  marketingEmailsEnabled?: boolean;
+  // Legacy fields (for backward compatibility)
+  isEmailVerified?: boolean;
+  onboardingState?: OnboardingState;
+  tourState?: TourState;
   createdAt: string;
   updatedAt: string;
 }
@@ -162,15 +177,6 @@ class ApiClient {
   }
 
   private async request<T>(config: any): Promise<ApiResponse<T>> {
-    console.log('🔍 DEBUG: apiClient.request called');
-    console.log('🔍 DEBUG: Request config:', {
-      method: config.method,
-      url: `${this.baseURL}${config.url}`,
-      hasData: !!config.data,
-      dataKeys: config.data ? Object.keys(config.data) : [],
-      headers: config.headers
-    });
-    
     try {
       const response: AxiosResponse<ApiResponse<T>> = await axios({
         ...config,
@@ -182,19 +188,8 @@ class ApiClient {
         withCredentials: true, // Include cookies in requests
       });
       
-      console.log('🔍 DEBUG: API request successful');
-      console.log('🔍 DEBUG: Response status:', response.status);
-      console.log('🔍 DEBUG: Response data:', response.data);
-      
       return response.data;
     } catch (error: any) {
-      console.error('🔍 DEBUG: API request failed');
-      console.error('🔍 DEBUG: Error type:', typeof error);
-      console.error('🔍 DEBUG: Error message:', error.message);
-      console.error('🔍 DEBUG: Error response status:', error.response?.status);
-      console.error('🔍 DEBUG: Error response data:', error.response?.data);
-      console.error('🔍 DEBUG: Full error:', error);
-      
       return {
         success: false,
         error: error.response?.data?.error || error.message || 'Network error',
@@ -203,17 +198,6 @@ class ApiClient {
   }
 
   async createConnection(data: CreateConnectionRequest): Promise<ApiResponse<{ connection: ApiConnection }>> {
-    console.log('🔍 DEBUG: apiClient.createConnection called');
-    console.log('🔍 DEBUG: Request data:', {
-      name: data.name,
-      description: data.description,
-      baseUrl: data.baseUrl,
-      authType: data.authType,
-      hasAuthConfig: !!data.authConfig,
-      authConfigKeys: Object.keys(data.authConfig || {}),
-      hasDocumentationUrl: !!data.documentationUrl
-    });
-    
     // Implement secret-first connection creation
     const secretsToCreate: CreateSecretRequest[] = [];
     const secretIds: string[] = [];
@@ -305,7 +289,6 @@ class ApiClient {
       data: connectionData,
     });
     
-    console.log('🔍 DEBUG: apiClient.createConnection response:', response);
     return response;
   }
 
