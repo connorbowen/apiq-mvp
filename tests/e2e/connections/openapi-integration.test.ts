@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser, cleanupTestUser, generateTestId, authenticateE2EPage } from '../../helpers/testUtils';
 import { UXComplianceHelper } from '../../helpers/uxCompliance';
+import { prisma } from '../../../lib/database/client';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -28,20 +29,14 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
     );
     jwt = testUser.accessToken;
     // Debug: Confirm user exists in DB after creation
-    const { PrismaClient } = require('../../../src/generated/prisma');
-    const prisma = new PrismaClient();
     const user = await prisma.user.findUnique({ where: { id: testUser.id } });
     console.log('🧑‍💻 [DEBUG] User after creation:', user);
-    await prisma.$disconnect();
   });
 
   test.afterAll(async ({ request }) => {
     // Debug: Confirm user exists in DB before cleanup
-    const { PrismaClient } = require('../../../src/generated/prisma');
-    const prisma = new PrismaClient();
     const user = await prisma.user.findUnique({ where: { id: testUser.id } });
     console.log('🧑‍💻 [DEBUG] User before cleanup:', user);
-    await prisma.$disconnect();
     
     // Clean up created connections
     for (const id of createdConnectionIds) {

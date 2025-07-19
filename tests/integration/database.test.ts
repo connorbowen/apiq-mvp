@@ -1,4 +1,4 @@
-import { prisma } from '../../src/lib/singletons/prisma';
+import { prisma } from '../../lib/database/client';
 import { getTestFixtures } from '../helpers/testIsolation';
 import { createConnectionTestData } from '../helpers/createTestData';
 

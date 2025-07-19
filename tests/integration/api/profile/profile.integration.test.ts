@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { NextApiRequest, NextApiResponse } from 'next';
 import profileHandler from '../../../../pages/api/profile/index';
 import passwordHandler from '../../../../pages/api/profile/password';
-import { prisma } from '../../../../src/lib/singletons/prisma';
+import { prisma } from '../../../../lib/database/client';;
 import bcrypt from 'bcryptjs';
 
 // Mock the auth middleware

@@ -2,7 +2,7 @@ import { ExecutionStateManager, ExecutionState, ExecutionProgress, ExecutionMetr
 import { QueueService } from '../../../../src/lib/queue/queueService';
 
 // Mock dependencies
-jest.mock('../../../../src/lib/singletons/prisma', () => ({
+jest.mock('../../../../lib/database/client', () => ({
   prisma: {
     workflowExecution: {
       create: jest.fn(),
@@ -18,7 +18,7 @@ jest.mock('../../../../src/lib/queue/queueService');
 jest.mock('../../../../src/utils/logger');
 
 // Import the mocked prisma
-import { prisma } from '../../../../src/lib/singletons/prisma';
+import { prisma } from '../../../../lib/database/client';;
 
 const mockPrisma = prisma;
 

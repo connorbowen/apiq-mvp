@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { UXComplianceHelper, UXValidations } from '../../helpers/uxCompliance';
 import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
 import { createTestApiConnection, cleanupTestApiConnections } from '../../helpers/createTestApiConnection';
-import { prisma } from '../../../src/lib/singletons/prisma';
+import { prisma } from '../../../lib/database/client';;
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 

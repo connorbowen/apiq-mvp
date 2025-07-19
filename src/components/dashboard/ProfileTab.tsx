@@ -142,23 +142,32 @@ export default function ProfileTab({ user, onProfileUpdated }: ProfileTabProps) 
                       <span>Email not verified</span>
                     </div>
                     <button
+                      data-testid="verify-email-btn"
                       onClick={async () => {
+                        console.log('🔍 DEBUG: Button clicked! Starting resend verification for:', user.email);
                         setIsResendingVerification(true);
                         try {
+                          // Include credentials since user is authenticated
                           const response = await fetch('/api/auth/resend-verification', {
                             method: 'POST',
                             headers: {
                               'Content-Type': 'application/json',
                             },
+                            credentials: 'include',
                             body: JSON.stringify({ email: user.email }),
                           });
-                          
+                          console.log('🔍 DEBUG: Response status:', response.status);
+                          const data = await response.json().catch(() => ({}));
+                          console.log('🔍 DEBUG: Response data:', data);
                           if (response.ok) {
-                            toast.success('Verification email sent!');
+                            console.log('🔍 DEBUG: Showing success toast');
+                            toast.success(data?.data?.message || 'Verification email sent!');
                           } else {
-                            toast.error('Failed to send verification email');
+                            console.log('🔍 DEBUG: Showing error toast');
+                            toast.error(data.error || 'Failed to send verification email');
                           }
                         } catch (error) {
+                          console.error('🔍 DEBUG: Resend verification error:', error);
                           toast.error('Failed to send verification email');
                         } finally {
                           setIsResendingVerification(false);

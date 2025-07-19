@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { prisma } from '../../../src/lib/singletons/prisma';
+import { prisma } from '../../../lib/database/client';;
 import { ApplicationError, badRequest, conflict, internalServerError } from '../../../src/lib/errors/ApplicationError';
 import { EmailService } from '../../../src/lib/services/emailService';
 import { logInfo, logError } from '../../../src/utils/logger';
@@ -164,10 +164,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }, 'refresh');
 
     // Set secure HTTP-only cookies for tokens (auto-login)
-    res.setHeader('Set-Cookie', [
+    const cookieOptions = [
       `accessToken=${accessToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${15 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`,
-      `refreshToken=${refreshToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`
-    ]);
+      `refreshToken=${refreshToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`,
+      `userOnboardingStage=${user.onboardingStage}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`
+    ];
+    
+    res.setHeader('Set-Cookie', cookieOptions);
+    
+    console.log('🔍 REGISTER: Setting cookies:', {
+      accessTokenLength: accessToken.length,
+      refreshTokenLength: refreshToken.length,
+      cookieCount: cookieOptions.length
+    });
 
     // Return success response for simplified onboarding with tokens
     res.status(201).json({

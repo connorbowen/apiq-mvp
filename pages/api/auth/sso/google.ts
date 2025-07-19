@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../../../src/lib/singletons/prisma';
+import { prisma } from '../../../../lib/database/client';;
 import { generateToken } from '../../../../src/lib/auth/session';
 import { ApplicationError } from '../../../../src/lib/errors/ApplicationError';
 

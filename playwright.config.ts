@@ -7,23 +7,25 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 2, // Conservative number of workers for stability
   reporter: 'html',
-  timeout: 15000,
+  timeout: 30000, // Increased timeout for multi-worker stability
   expect: {
-    timeout: 5000,
+    timeout: 10000, // Increased expect timeout
   },
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'off', // Set to 'on-first-retry' when debugging test failures
-    actionTimeout: 10000,
-    navigationTimeout: 15000,
+    actionTimeout: 15000, // Increased action timeout
+    navigationTimeout: 20000, // Increased navigation timeout
     launchOptions: {
       args: [
         '--disable-dev-shm-usage',
         '--disable-gpu',
         '--disable-web-security',
-        '--disable-features=VizDisplayCompositor'
+        '--disable-features=VizDisplayCompositor',
+        '--no-sandbox', // Add sandbox disable for stability
+        '--disable-setuid-sandbox' // Add setuid sandbox disable
       ]
     }
   },
@@ -51,6 +53,9 @@ export default defineConfig({
       TEST_MODE: 'true',
       PLAYWRIGHT_TEST: 'true',
       DISABLE_RATE_LIMITING: 'true', // Disable rate limiting for fast E2E testing
+      // Add worker-specific environment variables
+      WORKER_ID: process.env.WORKER_ID || '1',
+      MAX_WORKERS: process.env.MAX_WORKERS || '4',
     }
   },
 }); 

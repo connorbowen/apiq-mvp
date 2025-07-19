@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../../../src/lib/singletons/prisma';
+import { prisma } from '../../../../lib/database/client';
 import { requireAuth } from '../../../../src/lib/auth/session';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

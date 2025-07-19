@@ -1,5 +1,5 @@
 import { getQueueClient, QueueClient } from '../queueWrapper';
-import { prisma } from '../singletons/prisma';
+import { prisma } from '../../../lib/database/client';
 import { logError, logInfo } from '../../utils/logger';
 // @ts-ignore
 import { z } from 'zod'; // Use zod for runtime validation if available

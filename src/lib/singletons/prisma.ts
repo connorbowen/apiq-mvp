@@ -1,3 +1,6 @@
-import { PrismaClient } from '../../generated/prisma';
+// This file is deprecated. Use lib/database/client.ts instead.
+// This file will be removed after all imports are updated.
 
-export const prisma = new PrismaClient(); 
+import { prisma } from '../../../lib/database/client';
+
+export { prisma }; 

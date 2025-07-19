@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth } from '../../../../src/lib/auth/session';
-import { prisma } from '../../../../src/lib/singletons/prisma';
+import { prisma } from '../../../../lib/database/client';
 import { ApplicationError, badRequest, notFound } from '../../../../src/lib/errors/ApplicationError';
 import { markConnecting } from '../../../../src/lib/services/connectionService';
 import { oauth2Service } from '../../../../src/lib/auth/oauth2';

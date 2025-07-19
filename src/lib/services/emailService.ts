@@ -18,41 +18,79 @@ export interface EmailTemplate {
 }
 
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter!: nodemailer.Transporter;
   private isTestMode: boolean;
+  private isMockMode: boolean = false;
+  private consecutiveFailures: number = 0;
+  private readonly MAX_CONSECUTIVE_FAILURES = 3;
 
   constructor(config?: EmailConfig) {
-    this.isTestMode = process.env.NODE_ENV === 'test';
+    // Check if explicitly disabled for testing
+    this.isTestMode = process.env.DISABLE_EMAIL_SENDING === 'true';
     
     if (this.isTestMode) {
-      // In test mode, create a mock transporter that doesn't actually send emails
-      this.transporter = {
-        sendMail: async (mailOptions: any) => {
-          // Log the email for testing purposes
-          console.log('TEST EMAIL SENT:', {
-            to: mailOptions.to,
-            subject: mailOptions.subject,
-            html: mailOptions.html?.substring(0, 100) + '...',
-            text: mailOptions.text?.substring(0, 100) + '...'
-          });
-          return { messageId: 'test-message-id' };
-        },
-        verify: async () => true
-      } as any;
+      this.setupMockTransporter();
     } else {
-      // Use provided config or environment variables
-      const emailConfig = config || {
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: {
-          user: process.env.SMTP_USER || '',
-          pass: process.env.SMTP_PASS || ''
-        }
-      };
-
-      this.transporter = nodemailer.createTransport(emailConfig);
+      this.setupRealTransporter(config);
     }
+  }
+
+  private setupMockTransporter() {
+    this.isMockMode = true;
+    this.transporter = {
+      sendMail: async (mailOptions: any) => {
+        // Log the email for testing purposes
+        console.log('MOCK EMAIL SENT:', {
+          to: mailOptions.to,
+          subject: mailOptions.subject,
+          html: mailOptions.html?.substring(0, 100) + '...',
+          text: mailOptions.text?.substring(0, 100) + '...'
+        });
+        return { messageId: 'mock-message-id' };
+      },
+      verify: async () => true
+    } as any;
+  }
+
+  private setupRealTransporter(config?: EmailConfig) {
+    this.isMockMode = false;
+    // Use provided config or environment variables
+    const emailConfig = config || {
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || ''
+      }
+    };
+
+    this.transporter = nodemailer.createTransport(emailConfig);
+  }
+
+  /**
+   * Switch to mock mode when Gmail limits are hit
+   */
+  private switchToMockMode(reason: string) {
+    if (!this.isMockMode) {
+      console.log(`🔄 EMAIL SERVICE: Switching to mock mode - ${reason}`);
+      this.isMockMode = true;
+      this.setupMockTransporter();
+    }
+  }
+
+  /**
+   * Check if error indicates Gmail daily limit
+   */
+  private isGmailLimitError(error: any): boolean {
+    const errorMessage = error.message || error.toString();
+    return (
+      errorMessage.includes('Daily sending quota') ||
+      errorMessage.includes('quota exceeded') ||
+      errorMessage.includes('550 5.4.5') ||
+      errorMessage.includes('Daily user sending quota') ||
+      errorMessage.includes('User rate limit exceeded')
+    );
   }
 
   /**
@@ -160,7 +198,7 @@ ${process.env.NEXTAUTH_URL || 'http://localhost:3000'}
   }
 
   /**
-   * Send a generic email
+   * Send a generic email with automatic fallback to mock mode
    */
   protected async sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
     try {
@@ -174,18 +212,41 @@ ${process.env.NEXTAUTH_URL || 'http://localhost:3000'}
 
       await this.transporter.sendMail(mailOptions);
       
+      // Reset failure counter on success
+      this.consecutiveFailures = 0;
+      
       logInfo('Email sent successfully', {
         to,
         subject: template.subject,
-        type: template.subject.includes('Verify') ? 'verification' : 'password_reset'
+        type: template.subject.includes('Verify') ? 'verification' : 'password_reset',
+        mode: this.isMockMode ? 'mock' : 'real'
       });
 
       return true;
     } catch (error) {
+      this.consecutiveFailures++;
+      
+      // Check if this is a Gmail limit error
+      if (this.isGmailLimitError(error)) {
+        this.switchToMockMode('Gmail daily limit exceeded');
+        // Retry with mock mode
+        return this.sendEmail(to, template);
+      }
+      
+      // If we've had too many consecutive failures, switch to mock mode
+      if (this.consecutiveFailures >= this.MAX_CONSECUTIVE_FAILURES && !this.isMockMode) {
+        this.switchToMockMode(`Too many consecutive failures (${this.consecutiveFailures})`);
+        // Retry with mock mode
+        return this.sendEmail(to, template);
+      }
+      
       logError('Failed to send email', error as Error, {
         to,
-        subject: template.subject
+        subject: template.subject,
+        consecutiveFailures: this.consecutiveFailures,
+        mode: this.isMockMode ? 'mock' : 'real'
       });
+      
       return false;
     }
   }
@@ -214,6 +275,18 @@ ${process.env.NEXTAUTH_URL || 'http://localhost:3000'}
       text,
     };
     return this.sendEmail(to, template);
+  }
+
+  /**
+   * Get current email service status
+   */
+  getStatus() {
+    return {
+      isTestMode: this.isTestMode,
+      isMockMode: this.isMockMode,
+      consecutiveFailures: this.consecutiveFailures,
+      mode: this.isMockMode ? 'mock' : 'real'
+    };
   }
 }
 

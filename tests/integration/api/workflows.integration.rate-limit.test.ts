@@ -1,7 +1,7 @@
 import { createMocks } from 'node-mocks-http';
 import { NextApiRequest } from 'next';
 import { createTestConnection } from '../../helpers/testUtils';
-import { prisma } from '../../../src/lib/singletons/prisma';
+import { prisma } from '../../../lib/database/client';;
 import { generateToken } from '../../../src/lib/auth/session';
 import bcrypt from 'bcryptjs';
 

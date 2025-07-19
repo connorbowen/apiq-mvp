@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { createMocks } from 'node-mocks-http';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { prisma } from '../../../../src/lib/singletons/prisma';
+import { prisma } from '../../../../lib/database/client';;
 import { generateTestId, createTestUser, TestUser } from '../../../helpers/testUtils';
 
 describe('UX Simplification - Auth Flow Integration Tests', () => {

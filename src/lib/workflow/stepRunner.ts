@@ -193,7 +193,7 @@ export class ApiCallStepExecutor implements StepExecutor {
     
     try {
       // Use Prisma directly instead of API client for server-side operations
-      const { prisma } = await import('../singletons/prisma');
+      const { prisma } = await import('../../../lib/database/client');
       const connection = await prisma.apiConnection.findUnique({
         where: { id: apiConnectionId },
         include: {

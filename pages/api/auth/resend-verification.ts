@@ -1,11 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
-import { prisma } from '../../../src/lib/singletons/prisma';
+import { prisma } from '../../../lib/database/client';;
 import { ApplicationError, badRequest, internalServerError } from '../../../src/lib/errors/ApplicationError';
 import { EmailService } from '../../../src/lib/services/emailService';
 import { logInfo, logError } from '../../../src/utils/logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('DEBUG: HEADERS', req.headers);
+  console.log('DEBUG: COOKIES', req.cookies);
   if (req.method !== 'POST') {
     return res.status(405).json({
       success: false,
@@ -43,12 +45,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Check if user is already verified
-    if (user.isActive) {
+    // Check if user's email is already verified
+    if (user.emailVerified) {
       return res.status(200).json({
         success: true,
         data: {
-          message: 'This account is already verified. You can sign in normally.'
+          message: 'This email is already verified. You can sign in normally.'
         }
       });
     }

@@ -260,10 +260,24 @@ export const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => 
     const accessToken = generateToken(user, 'access');
     const refreshToken = generateToken(user, 'refresh');
     
-    // Set secure HTTP-only cookies for tokens
+    // Get full user data including onboarding stage
+    const fullUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        onboardingStage: true
+      }
+    });
+
+    // Set secure HTTP-only cookies for tokens and user state
     res.setHeader('Set-Cookie', [
       `accessToken=${accessToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${15 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`,
-      `refreshToken=${refreshToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`
+      `refreshToken=${refreshToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`,
+      `userOnboardingStage=${fullUser?.onboardingStage || 'NEW_USER'}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'Secure;' : ''}`
     ]);
     
     return res.status(200).json({

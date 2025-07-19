@@ -5,15 +5,14 @@
  * Usage: npm run rotate-secrets
  */
 
-const { PrismaClient } = require('../src/generated/prisma');
+const { prisma } = require('../lib/database/client');
 const { SecretsVault } = require('../src/lib/secrets/secretsVault');
 
 async function rotateSecrets() {
   console.log('🔐 Starting Secrets Vault key rotation...');
   
   try {
-    const prisma = new PrismaClient();
-    const vault = new SecretsVault(prisma);
+    const vault = new SecretsVault();
     
     // Check vault health before rotation
     const healthBefore = await vault.getHealthStatus();

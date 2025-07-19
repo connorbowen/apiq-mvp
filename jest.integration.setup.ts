@@ -1,5 +1,5 @@
 import { boss } from './src/lib/singletons/boss';
-import { prisma } from './src/lib/singletons/prisma';
+import { prisma } from './lib/database/client';
 import { loadFixtures } from './tests/fixtures/seed';
 import { PrismaClient } from '@prisma/client';
 

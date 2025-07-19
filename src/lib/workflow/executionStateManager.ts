@@ -1,4 +1,4 @@
-import { prisma } from '../singletons/prisma';
+import { prisma } from '../../../lib/database/client';
 import { logError, logInfo, logDebug } from '../../utils/logger';
 import { QueueService } from '../queue/queueService';
 

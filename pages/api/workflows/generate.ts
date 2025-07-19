@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
+import { prisma } from '../../../lib/database/client';
 import { NaturalLanguageWorkflowService } from '../../../src/lib/services/naturalLanguageWorkflowService';
-import { prisma } from '../../../src/lib/singletons/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -78,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('→ OpenAI API key configured');
 
-    const workflowService = new NaturalLanguageWorkflowService(openaiApiKey, prisma);
+    const workflowService = new NaturalLanguageWorkflowService(openaiApiKey);
 
     // Prepare the request
     const request = {

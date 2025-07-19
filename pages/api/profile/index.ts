@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth } from '../../../src/lib/auth/session';
-import { prisma } from '../../../src/lib/singletons/prisma';
+import { prisma } from '../../../lib/database/client';
 import { ApplicationError } from '../../../src/lib/errors/ApplicationError';
 import logger from '../../../src/utils/logger';
 

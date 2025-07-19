@@ -1,4 +1,4 @@
-import { prisma } from '../../src/lib/singletons/prisma';
+import { prisma } from '../../lib/database/client';
 import petstoreOpenApi from '../fixtures/petstore-openapi.json';
 
 /**

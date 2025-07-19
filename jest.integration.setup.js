@@ -48,7 +48,7 @@ console.warn = jest.fn();
 console.error = originalConsoleError; // Keep error logging
 
 // Import Prisma client for transaction management
-const { prisma } = require('./src/lib/singletons/prisma');
+const { prisma } = require('./lib/database/client');
 const { cleanupTestData } = require('./tests/helpers/testIsolation');
 
 // Global test state management

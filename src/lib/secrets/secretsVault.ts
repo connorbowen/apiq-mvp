@@ -59,13 +59,11 @@ interface RateLimitEntry {
 }
 
 export class SecretsVault {
-  private prisma: PrismaClient;
   private currentKey!: EncryptionKey; // Will be initialized in initializeKeys()
   private keyCache: Map<string, EncryptionKey> = new Map();
   private rateLimitCache: Map<string, RateLimitEntry> = new Map();
 
-  constructor(prismaClient: PrismaClient) {
-    this.prisma = prismaClient;
+  constructor() {
     this.initializeKeys();
   }
 
@@ -204,7 +202,7 @@ export class SecretsVault {
       const encryptedData = this.encrypt(JSON.stringify(secretData));
       
       // Check if secret already exists
-      const existingSecret = await this.prisma.secret.findFirst({
+      const existingSecret = await prisma.secret.findFirst({
         where: {
           userId,
           name,
@@ -214,19 +212,13 @@ export class SecretsVault {
 
       if (existingSecret) {
         // Update existing secret
-        const updatedSecret = await this.prisma.secret.update({
+        const updatedSecret = await prisma.secret.update({
           where: { id: existingSecret.id },
           data: {
             encryptedData: encryptedData.encryptedData,
             keyId: encryptedData.keyId,
             version: existingSecret.version + 1,
-            expiresAt,
-            rotationEnabled: rotationConfig?.rotationEnabled ?? existingSecret.rotationEnabled,
-            rotationInterval: rotationConfig?.rotationInterval ?? existingSecret.rotationInterval,
-            lastRotatedAt: rotationConfig?.lastRotatedAt ?? existingSecret.lastRotatedAt,
-            nextRotationAt: rotationConfig?.nextRotationAt ?? existingSecret.nextRotationAt,
-            rotationHistory: rotationConfig?.rotationHistory ? JSON.parse(JSON.stringify(rotationConfig.rotationHistory)) : existingSecret.rotationHistory,
-            updatedAt: new Date()
+            expiresAt
           }
         });
 
@@ -234,7 +226,7 @@ export class SecretsVault {
         return this.mapToSecretMetadata(updatedSecret, type);
       } else {
         // Create new secret
-        const newSecret = await this.prisma.secret.create({
+        const newSecret = await prisma.secret.create({
           data: {
             userId,
             name,
@@ -242,12 +234,6 @@ export class SecretsVault {
             encryptedData: encryptedData.encryptedData,
             keyId: encryptedData.keyId,
             expiresAt,
-            rotationEnabled: rotationConfig?.rotationEnabled ?? false,
-            rotationInterval: rotationConfig?.rotationInterval ?? null,
-            lastRotatedAt: rotationConfig?.lastRotatedAt ?? new Date(),
-            nextRotationAt: rotationConfig?.nextRotationAt ?? null,
-            rotationHistory: rotationConfig?.rotationHistory ? JSON.parse(JSON.stringify(rotationConfig.rotationHistory)) : [],
-            connectionId,
             metadata: connectionName ? { connectionName } : undefined
           }
         });
@@ -277,7 +263,7 @@ export class SecretsVault {
       // Check rate limiting
       this.checkRateLimit(userId);
 
-      const secret = await this.prisma.secret.findFirst({
+      const secret = await prisma.secret.findFirst({
         where: {
           userId,
           name,
@@ -327,13 +313,10 @@ export class SecretsVault {
       // Check rate limiting
       this.checkRateLimit(userId);
 
-      const secrets = await this.prisma.secret.findMany({
+      const secrets = await prisma.secret.findMany({
         where: {
           userId,
           isActive: true
-        },
-        orderBy: {
-          updatedAt: 'desc'
         }
       });
 
@@ -357,7 +340,7 @@ export class SecretsVault {
       // Check rate limiting
       this.checkRateLimit(userId);
 
-      const secret = await this.prisma.secret.findFirst({
+      const secret = await prisma.secret.findFirst({
         where: {
           userId,
           name,
@@ -370,7 +353,7 @@ export class SecretsVault {
       }
 
       // Soft delete the secret
-      await this.prisma.secret.update({
+      await prisma.secret.update({
         where: { id: secret.id },
         data: {
           isActive: false,
@@ -399,7 +382,7 @@ export class SecretsVault {
       // Check rate limiting
       this.checkRateLimit(userId);
 
-      const secret = await this.prisma.secret.findFirst({
+      const secret = await prisma.secret.findFirst({
         where: {
           userId,
           name,
@@ -442,7 +425,7 @@ export class SecretsVault {
       }
 
       // Update the secret with new encrypted data
-      const updatedSecret = await this.prisma.secret.update({
+      const updatedSecret = await prisma.secret.update({
         where: { id: secret.id },
         data: {
           encryptedData: this.encrypt(JSON.stringify(newSecretData)).encryptedData,
@@ -483,7 +466,7 @@ export class SecretsVault {
       };
 
       // Get all active secrets
-      const allSecrets = await this.prisma.secret.findMany({
+      const allSecrets = await prisma.secret.findMany({
         where: {
           isActive: true
         }
@@ -499,7 +482,7 @@ export class SecretsVault {
           const newEncryptedData = this.encryptWithKey(decryptedData, newKey);
           
           // Update secret with new encrypted data
-          await this.prisma.secret.update({
+          await prisma.secret.update({
             where: { id: secret.id },
             data: {
               encryptedData: newEncryptedData.encryptedData,
@@ -651,7 +634,7 @@ export class SecretsVault {
 
       console.log('Creating audit log entry:', { userId, action: actionText, resource: secretName });
 
-      const auditLog = await this.prisma.auditLog.create({
+      const auditLog = await prisma.auditLog.create({
         data: {
           userId,
           action: actionText,
@@ -688,7 +671,7 @@ export class SecretsVault {
     lastRotation?: Date;
   }> {
     try {
-      const activeSecrets = await this.prisma.secret.count({
+      const activeSecrets = await prisma.secret.count({
         where: { isActive: true }
       });
 
@@ -746,7 +729,7 @@ export class SecretsVault {
       }
 
       // Check if connection exists
-      const connection = await this.prisma.apiConnection.findUnique({
+      const connection = await prisma.apiConnection.findUnique({
         where: { id: connectionId, userId }
       });
 
@@ -755,7 +738,7 @@ export class SecretsVault {
       }
 
       // Update the secret with connection reference
-      const updatedSecret = await this.prisma.secret.update({
+      const updatedSecret = await prisma.secret.update({
         where: { userId_name: { userId, name: secretName } },
         data: {
           connectionId,
@@ -781,7 +764,7 @@ export class SecretsVault {
    */
   async getSecretsForConnection(userId: string, connectionId: string): Promise<SecretMetadata[]> {
     try {
-      const secrets = await this.prisma.secret.findMany({
+      const secrets = await prisma.secret.findMany({
         where: {
           userId,
           connectionId,
@@ -812,7 +795,7 @@ export class SecretsVault {
   ): Promise<SecretMetadata> {
     try {
       // Validate connection exists
-      const connection = await this.prisma.apiConnection.findUnique({
+      const connection = await prisma.apiConnection.findUnique({
         where: { id: connectionId, userId }
       });
 
@@ -851,7 +834,7 @@ export class SecretsVault {
 
     try {
       // Check if secret exists and belongs to user
-      const secret = await this.prisma.secret.findUnique({
+      const secret = await prisma.secret.findUnique({
         where: { userId_name: { userId, name: secretName } }
       });
 
@@ -861,7 +844,7 @@ export class SecretsVault {
       }
 
       // Check if connection exists and belongs to user
-      const connection = await this.prisma.apiConnection.findUnique({
+      const connection = await prisma.apiConnection.findUnique({
         where: { id: connectionId, userId }
       });
 
@@ -876,7 +859,7 @@ export class SecretsVault {
       }
 
       // Check if connection already has a secret of this type
-      const existingSecret = await this.prisma.secret.findFirst({
+      const existingSecret = await prisma.secret.findFirst({
         where: {
           userId,
           connectionId,
@@ -912,7 +895,7 @@ export class SecretsVault {
 
     try {
       // Get the connection with its credentials
-      const connection = await this.prisma.apiConnection.findUnique({
+      const connection = await prisma.apiConnection.findUnique({
         where: { id: connectionId, userId },
         include: {
           credentials: true
@@ -982,4 +965,4 @@ export class SecretsVault {
 }
 
 // Export singleton instance
-export const secretsVault = new SecretsVault(prisma); 
+export const secretsVault = new SecretsVault(); 

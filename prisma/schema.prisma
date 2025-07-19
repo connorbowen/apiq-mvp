@@ -177,6 +177,7 @@ model ApiConnection {
   endpoints   Endpoint[]
   workflows   WorkflowStep[]
   credentials ApiCredential[]
+  secrets     Secret[]
 
   @@unique([userId, name])
   @@map("api_connections")
@@ -363,12 +364,28 @@ model Secret {
   isActive      Boolean   @default(true)
   expiresAt     DateTime?
   metadata      Json? // Additional metadata about the secret
+  
+  // Secret rotation fields
+  rotationEnabled  Boolean   @default(false) // Whether automatic rotation is enabled
+  rotationInterval Int?      // Rotation interval in days
+  lastRotatedAt    DateTime? // When the secret was last rotated
+  nextRotationAt   DateTime? // When the secret should be rotated next
+  rotationHistory  Json?     // Array of rotation history entries
+  
+  // Connection association
+  connectionId     String?   // Reference to ApiConnection if this secret is connection-specific
+  
+  // Timestamps
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiConnection ApiConnection? @relation(fields: [connectionId], references: [id])
 
   @@unique([userId, name])
   @@index([userId, type]) // Index for filtering secrets by user and type
+  @@index([connectionId]) // Index for filtering secrets by connection
   @@map("secrets")
 }
 

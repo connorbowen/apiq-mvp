@@ -1,7 +1,5 @@
-import { boss } from './src/lib/singletons/boss';
-import { prisma } from './src/lib/singletons/prisma';
+import { prisma } from './lib/database/client';
 
 export default async function globalTeardown() {
-  await boss.stop();
   await prisma.$disconnect();
 } 

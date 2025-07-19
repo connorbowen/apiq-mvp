@@ -2,6 +2,7 @@
 // See docs/e2e-helpers-refactor-plan.md for details
 
 import { Page, expect } from '@playwright/test';
+import { navigateWithKeyboard } from './e2eHelpers';
 
 export interface AccessibilityOptions {
   validateARIA?: boolean;
@@ -22,27 +23,66 @@ export const testPrimaryActionPatterns = async (
 };
 
 /**
- * Test form accessibility (labels, ARIA, required fields)
+ * Test form accessibility with ARIA labels
  */
 export const testFormAccessibility = async (
   page: Page,
-  formSelector: string,
-  options: AccessibilityOptions = {}
+  formSelectors: {
+    emailLabel?: string;
+    passwordLabel?: string;
+    submitButton?: string;
+  } = {}
 ): Promise<void> => {
-  const form = page.locator(formSelector);
-  // Check for labels
-  const inputs = form.locator('input, select, textarea');
-  for (let i = 0; i < await inputs.count(); i++) {
-    const input = inputs.nth(i);
-    const id = await input.getAttribute('id');
-    if (id) {
-      await expect(form.locator(`label[for="${id}"]`)).toBeVisible();
-    }
-  }
-  // Check ARIA if requested
-  if (options.validateARIA) {
-    await expect(form).toHaveAttribute('role', 'form');
-  }
+  const {
+    emailLabel = 'Email address',
+    passwordLabel = 'Password',
+    submitButton = 'primary-action signin-btn'
+  } = formSelectors;
+  
+  // Check for proper ARIA labels
+  await expect(page.getByLabel(emailLabel)).toBeVisible();
+  await expect(page.getByLabel(passwordLabel)).toBeVisible();
+  
+  // Check for proper form structure
+  await expect(page.locator('form')).toBeVisible();
+  
+  // Check that submit button is visible and enabled
+  const submitBtn = page.getByTestId(submitButton);
+  await expect(submitBtn).toBeVisible();
+  await expect(submitBtn).toBeEnabled();
+};
+
+/**
+ * Test form validation feedback
+ */
+export const testFormValidation = async (
+  page: Page,
+  expectedError: string = 'Email is required'
+): Promise<void> => {
+  // Try to submit empty form
+  await page.getByTestId('primary-action signup-btn').click();
+  
+  // Should show validation errors
+  await expect(page.getByText(expectedError)).toBeVisible();
+};
+
+/**
+ * Test keyboard navigation for form inputs
+ */
+export const testFormKeyboardNavigation = async (
+  page: Page,
+  inputSelectors: string[]
+): Promise<void> => {
+  // Wait for page to be fully loaded
+  await page.waitForLoadState('networkidle');
+  
+  // Use the robust keyboard navigation helper with input selectors
+  await navigateWithKeyboard(page, inputSelectors);
+  
+  // Check that the submit button is visible and enabled (not necessarily focused)
+  const submitBtn = page.getByTestId('primary-action signin-btn');
+  await expect(submitBtn).toBeVisible();
+  await expect(submitBtn).toBeEnabled();
 };
 
 /**

@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../lib/database/client';
 
 export interface WorkflowStep {
   id: string;
@@ -50,14 +50,12 @@ export interface WorkflowGenerationResponse {
 
 export class NaturalLanguageWorkflowService {
   private openai: OpenAI;
-  private prisma: PrismaClient;
 
-  constructor(apiKey: string, prisma: PrismaClient) {
+  constructor(apiKey: string) {
     this.openai = new OpenAI({
       apiKey,
       dangerouslyAllowBrowser: false,
     });
-    this.prisma = prisma;
   }
 
   /**
@@ -530,7 +528,7 @@ Generate workflows that are:
     // Validate each step
     for (const step of workflow.steps) {
       if (step.type === 'api_call' && step.apiConnectionId) {
-        const connection = await this.prisma.apiConnection.findUnique({
+        const connection = await prisma.apiConnection.findUnique({
           where: { id: step.apiConnectionId }
         });
 

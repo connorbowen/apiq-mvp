@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 const inter = Inter({
@@ -38,6 +39,7 @@ export default function RootLayout({
         <div id="aria-live-announcements" aria-live="assertive" aria-atomic="true" className="sr-only"></div>
         <div id="aria-live-polite" aria-live="polite" aria-atomic="true" className="sr-only"></div>
         {children}
+        <Toaster position="top-right" />
       </body>
     </html>
   );

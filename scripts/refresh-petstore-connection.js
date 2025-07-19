@@ -7,12 +7,9 @@
  */
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-const { PrismaClient } = require('../src/generated/prisma');
+const { prisma } = require('../lib/database/client');
 const { Prisma } = require('../src/generated/prisma');
 const axios = require('axios');
-
-// Create a new Prisma client instance for this script
-const prisma = new PrismaClient();
 
 async function refreshPetstoreConnection() {
   try {

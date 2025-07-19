@@ -26,10 +26,16 @@ export interface UXExpectations {
  * Wait for dashboard to be fully loaded
  * 
  * Accounts for the 1.5-second delay from signup page redirects
+ * Updated to handle ongoing API calls and guided tour
  */
 export const waitForDashboard = async (page: Page): Promise<void> => {
-  // Wait for network to be idle (accounts for any API calls)
-  await page.waitForLoadState('networkidle');
+  // Wait for DOM to be ready (more reliable than networkidle for dashboard)
+  await page.waitForLoadState('domcontentloaded');
+  
+  // Wait for dashboard loading state to disappear first
+  await page.waitForSelector('[data-testid="dashboard-loading"]', { state: 'hidden', timeout: 15000 }).catch(() => {
+    // If loading element doesn't exist, that's fine
+  });
   
   // Wait for dashboard heading with extended timeout for signup redirects
   await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 20000 });
@@ -41,7 +47,7 @@ export const waitForDashboard = async (page: Page): Promise<void> => {
   await page.waitForSelector('[data-testid^="tab-"]', { timeout: 20000 });
   
   // Additional wait to ensure all components are fully loaded
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1000);
 };
 
 /**
@@ -60,7 +66,7 @@ export const waitForElement = async (
   selector: string,
   options: WaitOptions = {}
 ): Promise<void> => {
-  const { timeout = 5000, state = 'networkidle' } = options;
+  const { timeout = 5000, state = 'domcontentloaded' } = options;
   await page.waitForLoadState(state);
   await page.waitForSelector(selector, { timeout });
 };
@@ -141,4 +147,51 @@ export const closeGuidedTourIfPresent = async (page: Page): Promise<void> => {
     // Wait for overlay to disappear
     await overlay.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   }
+}; 
+
+/**
+ * Fill signup form with provided data
+ */
+export const fillSignupForm = async (
+  page: Page,
+  email: string,
+  password: string = 'testpass123'
+): Promise<void> => {
+  await page.getByLabel('Email address').fill(email);
+  await page.locator('#password').fill(password);
+  await page.locator('#confirmPassword').fill(password);
+};
+
+/**
+ * Fill login form with provided data
+ */
+export const fillLoginForm = async (
+  page: Page,
+  email: string,
+  password: string
+): Promise<void> => {
+  await page.getByLabel('Email address').fill(email);
+  await page.getByLabel('Password').fill(password);
+};
+
+/**
+ * Submit signup form and wait for redirect
+ */
+export const submitSignupForm = async (
+  page: Page,
+  email: string,
+  password: string = 'testpass123',
+  options: {
+    timeout?: number;
+    validateURL?: RegExp;
+  } = {}
+): Promise<void> => {
+  const { timeout = 20000, validateURL = /.*dashboard.*/ } = options;
+  
+  // Fill and submit form
+  await fillSignupForm(page, email, password);
+  await page.getByTestId('primary-action signup-btn').click();
+  
+  // Wait for redirect
+  await page.waitForURL(validateURL, { timeout });
 }; 

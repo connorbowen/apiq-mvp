@@ -99,9 +99,10 @@ export default function SignupPage() {
           localStorage.setItem('user', JSON.stringify(response.data.user));
         }
         
-        // Redirect to guided tour for new users
+        // Redirect to guided tour for new users (with delay to show welcome message)
         setTimeout(() => {
-          router.push('/dashboard?tour=true');
+          console.log('🔍 SIGNUP: Registration successful, redirecting to dashboard...');
+          window.location.href = '/dashboard?tour=true';
         }, 1500); // Show welcome message for 1.5 seconds before redirecting
       } else {
         if (response.error?.toLowerCase().includes('already exists') || 

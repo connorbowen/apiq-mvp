@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../../../src/lib/singletons/prisma';
+import { prisma } from '../../../lib/database/client';;
 import { EmailService } from '../../../src/lib/services/emailService';
 import { ApplicationError, badRequest, notFound, tooManyRequests, internalServerError } from '../../../src/lib/errors/ApplicationError';
 import { logInfo, logError } from '../../../src/utils/logger';

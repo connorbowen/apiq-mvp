@@ -1,5 +1,17 @@
 'use client';
 
+// TODO: Dynamic Import Strategy
+// This dashboard uses a hybrid approach to component loading:
+// - Regular imports for frequently used, test-critical components (better reliability)
+// - Dynamic imports for less frequently used components (better performance)
+// - ProfileTab uses regular import due to test environment module resolution issues
+// 
+// Future considerations:
+// 1. Monitor bundle size and performance metrics
+// 2. Investigate test environment module resolution improvements
+// 3. Consider component splitting for better lazy loading opportunities
+// 4. Evaluate if wrapper components can isolate problematic dependencies
+
 import { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -13,28 +25,22 @@ import MobileNavigation from '../../components/MobileNavigation';
 import { OnboardingProvider, useOnboarding } from '../../contexts/OnboardingContext';
 import { useGuidedTour, GuidedTour } from '../../components/GuidedTour';
 
-// Lazy load non-critical components
-const WorkflowsTab = dynamic(() => import('../../components/dashboard/WorkflowsTab'), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
-  ssr: false,
-});
+// Import components directly for better test reliability
+// TODO: Consider dynamic imports for these components in the future if:
+// 1. Bundle size becomes a concern (currently minimal impact)
+// 2. Test environment module resolution issues are resolved
+// 3. Component dependencies are simplified or better isolated
+import WorkflowsTab from '../../components/dashboard/WorkflowsTab';
+import SettingsTab from '../../components/dashboard/SettingsTab';
+import AdminTab from '../../components/dashboard/AdminTab';
+import ConnectionsTab from '../../components/dashboard/ConnectionsTab';
 
-const SettingsTab = dynamic(() => import('../../components/dashboard/SettingsTab').catch(err => {
-  console.error('Failed to load SettingsTab:', err);
-  return { default: () => <div>Error loading Settings</div> };
-}), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
-  ssr: false,
-});
-
-const AdminTab = dynamic(() => import('../../components/dashboard/AdminTab').catch(err => {
-  console.error('Failed to load AdminTab:', err);
-  return { default: () => <div>Error loading Admin</div> };
-}), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
-  ssr: false,
-});
-
+// Keep dynamic import for modal component (not directly tested)
+// TODO: This modal is a good candidate for dynamic import because:
+// 1. It's only shown when needed (user clicks "Create Connection")
+// 2. It's not directly tested in E2E tests
+// 3. It's a larger component that benefits from lazy loading
+// 4. It has minimal impact on initial page load
 const CreateConnectionModal = dynamic(() => import('../../components/dashboard/CreateConnectionModal').catch(err => {
   console.error('Failed to load CreateConnectionModal:', err);
   return { default: () => <div>Error loading Connection Modal</div> };
@@ -43,21 +49,26 @@ const CreateConnectionModal = dynamic(() => import('../../components/dashboard/C
   ssr: false,
 });
 
-const ConnectionsTab = dynamic(() => import('../../components/dashboard/ConnectionsTab').catch(err => {
-  console.error('Failed to load ConnectionsTab:', err);
-  return { default: () => <div>Error loading Connections</div> };
-}), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
-  ssr: false,
-});
+// Temporarily use regular import to debug ProfileTab dynamic import issue
+// TODO: Investigate ProfileTab dynamic import failure in test environment
+// Issue: Component fails to load with dynamic import, causing test timeouts
+// Root cause: Complex dependencies (react-hook-form, react-hot-toast) don't resolve correctly
+// in dynamic import context during tests
+// Potential solutions:
+// 1. Create wrapper components that isolate third-party dependencies
+// 2. Improve error handling in ProfileTab component
+// 3. Investigate test environment module resolution configuration
+// 4. Consider splitting ProfileTab into smaller, simpler components
+import ProfileTab from '../../components/dashboard/ProfileTab';
 
-const ProfileTab = dynamic(() => import('../../components/dashboard/ProfileTab').catch(err => {
-  console.error('Failed to load ProfileTab:', err);
-  return { default: () => <div>Error loading Profile</div> };
-}), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
-  ssr: false,
-});
+// TODO: Restore dynamic import when ProfileTab issue is resolved
+// const ProfileTab = dynamic(() => import('../../components/dashboard/ProfileTab').catch(err => {
+//   console.error('Failed to load ProfileTab:', err);
+//   return { default: () => <div data-testid="profile-tab">Error loading Profile</div> };
+// }), {
+//   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
+//   ssr: false,
+// });
 
 interface User {
   id: string;
