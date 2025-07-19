@@ -66,21 +66,36 @@ export const clearAuthState = async (page: Page): Promise<void> => {
   // Clear cookies
   await page.context().clearCookies();
   
-  // Clear localStorage and sessionStorage
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-  });
-  
-  // Clear any remaining auth state
-  await page.evaluate(() => {
-    // Remove any auth-related items
-    const authKeys = ['accessToken', 'refreshToken', 'user', 'auth'];
-    authKeys.forEach(key => {
-      localStorage.removeItem(key);
-      sessionStorage.removeItem(key);
+  // Clear localStorage and sessionStorage with error handling
+  try {
+    await page.evaluate(() => {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (error) {
+        // Ignore localStorage access errors (can happen in certain contexts)
+        console.warn('localStorage access failed:', error);
+      }
     });
-  });
+    
+    // Clear any remaining auth state
+    await page.evaluate(() => {
+      try {
+        // Remove any auth-related items
+        const authKeys = ['accessToken', 'refreshToken', 'user', 'auth'];
+        authKeys.forEach(key => {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        });
+      } catch (error) {
+        // Ignore localStorage access errors
+        console.warn('localStorage cleanup failed:', error);
+      }
+    });
+  } catch (error) {
+    // Ignore any localStorage-related errors - they're not critical for test execution
+    console.warn('Auth state cleanup failed:', error);
+  }
 };
 
 /**

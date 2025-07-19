@@ -73,7 +73,7 @@ export const getPrimaryActionButton = (
   page: Page,
   action: string
 ): Locator => {
-  return page.getByTestId(`primary-action ${action}`);
+  return page.getByTestId(`primary-action ${action}-btn`);
 };
 
 /**

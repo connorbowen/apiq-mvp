@@ -1,21 +1,50 @@
 import { test, expect } from '@playwright/test';
 import { generateTestId } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
-import bcrypt from 'bcryptjs';
 import { INVALID_TOKEN_PREFIX, TEST_TOKEN_PREFIX } from '../../../src/app/reset-password/page';
-import { UXComplianceHelper } from '../../helpers/uxCompliance';
+import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton, setupGlobalErrorListeners, setupTracing, stopTracing, clearAuthState, waitForServerReady } from '../../helpers/e2eHelpers';
+import { createE2EUser } from '../../helpers/authHelpers';
+import { waitForDashboard, closeGuidedTourIfPresent, waitForElement } from '../../helpers/uiHelpers';
+import { testPageLoadTime, testAuthenticationPerformance } from '../../helpers/performanceHelpers';
+import { testFormAccessibility, testFormValidation, testFormKeyboardNavigation } from '../../helpers/accessibilityHelpers';
+import { testXSSPrevention, testCSRFProtection, testDataExposure } from '../../helpers/securityHelpers';
+import { safeCleanupTestData } from '../../helpers/testIsolation';
+import { 
+  completeFullPasswordResetFlow, 
+  testExpiredTokenPasswordReset, 
+  testMultiplePasswordResetRequests,
+  requestPasswordReset,
+  getPasswordResetToken,
+  verifyTokenDeleted,
+  verifyPasswordResetAuditLogs,
+  cleanupPasswordResetTestData
+} from '../../helpers/passwordResetHelpers';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-let uxHelper: UXComplianceHelper;
+// UX compliance helper is now used through specific helper functions
+
+// Setup global error listeners and tracing for all tests
+test.beforeEach(async ({ page }, testInfo) => {
+  await setupGlobalErrorListeners(page);
+  await setupTracing(page);
+  await waitForServerReady(page);
+  await resetRateLimits(page);
+});
+
+test.afterEach(async ({ page }, testInfo) => {
+  await stopTracing(page, testInfo);
+  await clearAuthState(page);
+  await closeAllModals(page);
+});
 
 test.describe('Password Reset E2E Tests - Complete Flow', () => {
-  test.beforeEach(async ({ page }) => {
-    uxHelper = new UXComplianceHelper(page);
-  });
-
   test('DEBUG: should check if form submission works at all', async ({ page }) => {
     await page.goto(`${BASE_URL}/forgot-password`);
+    
+    // Use helper to wait for form elements
+    await waitForElement(page, 'form[data-testid="forgot-password-form"]');
+    await waitForElement(page, 'input[name="email"]');
     
     // Check if the form exists
     await expect(page.locator('form[data-testid="forgot-password-form"]')).toBeVisible();
@@ -23,8 +52,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
     // Check if the email input exists
     await expect(page.locator('input[name="email"]')).toBeVisible();
     
-    // Check if the submit button exists
-    const submitBtn = page.getByTestId('primary-action send-reset-link-btn');
+    // Check if the submit button exists using helper
+    const submitBtn = getPrimaryActionButton(page, 'send-reset-link');
     await expect(submitBtn).toBeVisible();
     await expect(submitBtn).toBeEnabled();
     
@@ -34,8 +63,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
     // Click the submit button
     await submitBtn.click();
     
-    // Wait a moment to see what happens
-    await page.waitForTimeout(2000);
+    // Wait for response using helper instead of hardcoded delay
+    await page.waitForLoadState('networkidle');
     
     // Check the current URL
     console.log('Current URL after form submission:', page.url());
@@ -63,230 +92,34 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
       const originalPassword = 'OriginalPass123!';
       const newPassword = 'NewSecurePass456!';
 
-      // Initialize UXComplianceHelper for UX validation
-      uxHelper = new UXComplianceHelper(page);
-
-      // Create a test user with known password
-      const hashedPassword = await bcrypt.hash(originalPassword, 12);
-      const testUser = await prisma.user.create({
-        data: {
-          email: testEmail,
-          name: 'E2E Test User',
-          password: hashedPassword,
-          isActive: true,
-          role: 'USER'
-        }
+      // Create a test user with known password using helper
+      const testUser = await createE2EUser('USER', {
+        email: testEmail,
+        password: originalPassword,
+        name: 'E2E Test User'
       });
 
-      try {
-        // Step 1: Request password reset
-        await page.goto(`${BASE_URL}/forgot-password`);
-        
-        // Initialize UXComplianceHelper for UX validation
-        uxHelper = new UXComplianceHelper(page);
-        
-        // Add UXComplianceHelper validation calls
-        await uxHelper.validateActivationFirstUX();
-        await uxHelper.validateFormAccessibility();
-        await uxHelper.validateMobileResponsiveness();
-        await uxHelper.validateKeyboardNavigation();
-        
-        // Fill and submit the form
-        await page.fill('input[name="email"]', testEmail);
-        
-        // Fix primary action data-testid pattern
-        await page.getByTestId('primary-action send-reset-link-btn').click();
-        
-        // Wait for success page with longer timeout
-        await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 10000 });
-        await expect(page.locator('h2')).toContainText('Reset Link Sent!');
-        
-        // Step 2: Get the reset token from database
-        const resetToken = await prisma.passwordResetToken.findFirst({
-          where: { email: testEmail }
-        });
-        
-        expect(resetToken).toBeTruthy();
-        expect(resetToken?.token).toBeTruthy();
-        
-        console.log('Reset token found:', resetToken?.token);
-        
-        // Step 3: Use the reset token to change password
-        await page.goto(`${BASE_URL}/reset-password?token=${resetToken!.token}`);
-        
-        // Verify we're on the reset password page
-        await expect(page.locator('h2')).toContainText('Reset your password');
-        
-        console.log('On reset password page with token:', resetToken!.token);
-        
-        // Fill in new password
-        await page.fill('input[name="password"]', newPassword);
-        await page.fill('input[name="confirmPassword"]', newPassword);
-        
-        console.log('Filled in new password:', newPassword);
-        
-        // Fix primary action data-testid pattern
-        await page.getByTestId('primary-action reset-password-btn').click();
-        
-        console.log('Clicked reset password button');
-        
-        // Wait for success message
-        await expect(page.locator('.bg-green-50')).toContainText('Password reset successful!');
-        
-        console.log('Password reset successful message shown');
-        
-        // Should redirect to login page
-        await expect(page).toHaveURL(/.*login/);
-        
-        console.log('Redirected to login page');
-        
-        // Add a small delay to ensure password reset is fully committed
-        await page.waitForTimeout(1000);
-        
-        // Step 4: Verify old password no longer works
-        await page.goto(`${BASE_URL}/login`);
-        await page.fill('input[name="email"]', testEmail);
-        await page.fill('input[name="password"]', originalPassword);
-        
-        console.log('Attempting login with old password');
-        
-        // Fix primary action data-testid pattern for login
-        await page.getByTestId('primary-action signin-btn').click();
-        
-        // Wait for error to appear (this ensures loading is complete)
-        await expect(page.locator('.bg-red-50')).toBeVisible();
-        await expect(page.locator('.bg-red-50')).toContainText(/Invalid credentials|Login failed/);
-        
-        // Now check that button is back to normal state
-        await expect(page.getByTestId('primary-action signin-btn')).toBeVisible();
-        await expect(page.getByTestId('primary-action signin-btn')).not.toBeDisabled();
-        
-        console.log('Old password correctly rejected');
-        
-        // Step 5: Verify new password works
-        await page.fill('input[name="password"]', newPassword);
-        
-        console.log('Attempting login with new password');
-        
-        // Fix primary action data-testid pattern for login
-        await page.getByTestId('primary-action signin-btn').click();
-        
-        // Should successfully login and redirect to dashboard
-        await expect(page).toHaveURL(/.*dashboard/, { timeout: 10000 });
-        
-        // Wait for the dashboard to fully load (user authentication completes)
-        await expect(page.locator('h1')).toContainText('Dashboard', { timeout: 10000 });
-        
-        console.log('New password login successful');
-        
-        // Step 6: Verify token was deleted from database
-        const deletedToken = await prisma.passwordResetToken.findUnique({
-          where: { token: resetToken!.token }
-        });
-        expect(deletedToken).toBeNull();
-        
-        // Step 7: Verify audit logs were created
-        const auditLogs = await prisma.auditLog.findMany({
-          where: { userId: testUser.id },
-          orderBy: { createdAt: 'desc' }
-        });
-        
-        expect(auditLogs.length).toBeGreaterThanOrEqual(2);
-        expect(auditLogs.some(log => log.action === 'REQUEST_PASSWORD_RESET')).toBe(true);
-        expect(auditLogs.some(log => log.action === 'PASSWORD_RESET')).toBe(true);
-        
-      } finally {
-        // Clean up test data
-        await prisma.passwordResetToken.deleteMany({
-          where: { email: testEmail }
-        });
-        await prisma.auditLog.deleteMany({
-          where: { userId: testUser.id }
-        });
-        await prisma.user.delete({
-          where: { id: testUser.id }
-        });
-      }
+      // Use helper for complete password reset flow
+      await completeFullPasswordResetFlow(page, testUser, newPassword, {
+        baseUrl: BASE_URL,
+        validateSuccess: true,
+        validateAuditLogs: true,
+        cleanupAfterTest: true
+      });
     });
 
     test('should handle expired reset token', async ({ page }) => {
       const testEmail = `e2e-expired-${generateTestId('user')}@example.com`;
 
-      // Initialize UXComplianceHelper for UX validation
-      uxHelper = new UXComplianceHelper(page);
-
-      // Create a test user
-      const hashedPassword = await bcrypt.hash('OriginalPass123!', 12);
-      const testUser = await prisma.user.create({
-        data: {
-          email: testEmail,
-          name: 'E2E Expired Test User',
-          password: hashedPassword,
-          isActive: true,
-          role: 'USER'
-        }
+      // Create a test user using helper
+      const testUser = await createE2EUser('USER', {
+        email: testEmail,
+        password: 'OriginalPass123!',
+        name: 'E2E Expired Test User'
       });
 
-      try {
-        // Request password reset
-        await page.goto(`${BASE_URL}/forgot-password`);
-        await page.fill('input[name="email"]', testEmail);
-        
-        // Fix primary action data-testid pattern
-        await page.getByTestId('primary-action send-reset-link-btn').click();
-        
-        // Wait for success page or error message
-        try {
-          await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 5000 });
-        } catch {
-          // If no redirect, check for error message on same page
-          await expect(page.locator('[data-testid="alert-validation-error"]')).toBeVisible();
-          await expect(page.locator('[data-testid="alert-validation-error"]')).toContainText(/expired|invalid/i);
-          return; // Test passes if error is shown
-        }
-        
-        // Get the reset token
-        const resetToken = await prisma.passwordResetToken.findFirst({
-          where: { email: testEmail }
-        });
-        expect(resetToken).toBeTruthy();
-        
-        // Manually expire the token in database
-        await prisma.passwordResetToken.update({
-          where: { id: resetToken!.id },
-          data: { expiresAt: new Date(Date.now() - 60 * 60 * 1000) } // 1 hour ago
-        });
-        
-        // Try to use expired token
-        await page.goto(`${BASE_URL}/reset-password?token=${resetToken!.token}`);
-        
-        // Fill in new password
-        await page.fill('input[name="password"]', 'NewPassword123!');
-        await page.fill('input[name="confirmPassword"]', 'NewPassword123!');
-        
-        // Fix primary action data-testid pattern
-        await page.getByTestId('primary-action reset-password-btn').click();
-        
-        // Should show error for expired token
-        await expect(page.locator('.bg-red-50')).toContainText(/expired|invalid/i);
-        // Should show disabled form fields and button
-        await expect(page.locator('input[name="password"]')).toBeDisabled();
-        await expect(page.locator('input[name="confirmPassword"]')).toBeDisabled();
-        await expect(page.getByTestId('primary-action reset-password-btn')).toBeDisabled();
-        // Should show a link to request a new reset
-        await expect(page.locator('a[href="/forgot-password"]')).toContainText(/request a new password reset/i);
-      } finally {
-        // Clean up test data
-        await prisma.passwordResetToken.deleteMany({
-          where: { email: testEmail }
-        });
-        await prisma.auditLog.deleteMany({
-          where: { userId: testUser.id }
-        });
-        await prisma.user.delete({
-          where: { id: testUser.id }
-        });
-      }
+      // Use helper for expired token testing
+      await testExpiredTokenPasswordReset(page, testUser, BASE_URL);
     });
 
     test('should handle invalid reset token', async ({ page }) => {
@@ -307,11 +140,11 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
       await page.goto(`${BASE_URL}/forgot-password`);
       await page.fill('input[name="email"]', nonExistentEmail);
       
-      // Fix primary action data-testid pattern
-      await page.getByTestId('primary-action send-reset-link-btn').click();
+      // Use helper for primary action button
+      await getPrimaryActionButton(page, 'send-reset-link').click();
       
-              // Should still show success page (security: don't reveal if user exists)
-        await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 10000 });
+      // Should still show success page (security: don't reveal if user exists)
+      await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 10000 });
       await expect(page.locator('h2')).toContainText('Reset Link Sent!');
       
       // Should not create any tokens in database
@@ -325,112 +158,15 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
       test.setTimeout(30000); // 30 seconds for complex multiple reset flow
       const testEmail = `e2e-multiple-${generateTestId('user')}@example.com`;
 
-      // Initialize UXComplianceHelper for UX validation
-      uxHelper = new UXComplianceHelper(page);
-
-      // Create a test user
-      const hashedPassword = await bcrypt.hash('OriginalPass123!', 12);
-      const testUser = await prisma.user.create({
-        data: {
-          email: testEmail,
-          name: 'E2E Multiple Test User',
-          password: hashedPassword,
-          isActive: true,
-          role: 'USER'
-        }
+      // Create a test user using helper
+      const testUser = await createE2EUser('USER', {
+        email: testEmail,
+        password: 'OriginalPass123!',
+        name: 'E2E Multiple Test User'
       });
 
-      try {
-        // First password reset request
-        await page.goto(`${BASE_URL}/forgot-password`);
-        
-        // Wait for the page to be fully loaded and the email input to be available
-        await page.waitForLoadState('networkidle');
-        await page.waitForSelector('input[name="email"]', { timeout: 15000 });
-        
-        await page.fill('input[name="email"]', testEmail);
-        
-        // Wait for button to be enabled and click
-        const submitBtn = page.getByTestId('primary-action send-reset-link-btn');
-        await expect(submitBtn).toBeEnabled();
-        await submitBtn.click();
-        
-        // Wait for success page
-        await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 10000 });
-        await expect(page.locator('h2')).toContainText('Reset Link Sent!');
-        
-        // Wait a moment for token to be created
-        await page.waitForTimeout(1000);
-        
-        // Get first token
-        const firstToken = await prisma.passwordResetToken.findFirst({
-          where: { email: testEmail }
-        });
-        expect(firstToken).toBeTruthy();
-        
-        // Second password reset request (should invalidate first)
-        await page.goto(`${BASE_URL}/forgot-password`);
-        
-        // Wait for the page to be fully loaded and the email input to be available
-        await page.waitForLoadState('networkidle');
-        await page.waitForSelector('input[name="email"]', { timeout: 15000 });
-        
-        await page.fill('input[name="email"]', testEmail);
-        
-        // Wait for button to be enabled and click
-        await expect(submitBtn).toBeEnabled();
-        await submitBtn.click();
-        
-        // Wait for success page
-        await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 10000 });
-        await expect(page.locator('h2')).toContainText('Reset Link Sent!');
-        
-        // Wait a moment for token to be updated
-        await page.waitForTimeout(1000);
-        
-        // Get second token
-        const secondToken = await prisma.passwordResetToken.findFirst({
-          where: { email: testEmail }
-        });
-        expect(secondToken).toBeTruthy();
-        expect(secondToken!.token).not.toBe(firstToken!.token);
-        
-        // First token should no longer exist
-        const oldToken = await prisma.passwordResetToken.findUnique({
-          where: { token: firstToken!.token }
-        });
-        expect(oldToken).toBeNull();
-        
-        // Use second token to reset password
-        await page.goto(`${BASE_URL}/reset-password?token=${secondToken!.token}`);
-        
-        // Wait for form to be enabled
-        await expect(page.locator('input[name="password"]')).toBeEnabled();
-        
-        await page.fill('input[name="password"]', 'NewPassword123!');
-        await page.fill('input[name="confirmPassword"]', 'NewPassword123!');
-        
-        // Wait for button to be enabled and click
-        const resetBtn = page.getByTestId('primary-action reset-password-btn');
-        await expect(resetBtn).toBeEnabled();
-        await resetBtn.click();
-        
-        // Should show success message
-        await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
-        await expect(page.locator('[data-testid="success-message"]')).toContainText('Password reset successful!');
-        
-      } finally {
-        // Clean up test data
-        await prisma.passwordResetToken.deleteMany({
-          where: { email: testEmail }
-        });
-        await prisma.auditLog.deleteMany({
-          where: { userId: testUser.id }
-        });
-        await prisma.user.delete({
-          where: { id: testUser.id }
-        });
-      }
+      // Use helper for multiple password reset requests testing
+      await testMultiplePasswordResetRequests(page, testUser, BASE_URL);
     });
   });
 
@@ -439,17 +175,16 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should complete forgot password flow with UX compliance', async ({ page }) => {
       const testEmail = `e2e-reset-${generateTestId('user')}@example.com`;
 
-      // Initialize UXComplianceHelper for UX validation
-      uxHelper = new UXComplianceHelper(page);
-
       // Navigate to forgot password page
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // Add UXComplianceHelper validation calls
-      await uxHelper.validateActivationFirstUX();
-      await uxHelper.validateFormAccessibility();
-      await uxHelper.validateMobileResponsiveness();
-      await uxHelper.validateKeyboardNavigation();
+      // Use helper to wait for page load and validate UX compliance
+      await waitForElement(page, 'form[data-testid="forgot-password-form"]');
+      await testFormAccessibility(page, {
+        emailLabel: 'Email address',
+        passwordLabel: undefined, // No password field on forgot password page
+        submitButton: 'primary-action send-reset-link-btn'
+      });
       
       // Verify basic page structure
       await expect(page).toHaveTitle(/APIQ/);
@@ -467,8 +202,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       // Fill email form
       await page.fill('input[name="email"]', testEmail);
       
-      // Click submit button
-      const submitBtn = page.getByTestId('primary-action send-reset-link-btn');
+      // Use helper for primary action button
+      const submitBtn = getPrimaryActionButton(page, 'send-reset-link');
       await expect(submitBtn).toBeEnabled();
       await submitBtn.click();
       
@@ -504,14 +239,11 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should handle forgot password validation errors with UX compliance', async ({ page }) => {
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // Initialize UXComplianceHelper for UX validation
-      uxHelper = new UXComplianceHelper(page);
-      
       // Test invalid email
       await page.fill('input[name="email"]', 'invalid-email');
       
-      // Click submit button
-      const submitBtn = page.getByTestId('primary-action send-reset-link-btn');
+      // Use helper for primary action button
+      const submitBtn = getPrimaryActionButton(page, 'send-reset-link');
       await expect(submitBtn).toBeEnabled();
       await submitBtn.click();
       
@@ -549,8 +281,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       // Fill form
       await page.fill('input[name="email"]', 'test@example.com');
       
-      // Click submit button
-      const submitBtn = page.getByTestId('primary-action send-reset-link-btn');
+      // Use helper for primary action button
+      const submitBtn = getPrimaryActionButton(page, 'send-reset-link');
       await expect(submitBtn).toBeEnabled();
       await submitBtn.click();
       
@@ -574,8 +306,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       // Test invalid email format
       await page.fill('input[name="email"]', 'invalid-email');
       
-      // Click submit button
-      const submitBtn = page.getByTestId('primary-action send-reset-link-btn');
+      // Use helper for primary action button
+      const submitBtn = getPrimaryActionButton(page, 'send-reset-link');
       await expect(submitBtn).toBeEnabled();
       await submitBtn.click();
       
@@ -592,16 +324,15 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       const testToken = `${TEST_TOKEN_PREFIX}-${generateTestId()}`;
       const newPassword = `newPassword${generateTestId()}`;
       
-      // Initialize UXComplianceHelper for UX validation
-      uxHelper = new UXComplianceHelper(page);
-      
       await page.goto(`${BASE_URL}/reset-password?token=${testToken}`);
       
-      // Add UXComplianceHelper validation calls
-      await uxHelper.validateActivationFirstUX();
-      await uxHelper.validateFormAccessibility();
-      await uxHelper.validateMobileResponsiveness();
-      await uxHelper.validateKeyboardNavigation();
+      // Use helper to wait for page load and validate UX compliance
+      await waitForElement(page, 'input[name="password"]');
+      await testFormAccessibility(page, {
+        emailLabel: undefined, // No email field on reset password page
+        passwordLabel: 'New password',
+        submitButton: 'primary-action reset-password-btn'
+      });
       
       // Verify UX compliance - heading hierarchy (UX spec: use h2)
       await expect(page).toHaveTitle(/APIQ/);
@@ -618,15 +349,15 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await expect(page.locator('input[name="password"]')).toHaveAttribute('aria-required', 'true');
       await expect(page.locator('input[name="confirmPassword"]')).toHaveAttribute('aria-required', 'true');
       
-      // Wait for form to be enabled
-      await expect(page.locator('input[name="password"]')).toBeEnabled();
+      // Wait for form to be enabled using helper
+      await waitForElement(page, 'input[name="password"]');
       
       // Fill password form
       await page.fill('input[name="password"]', newPassword);
       await page.fill('input[name="confirmPassword"]', newPassword);
       
-      // Click submit button
-      const submitBtn = page.getByTestId('primary-action reset-password-btn');
+      // Use helper for primary action button
+      const submitBtn = getPrimaryActionButton(page, 'reset-password');
       await expect(submitBtn).toBeEnabled();
       await submitBtn.click();
       
@@ -649,7 +380,7 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await expect(page.getByTestId('validation-errors').filter({ hasText: 'Missing or invalid reset token.' })).toBeVisible();
       await expect(page.getByTestId('password-input')).toBeDisabled();
       await expect(page.getByTestId('confirm-password-input')).toBeDisabled();
-      await expect(page.getByTestId('primary-action reset-password-btn')).toBeDisabled();
+      await expect(getPrimaryActionButton(page, 'reset-password')).toBeDisabled();
     });
 
     test('should handle missing reset token with UX compliance', async ({ page }) => {
@@ -657,7 +388,7 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await expect(page.getByTestId('validation-errors').filter({ hasText: 'Missing or invalid reset token.' })).toBeVisible();
       await expect(page.getByTestId('password-input')).toBeDisabled();
       await expect(page.getByTestId('confirm-password-input')).toBeDisabled();
-      await expect(page.getByTestId('primary-action reset-password-btn')).toBeDisabled();
+      await expect(getPrimaryActionButton(page, 'reset-password')).toBeDisabled();
     });
 
     test('should validate password reset form with UX compliance', async ({ page }) => {
@@ -668,8 +399,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await page.fill('input[name="password"]', 'password123');
       await page.fill('input[name="confirmPassword"]', 'differentpassword');
       
-      // Fix primary action data-testid pattern
-      await page.getByTestId('primary-action reset-password-btn').click();
+      // Use helper for primary action button
+      await getPrimaryActionButton(page, 'reset-password').click();
       
       // Assert error container and specific error
       await expect(page.getByTestId('validation-errors').filter({ hasText: 'Passwords do not match.' })).toBeVisible();
@@ -680,8 +411,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await page.fill('input[name="password"]', '123');
       await page.fill('input[name="confirmPassword"]', '123');
       
-      // Fix primary action data-testid pattern
-      await page.getByTestId('primary-action reset-password-btn').click();
+      // Use helper for primary action button
+      await getPrimaryActionButton(page, 'reset-password').click();
       
       await expect(page.getByTestId('validation-errors')).toBeVisible();
       await expect(page.getByTestId('password-input')).toHaveAttribute('aria-invalid', 'true');
@@ -692,8 +423,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await page.fill('input[name="password"]', '');
       await page.fill('input[name="confirmPassword"]', '');
       
-      // Fix primary action data-testid pattern
-      await page.getByTestId('primary-action reset-password-btn').click();
+      // Use helper for primary action button
+      await getPrimaryActionButton(page, 'reset-password').click();
       
       await expect(page.getByTestId('validation-errors')).toBeVisible();
       await expect(page.getByTestId('password-input')).toHaveAttribute('aria-invalid', 'true');
@@ -703,6 +434,10 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should validate form field requirements with UX compliance', async ({ page }) => {
       const testToken = `${TEST_TOKEN_PREFIX}-123`;
       await page.goto(`${BASE_URL}/reset-password?token=${testToken}`);
+      
+      // Use helper to wait for form elements
+      await waitForElement(page, 'input[name="password"]');
+      await waitForElement(page, 'input[name="confirmPassword"]');
       
       // Check that form fields exist with proper attributes
       const passwordInput = page.locator('input[name="password"]');
@@ -727,15 +462,15 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       const testToken = `${TEST_TOKEN_PREFIX}-loading-test`;
       await page.goto(`${BASE_URL}/reset-password?token=${testToken}`);
       
-      // Wait for page to load and form to be enabled
-      await expect(page.locator('input[name="password"]')).toBeEnabled();
+      // Wait for page to load and form to be enabled using helper
+      await waitForElement(page, 'input[name="password"]');
       
       // Fill form
       await page.fill('input[name="password"]', 'newpassword123');
       await page.fill('input[name="confirmPassword"]', 'newpassword123');
       
-      // Click submit button
-      const submitBtn = page.getByTestId('primary-action reset-password-btn');
+      // Use helper for primary action button
+      const submitBtn = getPrimaryActionButton(page, 'reset-password');
       await expect(submitBtn).toBeEnabled();
       await submitBtn.click();
       
@@ -748,6 +483,20 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
         // If loading state is too fast, that's okay
       }
     });
+
+    test('should have correct reset password button text and test ID', async ({ page }) => {
+      const testToken = `${TEST_TOKEN_PREFIX}-button-test`;
+      await page.goto(`${BASE_URL}/reset-password?token=${testToken}`);
+      
+      // Wait for form to be enabled
+      await waitForElement(page, 'input[name="password"]');
+      
+      // Specific: Check exact button text
+      await expect(page.getByTestId('primary-action reset-password-btn')).toHaveText('Reset Password');
+      
+      // Specific: Check exact test ID
+      await expect(page.getByTestId('primary-action reset-password-btn')).toBeVisible();
+    });
   });
 
   test.describe('Forgot Password Success Page - UX Compliance', () => {
@@ -755,15 +504,6 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       test.setTimeout(20000); // 20 seconds for page navigation under load
       const testEmail = 'test@example.com';
       await page.goto(`${BASE_URL}/forgot-password-success?email=${encodeURIComponent(testEmail)}`);
-      
-      // Initialize UXComplianceHelper for UX validation
-      uxHelper = new UXComplianceHelper(page);
-      
-      // Add UXComplianceHelper validation calls
-      await uxHelper.validateActivationFirstUX();
-      await uxHelper.validateFormAccessibility();
-      await uxHelper.validateMobileResponsiveness();
-      await uxHelper.validateKeyboardNavigation();
       
       // Should show success page
       await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 10000 });
@@ -823,11 +563,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should support keyboard navigation', async ({ page }) => {
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // Initialize UXComplianceHelper for UX validation
-      uxHelper = new UXComplianceHelper(page);
-      
-      // Add UXComplianceHelper keyboard navigation validation
-      await uxHelper.validateKeyboardNavigation();
+      // Use helper for keyboard navigation testing
+      await testFormKeyboardNavigation(page, ['input[type="email"]']);
       
       // First verify the email input exists and is focusable
       const emailInput = page.locator('input[type="email"]');
@@ -839,7 +576,7 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       
       // Test tab navigation to next element (submit button)
       await page.keyboard.press('Tab');
-      const submitButton = page.getByTestId('primary-action send-reset-link-btn');
+      const submitButton = getPrimaryActionButton(page, 'send-reset-link');
       await expect(submitButton).toBeFocused();
       
       // Test form submission with keyboard - should trigger validation for empty field
@@ -848,11 +585,18 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       await expect(page.locator('[data-testid="alert-validation-error"]')).toContainText('Email is required');
     });
 
-    test('should have proper ARIA attributes', async ({ page }) => {
+    test('should have correct password reset button text and test ID', async ({ page }) => {
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // Add comprehensive ARIA validation using UXComplianceHelper
-      await uxHelper.validateARIACompliance();
+      // Specific: Check exact button text
+      await expect(page.getByTestId('primary-action send-reset-link-btn')).toHaveText('Send Reset Link');
+      
+      // Specific: Check exact test ID
+      await expect(page.getByTestId('primary-action send-reset-link-btn')).toBeVisible();
+    });
+
+    test('should have proper ARIA attributes', async ({ page }) => {
+      await page.goto(`${BASE_URL}/forgot-password`);
       
       // Test form accessibility - focus on valid ARIA attributes
       await expect(page.locator('input[name="email"]')).toHaveAttribute('aria-required', 'true');
@@ -862,17 +606,13 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should be mobile responsive', async ({ page }) => {
       await page.goto(`${BASE_URL}/forgot-password`);
       
-      // Add comprehensive mobile responsiveness validation using UXComplianceHelper
-      await uxHelper.validateMobileResponsiveness();
-      await uxHelper.validateMobileAccessibility();
-      
       // Test mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
       await expect(page.locator('h2')).toBeVisible();
       await expect(page.locator('button[type="submit"]')).toBeVisible();
       
       // Add touch-friendly button size validation
-      const submitBtn = page.getByTestId('primary-action send-reset-link-btn');
+      const submitBtn = getPrimaryActionButton(page, 'send-reset-link');
       const box = await submitBtn.boundingBox();
       expect(box!.width).toBeGreaterThanOrEqual(44);
       expect(box!.height).toBeGreaterThanOrEqual(44);
@@ -894,11 +634,11 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
         await page.goto(`${BASE_URL}/forgot-password`);
         await page.fill('input[name="email"]', testEmail);
         
-        // Fix primary action data-testid pattern
-        await page.getByTestId('primary-action send-reset-link-btn').click();
+        // Use helper for primary action button
+        await getPrimaryActionButton(page, 'send-reset-link').click();
         
-        // Wait a bit between requests to ensure they're processed
-        await page.waitForTimeout(100);
+        // Wait for network idle instead of hardcoded delay
+        await page.waitForLoadState('networkidle');
       }
       
       // Check if rate limiting was triggered
@@ -925,8 +665,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       const xssPayload = '<script>alert("xss")</script>@example.com';
       await page.fill('input[name="email"]', xssPayload);
       
-      // Fix primary action data-testid pattern
-      await page.getByTestId('primary-action send-reset-link-btn').click();
+      // Use helper for primary action button
+      await getPrimaryActionButton(page, 'send-reset-link').click();
       
       // Should handle malicious input gracefully - either show validation error or sanitize
       await expect(page.locator('.bg-red-50')).toBeVisible();
@@ -942,11 +682,11 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       const sqlInjectionPayload = "'; DROP TABLE users; --";
       await page.fill('input[name="email"]', sqlInjectionPayload);
       
-      // Fix primary action data-testid pattern
-      await page.getByTestId('primary-action send-reset-link-btn').click();
+      // Use helper for primary action button
+      await getPrimaryActionButton(page, 'send-reset-link').click();
       
-      // Wait for any response (success or error)
-      await page.waitForTimeout(2000);
+      // Wait for network idle instead of hardcoded delay
+      await page.waitForLoadState('networkidle');
       
       // Check for either error message or success message (both are valid responses)
       const errorElement = page.locator('.bg-red-50, [role="alert"], .text-red-600, .text-red-500');
@@ -1002,10 +742,10 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
         // Fill in the form and submit to trigger API call
         await page.fill('input[name="password"]', 'NewPassword123!');
         await page.fill('input[name="confirmPassword"]', 'NewPassword123!');
-        await page.getByTestId('primary-action reset-password-btn').click();
+        await getPrimaryActionButton(page, 'reset-password').click();
         
-        // Wait a bit between attempts
-        await page.waitForTimeout(100);
+        // Wait for network idle instead of hardcoded delay
+        await page.waitForLoadState('networkidle');
       }
       
       // Check if brute force protection was triggered
@@ -1069,29 +809,22 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should prevent password reset for inactive users', async ({ page }) => {
       const testEmail = `e2e-inactive-${generateTestId('user')}@example.com`;
 
-      // Create an inactive test user
-      const hashedPassword = await bcrypt.hash('OriginalPass123!', 12);
-      const testUser = await prisma.user.create({
-        data: {
-          email: testEmail,
-          name: 'E2E Inactive Test User',
-          password: hashedPassword,
-          isActive: false, // Inactive user
-          role: 'USER'
-        }
+      // Create an inactive test user using helper (will be manually set to inactive)
+      const testUser = await createE2EUser('USER', {
+        email: testEmail,
+        password: 'OriginalPass123!',
+        name: 'E2E Inactive Test User'
+      });
+      
+      // Manually set user to inactive for this test
+      await prisma.user.update({
+        where: { id: testUser.id },
+        data: { isActive: false }
       });
 
       try {
-        // Request password reset for inactive user
-        await page.goto(`${BASE_URL}/forgot-password`);
-        await page.fill('input[name="email"]', testEmail);
-        
-        // Fix primary action data-testid pattern
-        await page.getByTestId('primary-action send-reset-link-btn').click();
-        
-        // Should still show success page (security: don't reveal if user exists or is inactive)
-        await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 10000 });
-        await expect(page.locator('h2')).toContainText('Reset Link Sent!');
+        // Request password reset for inactive user using helper
+        await requestPasswordReset(page, testEmail, BASE_URL);
         
         // Should not create any tokens in database for inactive user
         const tokens = await prisma.passwordResetToken.findMany({
@@ -1110,9 +843,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
 
   test.describe('Performance Requirements', () => {
     test('should meet performance requirements for page load', async ({ page }) => {
-      const startTime = Date.now();
-      await page.goto(`${BASE_URL}/forgot-password`);
-      const loadTime = Date.now() - startTime;
+      // Use helper to test page load time
+      const loadTime = await testPageLoadTime(page, `${BASE_URL}/forgot-password`);
       
       // Page should load within 3 seconds
       expect(loadTime).toBeLessThan(3000);
@@ -1125,18 +857,13 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should handle concurrent password reset requests', async ({ page, context }) => {
       test.setTimeout(45000); // 45 seconds for concurrent requests
       
-      // Create test users for concurrent requests
+      // Create test users for concurrent requests using helper
       const testUsers: any[] = [];
       for (let i = 0; i < 2; i++) { // Reduced from 3 to 2 to avoid overwhelming the server
-        const hashedPassword = await bcrypt.hash('OriginalPass123!', 12);
-        const testUser = await prisma.user.create({
-          data: {
-            email: `concurrent-test${i}-${generateTestId()}@example.com`,
-            name: `E2E Concurrent Test User ${i}`,
-            password: hashedPassword,
-            isActive: true,
-            role: 'USER'
-          }
+        const testUser = await createE2EUser('USER', {
+          email: `concurrent-test${i}-${generateTestId()}@example.com`,
+          password: 'OriginalPass123!',
+          name: `E2E Concurrent Test User ${i}`
         });
         testUsers.push(testUser);
       }
@@ -1209,8 +936,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
       // Fill form
       await page.fill('input[name="email"]', `rapid-test-${generateTestId()}@example.com`);
       
-      // Click submit button
-      const submitButton = page.getByTestId('primary-action send-reset-link-btn');
+      // Use helper for primary action button
+      const submitButton = getPrimaryActionButton(page, 'send-reset-link');
       await expect(submitButton).toBeEnabled();
       await submitButton.click();
       
@@ -1233,16 +960,11 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should maintain responsive UI during password reset process', async ({ page }) => {
       const testEmail = `e2e-responsive-${generateTestId('user')}@example.com`;
 
-      // Create a test user
-      const hashedPassword = await bcrypt.hash('OriginalPass123!', 12);
-      const testUser = await prisma.user.create({
-        data: {
-          email: testEmail,
-          name: 'E2E Responsive Test User',
-          password: hashedPassword,
-          isActive: true,
-          role: 'USER'
-        }
+      // Create a test user using helper
+      const testUser = await createE2EUser('USER', {
+        email: testEmail,
+        password: 'OriginalPass123!',
+        name: 'E2E Responsive Test User'
       });
 
       try {
@@ -1250,8 +972,8 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
         await page.goto(`${BASE_URL}/forgot-password`);
         await page.fill('input[name="email"]', testEmail);
         
-        // Click submit button
-        const submitBtn = page.getByTestId('primary-action send-reset-link-btn');
+        // Use helper for primary action button
+        const submitBtn = getPrimaryActionButton(page, 'send-reset-link');
         await expect(submitBtn).toBeEnabled();
         await submitBtn.click();
         

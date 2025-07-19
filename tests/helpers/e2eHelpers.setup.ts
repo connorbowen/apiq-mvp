@@ -95,7 +95,7 @@ export const loginAndNavigate = async (
   await page.fill('input[name="email"]', user.email);
   await page.fill('input[name="password"]', user.password);
   
-  const loginButton = getPrimaryActionButton(page, 'signin-btn');
+  const loginButton = getPrimaryActionButton(page, 'signin');
   console.log('🔍 E2E DEBUG: Looking for login button with testid: primary-action signin-btn');
   
   await expect(loginButton).toBeEnabled();

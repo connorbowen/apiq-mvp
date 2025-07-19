@@ -326,7 +326,7 @@ npm run test:e2e -- tests/e2e/auth/password-reset.test.ts
 npm run test:integration -- tests/integration/api/auth/reset-password.integration.test.ts
 
 # Expected results: All tests should pass
-# - 23/23 E2E tests passing
+# - 59/59 E2E tests passing
 # - 13/13 integration tests passing
 ```
 

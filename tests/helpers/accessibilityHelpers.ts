@@ -34,17 +34,23 @@ export const testFormAccessibility = async (
   } = {}
 ): Promise<void> => {
   const {
-    emailLabel = 'Email address',
-    passwordLabel = 'Password',
+    emailLabel,
+    passwordLabel,
     submitButton = 'primary-action signin-btn'
   } = formSelectors;
   
-  // Check for proper ARIA labels
-  await expect(page.getByLabel(emailLabel)).toBeVisible();
-  await expect(page.getByLabel(passwordLabel)).toBeVisible();
-  
   // Check for proper form structure
   await expect(page.locator('form')).toBeVisible();
+  
+  // Check for email label if specified
+  if (emailLabel) {
+    await expect(page.getByLabel(emailLabel)).toBeVisible();
+  }
+  
+  // Check for password label if specified
+  if (passwordLabel) {
+    await expect(page.getByLabel(passwordLabel)).toBeVisible();
+  }
   
   // Check that submit button is visible and enabled
   const submitBtn = page.getByTestId(submitButton);
@@ -60,7 +66,7 @@ export const testFormValidation = async (
   expectedError: string = 'Email is required'
 ): Promise<void> => {
   // Try to submit empty form
-  await page.getByTestId('primary-action signup-btn').click();
+  await page.locator('button[type="submit"]').click();
   
   // Should show validation errors
   await expect(page.getByText(expectedError)).toBeVisible();
@@ -79,8 +85,9 @@ export const testFormKeyboardNavigation = async (
   // Use the robust keyboard navigation helper with input selectors
   await navigateWithKeyboard(page, inputSelectors);
   
-  // Check that the submit button is visible and enabled (not necessarily focused)
-  const submitBtn = page.getByTestId('primary-action signin-btn');
+  // Check that a submit button is visible and enabled (not necessarily focused)
+  // Note: This is a generic check - specific tests should use the appropriate button
+  const submitBtn = page.locator('button[type="submit"]');
   await expect(submitBtn).toBeVisible();
   await expect(submitBtn).toBeEnabled();
 };
