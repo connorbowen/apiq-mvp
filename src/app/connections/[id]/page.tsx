@@ -55,88 +55,9 @@ export default function APIExplorerPage() {
         if (endpointsResponse.success && endpointsResponse.data) {
           setEndpoints(endpointsResponse.data.endpoints || []);
         } else {
-          // Fallback to mock data if no real endpoints found
-          console.warn('No real endpoints found, using mock data');
-          setEndpoints([
-            {
-              id: '1',
-              path: '/pets',
-              method: 'GET',
-              summary: 'List all pets',
-              description: 'Returns a list of all pets in the store',
-              parameters: [
-                { name: 'limit', type: 'integer', description: 'Maximum number of pets to return' },
-                { name: 'offset', type: 'integer', description: 'Number of pets to skip' }
-              ],
-              responses: [
-                { code: 200, description: 'Successful response' },
-                { code: 400, description: 'Bad request' }
-              ],
-              requestSchema: null,
-              responseSchema: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'integer' },
-                    name: { type: 'string' },
-                    status: { type: 'string' }
-                  }
-                }
-              }
-            },
-            {
-              id: '2',
-              path: '/pets',
-              method: 'POST',
-              summary: 'Create a pet',
-              description: 'Creates a new pet in the store',
-              parameters: [],
-              responses: [
-                { code: 201, description: 'Pet created successfully' },
-                { code: 400, description: 'Invalid input' }
-              ],
-              requestSchema: {
-                type: 'object',
-                required: ['name'],
-                properties: {
-                  name: { type: 'string', description: 'Pet name' },
-                  status: { type: 'string', enum: ['available', 'pending', 'sold'] }
-                }
-              },
-              responseSchema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'integer' },
-                  name: { type: 'string' },
-                  status: { type: 'string' }
-                }
-              }
-            },
-            {
-              id: '3',
-              path: '/pets/{id}',
-              method: 'GET',
-              summary: 'Get pet by ID',
-              description: 'Returns a single pet by ID',
-              parameters: [
-                { name: 'id', type: 'integer', description: 'Pet ID', required: true }
-              ],
-              responses: [
-                { code: 200, description: 'Successful response' },
-                { code: 404, description: 'Pet not found' }
-              ],
-              requestSchema: null,
-              responseSchema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'integer' },
-                  name: { type: 'string' },
-                  status: { type: 'string' }
-                }
-              }
-            }
-          ]);
+          // No endpoints found - show empty state
+          console.warn('No endpoints found for this connection');
+          setEndpoints([]);
         }
       } catch (error) {
         console.error('Failed to load connection and endpoints:', error);

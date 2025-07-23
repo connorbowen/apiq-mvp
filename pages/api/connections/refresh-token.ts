@@ -27,8 +27,8 @@ const refreshTokenSchema = z.object({
  * ```typescript
  * POST /api/connections/refresh-token
  * {
- *   "connectionId": "conn_123",
- *   "refreshToken": "rt_456"
+ *   "connectionId": "conn_example",
+ *   "refreshToken": "rt_example"
  * }
  * ```
  *

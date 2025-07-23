@@ -42,7 +42,7 @@ The UX simplification project has been **fully completed** across all three phas
 - **Tests:** Comprehensive navigation and user flow tests
 
 ### 2.2 Implement progressive disclosure ✅ COMPLETED
-- **Implementation:** OnboardingContext, ProgressiveDisclosure components
+- **Implementation:** OnboardingContext (localStorage is no longer used for authentication or user info; all authentication is managed via secure HTTP-only cookies)
 - **Result:** Feature unlocking based on user progress
 - **Components:** ProgressiveFeature, OnboardingProgress
 - **Tests:** Unit tests for all progressive disclosure logic
@@ -171,7 +171,7 @@ The UX simplification project has been **fully completed** across all three phas
 
 ### Progressive Disclosure ✅ COMPLETED
 - **Strategy:** Feature unlocking based on user progress
-- **Implementation:** OnboardingContext with localStorage persistence
+- **Implementation:** OnboardingContext (localStorage is no longer used for authentication or user info; all authentication is managed via secure HTTP-only cookies)
 - **Components:** Flexible ProgressiveDisclosure wrapper system
 - **Benefits:** Reduced cognitive load, guided learning experience
 

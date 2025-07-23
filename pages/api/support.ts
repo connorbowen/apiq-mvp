@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     await sendSupportEmail({
-      to: 'apiq-testing@gmail.com',
+      to: process.env.SUPPORT_EMAIL || `support-${Date.now()}@apiq.com`,
       from: email,
       subject: `Support Request from ${name}`,
       text: `User: ${name} <${email}>

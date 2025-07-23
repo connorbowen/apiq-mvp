@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Validate token format (in a real implementation, this would validate against a database)
-    if (!token.startsWith('test_access_token_')) {
+    if (!token.startsWith(`test_access_token_${Date.now()}`)) {
       return res.status(401).json({ 
         error: 'invalid_token',
         error_description: 'Invalid token format'
@@ -37,11 +37,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Return user information
     // In a real implementation, this would fetch user data from a database
-    // For test purposes, we'll return consistent test user data
+    // For test purposes, we'll return dynamic test user data
     const userInfo = {
       sub: `test-user-${Date.now()}`,
-      name: 'Test User',
-      email: 'test@example.com',
+      name: `Test User ${Date.now()}`,
+      email: `test-${Date.now()}@example.com`,
       email_verified: true,
       picture: 'https://via.placeholder.com/150',
       locale: 'en',

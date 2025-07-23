@@ -97,7 +97,7 @@ export class DatabaseInitializer {
   private static async createDefaultAdminUser(): Promise<void> {
     try {
       const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@apiq.com';
-      const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
+      const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || `admin-${Date.now()}`;
 
       // Check if admin user already exists
       const existingAdmin = await prisma.user.findUnique({

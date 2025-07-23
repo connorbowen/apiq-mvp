@@ -220,6 +220,9 @@ export const testEmailVerificationStatus = async (
   email: string,
   expectedVerified: boolean = false
 ): Promise<void> => {
+  // Close guided tour if present to avoid blocking user interactions
+  await closeGuidedTourIfPresent(page);
+  
   // Navigate to profile page to check verification status
   await page.getByTestId('user-dropdown-toggle').click();
   await page.getByTestId('user-dropdown-profile').click();

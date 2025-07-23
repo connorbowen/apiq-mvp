@@ -274,8 +274,8 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         if (connectionData.oauth2Provider) {
           oauth2Config = {
             provider: connectionData.oauth2Provider.toLowerCase(),
-            clientId: connectionData.clientId || 'test_client_id',
-            clientSecret: connectionData.clientSecret || 'test_client_secret',
+            clientId: connectionData.clientId || `client-${Date.now()}`,
+            clientSecret: connectionData.clientSecret || `secret-${Date.now()}`,
             redirectUri: connectionData.redirectUri || 'http://localhost:3000/api/oauth/callback'
           };
         }

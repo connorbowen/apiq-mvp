@@ -81,23 +81,6 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<OnboardingState>(defaultState);
 
-  // Load state from localStorage on mount
-  useEffect(() => {
-    const savedState = localStorage.getItem('onboardingState');
-    if (savedState) {
-      try {
-        setState(JSON.parse(savedState));
-      } catch (error) {
-        console.error('Failed to parse onboarding state:', error);
-      }
-    }
-  }, []);
-
-  // Save state to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('onboardingState', JSON.stringify(state));
-  }, [state]);
-
   // Update onboarding stage
   const updateStage = (stage: OnboardingStage) => {
     setState(prev => ({ ...prev, stage }));

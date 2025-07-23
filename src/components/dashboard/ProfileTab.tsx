@@ -24,31 +24,13 @@ export default function ProfileTab({ user, onProfileUpdated }: ProfileTabProps) 
   const [isEditing, setIsEditing] = useState(false);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
 
-  // Add error handling for react-hook-form
-  let useFormHook: typeof useForm;
-  try {
-    useFormHook = useForm;
-  } catch (error) {
-    console.error('Failed to load react-hook-form:', error);
-    // Fallback to basic form handling
-    return (
-      <div data-testid="profile-tab" className="space-y-6">
-        <div data-testid="profile-sentinel" />
-        <div>
-          <h3 className="text-lg font-medium text-gray-900">Profile Settings</h3>
-          <p className="text-sm text-gray-600">Profile form is loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
     watch,
-  } = useFormHook<ProfileData>();
+  } = useForm<ProfileData>();
 
   const watchedNotifications = watch('notificationsEnabled');
   const watchedMarketing = watch('marketingEmailsEnabled');

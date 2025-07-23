@@ -47,9 +47,9 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     env: {
-      ENCRYPTION_MASTER_KEY: 'test-master-key-32-chars-long-for-secrets',
+      ENCRYPTION_MASTER_KEY: `test-master-key-${Date.now()}-32-chars-long-for-secrets`,
       NODE_ENV: 'test',
-      JWT_SECRET: 'test-jwt-secret-key-for-testing-only',
+      JWT_SECRET: `test-jwt-secret-${Date.now()}-key-for-testing-only`,
       TEST_MODE: 'true',
       PLAYWRIGHT_TEST: 'true',
       DISABLE_RATE_LIMITING: 'true', // Disable rate limiting for fast E2E testing

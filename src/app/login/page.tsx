@@ -28,9 +28,6 @@ export default function LoginPage() {
       const response = await apiClient.login(formData.email, formData.password);
 
       if (response.success && response.data) {
-        // Store user data in localStorage for client-side access
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        
         // Check user onboarding state to determine redirect destination
         const user = response.data.user;
         const onboardingStage = user.onboardingStage;
@@ -87,21 +84,6 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-
-  // Check if user is returning (has email in localStorage)
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        if (user.email === formData.email) {
-          setWelcomeMessage(`Welcome back, ${user.name || user.email}!`);
-        }
-      } catch (error) {
-        // Invalid stored user data, ignore
-      }
-    }
-  }, [formData.email]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

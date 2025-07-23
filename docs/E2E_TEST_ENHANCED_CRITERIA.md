@@ -35,7 +35,7 @@ Tests user experience and accessibility standards:
 #### 4. **Testing Best Practices** (8% weight)
 Tests adherence to testing standards:
 - **UXComplianceHelper usage**: Comprehensive UX compliance helper
-- **Real authentication**: Real JWT tokens, localStorage, session management
+- **Real authentication**: Real JWT tokens and secure HTTP-only cookies for session management. localStorage is no longer used for authentication or user info.
 - **Database operations**: Real Prisma operations, test data creation, cleanup
 - **Proper cleanup and test isolation**: afterEach/afterAll cleanup
 - **Clear test descriptions**: Descriptive test names and organization

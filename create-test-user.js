@@ -3,23 +3,16 @@ const bcrypt = require('bcryptjs');
 
 async function createTestUser() {
   try {
-    // Check if test user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: 'test@example.com' }
-    });
-
-    if (existingUser) {
-      console.log('Test user already exists');
-      return;
-    }
-
-    // Create test user
-    const hashedPassword = await bcrypt.hash('password123', 12);
+    // Create test user with dynamic data (no need to check for existing)
+    const timestamp = Date.now();
+    const testEmail = `test-${timestamp}@example.com`;
+    const testPassword = `password-${timestamp}`;
+    const hashedPassword = await bcrypt.hash(testPassword, 12);
     
     const user = await prisma.user.create({
       data: {
-        email: 'test@example.com',
-        name: 'Test User',
+        email: testEmail,
+        name: `Test User ${timestamp}`,
         password: hashedPassword,
         role: 'USER',
         isActive: true

@@ -43,13 +43,8 @@ export default function OverviewTab({ connections, workflows, secrets, user }: O
   const totalWorkflows = workflows.length;
   const totalSecrets = secrets.length;
 
-  // Recent activity (mock data for now)
-  const recentActivity = [
-    { id: 1, type: 'workflow', action: 'Workflow "Customer Sync" completed successfully', time: '2 minutes ago' },
-    { id: 2, type: 'connection', action: 'GitHub API connection tested successfully', time: '5 minutes ago' },
-    { id: 3, type: 'workflow', action: 'Workflow "Data Export" started', time: '10 minutes ago' },
-    { id: 4, type: 'secret', action: 'New API key added to secrets vault', time: '1 hour ago' },
-  ];
+  // Recent activity - will be populated from real data when available
+  const recentActivity: any[] = [];
 
   return (
     <div data-testid="overview-tab">

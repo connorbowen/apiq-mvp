@@ -1,17 +1,5 @@
 'use client';
 
-// TODO: Dynamic Import Strategy
-// This dashboard uses a hybrid approach to component loading:
-// - Regular imports for frequently used, test-critical components (better reliability)
-// - Dynamic imports for less frequently used components (better performance)
-// - ProfileTab uses regular import due to test environment module resolution issues
-// 
-// Future considerations:
-// 1. Monitor bundle size and performance metrics
-// 2. Investigate test environment module resolution improvements
-// 3. Consider component splitting for better lazy loading opportunities
-// 4. Evaluate if wrapper components can isolate problematic dependencies
-
 import { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -22,53 +10,23 @@ import UserDropdown from '../../components/dashboard/UserDropdown';
 import SupportModal from '../../components/dashboard/SupportModal';
 import MessageBanner from '../../components/MessageBanner';
 import MobileNavigation from '../../components/MobileNavigation';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { OnboardingProvider, useOnboarding } from '../../contexts/OnboardingContext';
 import { useGuidedTour, GuidedTour } from '../../components/GuidedTour';
+import { UserProvider } from '../../contexts/UserContext';
 
 // Import components directly for better test reliability
-// TODO: Consider dynamic imports for these components in the future if:
-// 1. Bundle size becomes a concern (currently minimal impact)
-// 2. Test environment module resolution issues are resolved
-// 3. Component dependencies are simplified or better isolated
 import WorkflowsTab from '../../components/dashboard/WorkflowsTab';
 import SettingsTab from '../../components/dashboard/SettingsTab';
 import AdminTab from '../../components/dashboard/AdminTab';
 import ConnectionsTab from '../../components/dashboard/ConnectionsTab';
+import ProfileTab from '../../components/dashboard/ProfileTab';
 
-// Keep dynamic import for modal component (not directly tested)
-// TODO: This modal is a good candidate for dynamic import because:
-// 1. It's only shown when needed (user clicks "Create Connection")
-// 2. It's not directly tested in E2E tests
-// 3. It's a larger component that benefits from lazy loading
-// 4. It has minimal impact on initial page load
-const CreateConnectionModal = dynamic(() => import('../../components/dashboard/CreateConnectionModal').catch(err => {
-  console.error('Failed to load CreateConnectionModal:', err);
-  return { default: () => <div>Error loading Connection Modal</div> };
-}), {
+// Dynamic import for modal component (not directly tested)
+const CreateConnectionModal = dynamic(() => import('../../components/dashboard/CreateConnectionModal'), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
   ssr: false,
 });
-
-// Temporarily use regular import to debug ProfileTab dynamic import issue
-// TODO: Investigate ProfileTab dynamic import failure in test environment
-// Issue: Component fails to load with dynamic import, causing test timeouts
-// Root cause: Complex dependencies (react-hook-form, react-hot-toast) don't resolve correctly
-// in dynamic import context during tests
-// Potential solutions:
-// 1. Create wrapper components that isolate third-party dependencies
-// 2. Improve error handling in ProfileTab component
-// 3. Investigate test environment module resolution configuration
-// 4. Consider splitting ProfileTab into smaller, simpler components
-import ProfileTab from '../../components/dashboard/ProfileTab';
-
-// TODO: Restore dynamic import when ProfileTab issue is resolved
-// const ProfileTab = dynamic(() => import('../../components/dashboard/ProfileTab').catch(err => {
-//   console.error('Failed to load ProfileTab:', err);
-//   return { default: () => <div data-testid="profile-tab">Error loading Profile</div> };
-// }), {
-//   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>,
-//   ssr: false,
-// });
 
 interface User {
   id: string;
@@ -152,7 +110,7 @@ function DashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isTabLoading, setIsTabLoading] = useState(false);
 
   const [showSupportModal, setShowSupportModal] = useState(false);
   const router = useRouter();
@@ -392,12 +350,18 @@ function DashboardContent() {
   }, [loadConnections, loadWorkflows, loadSecrets, handleOAuth2Callback, user?.role]);
 
   const handleTabChange = useCallback((tab: TabType) => {
+    setIsTabLoading(true);
     setActiveTab(tab);
     
     // Update URL with tab parameter
     const url = new URL(window.location.href);
     url.searchParams.set('tab', tab);
     router.push(url.pathname + url.search);
+    
+    // Show loading state briefly for better UX
+    setTimeout(() => {
+      setIsTabLoading(false);
+    }, 300);
   }, [router]);
 
   const handleLogout = useCallback(async () => {
@@ -442,10 +406,11 @@ function DashboardContent() {
   useEffect(() => {
     const url = new URL(window.location.href);
     const tabParam = url.searchParams.get('tab');
-    if (tabParam && ['chat', 'workflows', 'connections', 'settings', 'profile'].includes(tabParam)) {
+    const validTabs = ['chat', 'workflows', 'connections', 'settings', 'profile'];
+    if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam as TabType);
-    } else if (!tabParam) {
-      // If no tab parameter, default to chat and update URL
+    } else {
+      // If no tab parameter or invalid, default to chat and update URL
       setActiveTab('chat');
       url.searchParams.set('tab', 'chat');
       window.history.replaceState({}, '', url.toString());
@@ -477,7 +442,22 @@ function DashboardContent() {
     
     <header role="banner" className="bg-white shadow">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <div className="flex items-center space-x-4">
+          {/* Back to Dashboard link for settings/profile/admin tabs */}
+          {['settings', 'profile'].includes(activeTab) && (
+            <Link
+              href="/dashboard?tab=chat"
+              className="flex items-center text-indigo-600 hover:text-indigo-500 transition-colors"
+              data-testid="back-to-dashboard-link"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="text-sm font-medium">Back to Dashboard</span>
+            </Link>
+          )}
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        </div>
         <div className="flex items-center space-x-4">
           {user && <UserDropdown user={{ ...user, name: user.name || user.email }} onLogout={handleLogout} onHelp={() => setShowSupportModal(true)} />}
         </div>
@@ -500,11 +480,13 @@ function DashboardContent() {
       {/* Tab Navigation */}
       {user && !['profile', 'settings'].includes(activeTab) && (
         <div className="mb-6 hidden lg:block">
-          <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm" aria-label="Tabs">
+          <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm" aria-label="Tabs" role="tablist">
             {filteredTabs.map((tab) => (
               <button
                 key={tab}
                 data-testid={tabConfig[tab].testId}
+                aria-selected={activeTab === tab ? 'true' : 'false'}
+                role="tab"
                 className={`px-4 py-2 font-medium text-sm rounded-md transition-colors min-h-[44px] ${
                   activeTab === tab 
                     ? 'bg-indigo-100 text-indigo-700' 
@@ -519,77 +501,17 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* Mobile Menu Toggle */}
-      {!["profile", "settings"].includes(activeTab) && (
-        <div className="mb-6 lg:hidden">
-          <button
-            data-testid="mobile-menu-toggle"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
-            aria-expanded={isMobileMenuOpen}
-            aria-controls="mobile-menu"
-          >
-            <span>{tabConfig[activeTab].label}</span>
-            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
-      )}
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && !["profile", "settings"].includes(activeTab) && (
-        <div id="mobile-menu" data-testid="mobile-menu" className="mb-6 lg:hidden bg-white border border-gray-300 rounded-md shadow-sm">
-          <nav className="flex flex-col p-1" aria-label="Mobile Tabs">
-            <button
-              className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
-                activeTab === 'chat' 
-                  ? 'bg-indigo-100 text-indigo-700' 
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => {
-                handleTabChange('chat');
-                setIsMobileMenuOpen(false);
-              }}
-            >
-              {tabConfig.chat.label}
-            </button>
-            <button
-              className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
-                activeTab === 'workflows' 
-                  ? 'bg-indigo-100 text-indigo-700' 
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => {
-                handleTabChange('workflows');
-                setIsMobileMenuOpen(false);
-              }}
-            >
-              {tabConfig.workflows.label}
-            </button>
-            <button
-              className={`px-4 py-2 text-left font-medium text-sm rounded-md transition-colors min-h-[44px] ${
-                activeTab === 'connections' 
-                  ? 'bg-indigo-100 text-indigo-700' 
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => {
-                handleTabChange('connections');
-                setIsMobileMenuOpen(false);
-              }}
-            >
-              {tabConfig.connections.label}
-            </button>
-          </nav>
-        </div>
-      )}
-
       {/* Tab Content */}
       <div className="tab-content">
-        {activeTab === 'chat' && (
+        {isTabLoading && (
+          <div className="flex items-center justify-center p-8">
+            <LoadingSpinner size="medium" text="Loading..." />
+          </div>
+        )}
+        {!isTabLoading && activeTab === 'chat' && (
           <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
         )}
-        {activeTab === 'workflows' && (
+        {!isTabLoading && activeTab === 'workflows' && (
           <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
             <div id="workflows-section">
               <WorkflowsTab
@@ -605,7 +527,7 @@ function DashboardContent() {
             </div>
           </Suspense>
         )}
-        {activeTab === 'connections' && (
+        {!isTabLoading && activeTab === 'connections' && (
           <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
             <div id="connections-section">
               <ConnectionsTab
@@ -623,7 +545,7 @@ function DashboardContent() {
                   setSuccessMessage('Connection deleted successfully');
                 }}
                 onConnectionTested={() => {
-                  setSuccessMessage('Connection test successful');
+                  setSuccessMessage('Connection validation completed successfully');
                 }}
                 onConnectionError={(error) => {
                   setErrorMessage(error);
@@ -632,7 +554,7 @@ function DashboardContent() {
             </div>
           </Suspense>
         )}
-        {activeTab === 'settings' && (
+        {!isTabLoading && activeTab === 'settings' && (
           <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
             <SettingsTab
               connections={connections}
@@ -651,7 +573,7 @@ function DashboardContent() {
                 setSuccessMessage('Connection deleted successfully');
               }}
               onConnectionTested={() => {
-                setSuccessMessage('Connection test successful');
+                setSuccessMessage('Connection validation completed successfully');
               }}
               onConnectionError={(error) => {
                 setErrorMessage(error);
@@ -666,7 +588,7 @@ function DashboardContent() {
             />
           </Suspense>
         )}
-        {activeTab === 'profile' && (
+        {!isTabLoading && activeTab === 'profile' && (
           <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
             <ProfileTab
               user={user}
@@ -701,12 +623,14 @@ function DashboardContent() {
   );
 }
 
-// Wrapper component that provides the OnboardingProvider context
+// Wrapper component that provides the OnboardingProvider and UserProvider context
 export default function DashboardPage() {
   return (
-    <OnboardingProvider>
-      <DashboardContent />
-    </OnboardingProvider>
+    <UserProvider>
+      <OnboardingProvider>
+        <DashboardContent />
+      </OnboardingProvider>
+    </UserProvider>
   );
 }
 

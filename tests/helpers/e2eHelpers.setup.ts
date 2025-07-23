@@ -83,12 +83,6 @@ export const loginAndNavigate = async (
   await page.goto('/login');
   await page.waitForLoadState('domcontentloaded');
   
-  // Clear localStorage after page has loaded
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-  });
-  
   console.log('🔍 E2E DEBUG: Filling login form');
   await page.waitForSelector('input[name="email"]', { timeout: 10000 });
   await page.waitForSelector('input[name="password"]', { timeout: 10000 });
@@ -143,8 +137,19 @@ export const loginAndNavigate = async (
     console.log('🔍 E2E DEBUG: Dashboard loaded (profile/settings mode)');
   } else {
     // For main tabs, wait for tab navigation to be visible
-    await page.waitForSelector('[data-testid^="tab-"]', { timeout: 20000 });
-    console.log('🔍 E2E DEBUG: Dashboard tabs loaded');
+    // Check if we're on mobile viewport (width < 768px)
+    const viewport = page.viewportSize();
+    const isMobile = viewport && viewport.width < 768;
+    
+    if (isMobile) {
+      // On mobile, wait for mobile navigation instead of desktop tabs
+      await page.waitForSelector('[data-testid="mobile-navigation"]', { timeout: 20000 });
+      console.log('🔍 E2E DEBUG: Mobile navigation loaded');
+    } else {
+      // On desktop, wait for desktop tabs
+      await page.waitForSelector('[data-testid^="tab-"]', { timeout: 20000 });
+      console.log('🔍 E2E DEBUG: Dashboard tabs loaded');
+    }
   }
   
   if (options.tab) {
@@ -154,9 +159,19 @@ export const loginAndNavigate = async (
     } else if (options.tab === 'profile') {
       await navigateToProfile(page);
     } else {
-      // Wait for the specific tab to be visible before clicking
-      await page.waitForSelector(`[data-testid="tab-${options.tab}"]`, { timeout: 10000 });
-      await page.click(`[data-testid="tab-${options.tab}"]`);
+      // Wait for and click the specified tab
+      const viewport = page.viewportSize();
+      const isMobile = viewport && viewport.width < 768;
+      
+      if (isMobile) {
+        // On mobile, use mobile navigation
+        await page.waitForSelector(`[data-testid="mobile-tab-${options.tab}"]`, { timeout: 10000 });
+        await page.click(`[data-testid="mobile-tab-${options.tab}"]`);
+      } else {
+        // On desktop, use desktop tabs
+        await page.waitForSelector(`[data-testid="tab-${options.tab}"]`, { timeout: 10000 });
+        await page.click(`[data-testid="tab-${options.tab}"]`);
+      }
       await page.waitForLoadState('domcontentloaded');
     }
   }

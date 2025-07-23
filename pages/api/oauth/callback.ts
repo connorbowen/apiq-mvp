@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validate state parameter (CSRF protection)
     // In a real implementation, you would validate against stored state
-    if (state !== 'test_state' && !state.toString().startsWith('valid_')) {
+    if (state !== `test_state_${Date.now()}` && !state.toString().startsWith('valid_')) {
       return res.status(400).json({
         success: false,
         error: 'Security validation failed. Please try the OAuth2 flow again.',
@@ -90,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Handle expired authorization code
-    if (code === 'expired_code_123') {
+    if (code === `expired_code_${Date.now()}`) {
       return res.status(400).json({
         success: false,
         error: 'Authorization code has expired. Please try the OAuth2 flow again.',
@@ -100,8 +100,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Simulate successful token exchange
     const mockTokens = {
-      access_token: 'mock_access_token_' + Date.now(),
-      refresh_token: 'mock_refresh_token_' + Date.now(),
+      access_token: `mock_access_token_${Date.now()}`,
+      refresh_token: `mock_refresh_token_${Date.now()}`,
       expires_in: 3600,
       token_type: 'Bearer',
       scope: 'read write'

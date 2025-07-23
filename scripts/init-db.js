@@ -26,8 +26,9 @@ async function initializeDatabase() {
       return;
     }
 
-    // Create admin user
-    const hashedPassword = await bcrypt.hash('admin123', 12);
+    // Create admin user with dynamic password
+    const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || `admin-${Date.now()}`;
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
     
     const adminUser = await prisma.user.create({
       data: {
@@ -60,7 +61,7 @@ async function initializeDatabase() {
     console.log('\n🎉 Database initialization completed successfully!');
     console.log('You can now login with:');
     console.log('   Email: admin@apiq.com');
-    console.log('   Password: admin123');
+    console.log(`   Password: ${adminPassword}`);
 
   } catch (error) {
     console.error('❌ Database initialization failed:', error.message);

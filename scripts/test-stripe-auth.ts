@@ -21,9 +21,9 @@ if (!STRIPE_TEST_SECRET_KEY) {
   process.exit(1);
 }
 
-// Test user credentials (from your test setup)
-const TEST_USER_EMAIL = 'stripe-test@example.com';
-const TEST_USER_PASSWORD = 'testpass123';
+// Test user credentials - should be provided via environment variables
+const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || `stripe-test-${Date.now()}@example.com`;
+const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || `testpass-${Date.now()}`;
 
 // Ensure STRIPE_TEST_SECRET_KEY is treated as string after the check
 const STRIPE_KEY = STRIPE_TEST_SECRET_KEY as string;

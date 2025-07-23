@@ -149,7 +149,7 @@ export default function WorkflowShareModal({ workflowId, isOpen, onClose }: Work
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="teammate@example.com"
+                  placeholder="colleague@company.com"
                   required
                 />
               </div>

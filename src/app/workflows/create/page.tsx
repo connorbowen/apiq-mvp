@@ -1,4 +1,4 @@
-import NaturalLanguageWorkflowChat from '../../../components/NaturalLanguageWorkflowChat';
+import ChatInterface from '../../../components/ChatInterface';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -17,7 +17,14 @@ export default function CreateWorkflowPage() {
             Use AI to create workflows by describing what you want to automate in plain English.
           </p>
         </div>
-        <NaturalLanguageWorkflowChat />
+        <div className="h-[600px]">
+          <ChatInterface 
+            onWorkflowSaved={(workflowId) => {
+              // Optionally redirect to workflows list after saving
+              console.log('Workflow saved:', workflowId);
+            }}
+          />
+        </div>
       </div>
     </div>
   );

@@ -136,6 +136,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   return (
     <nav
+      data-testid="mobile-navigation"
       className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden ${className}`}
       role="navigation"
       aria-label="Mobile navigation"
@@ -152,7 +153,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
             }`}
             aria-label={`Navigate to ${item.label}`}
             aria-current={isActive(item.id) ? 'page' : undefined}
-            data-testid={`mobile-nav-${item.id}`}
+            data-testid={`mobile-tab-${item.id}`}
           >
             <div className="relative">
               {item.icon}

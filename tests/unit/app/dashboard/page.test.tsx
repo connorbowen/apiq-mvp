@@ -105,14 +105,20 @@ describe('DashboardPage', () => {
     id: '1',
     email: 'test@example.com',
     name: 'Test User',
-    role: 'user',
+    role: 'user' as const,
+    isActive: true,
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
   };
 
   const mockAdminUser = {
     id: '2',
     email: 'admin@example.com',
     name: 'Admin User',
-    role: 'admin',
+    role: 'admin' as const,
+    isActive: true,
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
   };
 
   const mockConnections = [
@@ -439,6 +445,77 @@ describe('DashboardPage', () => {
       await waitFor(() => {
         const tabs = screen.getAllByRole('button');
         expect(tabs.length).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('Navigation Back to Dashboard', () => {
+    test('should show back to dashboard link on settings tab', async () => {
+      // Mock URL with settings tab
+      Object.defineProperty(window, 'location', {
+        value: {
+          href: 'http://localhost:3000/dashboard?tab=settings',
+        },
+        writable: true,
+      });
+
+      render(<DashboardPage />);
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('back-to-dashboard-link')).toBeInTheDocument();
+        expect(screen.getByText('Back to Dashboard')).toBeInTheDocument();
+      });
+    });
+
+    test('should show back to dashboard link on profile tab', async () => {
+      // Mock URL with profile tab
+      Object.defineProperty(window, 'location', {
+        value: {
+          href: 'http://localhost:3000/dashboard?tab=profile',
+        },
+        writable: true,
+      });
+
+      render(<DashboardPage />);
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('back-to-dashboard-link')).toBeInTheDocument();
+        expect(screen.getByText('Back to Dashboard')).toBeInTheDocument();
+      });
+    });
+
+    test('should not show back to dashboard link on main tabs', async () => {
+      // Mock URL with chat tab (main tab)
+      Object.defineProperty(window, 'location', {
+        value: {
+          href: 'http://localhost:3000/dashboard?tab=chat',
+        },
+        writable: true,
+      });
+
+      render(<DashboardPage />);
+      
+      await waitFor(() => {
+        expect(screen.queryByTestId('back-to-dashboard-link')).not.toBeInTheDocument();
+      });
+    });
+
+    test('should navigate to chat tab when back to dashboard is clicked', async () => {
+      // Mock URL with settings tab
+      Object.defineProperty(window, 'location', {
+        value: {
+          href: 'http://localhost:3000/dashboard?tab=settings',
+        },
+        writable: true,
+      });
+
+      render(<DashboardPage />);
+      
+      await waitFor(() => {
+        const backLink = screen.getByTestId('back-to-dashboard-link');
+        fireEvent.click(backLink);
+        
+        expect(mockPush).toHaveBeenCalledWith('/dashboard?tab=chat');
       });
     });
   });

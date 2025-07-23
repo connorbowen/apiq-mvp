@@ -123,7 +123,7 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
     });
 
     test('should handle invalid reset token', async ({ page }) => {
-      const invalidToken = `${INVALID_TOKEN_PREFIX}-123`;
+      const invalidToken = `${INVALID_TOKEN_PREFIX}-${generateTestId()}`;
       
       await page.goto(`${BASE_URL}/reset-password?token=${invalidToken}`);
       

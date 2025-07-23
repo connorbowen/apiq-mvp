@@ -244,10 +244,10 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
       const stages = ['new', 'profile_completed', 'tour_completed', 'completed'];
       
       for (const stage of stages) {
-        // Update user to specific stage
-        await page.evaluate((stage) => {
-          localStorage.setItem('onboardingStage', stage);
-        }, stage);
+        // Update user onboarding stage via backend API or test helper
+        await page.request.post('/api/test/set-onboarding-stage', {
+          data: { userId: newUser.id, stage },
+        });
         
         await page.reload();
         

@@ -47,7 +47,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         status: 'success',
         responseTime: 0,
         endpoints: 0,
-        message: 'Connection test successful'
+        message: 'Connection validation completed successfully'
       };
 
       try {
@@ -78,7 +78,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
               responseTime: Date.now() - startTime,
               endpoints: endpointCount,
               newEndpoints: Array.isArray(endpoints) ? endpoints.length : 0,
-              message: 'Connection test successful - OpenAPI spec parsed and endpoints extracted'
+              message: 'Connection validation completed successfully - OpenAPI spec parsed and endpoints extracted'
             };
 
             logInfo('API connection test successful', {
@@ -97,7 +97,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
             status: 'success',
             responseTime: Date.now() - startTime,
             endpoints: connection.endpoints.length,
-            message: 'Connection test successful - no OpenAPI spec to validate'
+            message: 'Connection validation completed successfully - no OpenAPI spec to validate'
           };
 
           // Update last tested timestamp
@@ -124,7 +124,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           status: 'failed',
           responseTime: Date.now() - startTime,
           endpoints: connection.endpoints.length,
-          message: 'Connection test failed',
+          message: 'Connection validation failed',
           error: error.message
         };
 

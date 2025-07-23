@@ -94,11 +94,6 @@ export default function SignupPage() {
         // Show welcome message
         setWelcomeMessage('Welcome to APIQ! Let\'s get you started with a quick tour.');
         
-        // Store user data in localStorage for client-side access
-        if (response.data?.user) {
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        }
-        
         // Redirect to guided tour for new users (with delay to show welcome message)
         setTimeout(() => {
           console.log('🔍 SIGNUP: Registration successful, redirecting to dashboard...');

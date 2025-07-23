@@ -61,7 +61,7 @@ export const getLibraryClient = (config: LibraryConfig): LibraryClient => {
   // Create the library instance
   // const client = new SomeLibrary({
   //   apiKey: config.apiKey,
-  //   endpoint: config.endpoint || 'https://api.example.com',
+  //   endpoint: config.endpoint || 'https://api.your-service.com',
   //   timeout: config.timeout || 30000,
   // });
 

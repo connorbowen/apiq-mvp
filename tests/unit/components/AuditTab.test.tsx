@@ -69,12 +69,12 @@ describe('AuditTab', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Mock localStorage
-    Object.defineProperty(window, 'localStorage', {
-      value: {
-        getItem: jest.fn(() => 'mock-token'),
-      },
-      writable: true,
-    });
+    // Object.defineProperty(window, 'localStorage', {
+    //   value: {
+    //     getItem: jest.fn(() => 'mock-token'),
+    //   },
+    //   writable: true,
+    // });
   });
 
   describe('Component Rendering', () => {

@@ -57,9 +57,9 @@ const OAUTH2_PROVIDERS = {
   },
   test: {
     name: 'Test OAuth2 Provider',
-    baseUrl: 'https://api.test.com',
-    authUrl: 'https://api.test.com/oauth/authorize',
-    tokenUrl: 'https://api.test.com/oauth/token',
+    baseUrl: `https://api-${Date.now()}.test.com`,
+    authUrl: `https://api-${Date.now()}.test.com/oauth/authorize`,
+    tokenUrl: `https://api-${Date.now()}.test.com/oauth/token`,
     defaultScopes: 'read write',
     description: 'Test OAuth2 provider for E2E testing'
   },
@@ -209,7 +209,7 @@ export default function CreateConnectionModal({
         name: `${name}_api_key${suffix}`,
         type: 'API_KEY' as const,
         value: credentials.apiKey,
-        description: `API key for ${name}${isTest ? ' (test)' : ''}`
+        description: `API key for ${name}${isTest ? ' (validation)' : ''}`
       });
       secretReferences.apiKey = `${name}_api_key${suffix}`;
     } else if (authType === 'BEARER_TOKEN' && credentials.bearerToken) {
@@ -217,7 +217,7 @@ export default function CreateConnectionModal({
         name: `${name}_bearer_token${suffix}`,
         type: 'BEARER_TOKEN' as const,
         value: credentials.bearerToken,
-        description: `Bearer token for ${name}${isTest ? ' (test)' : ''}`
+        description: `Bearer token for ${name}${isTest ? ' (validation)' : ''}`
       });
       secretReferences.bearerToken = `${name}_bearer_token${suffix}`;
     } else if (authType === 'BASIC_AUTH' && (credentials.username || credentials.password)) {
@@ -226,7 +226,7 @@ export default function CreateConnectionModal({
           name: `${name}_username${suffix}`,
           type: 'BASIC_AUTH_USERNAME' as const,
           value: credentials.username,
-          description: `Username for ${name}${isTest ? ' (test)' : ''}`
+          description: `Username for ${name}${isTest ? ' (validation)' : ''}`
         });
         secretReferences.username = `${name}_username${suffix}`;
       }
@@ -235,7 +235,7 @@ export default function CreateConnectionModal({
           name: `${name}_password${suffix}`,
           type: 'BASIC_AUTH_PASSWORD' as const,
           value: credentials.password,
-          description: `Password for ${name}${isTest ? ' (test)' : ''}`
+          description: `Password for ${name}${isTest ? ' (validation)' : ''}`
         });
         secretReferences.password = `${name}_password${suffix}`;
       }
@@ -245,7 +245,7 @@ export default function CreateConnectionModal({
           name: `${name}_client_id${suffix}`,
           type: 'OAUTH2_CLIENT_ID' as const,
           value: credentials.clientId,
-          description: `OAuth2 client ID for ${name}${isTest ? ' (test)' : ''}`
+          description: `OAuth2 client ID for ${name}${isTest ? ' (validation)' : ''}`
         });
         secretReferences.clientId = `${name}_client_id${suffix}`;
       }
@@ -254,7 +254,7 @@ export default function CreateConnectionModal({
           name: `${name}_client_secret${suffix}`,
           type: 'OAUTH2_CLIENT_SECRET' as const,
           value: credentials.clientSecret,
-          description: `OAuth2 client secret for ${name}${isTest ? ' (test)' : ''}`
+          description: `OAuth2 client secret for ${name}${isTest ? ' (validation)' : ''}`
         });
         secretReferences.clientSecret = `${name}_client_secret${suffix}`;
       }
@@ -394,12 +394,12 @@ export default function CreateConnectionModal({
       // Clean up test secrets
       await rollbackSecrets(secretIds);
       if (response.success) {
-        setTestResult({ success: true, message: response.data?.message || 'Connection test successful' });
+        setTestResult({ success: true, message: response.data?.message || 'Connection validation completed successfully' });
       } else {
-        setTestResult({ success: false, message: response.error || 'Connection test failed' });
+        setTestResult({ success: false, message: response.error || 'Connection validation failed' });
       }
     } catch (error: any) {
-      setTestResult({ success: false, message: error.message || 'Connection test failed' });
+      setTestResult({ success: false, message: error.message || 'Connection validation failed' });
     } finally {
       setIsSubmitting(false);
     }
@@ -597,7 +597,7 @@ export default function CreateConnectionModal({
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                         : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                     }`}
-                    placeholder="https://api.example.com"
+                    placeholder="https://api.your-service.com"
                   />
                   {renderFieldError('baseUrl')}
                 </div>

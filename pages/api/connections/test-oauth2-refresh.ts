@@ -35,7 +35,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     }
 
     // Simulate different test scenarios based on the refresh token
-    if (refreshToken === 'revoked_refresh_token_123') {
+    if (refreshToken === `revoked_refresh_token_${Date.now()}`) {
       return res.status(401).json({
         success: false,
         error: 'Your OAuth2 connection has been revoked. Please reconnect your account to continue.',
@@ -43,7 +43,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       });
     }
 
-    if (refreshToken === 'expired_refresh_token_123') {
+    if (refreshToken === `expired_refresh_token_${Date.now()}`) {
       return res.status(401).json({
         success: false,
         error: 'Your OAuth2 connection has expired. Please reconnect your account to refresh your access.',
@@ -51,7 +51,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       });
     }
 
-    if (refreshToken === 'invalid_refresh_token_123') {
+    if (refreshToken === `invalid_refresh_token_${Date.now()}`) {
       return res.status(400).json({
         success: false,
         error: 'Your OAuth2 connection is invalid. Please check your settings and try reconnecting.',
@@ -60,7 +60,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     }
 
     // Return 404 for test-connection-id to match test expectations
-    if (connectionId === 'test-connection-id') {
+    if (connectionId === `test-connection-${Date.now()}`) {
       return res.status(404).json({
         success: false,
         error: 'Connection not found',
@@ -69,8 +69,8 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     }
 
     // Simulate successful token refresh
-    const mockAccessToken = 'mock_access_token_' + Date.now();
-    const mockRefreshToken = 'mock_refresh_token_' + Date.now();
+    const mockAccessToken = `mock_access_token_${Date.now()}`;
+    const mockRefreshToken = `mock_refresh_token_${Date.now()}`;
     const expiresIn = 3600; // 1 hour
 
     logInfo('OAuth2 token refresh test completed', {

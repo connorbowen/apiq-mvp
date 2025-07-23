@@ -11,15 +11,25 @@ This document provides comprehensive documentation for all APIQ backend API endp
 
 ## Authentication
 
-All API endpoints require authentication using NextAuth.js JWT tokens. Include the session token in your requests:
+All API endpoints require authentication. Authentication is managed via secure HTTP-only cookies set by the backend during login and session refresh. 
 
-```bash
-# For client-side requests (automatic with NextAuth.js)
-# The token is automatically included in requests
+- **Browser-based requests:**
+  - Cookies are automatically included in all requests from the browser. No manual token management or localStorage is required or supported.
+  - Do not attempt to read or write authentication tokens in localStorage or sessionStorage.
 
-# For server-side requests
-Authorization: Bearer <your-jwt-token>
-```
+- **Server-to-server/API requests:**
+  - For direct API calls from backend services or scripts, include the session token as a Bearer token:
+
+    ```bash
+    Authorization: Bearer <your-jwt-token>
+    ```
+
+- **Security:**
+  - All authentication cookies are HTTP-only, SameSite=Lax, and (in production) Secure.
+  - Tokens are never exposed to client-side JavaScript.
+
+- **Session Management:**
+  - Sessions are managed via cookies. Logging out or session expiration will clear cookies and require re-authentication.
 
 ## Response Format
 

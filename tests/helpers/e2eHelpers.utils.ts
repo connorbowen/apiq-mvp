@@ -63,39 +63,8 @@ export const stopTracing = async (
  * Clear authentication state
  */
 export const clearAuthState = async (page: Page): Promise<void> => {
-  // Clear cookies
+  // Only clear cookies for authentication state. All auth state should be managed via cookies or server-side for tests.
   await page.context().clearCookies();
-  
-  // Clear localStorage and sessionStorage with error handling
-  try {
-    await page.evaluate(() => {
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-      } catch (error) {
-        // Ignore localStorage access errors (can happen in certain contexts)
-        console.warn('localStorage access failed:', error);
-      }
-    });
-    
-    // Clear any remaining auth state
-    await page.evaluate(() => {
-      try {
-        // Remove any auth-related items
-        const authKeys = ['accessToken', 'refreshToken', 'user', 'auth'];
-        authKeys.forEach(key => {
-          localStorage.removeItem(key);
-          sessionStorage.removeItem(key);
-        });
-      } catch (error) {
-        // Ignore localStorage access errors
-        console.warn('localStorage cleanup failed:', error);
-      }
-    });
-  } catch (error) {
-    // Ignore any localStorage-related errors - they're not critical for test execution
-    console.warn('Auth state cleanup failed:', error);
-  }
 };
 
 /**

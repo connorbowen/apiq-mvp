@@ -24,6 +24,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, ReactNode } from 'react';
+import { apiClient } from '../lib/api/client';
 import { useOnboarding } from '../contexts/OnboardingContext';
 
 export interface TourStep {
@@ -374,7 +375,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
  * Provides tour management functions and predefined tour steps.
  */
 export const useGuidedTour = () => {
-  const { startTour, completeTour, skipTour, state } = useOnboarding();
+  const { startTour, completeTour, skipTour, state, syncWithUserData } = useOnboarding();
   const [isTourOpen, setIsTourOpen] = useState(false);
 
   // Predefined tour steps for different sections
@@ -460,13 +461,39 @@ export const useGuidedTour = () => {
     setIsTourOpen(false);
   };
 
-  const completeTourHandler = () => {
+  const completeTourHandler = async () => {
     setIsTourOpen(false);
+    const now = new Date().toISOString();
+    await apiClient.updateTourState({
+      currentStep: 0,
+      totalSteps: 0,
+      isActive: false,
+      completedSteps: [],
+      dismissed: true,
+      lastShown: now
+    });
+    const userResponse = await apiClient.getCurrentUser();
+    if (userResponse.success && userResponse.data) {
+      syncWithUserData(userResponse.data.user);
+    }
     completeTour();
   };
 
-  const skipTourHandler = () => {
+  const skipTourHandler = async () => {
     setIsTourOpen(false);
+    const now = new Date().toISOString();
+    await apiClient.updateTourState({
+      currentStep: 0,
+      totalSteps: 0,
+      isActive: false,
+      completedSteps: [],
+      dismissed: true,
+      lastShown: now
+    });
+    const userResponse = await apiClient.getCurrentUser();
+    if (userResponse.success && userResponse.data) {
+      syncWithUserData(userResponse.data.user);
+    }
     skipTour();
   };
 

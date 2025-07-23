@@ -30,6 +30,7 @@ import { useState, useEffect, memo } from 'react';
 import { apiClient, ApiConnection, Secret } from '../../lib/api/client';
 import CreateConnectionModal from './CreateConnectionModal';
 import EditConnectionModal from './EditConnectionModal';
+import { useUser } from '../../contexts/UserContext';
 
 interface ConnectionsTabProps {
   connections: ApiConnection[];
@@ -48,6 +49,7 @@ function ConnectionsTab({
   onConnectionTested,
   onConnectionError 
 }: ConnectionsTabProps) {
+  const { user } = useUser();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingConnection, setEditingConnection] = useState<ApiConnection | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -553,8 +555,8 @@ function ConnectionsTab({
                                 // Get OAuth2 configuration from connection
                                 const authConfig = (connection as any).authConfig || {};
                                 const provider = authConfig.provider || 'test';
-                                const clientId = authConfig.clientId || 'test-client-id';
-                                const clientSecret = authConfig.clientSecret || 'test-client-secret';
+                                const clientId = authConfig.clientId || `test-client-${Date.now()}`;
+                                const clientSecret = authConfig.clientSecret || `test-secret-${Date.now()}`;
                                 const redirectUri = authConfig.redirectUri || 'http://localhost:3000/api/connections/oauth2/callback';
                                 const scope = authConfig.scope || 'read write';
                                 
@@ -604,21 +606,9 @@ function ConnectionsTab({
                                 if (!authUrl && provider === 'test') {
                                   console.log('🔧 OAuth2 Authorization Debug - Using fallback URL for test provider');
                                   
-                                  // Get the actual user ID from localStorage
-                                  const userData = localStorage.getItem('user');
-                                  let userId = 'test-user-id'; // fallback
-                                  if (userData) {
-                                    try {
-                                      const user = JSON.parse(userData);
-                                      userId = user.id;
-                                    } catch (e) {
-                                      console.error('Failed to parse user data:', e);
-                                    }
-                                  }
-                                  
                                   // Create proper state like the backend does
                                   const state = btoa(JSON.stringify({
-                                    userId: userId,
+                                    userId: user?.id,
                                     apiConnectionId: connection.id,
                                     provider: 'test',
                                     timestamp: Date.now(),
@@ -656,9 +646,9 @@ function ConnectionsTab({
                                 // Call the OAuth2 refresh token endpoint
                                 const response = await fetch(`/api/connections/oauth2/refresh`, {
                                   method: 'POST',
+                                  credentials: 'include',
                                   headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                    'Content-Type': 'application/json'
                                   },
                                   body: JSON.stringify({
                                     apiConnectionId: connection.id,
@@ -694,9 +684,9 @@ function ConnectionsTab({
                             // Call the actual test connection API
                             const response = await fetch(`/api/connections/${connection.id}/test`, {
                               method: 'POST',
+                              credentials: 'include',
                               headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                'Content-Type': 'application/json'
                               }
                             });
                             
@@ -709,7 +699,7 @@ function ConnectionsTab({
                                 ...prev,
                                 [connection.id]: { 
                                   success: true, 
-                                  message: result.data?.message || 'Connection test successful' 
+                                  message: result.data?.message || 'Connection validation completed successfully' 
                                 }
                               }));
                               onConnectionTested(); // Set global success message
@@ -719,10 +709,10 @@ function ConnectionsTab({
                                 ...prev,
                                 [connection.id]: { 
                                   success: false, 
-                                  message: errorData.error || 'Connection test failed' 
+                                  message: errorData.error || 'Connection validation failed' 
                                 }
                               }));
-                              onConnectionError(errorData.error || 'Connection test failed');
+                              onConnectionError(errorData.error || 'Connection validation failed');
                             }
                           } catch (error) {
                             console.error('Connection test error:', error);
@@ -730,10 +720,10 @@ function ConnectionsTab({
                               ...prev,
                               [connection.id]: { 
                                 success: false, 
-                                message: 'Connection test failed' 
+                                message: 'Connection validation failed' 
                               }
                             }));
-                            onConnectionError('Connection test failed');
+                            onConnectionError('Connection validation failed');
                           } finally {
                             setIsLoading(false);
                           }

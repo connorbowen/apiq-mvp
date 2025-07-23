@@ -256,7 +256,7 @@ This document outlines the comprehensive UX simplification plan for APIQ, organi
 - **Location:** `src/contexts/OnboardingContext.tsx`
 - **Purpose:** State management for progressive disclosure
 - **Features:** Onboarding stage tracking, tour management, feature unlocking
-- **Integration:** localStorage persistence and API client integration
+- **Integration:** API client integration only; localStorage is no longer used for authentication or user info. All authentication is managed via secure HTTP-only cookies.
 
 ### SettingsTab Component ✅ COMPLETED
 - **Location:** `src/components/dashboard/SettingsTab.tsx`

@@ -12,10 +12,6 @@ function getHeaderValue(request: NextRequest, key: string): string | undefined {
   return request.headers.get(key) || undefined;
 }
 
-// Note: Secrets-first validation has been moved to feature-level gating
-// based on user onboarding stage. This provides better UX and aligns with
-// the product vision of progressive disclosure.
-
 // Define protected routes that require authentication
 const protectedRoutes = [
   '/dashboard',
@@ -63,7 +59,7 @@ export function middleware(request: NextRequest) {
 
     // --- Authentication validation for protected routes ---
   if (isProtectedRoute) {
-    // Check for access token in cookies (more secure than localStorage for SSR)
+    // Check for access token in cookies (all authentication is managed via secure HTTP-only cookies; localStorage is not used)
     const accessToken = request.cookies.get('accessToken')?.value;
     console.log('🔍 MIDDLEWARE: Processing request for:', pathname);
     console.log('🔍 MIDDLEWARE: All cookies:', Array.from(request.cookies.getAll()).map(c => `${c.name}=${c.value.substring(0, 20)}...`));

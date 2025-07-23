@@ -39,7 +39,7 @@ The evaluator analyzes test files against **14 comprehensive criteria**:
 
 ### 4. **Testing Best Practices** (8% weight)
 - **UXComplianceHelper usage**: Uses the comprehensive UX compliance helper
-- **Real authentication**: Uses real JWT tokens, localStorage, session management
+- **Real authentication**: Uses real JWT tokens and secure HTTP-only cookies for session management. localStorage is no longer used for authentication or user info.
 - **Database operations**: Uses real Prisma operations, test data creation, cleanup
 - **Proper cleanup and test isolation**: Implements afterEach/afterAll cleanup
 - **Clear test descriptions**: Uses descriptive test names and organization

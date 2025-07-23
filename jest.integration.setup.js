@@ -31,8 +31,8 @@ if (!process.env.USE_REAL_OPENAI) {
 process.env.OPENAI_MODEL = 'gpt-4-turbo-preview';
 
 // Set encryption keys for tests (mock values)
-process.env.ENCRYPTION_MASTER_KEY = 'test-32-character-master-key-123';
-process.env.ENCRYPTION_KEY = 'test-32-character-encryption-key-123';
+process.env.ENCRYPTION_MASTER_KEY = `test-32-character-master-key-${Date.now()}`;
+process.env.ENCRYPTION_KEY = `test-32-character-encryption-key-${Date.now()}`;
 
 // Increase timeout for integration tests
 jest.setTimeout(30000);

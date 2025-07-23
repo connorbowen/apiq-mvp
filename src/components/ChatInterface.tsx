@@ -11,56 +11,37 @@ interface Message {
   workflow?: any;
   steps?: any[];
   explanation?: string;
+  isExecuted?: boolean;
+  executionResult?: any;
 }
 
 interface ChatInterfaceProps {
   onWorkflowGenerated?: (workflow: any, steps: any[]) => void;
+  onWorkflowSaved?: (workflowId: string) => void;
 }
 
 /**
- *  - CHAT INTERFACE PHASE 1 & 2 CHANGES - @connorbowen 2024-12-19
+ * Enhanced Chat Interface - Consolidated Workflow Management
  * 
- * PHASE 1.2: Make Chat the default tab ✅ COMPLETED
- * - [x] Enhance welcome message for new users
- * - [x] Add quick start examples prominently displayed
- * - [x] Improve first-time user experience
- * - [ ] Add tests: tests/unit/components/ChatInterface.test.tsx - test default tab behavior
- * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test chat as default landing
+ * Supports both one-shot executions and workflow creation:
+ * - One-shot: Execute immediately without saving
+ * - Workflow creation: Save for later use and management
+ * - Context-aware: Detect intent and suggest appropriate action
  * 
- * PHASE 2.1: Redesign dashboard layout with 3-tab structure
- * - [ ] INTEGRATE: Move quick actions from OverviewTab to Chat header
- * - [ ] INTEGRATE: Add status metrics from OverviewTab to Chat sidebar
- * - [ ] INTEGRATE: Show recent workflow activity in Chat interface
- * - [ ] Create ChatHeader component with integrated metrics
- * - [ ] Create ChatSidebar component for status and activity
- * - [ ] Add tests: tests/unit/components/ChatHeader.test.tsx
- * - [ ] Add tests: tests/unit/components/ChatSidebar.test.tsx
- * 
- * PHASE 2.2: Progressive disclosure
- * - [ ] Show different examples based on user onboarding stage
- * - [ ] Progressive reveal of advanced features
- * - [ ] Contextual help based on user progress
- * - [ ] Add tests: tests/unit/components/ProgressiveDisclosure.test.tsx
- * 
- * PHASE 2.4: Guided tour integration
- * - [ ] Add tour step highlighting for Chat interface
- * - [ ] Interactive tutorial for first workflow creation
- * - [ ] Tooltip guidance for new users
- * - [ ] Add tests: tests/unit/components/GuidedTour.test.tsx - test chat tour steps
- * 
- * PHASE 3.1: Mobile optimization
- * - [ ] Optimize chat interface for mobile screens
- * - [ ] Implement mobile-friendly input methods
- * - [ ] Add tests: tests/e2e/ui/navigation.test.ts - test mobile chat experience
+ * @connorbowen 2024-12-19 - Phase 1.2: Make Chat the default tab ✅ COMPLETED
+ * @connorbowen 2024-12-19 - Phase 2.1: Consolidated workflow management ✅ IN PROGRESS
  */
 
 const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   onWorkflowGenerated,
+  onWorkflowSaved,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [savingWorkflow, setSavingWorkflow] = useState<string | null>(null);
+  const [executingWorkflow, setExecutingWorkflow] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -127,6 +108,120 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       setIsLoading(false);
     }
   }, [inputMessage, isLoading, onWorkflowGenerated]);
+
+  const handleSaveWorkflow = useCallback(async (messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message?.workflow) return;
+
+    setSavingWorkflow(messageId);
+    
+    try {
+      const response = await apiClient.createWorkflow({
+        name: message.workflow.name,
+        description: message.workflow.description,
+        steps: message.steps || []
+      });
+
+      if (response.success && response.data && response.data.workflow) {
+        const workflowId = response.data.workflow.id;
+        
+        // Update the message to show it's saved
+        setMessages(prev => prev.map(m => 
+          m.id === messageId 
+            ? { ...m, workflow: { ...m.workflow, id: workflowId, isSaved: true } }
+            : m
+        ));
+
+        // Call callback if provided
+        if (onWorkflowSaved && workflowId) {
+          onWorkflowSaved(workflowId);
+        }
+
+        // Add a success message
+        const successMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: `✅ Workflow "${message.workflow.name}" has been saved successfully! You can now manage it from the Workflows tab.`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, successMsg]);
+      } else {
+        throw new Error(response.error || 'Failed to save workflow');
+      }
+    } catch (error) {
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: `❌ Failed to save workflow: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setSavingWorkflow(null);
+    }
+  }, [messages, onWorkflowSaved]);
+
+  const handleExecuteWorkflow = useCallback(async (messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message?.workflow) return;
+
+    setExecutingWorkflow(messageId);
+    
+    try {
+      // If workflow is saved, execute it directly
+      if (message.workflow.id) {
+        const response = await apiClient.executeWorkflow(message.workflow.id);
+        if (response.success) {
+          // Update message to show execution result
+          setMessages(prev => prev.map(m => 
+            m.id === messageId 
+              ? { ...m, isExecuted: true, executionResult: response.data }
+              : m
+          ));
+
+          // Add execution result message
+          const resultMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            type: 'assistant',
+            content: `✅ Workflow executed successfully! Execution ID: ${response.data.executionId}`,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, resultMsg]);
+        } else {
+          throw new Error(response.error || 'Failed to execute workflow');
+        }
+      } else {
+        // For unsaved workflows, we need to save and execute
+        // This is a simplified version - in practice you might want to ask user first
+        await handleSaveWorkflow(messageId);
+        
+        // Then execute the saved workflow
+        const savedMessage = messages.find(m => m.id === messageId);
+        if (savedMessage?.workflow?.id) {
+          const response = await apiClient.executeWorkflow(savedMessage.workflow.id);
+          if (response.success) {
+            const resultMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              type: 'assistant',
+              content: `✅ Workflow saved and executed successfully! Execution ID: ${response.data.executionId}`,
+              timestamp: new Date()
+            };
+            setMessages(prev => [...prev, resultMsg]);
+          }
+        }
+      }
+    } catch (error) {
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: `❌ Failed to execute workflow: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setExecutingWorkflow(null);
+    }
+  }, [messages, handleSaveWorkflow]);
 
   const formatTime = useCallback((date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -238,6 +333,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                 <div className="mt-3 p-3 bg-white rounded border border-gray-200">
                   <div className="text-xs font-medium text-gray-900 mb-2">
                     ✨ Created: {message.workflow.name}
+                    {message.workflow.isSaved && (
+                      <span className="ml-2 text-green-600">✓ Saved</span>
+                    )}
                   </div>
                   <div className="text-xs text-gray-600 mb-2">
                     {message.workflow.description}
@@ -277,14 +375,48 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                     </div>
                   </div>
                   
+                  {/* Action buttons */}
                   <div className="flex space-x-2">
-                    <button className="text-xs bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700">
-                      Save Workflow
-                    </button>
-                    <button className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">
+                    {!message.workflow.isSaved ? (
+                      <button 
+                        onClick={() => handleSaveWorkflow(message.id)}
+                        disabled={savingWorkflow === message.id}
+                        className="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 disabled:opacity-50"
+                      >
+                        {savingWorkflow === message.id ? 'Saving...' : 'Save Workflow'}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleExecuteWorkflow(message.id)}
+                        disabled={executingWorkflow === message.id}
+                        className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {executingWorkflow === message.id ? 'Executing...' : 'Execute Now'}
+                      </button>
+                    )}
+                    
+                    <button className="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">
                       Edit
                     </button>
+                    
+                    {message.workflow.isSaved && (
+                      <button className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                        View in Workflows
+                      </button>
+                    )}
                   </div>
+                  
+                  {/* Execution result */}
+                  {message.isExecuted && message.executionResult && (
+                    <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
+                      <div className="text-xs text-green-800">
+                        ✅ Executed successfully
+                      </div>
+                      <div className="text-xs text-green-600">
+                        Execution ID: {message.executionResult.executionId}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

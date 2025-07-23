@@ -52,7 +52,7 @@ APIQ is a semi-agentic, low-code web application designed to orchestrate complex
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **State Management**: React Context + SWR for data fetching
-- **Authentication**: NextAuth.js client integration
+- **Authentication**: NextAuth.js client integration (cookie-based, no localStorage)
 
 **Key Components:**
 - **Dashboard**: Main application interface with tabbed navigation

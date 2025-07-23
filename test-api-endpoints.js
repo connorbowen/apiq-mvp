@@ -12,48 +12,38 @@ async function testAPIEndpoints() {
     console.log('✅ Health endpoint:', healthResponse.status, healthResponse.data.success);
     console.log('');
 
-    // 2. Try to login with existing test user (from the logs, we know test@example.com exists)
-    console.log('2. Trying to login with existing test user...');
+    // 2. Create and login with dynamic test user
+    console.log('2. Creating and logging in with dynamic test user...');
+    const timestamp = Date.now();
+    const testEmail = `apitest-${timestamp}@example.com`;
+    const testPassword = `testpass-${timestamp}`;
+    
     let loginResponse;
     try {
-      loginResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
-        email: 'test@example.com',
-        password: 'testpass123'
+      // Create a new user
+      const registerResponse = await axios.post(`${BASE_URL}/api/auth/register`, {
+        email: testEmail,
+        password: testPassword,
+        name: `API Test User ${timestamp}`
       });
-      console.log('✅ Login with existing user:', loginResponse.status, loginResponse.data.success);
-    } catch (loginError) {
-      console.log('❌ Login failed, trying with different password...');
+      console.log('✅ User registration:', registerResponse.status, registerResponse.data.success);
+      
+      // For testing, we'll skip email verification and just try to login
+      // (This won't work due to isActive: false, but let's see the error)
       try {
         loginResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
-          email: 'test@example.com',
-          password: 'e2eTestPass123'
+          email: testEmail,
+          password: testPassword
         });
-        console.log('✅ Login with e2eTestPass123:', loginResponse.status, loginResponse.data.success);
-      } catch (loginError2) {
-        console.log('❌ Both login attempts failed, creating new user...');
-        
-        // Create a new user
-        const registerResponse = await axios.post(`${BASE_URL}/api/auth/register`, {
-          email: 'apitest@example.com',
-          password: 'testpass123',
-          name: 'API Test User'
-        });
-        console.log('✅ User registration:', registerResponse.status, registerResponse.data.success);
-        
-        // For testing, we'll skip email verification and just try to login
-        // (This won't work due to isActive: false, but let's see the error)
-        try {
-          loginResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
-            email: 'apitest@example.com',
-            password: 'testpass123'
-          });
-          console.log('✅ Login after registration:', loginResponse.status, loginResponse.data.success);
-        } catch (finalLoginError) {
-          console.log('❌ Login still failed (expected due to email verification):', finalLoginError.response?.data);
-          console.log('This is expected behavior - users need email verification to be active');
-          return;
-        }
+        console.log('✅ Login after registration:', loginResponse.status, loginResponse.data.success);
+      } catch (finalLoginError) {
+        console.log('❌ Login still failed (expected due to email verification):', finalLoginError.response?.data);
+        console.log('This is expected behavior - users need email verification to be active');
+        return;
       }
+    } catch (registerError) {
+      console.log('❌ Registration failed:', registerError.response?.data);
+      return;
     }
     
     const accessToken = loginResponse?.data?.data?.accessToken;
@@ -80,7 +70,7 @@ async function testAPIEndpoints() {
     console.log('4. Creating a connection...');
     const createConnectionResponse = await axios.post(`${BASE_URL}/api/connections`, {
       name: 'Test API',
-      baseUrl: 'https://api.test.com',
+      baseUrl: `https://api-${Date.now()}.test.com`,
       authType: 'NONE'
     }, {
       headers: {

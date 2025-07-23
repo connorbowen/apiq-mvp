@@ -179,7 +179,7 @@ export default function EditConnectionModal({
       } else {
         setTestResult({
           success: false,
-          message: response.error || 'Connection test failed. Please check your configuration.'
+          message: response.error || 'Connection validation failed. Please check your configuration.'
         });
       }
     } catch (error) {
@@ -365,7 +365,7 @@ export default function EditConnectionModal({
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                         : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                     }`}
-                    placeholder="https://api.example.com"
+                    placeholder="https://api.your-service.com"
                   />
                   {renderFieldError('baseUrl')}
                 </div>

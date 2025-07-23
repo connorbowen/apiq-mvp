@@ -26,11 +26,6 @@ export default function VerifyPage() {
       const response = await apiClient.verifyEmail(token);
 
       if (response.success && response.data) {
-        // Store authentication tokens
-        localStorage.setItem('accessToken', response.data.accessToken);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-
         // Check user onboarding state to determine redirect destination
         const user = response.data.user;
         const onboardingStage = user.onboardingStage;
