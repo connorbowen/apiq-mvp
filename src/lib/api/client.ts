@@ -643,10 +643,13 @@ class ApiClient {
 
   // Tour state management
   async getTourState(): Promise<ApiResponse<TourState>> {
-    return this.request({
+    console.log('🔍 API Client: Getting tour state...');
+    const response = await this.request<TourState>({
       method: 'GET',
       url: '/api/tour/state',
     });
+    console.log('🔍 API Client: Tour state response:', response);
+    return response;
   }
 
   async updateTourState(state: TourState): Promise<ApiResponse<TourState>> {

@@ -127,29 +127,44 @@ function DashboardContent() {
     tourState
   } = useGuidedTour();
 
-  // Auto-start tour for new users who haven't completed it
+  // Debug logging for tour state
+  useEffect(() => {
+    console.log('🎯 Dashboard: Onboarding state changed:', {
+      user: !!user,
+      onboardingState,
+      tourState,
+      isTourOpen
+    });
+  }, [user, onboardingState, tourState, isTourOpen]);
+
+  // Auto-start tour for new users who haven't completed it and haven't dismissed the tour
   useEffect(() => {
     console.log('🎯 Dashboard: Guided tour effect triggered:', {
       hasUser: !!user,
-      guidedTourCompleted: onboardingState.guidedTourCompleted,
+      tourState: onboardingState.tourState,
+      tourDismissed: onboardingState.tourState?.dismissed,
+      onboardingStage: onboardingState.stage,
+      onboardingCompleted: onboardingState.stage === 'completed',
       isTourOpen,
       userEmail: user?.email
     });
-    
-    if (user && !onboardingState.guidedTourCompleted && !isTourOpen) {
+    if (
+      user &&
+      onboardingState.tourState &&
+      !onboardingState.tourState.dismissed &&
+      onboardingState.stage !== 'completed' &&
+      !isTourOpen
+    ) {
       console.log('🎯 Dashboard: Scheduling guided tour to open in 1 second');
-      // Small delay to ensure all components are rendered
       const timer = setTimeout(() => {
-        // Re-evaluate conditions before opening tour to prevent race conditions
-        // This ensures we don't open the tour if the user data was loaded and synced
-        // after the effect was triggered but before the timeout executed
-        console.log('🎯 Dashboard: Timeout executed, re-evaluating tour conditions:', {
-          hasUser: !!user,
-          guidedTourCompleted: onboardingState.guidedTourCompleted,
-          isTourOpen
-        });
-        
-        if (user && !onboardingState.guidedTourCompleted && !isTourOpen) {
+        // Re-evaluate conditions before opening tour
+        if (
+          user &&
+          onboardingState.tourState &&
+          !onboardingState.tourState.dismissed &&
+          onboardingState.stage !== 'completed' &&
+          !isTourOpen
+        ) {
           console.log('🎯 Dashboard: Opening guided tour');
           openTour(fullTourSteps);
         } else {
@@ -157,8 +172,16 @@ function DashboardContent() {
         }
       }, 1000);
       return () => clearTimeout(timer);
+    } else {
+      console.log('🎯 Dashboard: Tour conditions not met:', {
+        hasUser: !!user,
+        hasTourState: !!onboardingState.tourState,
+        tourDismissed: onboardingState.tourState?.dismissed,
+        onboardingStage: onboardingState.stage,
+        isTourOpen
+      });
     }
-  }, [user, onboardingState.guidedTourCompleted, isTourOpen, openTour, fullTourSteps]);
+  }, [user, onboardingState.tourState, onboardingState.stage, isTourOpen, openTour, fullTourSteps]);
 
   const loadUser = useCallback(async () => {
     try {
@@ -170,7 +193,6 @@ function DashboardContent() {
           id: userData.id,
           email: userData.email,
           emailVerified: userData.emailVerified,
-          guidedTourCompleted: userData.guidedTourCompleted,
           onboardingStage: userData.onboardingStage
         });
         

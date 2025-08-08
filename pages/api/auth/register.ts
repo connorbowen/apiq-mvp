@@ -68,8 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         role: 'USER',
         isActive: true, // Active immediately for simplified onboarding
         onboardingStage: 'NEW_USER',
-        onboardingCompletedAt: null,
-        guidedTourCompleted: false
+        onboardingCompletedAt: null
       }
     });
 
@@ -194,8 +193,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           role: user.role,
           isActive: user.isActive,
           onboardingStage: user.onboardingStage,
-          onboardingCompletedAt: user.onboardingCompletedAt,
-          guidedTourCompleted: user.guidedTourCompleted
+          onboardingCompletedAt: user.onboardingCompletedAt
         }
       }
     });

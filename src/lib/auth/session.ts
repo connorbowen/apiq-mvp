@@ -407,7 +407,6 @@ export const handleGetCurrentUser = async (req: AuthenticatedRequest, res: NextA
         isActive: true,
         // Onboarding fields
         onboardingStage: true,
-        guidedTourCompleted: true,
         onboardingCompletedAt: true,
         // Profile fields
         firstName: true,

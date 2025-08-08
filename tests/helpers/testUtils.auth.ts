@@ -49,7 +49,6 @@ export const createTestUser = async (
       isActive: true,
       // Set onboarding fields to prevent guided tour in E2E tests
       onboardingStage: 'COMPLETED',
-      guidedTourCompleted: true,
       onboardingCompletedAt: new Date()
     }
   });
@@ -114,7 +113,6 @@ export const createTestUserWithTour = async (
       isActive: true,
       // Set onboarding fields to trigger guided tour
       onboardingStage: 'NEW_USER',
-      guidedTourCompleted: false,
       onboardingCompletedAt: null
     }
   });

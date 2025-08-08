@@ -29,13 +29,16 @@ export const setupGlobalErrorListeners = async (page: Page): Promise<void> => {
  * Setup tracing for debugging
  */
 export const setupTracing = async (page: Page): Promise<void> => {
-  // Start tracing if not already started
-  if (!page.context().tracing) {
+  try {
+    // Start tracing - this will create the tracing object
     await page.context().tracing.start({
       screenshots: true,
       snapshots: true,
       sources: true
     });
+  } catch (error) {
+    // If tracing is already started, that's fine
+    console.log('🔍 E2E DEBUG: Tracing already started or failed to start:', error);
   }
 };
 
@@ -47,10 +50,11 @@ export const stopTracing = async (
   testInfo: any
 ): Promise<void> => {
   try {
-    // Only try to stop tracing if it exists
-    if (page.context().tracing) {
+    // Check if tracing exists before trying to stop it
+    const context = page.context();
+    if (context.tracing) {
       const tracePath = testInfo.outputPath('trace.zip');
-      await page.context().tracing.stop({ path: tracePath });
+      await context.tracing.stop({ path: tracePath });
     }
   } catch (error) {
     // Ignore tracing errors - they're not critical for test execution

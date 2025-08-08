@@ -67,9 +67,9 @@ describe('GuidedTour', () => {
     mockUseOnboarding.mockReturnValue({
       state: {
         stage: 'new_user',
-        guidedTourCompleted: false,
         tourSteps: [],
         currentTourStep: 0,
+        tourState: { dismissed: false, currentStep: 0, totalSteps: 3, isActive: true, completedSteps: [], lastShown: new Date().toISOString() },
       },
       startTour: jest.fn(),
       completeTour: jest.fn(),
@@ -79,6 +79,8 @@ describe('GuidedTour', () => {
       updateStage: jest.fn(),
       completeOnboarding: jest.fn(),
       isFeatureAvailable: jest.fn(),
+      syncWithUserData: jest.fn(),
+      syncWithTourState: jest.fn(),
     });
   });
 

@@ -7,7 +7,6 @@ export interface TestUser {
   lastName?: string;
   role: 'user' | 'admin' | 'super_admin';
   onboardingStage?: 'new' | 'profile_completed' | 'tour_completed' | 'completed';
-  guidedTourCompleted?: boolean;
   isActive?: boolean;
   createdAt?: Date;
 }
@@ -15,7 +14,6 @@ export interface TestUser {
 export interface CreateTestUserOptions {
   role?: 'user' | 'admin' | 'super_admin';
   onboardingStage?: 'new' | 'profile_completed' | 'tour_completed' | 'completed';
-  guidedTourCompleted?: boolean;
   isActive?: boolean;
   email?: string;
   firstName?: string;
@@ -36,7 +34,6 @@ export async function createTestUser(options: CreateTestUserOptions = {}): Promi
     lastName: options.lastName || 'User',
     role: options.role || 'user',
     onboardingStage: options.onboardingStage || 'new',
-    guidedTourCompleted: options.guidedTourCompleted || false,
     isActive: options.isActive !== false, // Default to true
     createdAt: new Date(),
   };
@@ -104,31 +101,26 @@ export const TestUsers = {
   newUser: () => createTestUser({
     role: 'user',
     onboardingStage: 'new',
-    guidedTourCompleted: false,
   }),
   
   existingUser: () => createTestUser({
     role: 'user',
     onboardingStage: 'completed',
-    guidedTourCompleted: true,
   }),
   
   adminUser: () => createTestUser({
     role: 'admin',
     onboardingStage: 'completed',
-    guidedTourCompleted: true,
   }),
   
   superAdminUser: () => createTestUser({
     role: 'super_admin',
     onboardingStage: 'completed',
-    guidedTourCompleted: true,
   }),
   
   userInProgress: () => createTestUser({
     role: 'user',
     onboardingStage: 'profile_completed',
-    guidedTourCompleted: false,
   }),
 };
 

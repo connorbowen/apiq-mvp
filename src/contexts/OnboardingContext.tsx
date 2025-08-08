@@ -30,6 +30,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiClient } from '../lib/api/client';
 
 // Onboarding stages for progressive disclosure
 export type OnboardingStage = 'new_user' | 'first_connection' | 'first_workflow' | 'completed';
@@ -47,9 +48,16 @@ export interface TourStep {
 interface OnboardingState {
   stage: OnboardingStage;
   completedAt?: Date;
-  guidedTourCompleted: boolean;
   tourSteps: TourStep[];
   currentTourStep: number;
+  tourState?: {
+    currentStep: number;
+    totalSteps: number;
+    isActive: boolean;
+    completedSteps: number[];
+    dismissed: boolean;
+    lastShown: string;
+  };
 }
 
 // Onboarding context interface
@@ -64,12 +72,12 @@ interface OnboardingContextType {
   skipTour: () => void;
   isFeatureAvailable: (feature: string) => boolean;
   syncWithUserData: (userData: any) => void;
+  syncWithTourState: () => Promise<void>;
 }
 
 // Default onboarding state
 const defaultState: OnboardingState = {
   stage: 'new_user',
-  guidedTourCompleted: false,
   tourSteps: [],
   currentTourStep: 0,
 };
@@ -79,7 +87,40 @@ const OnboardingContext = createContext<OnboardingContextType | undefined>(undef
 
 // Provider component
 export function OnboardingProvider({ children }: { children: ReactNode }) {
+  console.log('🔄 OnboardingProvider: Initializing...');
   const [state, setState] = useState<OnboardingState>(defaultState);
+
+  // Fetch and sync tourState from backend on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        console.log('🔄 OnboardingContext: Fetching tour state from backend...');
+        const response = await apiClient.getTourState();
+        console.log('🔄 OnboardingContext: Tour state response:', response);
+        if (response.success && response.data) {
+          console.log('🔄 OnboardingContext: Setting tour state:', response.data);
+          setState(prev => ({ ...prev, tourState: response.data }));
+        } else {
+          console.log('🔄 OnboardingContext: Tour state response was not successful:', response);
+        }
+      } catch (error) {
+        console.error('🔄 OnboardingContext: Error fetching tour state:', error);
+        // Ignore error, tourState will remain undefined
+      }
+    })();
+  }, []); // Remove any dependencies to ensure it runs on mount
+
+  // Method to sync tourState from backend
+  const syncWithTourState = async () => {
+    try {
+      const response = await apiClient.getTourState();
+      if (response.success && response.data) {
+        setState(prev => ({ ...prev, tourState: response.data }));
+      }
+    } catch (error) {
+      // Ignore error
+    }
+  };
 
   // Update onboarding stage
   const updateStage = (stage: OnboardingStage) => {
@@ -96,46 +137,130 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   };
 
   // Start guided tour
-  const startTour = () => {
-    setState(prev => ({ 
-      ...prev, 
-      currentTourStep: 0,
-      guidedTourCompleted: false 
-    }));
+  const startTour = async () => {
+    try {
+      const response = await apiClient.updateTourState({
+        currentStep: 0,
+        totalSteps: 3,
+        isActive: true,
+        completedSteps: [],
+        dismissed: false,
+        lastShown: new Date().toISOString(),
+      });
+      if (response.success && response.data) {
+        setState(prev => ({ 
+          ...prev, 
+          currentTourStep: 0,
+          tourState: response.data
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to start tour:', error);
+    }
   };
 
   // Complete guided tour
-  const completeTour = () => {
-    setState(prev => ({ 
-      ...prev, 
-      guidedTourCompleted: true,
-      currentTourStep: 0 
-    }));
+  const completeTour = async () => {
+    try {
+      const response = await apiClient.updateTourState({
+        currentStep: 0,
+        totalSteps: 3,
+        isActive: false,
+        completedSteps: [0, 1, 2], // Mark all steps as completed
+        dismissed: false,
+        lastShown: new Date().toISOString(),
+      });
+      if (response.success && response.data) {
+        setState(prev => ({ 
+          ...prev, 
+          currentTourStep: 0,
+          tourState: response.data
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to complete tour:', error);
+    }
   };
 
   // Next tour step
-  const nextTourStep = () => {
-    setState(prev => ({ 
-      ...prev, 
-      currentTourStep: Math.min(prev.currentTourStep + 1, prev.tourSteps.length - 1) 
-    }));
+  const nextTourStep = async () => {
+    const nextStep = Math.min(state.currentTourStep + 1, state.tourSteps.length - 1);
+    try {
+      const response = await apiClient.updateTourState({
+        currentStep: nextStep,
+        totalSteps: 3,
+        isActive: true,
+        completedSteps: Array.from({ length: nextStep }, (_, i) => i), // Mark previous steps as completed
+        dismissed: false,
+        lastShown: new Date().toISOString(),
+      });
+      if (response.success && response.data) {
+        setState(prev => ({ 
+          ...prev, 
+          currentTourStep: nextStep,
+          tourState: response.data
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to update tour step:', error);
+      // Fallback to local state update
+      setState(prev => ({ 
+        ...prev, 
+        currentTourStep: nextStep
+      }));
+    }
   };
 
   // Previous tour step
-  const previousTourStep = () => {
-    setState(prev => ({ 
-      ...prev, 
-      currentTourStep: Math.max(prev.currentTourStep - 1, 0) 
-    }));
+  const previousTourStep = async () => {
+    const prevStep = Math.max(state.currentTourStep - 1, 0);
+    try {
+      const response = await apiClient.updateTourState({
+        currentStep: prevStep,
+        totalSteps: 3,
+        isActive: true,
+        completedSteps: Array.from({ length: prevStep }, (_, i) => i),
+        dismissed: false,
+        lastShown: new Date().toISOString(),
+      });
+      if (response.success && response.data) {
+        setState(prev => ({ 
+          ...prev, 
+          currentTourStep: prevStep,
+          tourState: response.data
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to update tour step:', error);
+      // Fallback to local state update
+      setState(prev => ({ 
+        ...prev, 
+        currentTourStep: prevStep
+      }));
+    }
   };
 
   // Skip tour
-  const skipTour = () => {
-    setState(prev => ({ 
-      ...prev, 
-      guidedTourCompleted: true,
-      currentTourStep: 0 
-    }));
+  const skipTour = async () => {
+    try {
+      const response = await apiClient.updateTourState({
+        currentStep: 0,
+        totalSteps: 3,
+        isActive: false,
+        completedSteps: [],
+        dismissed: true,
+        lastShown: new Date().toISOString(),
+      });
+      if (response.success && response.data) {
+        setState(prev => ({ 
+          ...prev, 
+          currentTourStep: 0,
+          tourState: response.data
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to skip tour:', error);
+    }
   };
 
   // Check if feature is available based on onboarding stage
@@ -161,13 +286,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     if (userData) {
       console.log('🔄 OnboardingContext: Syncing with user data:', {
         onboardingStage: userData.onboardingStage || userData.onboarding_stage,
-        guidedTourCompleted: userData.guidedTourCompleted || userData.guided_tour_completed,
         onboardingCompletedAt: userData.onboardingCompletedAt || userData.onboarding_completed_at
       });
       
       // Map database fields to context fields
       const onboardingStage = userData.onboardingStage || userData.onboarding_stage;
-      const guidedTourCompleted = userData.guidedTourCompleted || userData.guided_tour_completed;
       const onboardingCompletedAt = userData.onboardingCompletedAt || userData.onboarding_completed_at;
       
       if (onboardingStage) {
@@ -180,12 +303,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         };
         const mappedStage = stageMap[onboardingStage] || 'new_user';
         setState(prev => ({ ...prev, stage: mappedStage }));
-      }
-      
-      // Explicitly handle guided tour completion state
-      if (guidedTourCompleted !== undefined) {
-        console.log('🔄 OnboardingContext: Setting guidedTourCompleted to:', guidedTourCompleted);
-        setState(prev => ({ ...prev, guidedTourCompleted: Boolean(guidedTourCompleted) }));
       }
       
       if (onboardingCompletedAt) {
@@ -209,6 +326,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     skipTour,
     isFeatureAvailable,
     syncWithUserData,
+    syncWithTourState,
   };
 
   return (

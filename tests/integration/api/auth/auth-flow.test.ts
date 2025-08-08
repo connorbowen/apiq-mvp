@@ -122,7 +122,6 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
       
       // User should be set up for chat interface redirect
       expect(user.onboardingStage).toBe('NEW_USER');
-      expect(user.guidedTourCompleted).toBe(false);
       
       // The frontend should redirect to /dashboard?tour=true for new users
       // This is handled in the signup page component
@@ -260,7 +259,6 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
       // Should set proper onboarding state
       expect(user.onboardingStage).toBe('NEW_USER');
       expect(user.onboardingCompletedAt).toBeNull();
-      expect(user.guidedTourCompleted).toBe(false);
     });
 
     test('should track onboarding progress', async () => {
@@ -290,7 +288,6 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
         where: { id: user!.id },
         data: {
           onboardingStage: 'FIRST_WORKFLOW',
-          guidedTourCompleted: true
         }
       });
 
@@ -299,7 +296,6 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
         where: { id: user!.id }
       });
       expect(updatedUser?.onboardingStage).toBe('FIRST_WORKFLOW');
-      expect(updatedUser?.guidedTourCompleted).toBe(true);
     });
 
     test('should handle guided tour state', async () => {
@@ -324,8 +320,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
       const user = await prisma.user.findUnique({
         where: { email: testEmail }
       });
-      expect(user?.guidedTourCompleted).toBe(false);
-
+      
       // Complete tour
       await prisma.user.update({
         where: { id: user!.id },
@@ -367,7 +362,6 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
         data: {
           onboardingStage: 'COMPLETED',
           onboardingCompletedAt: new Date(),
-          guidedTourCompleted: true
         }
       });
 
@@ -377,7 +371,6 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
       });
       expect(completedUser?.onboardingStage).toBe('COMPLETED');
       expect(completedUser?.onboardingCompletedAt).toBeDefined();
-      expect(completedUser?.guidedTourCompleted).toBe(true);
     });
   });
 

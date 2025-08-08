@@ -18,6 +18,19 @@ This document outlines the comprehensive testing strategy for the UX simplificat
 - **Accessibility First:** WCAG 2.1 AA compliance for all components
 - **Performance Testing:** Load testing and optimization validation
 - **Security Testing:** Authentication flows and data protection
+- **Hybrid Testing Strategy:** E2E tests for user journeys, unit tests for form logic
+
+### **React Form Testing Strategy**
+- **E2E Tests**: Focus on user journey validation using API-based authentication
+  - Full user flow testing (login → dashboard → functionality)
+  - Form UI validation (elements present, accessible)
+  - User experience validation with real data
+- **Unit Tests**: Comprehensive form logic testing using React Testing Library
+  - All form submission scenarios (success/failure)
+  - Error handling (network errors, validation)
+  - Loading states and UX compliance
+  - OAuth2 integration testing
+- **Rationale**: Playwright cannot update React controlled component state, requiring hybrid approach
 
 ### **Test Organization**
 ```

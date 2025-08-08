@@ -25,12 +25,10 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
     newUser = await createTestUser({ 
       role: 'user',
       onboardingStage: 'new',
-      guidedTourCompleted: false
     });
     existingUser = await createTestUser({ 
       role: 'user',
       onboardingStage: 'completed',
-      guidedTourCompleted: true
     });
   });
 

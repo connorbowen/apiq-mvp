@@ -20,7 +20,6 @@ describe('ProgressiveDisclosure', () => {
       isFeatureAvailable: jest.fn(),
       state: {
         stage: 'new_user',
-        guidedTourCompleted: false,
         tourSteps: [],
         currentTourStep: 0,
       },
@@ -89,7 +88,6 @@ describe('ProgressiveDisclosure', () => {
         ...mockUseOnboarding(),
         state: {
           stage: 'completed',
-          guidedTourCompleted: false,
           tourSteps: [],
           currentTourStep: 0,
         },
@@ -213,7 +211,6 @@ describe('ProgressiveDisclosure', () => {
         ...mockUseOnboarding(),
         state: {
           stage: 'new_user',
-          guidedTourCompleted: false,
           tourSteps: [],
           currentTourStep: 0,
         },
@@ -263,7 +260,6 @@ describe('ProgressiveDisclosure', () => {
         ...mockUseOnboarding(),
         state: {
           stage: 'new_user',
-          guidedTourCompleted: false,
           tourSteps: [],
           currentTourStep: 0,
         },
@@ -283,7 +279,6 @@ describe('ProgressiveDisclosure', () => {
         ...mockUseOnboarding(),
         state: {
           stage: 'completed',
-          guidedTourCompleted: false,
           tourSteps: [],
           currentTourStep: 0,
         },
@@ -354,7 +349,6 @@ describe('ProgressiveDisclosure', () => {
         isFeatureAvailable: jest.fn().mockReturnValue(false),
         state: {
           stage: 'new_user',
-          guidedTourCompleted: false,
           tourSteps: [],
           currentTourStep: 0,
         },
@@ -379,7 +373,6 @@ describe('ProgressiveDisclosure', () => {
         isFeatureAvailable: jest.fn().mockReturnValue(false),
         state: {
           stage: 'new_user',
-          guidedTourCompleted: false,
           tourSteps: [],
           currentTourStep: 1,
         },
