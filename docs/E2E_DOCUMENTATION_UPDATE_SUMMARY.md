@@ -224,3 +224,22 @@ This documentation update ensures that the project can continue its migration to
 **Last Updated:** August 2024  
 **Document Owner:** Development Team  
 **Next Review:** After Tier 2 completion
+
+## 📊 **CORRECTED CURRENT STATUS (August 2024)**
+
+### **Files Actually Completed: 3/24 (12.5%)**
+- ✅ `tests/e2e/auth/authentication-session.test.ts` (23/23 tests passing)
+- ✅ `tests/e2e/auth/password-reset.test.ts` (36/36 tests passing)  
+- ✅ `tests/e2e/ui/navigation.test.ts` (22/22 tests passing)
+
+### **Files NOT Completed (Not in e2e:current):**
+- ❌ `tests/e2e/auth/oauth2.test.ts` - **NOT REFACTORED** (Not in e2e:current)
+- ❌ `tests/e2e/auth/registration-verification.test.ts` - **NOT REFACTORED** (Not in e2e:current)
+
+### **Foundation Tier Progress: 60% Complete (3/5 files)**
+- **Auth Tests**: 2/4 files (50%) - Only the 2 files in e2e:current
+- **UI Tests**: 1/3 files (33%) - Navigation tests only
+- **Total Tests Passing**: 81/81 (100% for completed files)
+
+### **Important Note**
+The documentation previously incorrectly showed 5 files as completed. Only the 3 files included in the `e2e:current` command have been fully refactored and migrated to the new helper structure. The other 2 auth files exist but have not been refactored yet.

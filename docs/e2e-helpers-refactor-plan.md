@@ -958,17 +958,15 @@ When migrating from old patterns:
   - `tests/e2e/auth/authentication-session.test.ts` (23/23 tests passing)
   - `tests/e2e/auth/password-reset.test.ts` (36/36 tests passing)
   - `tests/e2e/ui/navigation.test.ts` (22/22 tests passing)
-- **Remaining**: 20 E2E test files need migration to new helper structure
-- **Success Rate**: 100% for migrated tests (81/81 tests passing)
-- **File Size Compliance**: All helper files now under 300 lines
-- **New Achievement**: Created comprehensive `uiHelpers.ts` with navigation-specific helpers extracted from navigation tests
+- **Not Started**: 
+  - `tests/e2e/auth/oauth2.test.ts` (Not in e2e:current)
+  - `tests/e2e/auth/registration-verification.test.ts` (Not in e2e:current)
+- **Total**: 3/23 files (13.0%) - 81/81 tests passing with new helper structure
 
-### **Next Steps**
-1. **Continue Migration**: Migrate remaining 20 E2E test files to new helper structure
-2. **Validate Each File**: Ensure 100% pass rate for each migrated file
-3. **Update Documentation**: Keep documentation synchronized with migration progress
-4. **Performance Monitoring**: Monitor test execution times during migration
-5. **Apply Proven Pattern**: Use the successful navigation tier pattern for remaining files
+### **Next Phase Ready**
+- **Foundation Tier**: 60% complete (3/5 files)
+- **Ready for Tier 2**: Core User Flows (connections, workflows)
+- **Helper Structure**: Proven and stable
 
 ### **Success Metrics Achieved**
 - ✅ **File Size Compliance**: All helper files under 300 lines
@@ -999,6 +997,7 @@ When migrating from old patterns:
 - [x] Replace inline logic with helper calls
 - [x] Create specialized `uiHelpers.ts` with navigation-specific helpers
 - [x] Validate 100% pass rate (81/81 tests)
+- **Status**: 3/23 files completed (13.0%)
 
 ### Week 3: Core User Flows (In Progress)
 - [ ] Migrate remaining Tier 2 E2E tests (connections, workflows)
