@@ -104,8 +104,18 @@ export const createTestUserWithTour = async (
   const hashedPassword = await bcrypt.hash(testPassword, 10);
 
   // Create user that will trigger guided tour
-  const user = await prisma.user.create({
-    data: {
+  const user = await prisma.user.upsert({
+    where: { email: testEmail },
+    update: {
+      password: hashedPassword,
+      name: testName,
+      role: role,
+      isActive: true,
+      // Set onboarding fields to trigger guided tour
+      onboardingStage: 'NEW_USER',
+      onboardingCompletedAt: null
+    },
+    create: {
       email: testEmail,
       password: hashedPassword,
       name: testName,
@@ -114,6 +124,28 @@ export const createTestUserWithTour = async (
       // Set onboarding fields to trigger guided tour
       onboardingStage: 'NEW_USER',
       onboardingCompletedAt: null
+    }
+  });
+
+  // Create tour state for the user
+  await prisma.tourState.upsert({
+    where: { userId: user.id },
+    update: {
+      currentStep: 0,
+      totalSteps: 3,
+      isActive: true,
+      completedSteps: [],
+      dismissed: false,
+      lastShown: new Date(),
+    },
+    create: {
+      userId: user.id,
+      currentStep: 0,
+      totalSteps: 3,
+      isActive: true,
+      completedSteps: [],
+      dismissed: false,
+      lastShown: new Date(),
     }
   });
 

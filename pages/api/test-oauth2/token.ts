@@ -1,7 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 // Only allow this endpoint in test environment or when explicitly enabled
-if (process.env.NODE_ENV !== 'test' && process.env.ENABLE_TEST_OAUTH2 !== 'true') {
+// For E2E tests, we need to be more flexible about environment detection
+const isTestEnvironment = process.env.NODE_ENV === 'test' || 
+                         process.env.ENABLE_TEST_OAUTH2 === 'true' || 
+                         process.env.PLAYWRIGHT_TEST === 'true' ||
+                         process.env.TEST_MODE === 'true';
+
+if (!isTestEnvironment) {
   throw new Error('Test OAuth2 endpoints are only available in test environment');
 }
 

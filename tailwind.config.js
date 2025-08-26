@@ -21,6 +21,21 @@ module.exports = {
           800: '#1e40af',
           900: '#1e3a8a',
         },
+        // Enhanced contrast colors for better readability
+        text: {
+          primary: '#111827',    // Very dark gray for primary text
+          secondary: '#374151',  // Dark gray for secondary text
+          tertiary: '#6b7280',  // Medium gray for tertiary text
+          placeholder: '#6b7280', // Better contrast placeholder
+          muted: '#9ca3af',     // Muted text with better contrast
+        },
+        input: {
+          bg: '#ffffff',         // Pure white input background
+          border: '#d1d5db',     // Consistent border color
+          focus: '#3b82f6',      // Focus ring color
+          text: '#111827',       // Dark text for inputs
+          placeholder: '#6b7280', // Better contrast placeholder
+        }
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],

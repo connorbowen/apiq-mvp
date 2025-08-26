@@ -26,7 +26,7 @@
 
 'use client';
 
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useRef } from 'react';
 import { apiClient, ApiConnection, Secret } from '../../lib/api/client';
 import CreateConnectionModal from './CreateConnectionModal';
 import EditConnectionModal from './EditConnectionModal';
@@ -72,6 +72,9 @@ function ConnectionsTab({
   const [rotateError, setRotateError] = useState<Record<string, string>>({});
   const [rotateSuccess, setRotateSuccess] = useState<Record<string, string>>({});
   const [viewingSecret, setViewingSecret] = useState<Secret | null>(null);
+  
+  // Ref to prevent duplicate API calls for the same connection set
+  const lastFetchedConnectionIds = useRef<string>('');
 
   // Add debugging for connections prop
   console.info('[connections-tab] ConnectionsTab rendered with connections:', {
@@ -123,10 +126,17 @@ function ConnectionsTab({
       setSecretsLoading(newLoading);
       setSecretsError(newError);
     };
+    
+    // Only fetch if we have connections and haven't fetched recently
     if (connections.length > 0) {
-      fetchAllSecrets();
+      // Use a ref to prevent multiple simultaneous fetches
+      const connectionIds = connections.map(c => c.id).sort().join(',');
+      if (connectionIds !== lastFetchedConnectionIds.current) {
+        lastFetchedConnectionIds.current = connectionIds;
+        fetchAllSecrets();
+      }
     }
-  }, [connections]);
+  }, [connections.length]); // Only depend on connections.length, not the entire array
 
   const getStatusColor = (connection: ApiConnection) => {
     // For OAuth2 connections, use connectionStatus instead of status

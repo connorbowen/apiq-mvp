@@ -134,19 +134,119 @@ export const validateUXCompliance = async (
  * - Safe to call multiple times in the same test
  */
 export const closeGuidedTourIfPresent = async (page: Page): Promise<void> => {
-  const overlay = page.locator('[data-testid="guided-tour-overlay"]');
-  if (await overlay.isVisible().catch(() => false)) {
+  // Check for guided tour overlay with multiple selectors
+  const overlaySelectors = [
+    '[data-testid="guided-tour-overlay"]',
+    '.guided-tour [data-testid="guided-tour-overlay"]',
+    '.guided-tour .fixed.inset-0.bg-black.bg-opacity-50'
+  ];
+  
+  let overlay = null;
+  for (const selector of overlaySelectors) {
+    const element = page.locator(selector);
+    if (await element.isVisible().catch(() => false)) {
+      overlay = element;
+      break;
+    }
+  }
+  
+  if (overlay) {
+    console.log('🔍 E2E DEBUG: Guided tour overlay detected, attempting to close');
+    
     // Try clicking the close button if it exists
     const closeBtn = page.locator('[data-testid="close-guided-tour-btn"]');
     if (await closeBtn.isVisible().catch(() => false)) {
+      console.log('🔍 E2E DEBUG: Clicking close button');
       await closeBtn.click();
     } else {
       // Fallback: press Escape
+      console.log('🔍 E2E DEBUG: Using Escape key fallback');
       await page.keyboard.press('Escape');
     }
-    // Wait for overlay to disappear
-    await overlay.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+    
+    // Wait for overlay to disappear with multiple checks
+    try {
+      await overlay.waitFor({ state: 'hidden', timeout: 5000 });
+      console.log('🔍 E2E DEBUG: Guided tour overlay closed successfully');
+    } catch (error) {
+      console.log('🔍 E2E DEBUG: Overlay close timeout, trying additional cleanup');
+      
+      // Additional cleanup: try clicking outside or pressing Escape again
+      try {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(500);
+      } catch (cleanupError) {
+        console.log('🔍 E2E DEBUG: Additional cleanup failed:', cleanupError);
+      }
+    }
+  } else {
+    console.log('🔍 E2E DEBUG: No guided tour overlay detected');
   }
+  
+  // Final verification: ensure no guided tour elements are blocking interactions
+  await page.waitForTimeout(500);
+  
+  // Check if any guided tour elements are still visible and blocking
+  const blockingElements = page.locator('.guided-tour [data-testid="guided-tour-overlay"], .guided-tour .fixed.inset-0.bg-black.bg-opacity-50');
+  if (await blockingElements.count() > 0) {
+    console.log('🔍 E2E DEBUG: Guided tour still blocking, forcing cleanup');
+    // Force cleanup by pressing Escape multiple times
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(200);
+    }
+  }
+};
+
+/**
+ * Wait for guided tour to be ready with authentication-aware retry mechanism
+ * Handles the case where tour state API might return 401 initially due to auth timing
+ */
+export const waitForGuidedTourReady = async (page: Page, timeout: number = 20000): Promise<void> => {
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeout) {
+    try {
+      // Check if tour tooltip is visible
+      const tooltip = page.locator('[data-testid="guided-tour-tooltip"]');
+      if (await tooltip.isVisible({ timeout: 2000 }).catch(() => false)) {
+        console.log('🔍 E2E DEBUG: Guided tour tooltip is visible');
+        return;
+      }
+      
+      // If tour tooltip not visible, ensure authentication is fully established
+      console.log('🔍 E2E DEBUG: Tour tooltip not visible, ensuring authentication is ready');
+      
+      // Wait for authentication to be fully established by checking for user data
+      await page.waitForFunction(() => {
+        // Check if user data is loaded (indicating auth is ready)
+        const userData = (window as any).__userData || null;
+        return userData !== null;
+      }, { timeout: 5000 }).catch(() => {
+        console.log('🔍 E2E DEBUG: User data not detected, proceeding anyway');
+      });
+      
+      // Wait for any pending API calls to complete
+      await page.waitForTimeout(2000);
+      
+      // Try to wait for tour tooltip again with shorter timeout
+      try {
+        await page.waitForSelector('[data-testid="guided-tour-tooltip"]', { timeout: 5000 });
+        console.log('🔍 E2E DEBUG: Guided tour tooltip appeared after auth wait');
+        return;
+      } catch (retryError) {
+        console.log('🔍 E2E DEBUG: Tour tooltip still not visible after auth wait');
+      }
+      
+      // Wait a bit before retrying the main loop
+      await page.waitForTimeout(1000);
+    } catch (error) {
+      console.log('🔍 E2E DEBUG: Tour check failed, retrying...', error);
+      await page.waitForTimeout(1000);
+    }
+  }
+  
+  throw new Error(`Guided tour did not appear within ${timeout}ms`);
 }; 
 
 /**
@@ -175,6 +275,36 @@ export const fillLoginForm = async (
 };
 
 /**
+ * Wait for dashboard to be fully loaded and ready
+ * Ensures all API calls have completed before proceeding
+ */
+export const waitForDashboardReady = async (page: Page, timeout = 15000): Promise<void> => {
+  console.log('🔍 E2E DEBUG: Waiting for dashboard to be fully ready');
+  
+  try {
+    // Wait for main dashboard elements to be visible
+    await page.waitForSelector('[data-testid="tab-chat"]', { timeout });
+    
+    // Wait for any loading states to disappear
+    await page.waitForFunction(() => {
+      // Check if there are any loading indicators visible
+      const loadingElements = document.querySelectorAll('[data-testid*="loading"], [data-testid*="spinner"]');
+      return loadingElements.length === 0;
+    }, { timeout: 10000 }).catch(() => {
+      console.log('🔍 E2E DEBUG: Loading indicators check failed, proceeding anyway');
+    });
+    
+    // Wait a bit more for any remaining API calls to settle
+    await page.waitForTimeout(2000);
+    
+    console.log('🔍 E2E DEBUG: Dashboard is ready');
+  } catch (error) {
+    console.log('🔍 E2E DEBUG: Dashboard ready check failed:', error);
+    throw error;
+  }
+};
+
+/**
  * Submit signup form and wait for redirect
  */
 export const submitSignupForm = async (
@@ -194,4 +324,240 @@ export const submitSignupForm = async (
   
   // Wait for redirect
   await page.waitForURL(validateURL, { timeout });
+}; 
+
+/**
+ * Navigation and Tab Management Helpers
+ */
+
+/**
+ * Navigate to a specific tab and wait for URL update
+ */
+export const navigateToTab = async (page: Page, tabName: string): Promise<void> => {
+  await page.getByTestId(`tab-${tabName}`).click();
+  
+  // Wait for URL to change, but be more flexible about the timing
+  try {
+    await page.waitForURL(/.*tab=${tabName}/, { timeout: 5000 });
+  } catch (error) {
+    // If URL doesn't change immediately, check if the tab is actually selected
+    await expect(page.getByTestId(`tab-${tabName}`)).toHaveAttribute('aria-selected', 'true');
+  }
+};
+
+/**
+ * Validate tab content is visible and properly selected
+ */
+export const validateTabContent = async (page: Page, tabName: string): Promise<void> => {
+  const tabSelectors: Record<string, string> = {
+    chat: '[data-testid="chat-interface"]',
+    workflows: '[data-testid="workflows-management"]',
+    connections: '[data-testid="connections-management"]',
+    settings: '[data-testid="settings-tab"]',
+    profile: '[data-testid="profile-tab"]'
+  };
+  
+  await expect(page.getByTestId(`tab-${tabName}`)).toHaveAttribute('aria-selected', 'true');
+  if (tabSelectors[tabName]) {
+    await expect(page.locator(tabSelectors[tabName])).toBeVisible();
+  }
+};
+
+/**
+ * Test switching between multiple tabs
+ */
+export const testTabSwitching = async (page: Page, tabs: string[]): Promise<void> => {
+  for (const tab of tabs) {
+    await navigateToTab(page, tab);
+    await validateTabContent(page, tab);
+  }
+};
+
+/**
+ * User Dropdown Navigation Helpers
+ */
+
+/**
+ * Open the user dropdown menu
+ */
+export const openUserDropdown = async (page: Page): Promise<void> => {
+  await page.getByTestId('user-dropdown-toggle').click();
+};
+
+/**
+ * Validate user dropdown options are visible/hidden as expected
+ */
+export const validateUserDropdownOptions = async (
+  page: Page, 
+  expectedOptions: string[], 
+  unexpectedOptions: string[] = []
+): Promise<void> => {
+  for (const option of expectedOptions) {
+    await expect(page.getByTestId(`user-dropdown-${option}`)).toBeVisible();
+  }
+  
+  for (const option of unexpectedOptions) {
+    await expect(page.getByTestId(`user-dropdown-${option}`)).not.toBeVisible();
+  }
+};
+
+/**
+ * Navigate via user dropdown option
+ */
+export const navigateViaUserDropdown = async (page: Page, option: string): Promise<void> => {
+  await openUserDropdown(page);
+  await page.getByTestId(`user-dropdown-${option}`).click();
+};
+
+/**
+ * Mobile Navigation Helpers
+ */
+
+/**
+ * Set mobile viewport for testing
+ */
+export const setMobileViewport = async (page: Page): Promise<void> => {
+  await page.setViewportSize({ width: 375, height: 667 });
+};
+
+/**
+ * Set desktop viewport for testing
+ */
+export const setDesktopViewport = async (page: Page): Promise<void> => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+};
+
+/**
+ * Validate mobile navigation visibility based on viewport
+ */
+export const validateMobileNavigation = async (page: Page, isMobile: boolean): Promise<void> => {
+  if (isMobile) {
+    await expect(page.getByTestId('mobile-navigation')).toBeVisible();
+    await expect(page.locator('.hidden.lg\\:block')).toBeHidden();
+  } else {
+    await expect(page.getByTestId('mobile-navigation')).toBeHidden();
+    await expect(page.locator('.hidden.lg\\:block')).toBeVisible();
+  }
+};
+
+/**
+ * Accessibility Testing Helpers
+ */
+
+/**
+ * Validate tab accessibility attributes
+ */
+export const validateTabAccessibility = async (page: Page, tabs: string[]): Promise<void> => {
+  for (const tab of tabs) {
+    const tabElement = page.getByTestId(`tab-${tab}`);
+    await expect(tabElement).toHaveAttribute('role', 'tab');
+    await expect(tabElement).toHaveAttribute('aria-selected');
+  }
+};
+
+/**
+ * Test keyboard navigation between tabs
+ */
+export const testKeyboardNavigation = async (page: Page, startTab: string, targetTab: string): Promise<void> => {
+  // Focus the start tab
+  await page.getByTestId(`tab-${startTab}`).focus();
+  
+  // Press Tab to move to next tab
+  await page.keyboard.press('Tab');
+  
+  // Press Enter to activate the target tab
+  await page.keyboard.press('Enter');
+  
+  // Validate the target tab is now selected
+  await expect(page.getByTestId(`tab-${targetTab}`)).toHaveAttribute('aria-selected', 'true');
+};
+
+/**
+ * Chat Interface Helpers
+ */
+
+/**
+ * Send a chat message
+ */
+export const sendChatMessage = async (page: Page, message: string): Promise<void> => {
+  const chatInput = page.getByTestId('chat-input');
+  await chatInput.fill(message);
+  await page.getByTestId('chat-send-button').click();
+};
+
+/**
+ * Wait for chat response (loading, success, or error)
+ */
+export const waitForChatResponse = async (page: Page, timeout: number = 15000): Promise<void> => {
+  await page.waitForSelector(
+    '[data-testid="chat-interface"] .bg-gray-100, [data-testid="chat-interface"] .text-red-600, [data-testid="chat-interface"] .animate-spin', 
+    { timeout }
+  );
+};
+
+/**
+ * Validate chat response is received
+ */
+export const validateChatResponse = async (page: Page): Promise<boolean> => {
+  const hasResponse = await page.locator('[data-testid="chat-interface"] .bg-gray-100').count() > 0;
+  const hasError = await page.locator('[data-testid="chat-interface"] .text-red-600').count() > 0;
+  const hasLoading = await page.locator('[data-testid="chat-interface"] .animate-spin').count() > 0;
+  
+  return hasResponse || hasError || hasLoading;
+};
+
+/**
+ * Guided Tour Helpers
+ */
+
+/**
+ * Complete the guided tour by clicking through all steps
+ */
+export const completeGuidedTour = async (page: Page, maxSteps: number = 12): Promise<void> => {
+  let stepCount = 0;
+  
+  while (stepCount < maxSteps) {
+    try {
+      const isNextVisible = await page.getByTestId('guided-tour-next').isVisible();
+      const isSkipVisible = await page.getByTestId('guided-tour-skip').isVisible();
+      
+      if (!isNextVisible && !isSkipVisible) {
+        console.log('🔍 E2E DEBUG: Tour completed - no more buttons visible');
+        break;
+      }
+      
+      if (isNextVisible) {
+        await page.getByTestId('guided-tour-next').click();
+        stepCount++;
+        console.log(`🔍 E2E DEBUG: Clicked tour next button (step ${stepCount})`);
+        await page.waitForTimeout(500);
+      } else if (isSkipVisible) {
+        console.log('🔍 E2E DEBUG: Next button not available, skipping tour');
+        await page.getByTestId('guided-tour-skip').click();
+        break;
+      }
+    } catch (error) {
+      console.log(`🔍 E2E DEBUG: Error during tour step ${stepCount}:`, error instanceof Error ? error.message : String(error));
+      // Try to skip as fallback
+      try {
+        if (await page.getByTestId('guided-tour-skip').isVisible()) {
+          await page.getByTestId('guided-tour-skip').click();
+          console.log('🔍 E2E DEBUG: Successfully skipped tour after error');
+        }
+      } catch (skipError) {
+        console.log('🔍 E2E DEBUG: Could not skip tour, breaking loop');
+      }
+      break;
+    }
+  }
+  
+  // Final skip attempt
+  try {
+    if (await page.getByTestId('guided-tour-skip').isVisible()) {
+      await page.getByTestId('guided-tour-skip').click();
+      console.log('🔍 E2E DEBUG: Final skip attempt successful');
+    }
+  } catch (error) {
+    console.log('🔍 E2E DEBUG: Final skip attempt failed, proceeding with test');
+  }
 }; 

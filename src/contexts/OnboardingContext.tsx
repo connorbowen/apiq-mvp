@@ -92,23 +92,36 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   // Fetch and sync tourState from backend on mount
   useEffect(() => {
+    let isMounted = true;
+    
     (async () => {
       try {
         console.log('🔄 OnboardingContext: Fetching tour state from backend...');
         const response = await apiClient.getTourState();
-        console.log('🔄 OnboardingContext: Tour state response:', response);
-        if (response.success && response.data) {
-          console.log('🔄 OnboardingContext: Setting tour state:', response.data);
-          setState(prev => ({ ...prev, tourState: response.data }));
-        } else {
-          console.log('🔄 OnboardingContext: Tour state response was not successful:', response);
+        
+        // Only update state if component is still mounted
+        if (isMounted) {
+          console.log('🔄 OnboardingContext: Tour state response:', response);
+          if (response.success && response.data) {
+            console.log('🔄 OnboardingContext: Setting tour state:', response.data);
+            setState(prev => ({ ...prev, tourState: response.data }));
+          } else {
+            console.log('🔄 OnboardingContext: Tour state response was not successful:', response);
+          }
         }
       } catch (error) {
-        console.error('🔄 OnboardingContext: Error fetching tour state:', error);
-        // Ignore error, tourState will remain undefined
+        if (isMounted) {
+          console.error('🔄 OnboardingContext: Error fetching tour state:', error);
+          // Ignore error, tourState will remain undefined
+        }
       }
     })();
-  }, []); // Remove any dependencies to ensure it runs on mount
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - only run once on mount
 
   // Method to sync tourState from backend
   const syncWithTourState = async () => {

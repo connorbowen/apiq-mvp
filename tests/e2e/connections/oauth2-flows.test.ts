@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
+import { generateTestId, cleanupTestUser } from '../../helpers/testUtils';
 import { createUXComplianceHelper } from '../../helpers/uxCompliance';
+import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton } from '../../helpers/e2eHelpers';
+import { waitForModal, waitForTestId } from '../../helpers/waitHelpers';
+import { createE2EUser } from '../../helpers/authHelpers';
 import { Role } from '../../../src/generated/prisma';
 
 // OAuth2 Flow E2E Tests with comprehensive UX compliance validation
@@ -16,12 +19,11 @@ const createdConnectionIds: string[] = [];
 test.describe('OAuth2 Flow E2E Tests', () => {
   test.beforeAll(async () => {
     // Create a real test user and get JWT (ADMIN role to access audit tab)
-    testUser = await createTestUser(
-      `e2e-oauth2-${generateTestId('user')}@example.com`,
-      'e2eTestPass123',
-      Role.ADMIN,
-      'E2E OAuth2 Test User'
-    );
+    testUser = await createE2EUser(Role.ADMIN, {
+      email: `e2e-oauth2-${generateTestId('user')}@example.com`,
+      password: 'e2eTestPass123',
+      name: 'E2E OAuth2 Test User'
+    });
     jwt = testUser.accessToken;
   });
 
@@ -62,25 +64,12 @@ test.describe('OAuth2 Flow E2E Tests', () => {
         console.log('🚚 /api/auth/me cookie header:', req.headers()['cookie']);
     });
 
-    // Use real login flow (like the working tests)
-    await page.goto(`${BASE_URL}/login`);
-    await page.getByLabel('Email address').fill(testUser.email);
-    await page.getByLabel('Password').fill('e2eTestPass123');
-    await page.getByTestId('primary-action signin-btn').click();
-    
-    // Wait for successful login and redirect to dashboard
-    await page.waitForURL(/.*dashboard/);
-    
-    // DEBUG: Check if cookies are set
-    const cookies = await page.context().cookies();
-    console.log('🔍 DEBUG: Cookies after login:', cookies);
-    
-    // Wait for dashboard to be fully loaded
-    await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
-    
-    // Navigate to Connections tab
-    await page.click('[data-testid="tab-connections"]');
-    
+    // Use new E2E helper for login and navigation to connections tab
+    await setupE2E(page, testUser, { 
+      tab: 'connections', 
+      validateUX: true 
+    });
+
     // Validate comprehensive UX compliance for connections page
     const uxHelper = createUXComplianceHelper(page);
     await uxHelper.validateActivationFirstUX();
@@ -107,11 +96,11 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateActivationFirstUX();
       
       // Click create connection button (primary action)
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       console.log('🪵 Clicked create connection button');
       
       // Wait for modal to appear
-      await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
+      await waitForModal(page);
       console.log('🪵 Modal appeared');
       
       // Add debug logging for form elements
@@ -167,7 +156,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       console.log('🪵 Filled OAuth2 credentials');
       
       // Check if submit button is enabled
-      const submitBtn = page.locator('[data-testid="primary-action submit-connection-btn"]');
+      const submitBtn = getPrimaryActionButton(page, 'submit-connection');
       const isEnabled = await submitBtn.isEnabled();
       console.log('🪵 Submit button enabled:', isEnabled);
       await expect(submitBtn).toBeEnabled();
@@ -355,11 +344,11 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateActivationFirstUX();
       
       // Click create connection button (primary action)
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       console.log('🪵 Clicked create connection button');
       
       // Wait for modal to appear
-      await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
+      await waitForModal(page);
       console.log('🪵 Modal appeared');
       
       // Add debug logging for form elements
@@ -532,7 +521,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateActivationFirstUX();
       
       // Click create connection button (primary action)
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       // Validate comprehensive modal accessibility
       await uxHelper.validateFormAccessibility();
@@ -573,7 +562,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateActivationFirstUX();
       
       // Submit form using primary action pattern and validate loading state
-      const submitButton = page.locator('[data-testid="primary-action submit-connection-btn"]');
+      const submitButton = getPrimaryActionButton(page, 'submit-connection');
       await submitButton.click();
       
       // Validate loading state (button should be disabled and show loading text)
@@ -587,7 +576,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateSuccessContainer('Connection created successfully');
         
       // Wait for the connection to appear in the list
-      await page.waitForSelector('[data-testid="connection-card"]', { timeout: 10000 });
+      await waitForTestId(page, 'connection-card', 10000);
       await expect(page.locator('[data-testid="connection-card"]')).toContainText('Slack API');
       await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
       
@@ -632,7 +621,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       createdConnectionIds.push(connection.id);
       
       // Wait for the connection to appear in the list
-      await page.waitForSelector('[data-testid="connection-card"]', { timeout: 10000 });
+      await waitForTestId(page, 'connection-card', 10000);
       await expect(page.locator('[data-testid="connection-card"]')).toContainText('Secure OAuth2 API');
       
       // Validate security indicators are present
@@ -789,12 +778,11 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       const uxHelper = createUXComplianceHelper(page);
       
       // Create a non-admin test user
-      const nonAdminUser = await createTestUser(
-        `e2e-nonadmin-${generateTestId('user')}@example.com`,
-        'e2eTestPass123',
-        'USER',
-        'E2E Non-Admin Test User'
-      );
+      const nonAdminUser = await createE2EUser(Role.USER, {
+        email: `e2e-nonadmin-${generateTestId('user')}@example.com`,
+        password: 'e2eTestPass123',
+        name: 'E2E Non-Admin Test User'
+      });
       
       try {
         // Login as non-admin user
@@ -1074,7 +1062,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       const uxHelper = createUXComplianceHelper(page);
       
       // Click create connection button
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       // Fill form with existing connection name
       await page.fill('[data-testid="connection-name-input"]', 'GitHub API'); // Use existing name
@@ -1090,7 +1078,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await page.fill('[data-testid="connection-clientsecret-input"]', 'test_client_secret');
       
       // Submit form
-      const submitButton = page.locator('[data-testid="primary-action submit-connection-btn"]');
+      const submitButton = getPrimaryActionButton(page, 'submit-connection');
       await submitButton.click();
       
       // Should show validation error in modal (check for any error message)
@@ -1105,7 +1093,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       const uxHelper = createUXComplianceHelper(page);
       
       // Start OAuth2 flow
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       // Fill form partially
       await page.fill('[data-testid="connection-name-input"]', 'Session Test');
@@ -1115,7 +1103,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await page.context().clearCookies();
       
       // Try to submit form
-      const submitButton = page.locator('[data-testid="primary-action submit-connection-btn"]');
+      const submitButton = getPrimaryActionButton(page, 'submit-connection');
       await submitButton.click();
       
       // Should redirect to login or show session expired error (check for any redirect or error)
@@ -1138,7 +1126,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       const uxHelper = createUXComplianceHelper(page);
       
       // Click create connection button
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       // Fill form with invalid credentials
       await page.fill('[data-testid="connection-name-input"]', 'Invalid Credentials Test');
@@ -1154,7 +1142,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await page.fill('[data-testid="connection-clientsecret-input"]', 'invalid_client_secret');
       
       // Submit form
-      const submitButton = page.locator('[data-testid="primary-action submit-connection-btn"]');
+      const submitButton = getPrimaryActionButton(page, 'submit-connection');
       await submitButton.click();
       
       // Should show validation error (check for any error message)
@@ -1196,7 +1184,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       createdConnectionIds.push(connection.id);
       
       // Navigate to audit log (wait for tab to be visible)
-      await page.waitForSelector('[data-testid="tab-audit"]', { timeout: 10000 });
+      await waitForTestId(page, 'tab-audit', 10000);
       await page.click('[data-testid="tab-audit"]');
       
       // Should show OAuth2 connection creation in audit log (check for any audit log entry)
@@ -1291,7 +1279,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateMobileAccessibility();
       
       // Test OAuth2 flow on mobile
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       // Validate mobile form accessibility
       await uxHelper.validateMobileAccessibility();
@@ -1311,7 +1299,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateMobileAccessibility();
       
       // Test OAuth2 flow accessibility
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       // Validate form accessibility
       await uxHelper.validateFormAccessibility();
@@ -1329,7 +1317,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Test OAuth2 flow performance
       const startTime = Date.now();
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       
       // Validate response time
       const loadTime = Date.now() - startTime;
@@ -1351,7 +1339,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Test OAuth2 security edge cases
       // Test XSS prevention
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       await page.fill('[data-testid="connection-name-input"]', '<script>alert("xss")</script>');
       await page.keyboard.press('Tab');
       
@@ -1411,11 +1399,11 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       );
       
       // Click create connection button
-      await page.click('[data-testid="primary-action create-connection-header-btn"]');
+      await getPrimaryActionButton(page, 'create-connection-header').click();
       console.log('🪵 Clicked create connection button');
       
       // Wait for modal to appear
-      await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
+      await waitForModal(page);
       console.log('🪵 Modal appeared');
       
       // Fill out the form with detailed logging
@@ -1443,7 +1431,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       console.log('🪵 Filled API key');
       
       // Check if submit button is enabled
-      const submitBtn = page.locator('[data-testid="primary-action submit-connection-btn"]');
+      const submitBtn = getPrimaryActionButton(page, 'submit-connection');
       const isEnabled = await submitBtn.isEnabled();
       console.log('🪵 Submit button enabled:', isEnabled);
       await expect(submitBtn).toBeEnabled();
@@ -1584,7 +1572,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       console.log('🪵 Testing dashboard initial load...');
       
       // Wait for dashboard to be fully loaded
-      await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
+      await waitForTestId(page, 'tab-connections', 10000);
       
       // Navigate to Connections tab
       await page.click('[data-testid="tab-connections"]');

@@ -25,8 +25,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import AdminTab from './AdminTab';
+import AuditTab from './AuditTab';
 
-type SettingsSection = 'preferences' | 'admin';
+type SettingsSection = 'preferences' | 'admin' | 'audit';
 
 interface SettingsTabProps {
   connections: any[];
@@ -63,6 +64,16 @@ const sectionConfig = {
     feature: 'admin',
     adminOnly: true,
   },
+  audit: {
+    label: 'Audit',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+    feature: 'audit',
+    adminOnly: true,
+  },
 };
 
 const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
@@ -89,10 +100,35 @@ const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       const sectionParam = url.searchParams.get('section');
-      if (sectionParam && ['preferences', 'admin'].includes(sectionParam)) {
+      if (sectionParam && ['preferences', 'admin', 'audit'].includes(sectionParam)) {
         setActiveSection(sectionParam as SettingsSection);
       }
     }
+  }, []);
+
+  // Listen for URL changes to update active section
+  useEffect(() => {
+    const handleUrlChange = () => {
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        const sectionParam = url.searchParams.get('section');
+        if (sectionParam && ['preferences', 'admin', 'audit'].includes(sectionParam)) {
+          setActiveSection(sectionParam as SettingsSection);
+        }
+      }
+    };
+
+    // Listen for popstate events (back/forward navigation)
+    window.addEventListener('popstate', handleUrlChange);
+    
+    // Also check URL on mount and after a short delay to catch programmatic navigation
+    handleUrlChange();
+    const timeoutId = setTimeout(handleUrlChange, 100);
+
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleSectionChange = (section: SettingsSection) => {
@@ -177,6 +213,13 @@ const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-4">Admin Settings</h3>
             <AdminTab user={user} />
+          </div>
+        )}
+
+        {activeSection === 'audit' && (
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Audit Logs</h3>
+            <AuditTab />
           </div>
         )}
       </div>

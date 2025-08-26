@@ -42,7 +42,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: './scripts/start-test-server.sh',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
@@ -52,10 +52,8 @@ export default defineConfig({
       JWT_SECRET: `test-jwt-secret-${Date.now()}-key-for-testing-only`,
       TEST_MODE: 'true',
       PLAYWRIGHT_TEST: 'true',
-      DISABLE_RATE_LIMITING: 'true', // Disable rate limiting for fast E2E testing
-      // Add worker-specific environment variables
-      WORKER_ID: process.env.WORKER_ID || '1',
-      MAX_WORKERS: process.env.MAX_WORKERS || '4',
+      DISABLE_RATE_LIMITING: 'true',
+      ENABLE_TEST_OAUTH2: 'true',
     }
   },
 }); 

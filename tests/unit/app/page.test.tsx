@@ -30,10 +30,10 @@ describe('Home Page (Landing Page)', () => {
     expect(screen.getByText(/just ask, we'll connect/i)).toBeInTheDocument();
     expect(screen.getByText(/ai-powered api assistant/i)).toBeInTheDocument();
     
-    // Check navigation links
-    expect(screen.getByRole('link', { name: /try chat/i })).toBeInTheDocument();
+    // Check navigation links - updated to match actual component text
+    expect(screen.getByRole('link', { name: /start tour/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /sign in/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /start chatting/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /start your journey/i })).toBeInTheDocument();
   });
 
   it('renders the chat demo section', () => {
@@ -104,13 +104,13 @@ describe('Home Page (Landing Page)', () => {
   it('has proper navigation links to dashboard and login', () => {
     render(<Home />);
     
-    const tryChatLink = screen.getByRole('link', { name: /try chat/i });
+    const startTourLink = screen.getByRole('link', { name: /start tour/i });
     const signInLink = screen.getByRole('link', { name: /sign in/i });
-    const startChattingLink = screen.getByRole('link', { name: /start chatting/i });
+    const startJourneyLink = screen.getByRole('link', { name: /start your journey/i });
     
-    expect(tryChatLink).toHaveAttribute('href', '/dashboard');
+    expect(startTourLink).toHaveAttribute('href', '/dashboard?tour=true');
     expect(signInLink).toHaveAttribute('href', '/login');
-    expect(startChattingLink).toHaveAttribute('href', '/dashboard');
+    expect(startJourneyLink).toHaveAttribute('href', '/dashboard?tour=true');
   });
 
   it('has proper accessibility attributes', () => {
@@ -133,11 +133,8 @@ describe('Home Page (Landing Page)', () => {
   it('displays hero section with call-to-action buttons', () => {
     render(<Home />);
     
-    // Check hero section content
-    expect(screen.getByText(/describe what you want to do with your apis/i)).toBeInTheDocument();
-    
-    // Check CTA buttons
-    expect(screen.getByRole('link', { name: /start chatting/i })).toBeInTheDocument();
+    // Check CTA buttons - updated to match actual component text
+    expect(screen.getByRole('link', { name: /start your journey/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /see examples/i })).toBeInTheDocument();
   });
 
@@ -181,5 +178,17 @@ describe('Home Page (Landing Page)', () => {
       // Should show loading state
       expect(healthButton).toBeDisabled();
     }
+  });
+
+  it('renders the hero section with proper content', () => {
+    render(<Home />);
+    
+    expect(screen.getByText(/just ask, we'll connect/i)).toBeInTheDocument();
+    expect(screen.getByText(/ai-powered api assistant/i)).toBeInTheDocument();
+    
+    // Check navigation links - updated to match actual component text
+    expect(screen.getByRole('link', { name: /start tour/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /start your journey/i })).toBeInTheDocument();
   });
 }); 

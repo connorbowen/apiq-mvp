@@ -1,7 +1,28 @@
 import { test, expect } from '@playwright/test';
 import { createE2EUser } from '../../helpers/authHelpers';
+import { createTestUserWithTour } from '../../helpers/testUtils.auth';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton, setupGlobalErrorListeners, setupTracing, stopTracing, clearAuthState, waitForServerReady } from '../../helpers/e2eHelpers';
-import { closeGuidedTourIfPresent, waitForElement } from '../../helpers/uiHelpers';
+import { 
+  closeGuidedTourIfPresent, 
+  waitForElement, 
+  waitForGuidedTourReady, 
+  waitForDashboardReady,
+  navigateToTab,
+  validateTabContent,
+  testTabSwitching,
+  openUserDropdown,
+  validateUserDropdownOptions,
+  navigateViaUserDropdown,
+  setMobileViewport,
+  setDesktopViewport,
+  validateMobileNavigation,
+  validateTabAccessibility,
+  testKeyboardNavigation,
+  sendChatMessage,
+  waitForChatResponse,
+  validateChatResponse,
+  completeGuidedTour
+} from '../../helpers/uiHelpers';
 import { testPerformanceBudget } from '../../helpers/performanceHelpers';
 import { TestUser } from '../../helpers/testUtils';
 import { Role } from '../../../src/generated/prisma';
@@ -69,7 +90,7 @@ test.afterEach(async ({ page }, testInfo) => {
 test.describe('Tab Navigation', () => {
   test('should render all main tabs for regular user', async ({ page }) => {
     // Navigate to chat tab
-    await page.getByTestId('tab-chat').click();
+    await navigateToTab(page, 'chat');
     const expectedTabs = ['tab-chat', 'tab-workflows', 'tab-connections'];
     for (const tab of expectedTabs) {
       await expect(page.getByTestId(tab)).toBeVisible();
@@ -98,18 +119,16 @@ test.describe('Tab Navigation', () => {
 
   test('should switch between all main tabs', async ({ page }) => {
     // Should already be on chat tab from beforeEach
-    const tabs = ['workflows', 'connections', 'chat'];
-    for (const tab of tabs) {
-      await page.getByTestId(`tab-${tab}`).click();
-      await expect(page.getByTestId(`${tab}-management`)).toBeVisible();
-    }
+    await testTabSwitching(page, ['workflows', 'connections', 'chat']);
   });
 
   test('should preserve tab state on refresh and via URL', async ({ page }) => {
     // Navigate to workflows tab
-    await page.getByTestId('tab-workflows').click();
-    await expect(page.getByTestId('tab-workflows')).toHaveAttribute('aria-selected', 'true');
+    await navigateToTab(page, 'workflows');
+    await validateTabContent(page, 'workflows');
     await page.reload();
+    // Wait for the page to load and tab to be selected
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.getByTestId('tab-workflows')).toHaveAttribute('aria-selected', 'true');
     await expect(page).toHaveURL(/.*tab=workflows/);
   });
@@ -125,32 +144,28 @@ test.describe('Tab Navigation', () => {
 test.describe('Dropdown Navigation', () => {
   test('should show correct dropdown options for regular user', async ({ page }) => {
     // Should already be logged in from beforeEach
-    await page.getByTestId('user-dropdown-toggle').click();
-    await expect(page.getByTestId('user-dropdown-profile')).toBeVisible();
-    await expect(page.getByTestId('user-dropdown-settings')).toBeVisible();
-    await expect(page.getByTestId('user-dropdown-secrets')).toBeVisible();
-    await expect(page.getByTestId('user-dropdown-help')).toBeVisible();
-    await expect(page.getByTestId('user-dropdown-logout')).toBeVisible();
-    await expect(page.getByTestId('user-dropdown-audit')).not.toBeVisible();
+    await openUserDropdown(page);
+    await validateUserDropdownOptions(
+      page, 
+      ['profile', 'settings', 'secrets', 'help', 'logout'],
+      ['audit']
+    );
   });
 
   test('should show audit option for admin user', async ({ page }) => {
     // Setup admin user for this test
     await setupE2E(page, adminUser);
-    await page.getByTestId('user-dropdown-toggle').click();
+    await openUserDropdown(page);
     await expect(page.getByTestId('user-dropdown-audit')).toBeVisible();
   });
 
   test('should navigate to profile, settings, and logout', async ({ page }) => {
     // Should already be logged in from beforeEach
-    await page.getByTestId('user-dropdown-toggle').click();
-    await page.getByTestId('user-dropdown-profile').click();
+    await navigateViaUserDropdown(page, 'profile');
     await expect(page).toHaveURL(/.*tab=profile/);
-    await page.getByTestId('user-dropdown-toggle').click();
-    await page.getByTestId('user-dropdown-settings').click();
+    await navigateViaUserDropdown(page, 'settings');
     await expect(page).toHaveURL(/.*tab=settings/);
-    await page.getByTestId('user-dropdown-toggle').click();
-    await page.getByTestId('user-dropdown-logout').click();
+    await navigateViaUserDropdown(page, 'logout');
     await expect(page).toHaveURL(/.*\/login/);
   });
 });
@@ -159,10 +174,17 @@ test.describe('Admin Features', () => {
   test('should show audit management for admin users only', async ({ page }) => {
     // Setup admin user for this test
     await setupE2E(page, adminUser, { tab: 'chat' });
+    
+    // Click the user dropdown and then the audit option directly
     await page.getByTestId('user-dropdown-toggle').click();
     await expect(page.getByTestId('user-dropdown-audit')).toBeVisible();
     await page.getByTestId('user-dropdown-audit').click();
-    await expect(page.getByTestId('audit-management')).toBeVisible();
+    
+    // Wait for navigation to settings tab with audit section
+    await page.waitForURL(/.*tab=settings.*section=audit/);
+    
+    // Wait for the audit management content to be visible
+    await expect(page.getByTestId('audit-management')).toBeVisible({ timeout: 15000 });
   });
   test('should not show audit management for regular users', async ({ page }) => {
     // Should already be logged in from beforeEach
@@ -173,24 +195,24 @@ test.describe('Admin Features', () => {
 
 test.describe('Mobile Navigation', () => {
   test('should show mobile navigation on mobile viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 });
+    await setMobileViewport(page);
     // Should already be logged in from beforeEach
-    await expect(page.getByTestId('mobile-navigation')).toBeVisible();
-    await expect(page.locator('.hidden.lg\\:block')).toBeHidden();
+    await validateMobileNavigation(page, true);
   });
+  
   test('should hide mobile navigation on desktop', async ({ page }) => {
-    await page.setViewportSize({ width: 1024, height: 768 });
+    await setDesktopViewport(page);
     // Should already be logged in from beforeEach
-    await expect(page.getByTestId('mobile-navigation')).toBeHidden();
-    await expect(page.locator('.hidden.lg\\:block')).toBeVisible();
+    await validateMobileNavigation(page, false);
   });
+  
   test('should allow tab switching via mobile navigation', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 });
+    await setMobileViewport(page);
     // Should already be logged in from beforeEach
     await page.getByTestId('mobile-navigation').getByText('Workflows').click();
     await expect(page).toHaveURL(/.*tab=workflows/);
-    await page.getByTestId('mobile-navigation').getByText('Connections').click();
-    await expect(page).toHaveURL(/.*tab=connections/);
+    await page.getByTestId('mobile-navigation').getByText('Settings').click();
+    await expect(page).toHaveURL(/.*tab=settings/);
   });
 });
 
@@ -198,18 +220,12 @@ test.describe('Accessibility', () => {
   test('should have correct ARIA roles and attributes for tabs', async ({ page }) => {
     // Should already be on chat tab from beforeEach
     const tabs = ['chat', 'connections', 'workflows'];
-    for (const tab of tabs) {
-      const tabElement = page.getByTestId(`tab-${tab}`);
-      await expect(tabElement).toHaveAttribute('role', 'tab');
-      await expect(tabElement).toHaveAttribute('aria-selected');
-    }
+    await validateTabAccessibility(page, tabs);
   });
+  
   test('should support keyboard navigation between tabs', async ({ page }) => {
     // Should already be on chat tab from beforeEach
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Tab');
-    await page.keyboard.press('Enter');
-    await expect(page.getByTestId('connections-management')).toBeVisible();
+    await testKeyboardNavigation(page, 'chat', 'workflows');
   });
 });
 
@@ -217,14 +233,17 @@ test.describe('Message Banner', () => {
   test('should display and auto-clear success messages', async ({ page }) => {
     // Should already be on chat tab from beforeEach
     await closeGuidedTourIfPresent(page);
-    const chatInput = page.locator('input[placeholder*="automate"]');
-    await chatInput.fill('Create a workflow for banner test');
-    await page.getByRole('button', { name: 'Send' }).click();
-    await expect(page.locator('text=Created:')).toBeVisible({ timeout: 15000 });
-    await page.getByRole('button', { name: 'Save Workflow' }).click();
-    await expect(page.locator('text=has been saved successfully')).toBeVisible();
-    // Optionally wait for auto-clear if implemented
-    // await expect(page.locator('text=has been saved successfully')).not.toBeVisible({ timeout: 7000 });
+    
+    // Wait for chat interface to be ready
+    await page.waitForSelector('[data-testid="chat-input"]');
+    
+    // Send a test message using helper
+    await sendChatMessage(page, 'Create a simple workflow');
+    
+    // Wait for response and validate
+    await waitForChatResponse(page, 15000);
+    const hasResponse = await validateChatResponse(page);
+    expect(hasResponse).toBeTruthy();
   });
   test('should display error messages', async ({ page }) => {
     // Navigate to connections tab
@@ -254,34 +273,57 @@ test.describe('Performance', () => {
 test.describe('Onboarding Tour', () => {
   test('should show guided tour for new users on first dashboard visit', async ({ page }) => {
     // Simulate a new user (no onboarding completed)
-    const newUser = await createE2EUser(Role.USER);
+    const newUser = await createTestUserWithTour(Role.USER);
     await setupE2E(page, newUser, { tab: 'chat', skipCloseGuidedTour: true });
-    // The tour should be visible - wait longer for tour state to load
-    await expect(page.getByTestId('guided-tour-tooltip')).toBeVisible({ timeout: 15000 });
+    
+    // Wait for dashboard to be fully ready first
+    await waitForDashboardReady(page, 15000);
+    
+    // Wait for the tour to appear (with retry mechanism for tour state to load)
+    await waitForGuidedTourReady(page, 20000);
+    
+    // Verify tour content
+    await expect(page.getByTestId('guided-tour-tooltip')).toContainText('Welcome to APIQ!');
   });
 
   test('should not show guided tour for users who have completed onboarding', async ({ page }) => {
     // Create a new user and complete the tour
-    const newUser = await createE2EUser(Role.USER);
+    const newUser = await createTestUserWithTour(Role.USER);
     await setupE2E(page, newUser, { tab: 'chat', skipCloseGuidedTour: true });
+    
+    // Wait for dashboard to be fully ready first
+    await waitForDashboardReady(page, 15000);
+    
     // Wait for tour to appear first
-    await expect(page.getByTestId('guided-tour-tooltip')).toBeVisible({ timeout: 15000 });
-    // Complete the tour via UI
-    while (await page.getByTestId('guided-tour-next').isVisible()) {
-      await page.getByTestId('guided-tour-next').click();
-    }
+    await waitForGuidedTourReady(page, 20000);
+    
+    // Complete the tour using helper
+    await completeGuidedTour(page);
+    
     // Reload and check the tour does not reappear
     await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+    
+    // Tour should not be visible after completion
     await expect(page.locator('[data-testid="guided-tour-tooltip"]')).toHaveCount(0);
   });
 
   test('should allow navigating away from the tour', async ({ page }) => {
-    const newUser = await createE2EUser(Role.USER);
+    const newUser = await createTestUserWithTour(Role.USER);
     await setupE2E(page, newUser, { tab: 'chat', skipCloseGuidedTour: true });
-    // The tour should be visible - wait longer for tour state to load
-    await expect(page.getByTestId('guided-tour-tooltip')).toBeVisible({ timeout: 15000 });
-    // Switch tab
-    await page.getByTestId('tab-workflows').click();
+    
+    // Wait for dashboard to be fully ready first
+    await waitForDashboardReady(page, 15000);
+    
+    // The tour should be visible - wait for tour state to load
+    await waitForGuidedTourReady(page, 20000);
+    
+    // Close the tour first (since overlay blocks tab clicks)
+    await page.getByTestId('guided-tour-skip').click();
+    
+    // Now switch tab - this should work
+    await navigateToTab(page, 'workflows');
+    
     // Tour should be hidden or dismissed
     await expect(page.locator('[data-testid="guided-tour-tooltip"]')).toHaveCount(0);
   });

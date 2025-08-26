@@ -121,6 +121,9 @@ export class UXComplianceHelper {
         await expect(this.page.locator(`label[for="${id}"]`)).toBeVisible();
       }
     }
+
+    // Also validate text readability for form elements
+    await this.validateTextReadability();
   }
 
   /**
@@ -247,8 +250,9 @@ export class UXComplianceHelper {
     // Use a more specific selector to avoid conflicts with multiple success messages
     const successMessages = this.page.locator('[data-testid="success-message"]');
     await expect(successMessages.first()).toBeVisible();
-    // Use a more specific selector to avoid conflicts with other green text
-    await expect(successMessages.first().locator('.text-green-800')).toContainText(expectedMessage);
+    // Use the text content directly to avoid conflicts with multiple green text elements
+    const messageText = await successMessages.first().textContent();
+    expect(messageText).toContain(expectedMessage);
   }
 
   /**

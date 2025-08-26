@@ -293,7 +293,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             </div>
             
             {/* Quick Examples */}
-            <div className="space-y-3">
+            <div data-testid="chat-examples" className="space-y-3">
               <p className="text-sm font-medium text-gray-700">Try one of these examples:</p>
               <div className="space-y-2 max-w-2xl mx-auto">
                 {quickExamples.map((example, index) => (
@@ -441,14 +441,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       <div className="px-6 py-4 border-t border-gray-200">
         <form onSubmit={handleSubmit} className="flex space-x-3">
           <input
+            data-testid="chat-input"
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Describe what you want to automate..."
             disabled={isLoading}
-            className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+            className="input-enhanced flex-1 disabled:opacity-50"
           />
           <button
+            data-testid="chat-send-button"
             type="submit"
             disabled={!inputMessage.trim() || isLoading}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"

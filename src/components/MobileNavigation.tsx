@@ -124,10 +124,10 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       onTabChange(item.id);
     }
     
-    // Update URL with tab parameter
+    // Update URL with tab parameter without triggering navigation
     const url = new URL(window.location.href);
     url.searchParams.set('tab', item.id);
-    router.push(url.pathname + url.search);
+    window.history.replaceState({}, '', url.toString());
   };
 
   const isActive = (itemId: string) => {

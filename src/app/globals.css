@@ -9,7 +9,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +23,152 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Enhanced Text Contrast - Ensuring readability across all backgrounds */
+.text-primary {
+  color: #111827 !important; /* Very dark gray for maximum contrast */
+}
+
+.text-secondary {
+  color: #374151 !important; /* Dark gray for good contrast */
+}
+
+.text-tertiary {
+  color: #6b7280 !important; /* Medium gray for sufficient contrast */
+}
+
+.text-muted {
+  color: #9ca3af !important; /* Muted text with better contrast */
+}
+
+/* Enhanced Input Styling - Consistent, high-contrast inputs */
+.input-enhanced {
+  @apply appearance-none relative block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:z-10 sm:text-sm transition-colors duration-200;
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important; /* Very dark text for maximum readability */
+}
+
+.input-enhanced::placeholder {
+  color: #6b7280 !important; /* Better contrast placeholder text */
+  opacity: 1 !important;
+}
+
+.input-enhanced:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Enhanced Placeholder Styling */
+.placeholder-enhanced::placeholder {
+  color: #6b7280 !important; /* Better contrast placeholder */
+  opacity: 1 !important;
+}
+
+/* Enhanced Text Colors for Better Readability */
+.text-enhanced-primary {
+  color: #111827 !important; /* Very dark gray for maximum contrast */
+}
+
+.text-enhanced-secondary {
+  color: #374151 !important; /* Dark gray for good contrast */
+}
+
+.text-enhanced-tertiary {
+  color: #6b7280 !important; /* Medium gray for sufficient contrast */
+}
+
+/* Enhanced Label Styling */
+.label-enhanced {
+  @apply block text-sm font-medium;
+  color: #374151 !important; /* Dark gray for good contrast against light backgrounds */
+}
+
+/* Enhanced Button Text Styling */
+.btn-text-enhanced {
+  color: #111827 !important; /* Very dark text for buttons */
+}
+
+/* Enhanced Form Field Styling */
+.form-field-enhanced {
+  @apply mt-1 appearance-none relative block w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:z-10 sm:text-sm transition-colors duration-200;
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+.form-field-enhanced::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+.form-field-enhanced:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* TARGETED FORM ELEMENT OVERRIDES - Only affect form elements, not all text */
+/* This ensures compliance across form elements while preserving static text readability */
+
+/* Only input elements get enhanced styling by default */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="search"]::placeholder,
+input[type="url"]::placeholder,
+input[type="tel"]::placeholder,
+input[type="number"]::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Only textarea elements get enhanced styling */
+textarea {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+textarea::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Only select elements get enhanced styling */
+select {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+/* Only label elements get enhanced styling */
+label {
+  color: #374151 !important;
+}
+
+/* Enhanced focus states for form elements only */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  outline: none !important;
 }
 
 /* Mobile Accessibility - Touch Target Sizes (WCAG 2.1 AA Compliance) */

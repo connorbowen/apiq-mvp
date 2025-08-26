@@ -116,7 +116,7 @@ function DashboardContent() {
   const router = useRouter();
 
   // Guided Tour integration - now safely within OnboardingProvider
-  const { state: onboardingState, syncWithUserData } = useOnboarding();
+  const { state: onboardingState, syncWithUserData, syncWithTourState } = useOnboarding();
   const {
     isTourOpen,
     openTour,
@@ -192,15 +192,34 @@ function DashboardContent() {
         console.log('👤 Dashboard: User data loaded from API:', {
           id: userData.id,
           email: userData.email,
+          role: userData.role,
           emailVerified: userData.emailVerified,
           onboardingStage: userData.onboardingStage
         });
         
-        setUser({ ...userData, name: userData.name || userData.email });
+        // Ensure role is properly set and handle case sensitivity
+        const userWithRole = {
+          ...userData,
+          name: userData.name || userData.email,
+          role: userData.role || 'USER' // Default to USER if role is missing
+        };
+        
+        console.log('👤 Dashboard: Setting user with role:', {
+          id: userWithRole.id,
+          email: userWithRole.email,
+          role: userWithRole.role,
+          roleType: typeof userWithRole.role
+        });
+        
+        setUser(userWithRole);
         
         // Sync onboarding context with user data from database
         console.log('🔄 Dashboard: Syncing onboarding context with user data');
         syncWithUserData(userData);
+        
+        // Sync tour state from database
+        console.log('🔄 Dashboard: Syncing tour state from database');
+        await syncWithTourState();
         
         setIsLoading(false);
         return;
@@ -329,7 +348,7 @@ function DashboardContent() {
         }
       }
     }
-  }, []);
+  }, []); // Empty dependency array - this function doesn't depend on any props/state
 
   // Monitor connections state changes
   useEffect(() => {
@@ -339,24 +358,18 @@ function DashboardContent() {
     });
   }, [connections]);
 
-  // Load initial data
+  // Load initial data and set up polling in a single useEffect
   useEffect(() => {
     console.info('[dashboard] DashboardPage useEffect triggered - loading initial data');
-    loadConnections();
-    loadWorkflows();
-    loadSecrets();
-    loadUser();
-  }, [loadConnections, loadWorkflows, loadSecrets, loadUser]);
-
-  // Real-time updates with slower polling to avoid conflicts
-  useEffect(() => {
+    
     // Initial load
     loadConnections();
     loadWorkflows();
     loadSecrets();
+    loadUser();
     handleOAuth2Callback();
     
-    // Much slower polling to avoid rate limit issues
+    // Set up polling for real-time updates (much slower to avoid rate limits)
     const interval = setInterval(() => {
       loadConnections();
       loadWorkflows();
@@ -369,22 +382,22 @@ function DashboardContent() {
     return () => {
       clearInterval(interval);
     };
-  }, [loadConnections, loadWorkflows, loadSecrets, handleOAuth2Callback, user?.role]);
+  }, []); // Empty dependency array - only run once on mount to prevent infinite loops
 
   const handleTabChange = useCallback((tab: TabType) => {
     setIsTabLoading(true);
     setActiveTab(tab);
     
-    // Update URL with tab parameter
+    // Update URL with tab parameter without triggering navigation
     const url = new URL(window.location.href);
     url.searchParams.set('tab', tab);
-    router.push(url.pathname + url.search);
+    window.history.replaceState({}, '', url.toString());
     
     // Show loading state briefly for better UX
     setTimeout(() => {
       setIsTabLoading(false);
     }, 300);
-  }, [router]);
+  }, []);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -405,10 +418,29 @@ function DashboardContent() {
   const filteredTabs = useMemo(() => {
     if (!user) return Object.keys(tabConfig) as TabType[];
     
+    // Debug: Log user role for troubleshooting
+    console.log('🔍 Dashboard: User role check:', {
+      userId: user.id,
+      userRole: user.role,
+      userRoleType: typeof user.role,
+      hasRole: 'role' in user
+    });
+    
     // Filter tabs: only show main navigation tabs (not settings)
     const mainTabs = (Object.keys(tabConfig) as TabType[]).filter(tab => {
       const config = tabConfig[tab];
-      return tab !== 'settings' && tab !== 'profile' && (!config.adminOnly || user.role === 'admin');
+      const isAdminOnly = config.adminOnly;
+      const hasAdminAccess = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'admin';
+      
+      // Debug: Log tab filtering logic
+      console.log('🔍 Dashboard: Tab filtering:', {
+        tab,
+        adminOnly: isAdminOnly,
+        hasAdminAccess,
+        willShow: !isAdminOnly || hasAdminAccess
+      });
+      
+      return tab !== 'settings' && tab !== 'profile' && (!isAdminOnly || hasAdminAccess);
     });
     
     // If settings tab is active (accessed via dropdown), include it
@@ -421,22 +453,39 @@ function DashboardContent() {
       mainTabs.push('profile');
     }
     
+    console.log('🔍 Dashboard: Final filtered tabs:', mainTabs);
     return mainTabs;
   }, [user, activeTab]);
 
-  // Initialize tab from URL on component mount
+  // Initialize tab from URL on component mount and listen for URL changes
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const tabParam = url.searchParams.get('tab');
-    const validTabs = ['chat', 'workflows', 'connections', 'settings', 'profile'];
-    if (tabParam && validTabs.includes(tabParam)) {
-      setActiveTab(tabParam as TabType);
-    } else {
-      // If no tab parameter or invalid, default to chat and update URL
-      setActiveTab('chat');
-      url.searchParams.set('tab', 'chat');
-      window.history.replaceState({}, '', url.toString());
-    }
+    const handleUrlChange = () => {
+      const url = new URL(window.location.href);
+      const tabParam = url.searchParams.get('tab');
+      const validTabs = ['chat', 'workflows', 'connections', 'settings', 'profile'];
+      if (tabParam && validTabs.includes(tabParam)) {
+        setActiveTab(tabParam as TabType);
+      } else {
+        // If no tab parameter or invalid, default to chat and update URL
+        setActiveTab('chat');
+        url.searchParams.set('tab', 'chat');
+        window.history.replaceState({}, '', url.toString());
+      }
+    };
+
+    // Handle initial URL
+    handleUrlChange();
+
+    // Listen for popstate events (back/forward navigation)
+    window.addEventListener('popstate', handleUrlChange);
+    
+    // Also listen for any programmatic URL changes in tests
+    const checkUrlInterval = setInterval(handleUrlChange, 1000);
+    
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      clearInterval(checkUrlInterval);
+    };
   }, [user]);
 
   if (isLoading || !user) {

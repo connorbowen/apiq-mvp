@@ -71,6 +71,10 @@ process.env.JWT_EXPIRES_IN = '24h'
 process.env.ENABLE_TEST_OAUTH2 = 'true'
 process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
 
+// OAuth2 Test Credentials
+process.env.TEST_GOOGLE_EMAIL = 'apiq.testing@gmail.com'
+process.env.TEST_GOOGLE_PASSWORD = 'APIQ_testing123'
+
 // Mock scrollIntoView for jsdom
 if (typeof Element !== 'undefined') {
   Element.prototype.scrollIntoView = jest.fn();

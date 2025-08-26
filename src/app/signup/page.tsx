@@ -125,6 +125,18 @@ export default function SignupPage() {
     ...Object.values(fieldErrors).filter(err => err)
   ].filter(Boolean);
 
+  const renderFieldError = (name: string) => {
+    const error = fieldErrors[name as keyof FieldErrors];
+    if (error) {
+      return (
+        <p className="mt-1 text-xs text-red-600" id={`${name}-error`}>
+          {error}
+        </p>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -210,7 +222,7 @@ export default function SignupPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="label-enhanced">
                 Email address <span className="text-red-500" aria-label="required">*</span>
               </label>
               <input
@@ -224,15 +236,16 @@ export default function SignupPage() {
                 value={formData.email}
                 onChange={(e) => handleFieldChange('email', e.target.value)}
                 onBlur={() => handleBlur('email')}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200 ${
-                  fieldErrors.email ? 'border-red-300' : 'border-gray-300'
+                className={`form-field-enhanced ${
+                  fieldErrors.email ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
                 }`}
                 placeholder="Enter your email address"
               />
+              {renderFieldError('email')}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="label-enhanced">
                 Password <span className="text-red-500" aria-label="required">*</span>
               </label>
               <input
@@ -243,23 +256,20 @@ export default function SignupPage() {
                 required
                 aria-required="true"
                 aria-invalid={fieldErrors.password ? 'true' : 'false'}
-                aria-describedby="password-requirements"
                 value={formData.password}
                 onChange={(e) => handleFieldChange('password', e.target.value)}
                 onBlur={() => handleBlur('password')}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200 ${
-                  fieldErrors.password ? 'border-red-300' : 'border-gray-300'
+                className={`form-field-enhanced ${
+                  fieldErrors.password ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
                 }`}
                 placeholder="Create a strong password"
               />
-              <div id="password-requirements" className="mt-1 text-xs text-gray-500">
-                Password must be at least 8 characters
-              </div>
+              {renderFieldError('password')}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm password <span className="text-red-500" aria-label="required">*</span>
+              <label htmlFor="confirmPassword" className="label-enhanced">
+                Confirm Password <span className="text-red-500" aria-label="required">*</span>
               </label>
               <input
                 id="confirmPassword"
@@ -272,11 +282,12 @@ export default function SignupPage() {
                 value={formData.confirmPassword}
                 onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
                 onBlur={() => handleBlur('confirmPassword')}
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200 ${
-                  fieldErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                className={`form-field-enhanced ${
+                  fieldErrors.confirmPassword ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
                 }`}
                 placeholder="Confirm your password"
               />
+              {renderFieldError('confirmPassword')}
             </div>
           </div>
 

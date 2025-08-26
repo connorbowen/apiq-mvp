@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Exchange the authorization code for tokens
-    const tokenResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3001'}/api/auth/sso/google`, {
+    const tokenResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/sso/google`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,16 +64,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const authData = await tokenResponse.json();
 
     if (authData.success && authData.data) {
+      console.log('🔍 OAuth2 Callback: Token exchange successful, setting cookies...');
+      console.log('🔍 OAuth2 Callback: Access token present:', !!authData.data.accessToken);
+      console.log('🔍 OAuth2 Callback: User data:', authData.data.user);
+      
       logInfo('Google SSO OAuth2 callback successful', {
         provider: authData.data.provider,
         hasAccessToken: !!authData.data.accessToken
       });
 
-      // Redirect to dashboard with tokens in URL params (in production, use secure cookies)
-      const redirectUrl = new URL('/dashboard', process.env.NEXTAUTH_URL || 'http://localhost:3001');
-      redirectUrl.searchParams.set('accessToken', authData.data.accessToken);
-      redirectUrl.searchParams.set('refreshToken', authData.data.refreshToken);
-      redirectUrl.searchParams.set('user', JSON.stringify(authData.data.user));
+      // Set access token as secure HTTP-only cookie
+      const isProduction = process.env.NODE_ENV === 'production';
+      const cookieOptions = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax' as const,
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        path: '/'
+      };
+
+      // Set all cookies as an array
+      const cookies = [
+        `accessToken=${authData.data.accessToken}; HttpOnly; Path=/; Max-Age=${24 * 60 * 60}; SameSite=Lax`,
+        `refreshToken=${authData.data.refreshToken}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax`,
+        `userInfo=${encodeURIComponent(JSON.stringify({
+          id: authData.data.user.id,
+          email: authData.data.user.email,
+          name: authData.data.user.name,
+          role: authData.data.user.role
+        }))}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Lax`
+      ];
+      
+      res.setHeader('Set-Cookie', cookies);
+
+      console.log('🔍 OAuth2 Callback: All cookies set, redirecting to dashboard...');
+      console.log('🔍 OAuth2 Callback: Set-Cookie headers:', res.getHeader('Set-Cookie'));
+
+      // Redirect to dashboard (tokens are now in cookies)
+      const redirectUrl = new URL('/dashboard', process.env.NEXTAUTH_URL || 'http://localhost:3000');
       redirectUrl.searchParams.set('oauth2_success', 'true');
       
       return res.redirect(redirectUrl.toString());

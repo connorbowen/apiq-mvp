@@ -199,6 +199,8 @@ export default function CreateConnectionModal({
     authType: typeof formData.authType,
     isTest: boolean = false
   ): Promise<{ secretIds: string[]; secretReferences: Record<string, string> }> => {
+    console.log('🔍 createSecretsForConnection - received credentials:', credentials);
+    console.log('🔍 createSecretsForConnection - authType:', authType);
     const secretsToCreate = [];
     const secretIds: string[] = [];
     const secretReferences: Record<string, string> = {};
@@ -306,6 +308,9 @@ export default function CreateConnectionModal({
       (window as any).lastRateLimitReset = now;
     }
     try {
+      console.log('🔍 handleSubmit - complete formData at submission:', formData);
+      console.log('🔍 handleSubmit - credentials:', formData.credentials);
+      
       // --- SECRETS-FIRST: Create secrets first ---
       const { secretIds, secretReferences } = await createSecretsForConnection(
         formData.name,
@@ -319,11 +324,23 @@ export default function CreateConnectionModal({
         description: formData.description,
         baseUrl: formData.baseUrl,
         authType: formData.authType,
-        authConfig: {}, // Do not store credentials directly
+        authConfig: formData.authType === 'OAUTH2' ? {
+          provider: formData.provider,
+          clientId: formData.credentials.clientId,
+          clientSecret: formData.credentials.clientSecret,
+          redirectUri: formData.credentials.redirectUri,
+          scopes: formData.credentials.scopes
+        } : {}, // Include OAuth2 config for validation, but credentials are stored as secrets
         documentationUrl: formData.openApiUrl || undefined,
         secretIds,
         secretReferences
       };
+      
+      // Debug: Log the exact data being sent
+      console.log('🔍 handleSubmit - connectionData being sent:', JSON.stringify(connectionData, null, 2));
+      console.log('🔍 handleSubmit - authConfig details:', connectionData.authConfig);
+      console.log('🔍 handleSubmit - formData.credentials:', formData.credentials);
+      console.log('🔍 handleSubmit - formData.provider:', formData.provider);
       const response = await apiClient.createConnection(connectionData);
       if (response.success) {
         setSubmitSuccess(true);
@@ -539,7 +556,7 @@ export default function CreateConnectionModal({
               <h4 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h4>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="connection-name" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="connection-name" className="label-enhanced">
                     Connection Name *
                   </label>
                   <input
@@ -553,10 +570,10 @@ export default function CreateConnectionModal({
                     aria-label="Connection name"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
+                    className={`form-field-enhanced ${
                       fieldErrors.name 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                        : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                        : ''
                     }`}
                     placeholder="e.g., GitHub API"
                   />
@@ -564,7 +581,7 @@ export default function CreateConnectionModal({
                 </div>
                 
                 <div>
-                  <label htmlFor="connection-description" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="connection-description" className="label-enhanced">
                     Description
                   </label>
                   <textarea
@@ -573,14 +590,14 @@ export default function CreateConnectionModal({
                     aria-label="Connection description"
                     value={formData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="form-field-enhanced"
                     placeholder="Optional description of this connection"
                     rows={3}
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="connection-base-url" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="connection-base-url" className="label-enhanced">
                     Base URL *
                   </label>
                   <input
@@ -592,10 +609,10 @@ export default function CreateConnectionModal({
                     aria-describedby={fieldErrors.baseUrl ? 'baseUrl-error' : undefined}
                     value={formData.baseUrl}
                     onChange={(e) => handleInputChange('baseUrl', e.target.value)}
-                    className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
+                    className={`form-field-enhanced ${
                       fieldErrors.baseUrl 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                        : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                        : ''
                     }`}
                     placeholder="https://api.your-service.com"
                   />
@@ -609,7 +626,7 @@ export default function CreateConnectionModal({
               <h4 className="text-lg font-medium text-gray-900 mb-4">Authentication</h4>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="connection-auth-type" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="connection-auth-type" className="label-enhanced">
                     Authentication Type *
                   </label>
                   <select
@@ -618,7 +635,7 @@ export default function CreateConnectionModal({
                     aria-required="true"
                     value={formData.authType}
                     onChange={(e) => setFormData({ ...formData, authType: e.target.value as 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM' })}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="form-field-enhanced"
                   >
                     <option value="API_KEY">API Key</option>
                     <option value="BEARER_TOKEN">Bearer Token</option>
@@ -683,7 +700,7 @@ export default function CreateConnectionModal({
                 {formData.authType === 'BASIC_AUTH' && (
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="username" className="label-enhanced">
                         Username *
                       </label>
                       <input
@@ -695,17 +712,17 @@ export default function CreateConnectionModal({
                         aria-describedby={fieldErrors.username ? 'username-error' : undefined}
                         value={formData.credentials.username}
                         onChange={(e) => handleCredentialsChange('username', e.target.value)}
-                        className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
+                        className={`form-field-enhanced ${
                           fieldErrors.username 
                             ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                            : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                            : ''
                         }`}
                         placeholder="Enter username"
                       />
                       {renderFieldError('username')}
                     </div>
                     <div>
-                      <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="password" className="label-enhanced">
                         Password *
                       </label>
                       <input
@@ -717,10 +734,10 @@ export default function CreateConnectionModal({
                         aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                         value={formData.credentials.password}
                         onChange={(e) => handleCredentialsChange('password', e.target.value)}
-                        className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
+                        className={`form-field-enhanced ${
                           fieldErrors.password 
                             ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                            : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+                            : ''
                         }`}
                         placeholder="Enter password"
                       />

@@ -193,7 +193,7 @@ export default function LoginPage() {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="label-enhanced">
                 Email address
               </label>
               <input
@@ -207,12 +207,12 @@ export default function LoginPage() {
                 aria-required="true"
                 aria-invalid={error ? "true" : "false"}
                 aria-describedby={error ? "email-error" : undefined}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200"
+                className="form-field-enhanced"
                 placeholder="Enter your email"
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="label-enhanced">
                 Password
               </label>
               <input
@@ -226,7 +226,7 @@ export default function LoginPage() {
                 aria-required="true"
                 aria-invalid={error ? "true" : "false"}
                 aria-describedby={error ? "password-error" : undefined}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors duration-200"
+                className="form-field-enhanced"
                 placeholder="Enter your password"
               />
             </div>

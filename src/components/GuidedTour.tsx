@@ -164,9 +164,23 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
         break;
     }
 
-    // Ensure tooltip stays within viewport
-    top = Math.max(10, Math.min(top, window.innerHeight - tooltipHeight - 10));
-    left = Math.max(10, Math.min(left, window.innerWidth - tooltipWidth - 10));
+    // Ensure tooltip stays within viewport with extra padding for button accessibility
+    const viewportPadding = 20;
+    const minTop = viewportPadding;
+    const maxTop = window.innerHeight - tooltipHeight - viewportPadding;
+    const minLeft = viewportPadding;
+    const maxLeft = window.innerWidth - tooltipWidth - viewportPadding;
+    
+    top = Math.max(minTop, Math.min(top, maxTop));
+    left = Math.max(minLeft, Math.min(left, maxLeft));
+    
+    // Additional check: if the tooltip would be too close to the bottom or top,
+    // adjust position to prefer center of viewport for better button accessibility
+    if (top < window.innerHeight * 0.1) {
+      top = window.innerHeight * 0.15; // Move away from very top
+    } else if (top > window.innerHeight * 0.8) {
+      top = window.innerHeight * 0.7; // Move away from very bottom
+    }
 
     setTooltipPosition({ top, left });
   };
@@ -258,10 +272,12 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
       {/* Tooltip */}
       <div
         ref={tooltipRef}
-        className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 max-w-sm"
+        className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 max-w-sm pointer-events-auto"
         style={{
           top: tooltipPosition.top,
           left: tooltipPosition.left,
+          minHeight: '200px', // Ensure enough space for buttons
+          minWidth: '300px',  // Ensure enough space for buttons
         }}
         role="dialog"
         aria-labelledby="tour-title"
