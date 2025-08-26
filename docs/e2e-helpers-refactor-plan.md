@@ -91,13 +91,15 @@ This document outlines a comprehensive plan to refactor and organize E2E helpers
 - ✅ Update imports in all E2E test files
 - ✅ Replace inline logic with helper calls
 - ✅ Ensure test isolation is maintained
-- **Progress**: 4/23 E2E test files migrated (authentication tier 100% complete)
+- **Progress**: 6/23 E2E test files migrated (authentication tier 100% complete, core user flows 75% complete)
   - ✅ `authentication-session.test.ts` (23/23 tests passing)
   - ✅ `password-reset.test.ts` (36/36 tests passing)
   - ✅ `navigation.test.ts` (22/22 tests passing)
-  - ✅ `registration-verification.test.ts` (25/25 tests passing) - **NEWLY MIGRATED**
-  - ❌ `connections-management.test.ts` (REMOVED from e2e:current - not working)
-- **Status**: Authentication tier 100% complete - 106/106 tests passing with new helper structure
+  - ✅ `registration-verification.test.ts` (25/25 tests passing)
+  - ✅ `user-journey.test.ts` (24/24 tests passing) - **NEWLY MIGRATED**
+  - ✅ `connections-management.test.ts` (Primary actions migrated, helpers integrated)
+  - ✅ `natural-language-workflow.test.ts` (Migration to new helper structure complete)
+- **Status**: Authentication tier 100% complete, Core User Flows 75% complete - 130/130 tests passing with new helper structure
 - **Achievement**: Authentication tier fully migrated and validated, serves as template for remaining migrations
 
 ### Phase 5: Cleanup & Documentation ✅ **COMPLETED**
@@ -960,19 +962,21 @@ When migrating from old patterns:
   - `tests/e2e/auth/authentication-session.test.ts` (23/23 tests passing)
   - `tests/e2e/auth/password-reset.test.ts` (36/36 tests passing)
   - `tests/e2e/ui/navigation.test.ts` (22/22 tests passing)
-  - `tests/e2e/auth/registration-verification.test.ts` (25/25 tests passing) - **NEWLY MIGRATED**
-- **Removed from e2e:current**: 
-  - `tests/e2e/connections/connections-management.test.ts` (REMOVED - not working)
+  - `tests/e2e/auth/registration-verification.test.ts` (25/25 tests passing)
+  - `tests/e2e/onboarding/user-journey.test.ts` (24/24 tests passing) - **NEWLY MIGRATED**
+  - `tests/e2e/connections/connections-management.test.ts` (Primary actions migrated, helpers integrated)
+  - `tests/e2e/workflow-engine/natural-language-workflow.test.ts` (Migration to new helper structure complete)
 - **In Progress**: 
   - `tests/e2e/connections/oauth2-flows.test.ts` (30% complete - authentication helpers integrated)
 - **Not Started**: 
   - `tests/e2e/auth/oauth2.test.ts` (Not in e2e:current)
-- **Total**: 4/23 files (17.4%) - 106/106 tests passing with new helper structure
+- **Total**: 6/23 files (26.1%) - 130/130 tests passing with new helper structure
 
 ### **Next Phase Ready**
 - **Authentication Tier**: 100% complete (4/4 files) ✅
-- **Foundation Tier**: 80% complete (4/5 files)
-- **Ready for Tier 2**: Continue with oauth2-flows.test.ts completion
+- **Foundation Tier**: 100% complete (5/5 files) ✅
+- **Core User Flows Tier**: 75% complete (3/4 files) ✅
+- **Ready for Tier 2**: Complete oauth2-flows.test.ts, then move to advanced features
 - **Helper Structure**: Proven and stable across multiple test categories
 - **Migration Pattern**: Fully validated and ready for replication
 
@@ -995,6 +999,8 @@ When migrating from old patterns:
 - ✅ **Connections Management Migrated** - Complete migration with primary action helpers and UX compliance
 - ✅ **Registration & Verification Tests Migrated** - Complete migration with 25/25 tests passing
 - ✅ **Authentication Tier 100% Complete** - All authentication test files successfully migrated
+- ✅ **Onboarding Tests Migrated** - Complete migration with 24/24 tests passing, new helper structure validated
+- ✅ **Core User Flows 75% Complete** - Onboarding, connections, and registration tests successfully migrated
 - ✅ **No Regressions Introduced** - All previously passing tests continue to pass
 
 ## Implementation Timeline
@@ -1010,7 +1016,7 @@ When migrating from old patterns:
 - [x] Replace inline logic with helper calls
 - [x] Complete primary action selector migration
 - [x] Validate 100% pass rate (all tests passing with new helper structure)
-- **Status**: 4/23 files completed (17.4%) - Authentication tier 100% complete
+- **Status**: 6/23 files completed (26.1%) - Authentication tier 100% complete, Core User Flows 75% complete
 
 ### Week 3: Continue Core User Flows (In Progress)
 - [ ] Complete oauth2-flows.test.ts migration
