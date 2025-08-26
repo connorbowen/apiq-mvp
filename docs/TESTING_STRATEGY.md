@@ -360,3 +360,62 @@ npm run test:coverage
 **Last Updated**: December 2024  
 **Version**: 1.0  
 **Maintainer**: APIQ Team 
+
+## Text Readability Testing
+
+### Enhanced Styling Validation
+
+The enhanced text readability system includes comprehensive testing to ensure WCAG 2.1 AA compliance.
+
+#### 1. **E2E Test Suite**
+
+```typescript
+// tests/e2e/ui/text-readability.test.ts
+test.describe('Enhanced Text Readability & Contrast', () => {
+  test('should have high contrast text in all input fields', async ({ page }) => {
+    // Navigate to forms and validate enhanced styling
+    await page.getByTestId('tab-connections').click();
+    await page.getByTestId('primary-action create-connection-btn').click();
+    
+    // Verify enhanced styling is applied
+    const nameInput = page.getByTestId('connection-name-input');
+    await expect(nameInput).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect(nameInput).toHaveCSS('color', 'rgb(17, 24, 39)');
+  });
+});
+```
+
+#### 2. **UX Compliance Helper Integration**
+
+```typescript
+// All existing tests automatically get text readability validation
+import { UXComplianceHelper } from '@/tests/helpers/uxCompliance';
+
+const uxHelper = new UXComplianceHelper(page);
+
+// This now includes text readability validation
+await uxHelper.validateFormAccessibility();
+
+// Or validate specifically
+await uxHelper.validateTextReadability();
+```
+
+#### 3. **Validation Script**
+
+```bash
+# Automated validation of enhanced styling system
+node scripts/test-enhanced-styling.js
+```
+
+#### 4. **Test Coverage Areas**
+
+- **Form Input Contrast**: White backgrounds with dark text
+- **Label Readability**: Dark text against any background
+- **Placeholder Visibility**: Optimized contrast for placeholders
+- **Focus State Clarity**: Blue borders with shadows
+- **Cross-Platform Consistency**: Mobile, tablet, and desktop
+- **Performance Impact**: No significant load time increase
+
+### Accessibility Testing
+
+// ... existing code ... 

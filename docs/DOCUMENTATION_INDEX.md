@@ -74,6 +74,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **[UX Specification](UX_SPEC.md)** - Comprehensive UX design principles, patterns, and specifications
 - **[UX Compliant Testing](UX_COMPLIANT_TESTING.md)** - E2E testing guide for UX compliance and accessibility
 - **[Secrets Vault UX Guide](SECRETS_VAULT_UX_GUIDE.md)** - Comprehensive UX guide for secrets vault with accessibility and security patterns
+- **[Enhanced Styling System](ENHANCED_STYLING_SYSTEM.md)** - Automatic text readability enhancement system with WCAG 2.1 AA compliance
 
 ### AI & Automation
 - **[Agentic Code Generation Plan](agentic-code-generation-plan.md)** - AI-powered code generation features and roadmap

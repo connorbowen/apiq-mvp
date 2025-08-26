@@ -1150,6 +1150,106 @@ describe("QueueService", () => {
 
 ## Frontend Development
 
+### Enhanced Styling System
+
+The project includes an automatic text readability enhancement system that ensures all form elements meet WCAG 2.1 AA compliance standards.
+
+#### 1. **Automatic Enhancement**
+
+All form elements automatically receive enhanced styling without manual component updates:
+
+```css
+/* Automatically applied to all form elements */
+input[type="text"], input[type="email"], input[type="password"],
+textarea, select {
+  background-color: #ffffff !important;  /* Pure white background */
+  color: #111827 !important;            /* Very dark text */
+  border-color: #d1d5db !important;    /* Consistent borders */
+}
+
+label {
+  color: #374151 !important;            /* Dark label text */
+}
+
+/* Enhanced focus states */
+input:focus, textarea:focus, select:focus {
+  border-color: #3b82f6 !important;    /* Blue focus border */
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+```
+
+#### 2. **Customization Options**
+
+For custom styling needs, use the provided utility classes:
+
+```typescript
+// src/lib/styles/formStyles.ts
+import { getInputClasses, getLabelClasses } from '@/lib/styles/formStyles';
+
+// Enhanced input with custom variants
+const inputClasses = getInputClasses({
+  variant: 'default',
+  size: 'md',
+  error: false
+});
+
+// Enhanced label with custom variants
+const labelClasses = getLabelClasses({
+  variant: 'default',
+  required: true
+});
+```
+
+#### 3. **Reusable Components**
+
+Use the enhanced form components for consistent styling:
+
+```typescript
+// src/components/ui/FormElements.tsx
+import { Input, Textarea, Select, Label, FormField } from '@/components/ui/FormElements';
+
+// Enhanced input with built-in accessibility
+<Input
+  name="email"
+  type="email"
+  placeholder="Enter your email"
+  required
+  aria-describedby="email-error"
+/>
+
+// Enhanced textarea with consistent styling
+<Textarea
+  name="description"
+  placeholder="Enter description"
+  rows={3}
+/>
+```
+
+#### 4. **Testing Text Readability**
+
+The enhanced styling system includes comprehensive testing:
+
+```typescript
+// E2E tests automatically validate text readability
+import { UXComplianceHelper } from '@/tests/helpers/uxCompliance';
+
+const uxHelper = new UXComplianceHelper(page);
+
+// Validate form accessibility (includes text readability)
+await uxHelper.validateFormAccessibility();
+
+// Validate text readability specifically
+await uxHelper.validateTextReadability();
+```
+
+#### 5. **Performance Impact**
+
+The enhanced styling system has minimal performance impact:
+- CSS-only implementation (no JavaScript overhead)
+- Optimized selectors for fast rendering
+- No impact on component re-renders
+- Automatic application without build-time processing
+
 ### Component Architecture
 
 The frontend follows a component-based architecture with clear separation of concerns:

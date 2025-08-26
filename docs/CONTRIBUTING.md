@@ -1301,3 +1301,37 @@ Thank you for contributing to APIQ! Your contributions help make this project be
 
 - Documentation must not reference or instruct the use of mock or hardcoded data in dev/prod.
 - All examples using test users or demo data must be clearly marked as test-only and isolated to test scripts or test environments. 
+
+## Styling Guidelines
+
+### Enhanced Text Readability
+
+When contributing to the frontend, follow these styling guidelines to maintain accessibility compliance:
+
+#### 1. **Form Elements**
+
+- **Don't override** the enhanced styling system - it's automatic
+- **Use utility classes** from `src/lib/styles/formStyles.ts` for custom needs
+- **Test readability** using the UX compliance helper methods
+
+#### 2. **Custom Styling**
+
+```typescript
+// ✅ Good: Use provided utility functions
+import { getInputClasses } from '@/lib/styles/formStyles';
+
+const customClasses = getInputClasses({
+  variant: 'custom',
+  size: 'lg',
+  error: hasError
+});
+
+// ❌ Bad: Override enhanced styling directly
+const badClasses = 'bg-gray-100 text-gray-800'; // This breaks accessibility
+```
+
+#### 3. **Testing Requirements**
+
+- All form-related changes must pass `validateTextReadability()`
+- E2E tests should include text readability validation
+- Use the enhanced form components when possible 
