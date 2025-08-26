@@ -1,10 +1,6 @@
-import ChatInterface from '../../../components/ChatInterface';
-import type { Metadata } from 'next';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Create Workflow',
-  description: 'Use AI to create workflows by describing what you want to automate in plain English.',
-};
+import ChatInterface from '../../../components/ChatInterface';
 
 export default function CreateWorkflowPage() {
   return (

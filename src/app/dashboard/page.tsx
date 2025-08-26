@@ -488,9 +488,36 @@ function DashboardContent() {
     };
   }, [user]);
 
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
-      <div data-testid="dashboard-loading" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="large" text="Loading dashboard..." />
+          <p className="mt-4 text-gray-600">Please wait while we load your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Error</h2>
+          <p className="text-gray-600 mb-4">Unable to load user data. Please try logging in again.</p>
+          <button
+            onClick={() => router.push('/login')}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
     );
   }
 

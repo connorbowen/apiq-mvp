@@ -127,6 +127,53 @@ export class UXComplianceHelper {
   }
 
   /**
+   * Validate text readability for form elements
+   */
+  async validateTextReadability() {
+    // Check if form elements have readable text
+    const formElements = this.page.locator('input, select, textarea, button, label');
+    const count = await formElements.count();
+    
+    for (let i = 0; i < Math.min(count, 10); i++) { // Check first 10 elements
+      try {
+        const element = formElements.nth(i);
+        const tagName = await element.evaluate(el => el.tagName.toLowerCase());
+        
+        if (tagName === 'input' || tagName === 'textarea') {
+          // Check placeholder text for inputs
+          const placeholder = await element.getAttribute('placeholder');
+          if (placeholder && placeholder.length > 0) {
+            // Ensure placeholder is not too short or too long
+            if (placeholder.length < 3 || placeholder.length > 100) {
+              console.warn(`Placeholder text length issue: "${placeholder}" (${placeholder.length} chars)`);
+            }
+          }
+        } else if (tagName === 'label') {
+          // Check label text
+          const labelText = await element.textContent();
+          if (labelText && labelText.trim().length > 0) {
+            // Ensure label is not too short
+            if (labelText.trim().length < 2) {
+              console.warn(`Label text too short: "${labelText}"`);
+            }
+          }
+        } else if (tagName === 'button') {
+          // Check button text
+          const buttonText = await element.textContent();
+          if (buttonText && buttonText.trim().length > 0) {
+            // Ensure button text is not too short
+            if (buttonText.trim().length < 2) {
+              console.warn(`Button text too short: "${buttonText}"`);
+            }
+          }
+        }
+      } catch (e) {
+        // Continue to next element
+      }
+    }
+  }
+
+  /**
    * Validate loading states as per UX spec
    */
   async validateLoadingState(buttonSelector: string) {

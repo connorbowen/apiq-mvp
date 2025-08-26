@@ -36,7 +36,7 @@ export const waitForAPIResponse = async (
  * Wait for modal to appear and be interactive
  */
 export const waitForModal = async (page: Page, modalId?: string, timeout: number = 5000): Promise<void> => {
-  const modalSelector = modalId ? `[data-testid="${modalId}"]` : 'role="dialog"]';
+  const modalSelector = modalId ? `[data-testid="${modalId}"]` : '[role="dialog"]';
   await page.waitForSelector(modalSelector, { timeout });
   // Wait a bit more for modal to be fully interactive
   await page.waitForTimeout(100);
