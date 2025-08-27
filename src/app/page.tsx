@@ -103,11 +103,11 @@ export default function Home() {
         <div className="px-4 py-12 sm:px-0 text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl mb-6">
-              Just Ask, We&apos;ll Connect
+              Stop Writing API Code. Start Talking to APIs.
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Automatically ingest API schemas, chat with your APIs using natural language, and create complex workflows across multiple services. 
-              No more manual API integration - just describe what you want and let AI orchestrate everything.
+              Connect any API in seconds, then simply describe what you want in plain English. 
+              APIQ automatically builds the workflows, handles authentication, and orchestrates everything.
             </p>
             
             {userOnboardingStage ? (
@@ -163,30 +163,65 @@ export default function Home() {
               <div className="p-6 space-y-4">
                 <div className="flex justify-end">
                   <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-indigo-600 text-white">
-                    <div className="text-sm">&quot;When a new customer signs up, add them to our CRM and send a welcome email&quot;</div>
-                    <div className="text-xs text-indigo-200 mt-1">2:30 PM</div>
+                    <div className="text-sm">"Create a workflow that syncs new orders from Shopify to our inventory system"</div>
                   </div>
                 </div>
                 <div className="flex justify-start">
                   <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-gray-100 text-gray-900">
-                    <div className="text-sm">I&apos;ll help you create a workflow that:</div>
-                    <div className="text-sm mt-2 space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                        <span>Monitors for new customer signups</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                        <span>Adds customer to your CRM system</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                        <span>Sends a personalized welcome email</span>
-                      </div>
+                    <div className="text-sm font-medium mb-2">✅ Workflow Created Successfully!</div>
+                    <div className="text-xs text-gray-600">
+                      • Monitors Shopify webhooks<br/>
+                      • Transforms order data<br/>
+                      • Updates inventory in real-time<br/>
+                      • Sends confirmation emails
                     </div>
-                    <div className="text-xs text-gray-500 mt-2">Ready to save and activate</div>
+                    <div className="mt-2 text-xs text-green-600 font-medium">Ready to activate in 1 click</div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Use Cases Section */}
+        <div className="px-4 py-12 sm:px-0">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">What You Can Build</h2>
+            <p className="text-xl text-gray-600">Real examples of workflows you can create in minutes</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-gray-900">E-commerce Automation</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Sync orders, update inventory, send notifications across 5+ systems</p>
+              <div className="text-xs text-gray-500">
+                <span className="inline-block bg-gray-100 px-2 py-1 rounded mr-2">Shopify</span>
+                <span className="inline-block bg-gray-100 px-2 py-1 rounded mr-2">Inventory</span>
+                <span className="inline-block bg-gray-100 px-2 py-1 rounded">Email</span>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-gray-900">Customer Data Sync</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Keep CRM, marketing tools, and support systems in sync automatically</p>
+              <div className="text-xs text-gray-500">
+                <span className="inline-block bg-gray-100 px-2 py-1 rounded mr-2">CRM</span>
+                <span className="inline-block bg-gray-100 px-2 py-1 rounded mr-2">Marketing</span>
+                <span className="inline-block bg-gray-100 px-2 py-1 rounded">Support</span>
               </div>
             </div>
           </div>
@@ -196,10 +231,10 @@ export default function Home() {
         <div id="examples" className="px-4 py-12 sm:px-0">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Core Value: API Schema Ingestion & Workflow Creation
+              How APIQ Works
             </h2>
             <p className="text-xl text-gray-600">
-              The foundation of what makes APIQ powerful
+              Three simple steps to transform how you work with APIs
             </p>
           </div>
 
@@ -212,10 +247,10 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">API Schema Ingestion</h3>
+                <h3 className="text-lg font-semibold text-gray-900">1. Connect Your APIs</h3>
               </div>
               <p className="text-sm text-gray-700">
-                Automatically ingest and understand API schemas from OpenAPI, GraphQL, or custom formats. No manual configuration needed.
+                Paste any API endpoint or upload OpenAPI/GraphQL schemas. APIQ automatically discovers and understands your APIs.
               </p>
             </div>
 
@@ -227,10 +262,10 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Natural Language Chat</h3>
+                <h3 className="text-lg font-semibold text-gray-900">2. Describe What You Want</h3>
               </div>
               <p className="text-sm text-gray-700">
-                Chat with your APIs using natural language. Ask questions, request data, and describe workflows in plain English.
+                Tell APIQ what you want to accomplish in plain English. "Sync orders from Shopify to our inventory system" is all you need to say.
               </p>
             </div>
 
@@ -242,10 +277,10 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Workflow Creation</h3>
+                <h3 className="text-lg font-semibold text-gray-900">3. Watch It Build Itself</h3>
               </div>
               <p className="text-sm text-gray-700">
-                Automatically generate and orchestrate complex workflows across multiple APIs. Transform, combine, and automate data flows.
+                APIQ automatically generates the workflow, handles authentication, and orchestrates everything. Just review and activate.
               </p>
             </div>
           </div>
@@ -274,9 +309,10 @@ export default function Home() {
                       </svg>
                     </span>
                   </div>
-                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Natural Language</h3>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Zero-Code Workflows</h3>
                   <p className="mt-5 text-base text-gray-500">
-                    Just describe what you want in plain English. No technical jargon or complex configuration needed.
+                    Build complex multi-API workflows without writing a single line of code. 
+                    Just describe the flow and let AI handle the rest.
                   </p>
                 </div>
               </div>
@@ -293,9 +329,10 @@ export default function Home() {
                       </svg>
                     </span>
                   </div>
-                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">AI-Powered</h3>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Smart API Orchestration</h3>
                   <p className="mt-5 text-base text-gray-500">
-                    Advanced AI understands your intent and automatically plans the optimal sequence of API calls.
+                    AI automatically discovers API endpoints, handles authentication, and orchestrates 
+                    complex data flows across multiple services.
                   </p>
                 </div>
               </div>
@@ -312,9 +349,10 @@ export default function Home() {
                       </svg>
                     </span>
                   </div>
-                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Simple & Secure</h3>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Enterprise Security</h3>
                   <p className="mt-5 text-base text-gray-500">
-                    Clean, intuitive interface with enterprise-grade security for your API credentials and data.
+                    Bank-level encryption for API keys, SOC 2 compliance, and granular access controls. 
+                    Your data never leaves your infrastructure.
                   </p>
                 </div>
               </div>
@@ -344,10 +382,10 @@ export default function Home() {
         <div className="px-4 py-16 sm:px-0">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-center">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Ready to Transform Your API Workflows?
+              Ready to Stop Writing API Code?
             </h2>
             <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
-              Join thousands of developers who are already building smarter, faster integrations with APIQ.
+              Join the waitlist and be among the first to experience the future of API orchestration.
             </p>
             <div className="flex justify-center space-x-4">
               {userOnboardingStage ? (
