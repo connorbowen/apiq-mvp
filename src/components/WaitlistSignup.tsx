@@ -11,13 +11,13 @@ interface WaitlistFormData {
 }
 
 const INTEREST_OPTIONS = [
-  'API Integration',
-  'Workflow Automation',
-  'Data Synchronization',
-  'Customer Support',
-  'Sales & Marketing',
-  'Product Development',
-  'Operations',
+  'Natural Language API Chat',
+  'Schema Ingestion & Learning',
+  'Workflow Creation & Automation',
+  'Multi-API Orchestration',
+  'Real-time Data Processing',
+  'API Documentation Generation',
+  'Integration Testing',
   'Other'
 ];
 
@@ -184,7 +184,7 @@ export default function WaitlistSignup() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              What interests you most? (Select all that apply)
+              Which APIQ capabilities interest you most? (Select all that apply)
             </label>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {INTEREST_OPTIONS.map((interest) => (
