@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import WaitlistSignup from '../components/WaitlistSignup';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
@@ -68,18 +69,29 @@ export default function Home() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Link
-                href={getChatDestination()}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-              >
-                {userOnboardingStage === 'NEW_USER' || userOnboardingStage === null ? 'Start Tour' : 'Try Chat'}
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-              >
-                Sign In
-              </Link>
+              {userOnboardingStage ? (
+                <>
+                  <Link
+                    href={getChatDestination()}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                  >
+                    {userOnboardingStage === 'NEW_USER' ? 'Start Tour' : 'Try Chat'}
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                  >
+                    Sign In
+                  </Link>
+                </>
+              ) : (
+                <a
+                  href="#waitlist"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                >
+                  Join Waitlist
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -88,63 +100,86 @@ export default function Home() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Hero Section */}
-        <div className="px-4 py-6 sm:px-0">
-          <div className="text-center">
-            <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+        <div className="px-4 py-12 sm:px-0 text-center">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl md:text-6xl mb-6">
               Just Ask, We&apos;ll Connect
-            </h2>
-            <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-              Describe what you want to do with your APIs in plain English. Our AI understands your intent and orchestrates the complex connections for you.
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Automatically ingest API schemas, chat with your APIs using natural language, and create complex workflows across multiple services. 
+              No more manual API integration - just describe what you want and let AI orchestrate everything.
             </p>
-            <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-              <div className="rounded-md shadow">
+            
+            {userOnboardingStage ? (
+              <div className="flex justify-center space-x-4">
                 <Link
                   href={getChatDestination()}
-                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition-colors duration-200"
+                  className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200"
+                  data-testid="primary-action start-chat"
                 >
-                  {userOnboardingStage === 'NEW_USER' || userOnboardingStage === null ? 'Start Your Journey' : 'Start Chatting'}
+                  {userOnboardingStage === 'NEW_USER' ? 'Start Your Journey' : 'Start Chatting'}
                 </Link>
               </div>
-              <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
+            ) : (
+              <div className="flex justify-center space-x-4">
+                <a
+                  href="#waitlist"
+                  className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200"
+                  data-testid="primary-action join-waitlist"
+                >
+                  Join Waitlist
+                </a>
                 <a
                   href="#examples"
-                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10 transition-colors duration-200"
+                  className="inline-flex items-center px-8 py-4 border border-gray-300 text-lg font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
                 >
                   See Examples
                 </a>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* Social Proof Section */}
+        <div className="px-4 py-12 sm:px-0">
+          <div className="text-center mb-8">
+            <p className="text-lg text-gray-600 mb-4">Trusted by teams at</p>
+            <div className="flex justify-center items-center space-x-8 opacity-60">
+              <div className="text-2xl font-bold text-gray-400">Company A</div>
+              <div className="text-2xl font-bold text-gray-400">Company B</div>
+              <div className="text-2xl font-bold text-gray-400">Company C</div>
             </div>
           </div>
         </div>
 
         {/* Chat Demo Section */}
-        <div className="mt-16 px-4 sm:px-0">
+        <div className="px-4 py-12 sm:px-0">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Chat Interface</h3>
-                <p className="text-sm text-gray-500 mt-1">Just describe what you want to do</p>
+            <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-500 to-purple-600">
+                <h3 className="text-lg font-medium text-white">See It In Action</h3>
+                <p className="text-sm text-indigo-100 mt-1">Just describe what you want to do</p>
               </div>
               <div className="p-6 space-y-4">
                 <div className="flex justify-end">
-                  <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-indigo-600 text-white">
+                  <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-indigo-600 text-white">
                     <div className="text-sm">&quot;When a new customer signs up, add them to our CRM and send a welcome email&quot;</div>
                     <div className="text-xs text-indigo-200 mt-1">2:30 PM</div>
                   </div>
                 </div>
                 <div className="flex justify-start">
-                  <div className="max-w-xs lg:max-w-md px-4 py-2 rounded-lg bg-gray-100 text-gray-900">
+                  <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-gray-100 text-gray-900">
                     <div className="text-sm">I&apos;ll help you create a workflow that:</div>
-                    <div className="text-sm mt-2">
+                    <div className="text-sm mt-2 space-y-1">
                       <div className="flex items-center space-x-2">
                         <span className="w-2 h-2 bg-green-400 rounded-full"></span>
                         <span>Monitors for new customer signups</span>
                       </div>
-                      <div className="flex items-center space-x-2 mt-1">
+                      <div className="flex items-center space-x-2">
                         <span className="w-2 h-2 bg-green-400 rounded-full"></span>
                         <span>Adds customer to your CRM system</span>
                       </div>
-                      <div className="flex items-center space-x-2 mt-1">
+                      <div className="flex items-center space-x-2">
                         <span className="w-2 h-2 bg-green-400 rounded-full"></span>
                         <span>Sends a personalized welcome email</span>
                       </div>
@@ -157,127 +192,187 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Examples Section */}
-        <div id="examples" className="mt-16 px-4 sm:px-0">
-          <div className="text-center">
-            <h3 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">
-              What You Can Ask
-            </h3>
-            <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-              Natural language examples that work right away
+        {/* Core Value Section */}
+        <div id="examples" className="px-4 py-12 sm:px-0">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Core Value: API Schema Ingestion & Workflow Creation
+            </h2>
+            <p className="text-xl text-gray-600">
+              The foundation of what makes APIQ powerful
             </p>
           </div>
 
-          <div className="mt-12">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Example 1 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-                <div className="text-sm text-gray-600 mb-4">
-                  &quot;Get the latest orders from our e-commerce API and update our inventory system&quot;
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Core Value 1 */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-200">
+              <div className="text-center mb-4">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-lg bg-indigo-500 text-white mb-3">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                 </div>
-                <div className="text-xs text-gray-500">
-                  Creates a workflow that syncs order data with inventory management
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900">API Schema Ingestion</h3>
               </div>
+              <p className="text-sm text-gray-700">
+                Automatically ingest and understand API schemas from OpenAPI, GraphQL, or custom formats. No manual configuration needed.
+              </p>
+            </div>
 
-              {/* Example 2 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-                <div className="text-sm text-gray-600 mb-4">
-                  &quot;Monitor our GitHub repository for new issues and create Trello cards&quot;
+            {/* Core Value 2 */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-200">
+              <div className="text-center mb-4">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-lg bg-indigo-500 text-white mb-3">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
                 </div>
-                <div className="text-xs text-gray-500">
-                  Automatically creates project management tasks from development issues
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Natural Language Chat</h3>
               </div>
+              <p className="text-sm text-gray-700">
+                Chat with your APIs using natural language. Ask questions, request data, and describe workflows in plain English.
+              </p>
+            </div>
 
-              {/* Example 3 */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-                <div className="text-sm text-gray-600 mb-4">
-                  &quot;Send me a daily summary of our sales data and customer feedback&quot;
+            {/* Core Value 3 */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow duration-200">
+              <div className="text-center mb-4">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-lg bg-indigo-500 text-white mb-3">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
                 </div>
-                <div className="text-xs text-gray-500">
-                  Generates automated reports combining multiple data sources
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Workflow Creation</h3>
               </div>
+              <p className="text-sm text-gray-700">
+                Automatically generate and orchestrate complex workflows across multiple APIs. Transform, combine, and automate data flows.
+              </p>
             </div>
           </div>
         </div>
 
         {/* Features Section */}
-        <div className="mt-16 px-4 sm:px-0">
-          <div className="text-center">
-            <h3 className="text-2xl font-extrabold text-gray-900 sm:text-3xl">
+        <div className="px-4 py-12 sm:px-0">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Why It Works
-            </h3>
-            <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
+            </h2>
+            <p className="text-xl text-gray-600">
               Simple, powerful, and intelligent
             </p>
           </div>
 
-          <div className="mt-12">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Feature 1 */}
-              <div className="pt-6">
-                <div className="flow-root bg-white rounded-lg px-6 pb-8 hover:shadow-md transition-shadow duration-200">
-                  <div className="-mt-6">
-                    <div>
-                      <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
-                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                      </span>
-                    </div>
-                    <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Natural Language</h3>
-                    <p className="mt-5 text-base text-gray-500">
-                      Just describe what you want in plain English. No technical jargon or complex configuration needed.
-                    </p>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Feature 1 */}
+            <div className="pt-6">
+              <div className="flow-root bg-white rounded-xl px-6 pb-8 shadow-lg hover:shadow-xl transition-shadow duration-200">
+                <div className="-mt-6">
+                  <div>
+                    <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-lg shadow-lg">
+                      <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </span>
                   </div>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Natural Language</h3>
+                  <p className="mt-5 text-base text-gray-500">
+                    Just describe what you want in plain English. No technical jargon or complex configuration needed.
+                  </p>
                 </div>
               </div>
+            </div>
 
-              {/* Feature 2 */}
-              <div className="pt-6">
-                <div className="flow-root bg-white rounded-lg px-6 pb-8 hover:shadow-md transition-shadow duration-200">
-                  <div className="-mt-6">
-                    <div>
-                      <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
-                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      </span>
-                    </div>
-                    <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">AI-Powered</h3>
-                    <p className="mt-5 text-base text-gray-500">
-                      Advanced AI understands your intent and automatically plans the optimal sequence of API calls.
-                    </p>
+            {/* Feature 2 */}
+            <div className="pt-6">
+              <div className="flow-root bg-white rounded-xl px-6 pb-8 shadow-lg hover:shadow-xl transition-shadow duration-200">
+                <div className="-mt-6">
+                  <div>
+                    <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-lg shadow-lg">
+                      <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </span>
                   </div>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">AI-Powered</h3>
+                  <p className="mt-5 text-base text-gray-500">
+                    Advanced AI understands your intent and automatically plans the optimal sequence of API calls.
+                  </p>
                 </div>
               </div>
+            </div>
 
-              {/* Feature 3 */}
-              <div className="pt-6">
-                <div className="flow-root bg-white rounded-lg px-6 pb-8 hover:shadow-md transition-shadow duration-200">
-                  <div className="-mt-6">
-                    <div>
-                      <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-md shadow-lg">
-                        <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </span>
-                    </div>
-                    <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Simple & Secure</h3>
-                    <p className="mt-5 text-base text-gray-500">
-                      Clean, intuitive interface with enterprise-grade security for your API credentials and data.
-                    </p>
+            {/* Feature 3 */}
+            <div className="pt-6">
+              <div className="flow-root bg-white rounded-xl px-6 pb-8 shadow-lg hover:shadow-xl transition-shadow duration-200">
+                <div className="-mt-6">
+                  <div>
+                    <span className="inline-flex items-center justify-center p-3 bg-indigo-500 rounded-lg shadow-lg">
+                      <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </span>
                   </div>
+                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Simple & Secure</h3>
+                  <p className="mt-5 text-base text-gray-500">
+                    Clean, intuitive interface with enterprise-grade security for your API credentials and data.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Health Status */}
-        {healthStatus && (
+        {/* Waitlist Section */}
+        <div id="waitlist" className="px-4 py-16 sm:px-0">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Get Early Access
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              We're building the future of API orchestration. Join our waitlist to be among the first to experience APIQ when we launch. 
+              Get exclusive early access, special pricing, and help shape the product.
+            </p>
+            <div className="mt-6 text-sm text-gray-500">
+              <p>Currently in development - not yet available for production use</p>
+            </div>
+          </div>
+          
+          <WaitlistSignup />
+        </div>
+
+        {/* CTA Section */}
+        <div className="px-4 py-16 sm:px-0">
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-center">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Ready to Transform Your API Workflows?
+            </h2>
+            <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
+              Join thousands of developers who are already building smarter, faster integrations with APIQ.
+            </p>
+            <div className="flex justify-center space-x-4">
+              {userOnboardingStage ? (
+                <Link
+                  href={getChatDestination()}
+                  className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-indigo-600 bg-white hover:bg-gray-50 transition-colors duration-200"
+                  data-testid="primary-action cta-start"
+                >
+                  Start Building Now
+                </Link>
+              ) : (
+                <a
+                  href="#waitlist"
+                  className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-indigo-600 bg-white hover:bg-gray-50 transition-colors duration-200"
+                  data-testid="primary-action cta-waitlist"
+                >
+                  Join Waitlist
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Health Status - Only show for logged in users */}
+        {userOnboardingStage && healthStatus && (
           <div className="mt-8 px-4 sm:px-0">
             <div className={`rounded-lg p-4 ${
               healthStatus.success && healthStatus.status === 'healthy' 
