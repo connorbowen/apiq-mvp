@@ -140,17 +140,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Social Proof Section */}
-        <div className="px-4 py-12 sm:px-0">
-          <div className="text-center mb-8">
-            <p className="text-lg text-gray-600 mb-4">Trusted by teams at</p>
-            <div className="flex justify-center items-center space-x-8 opacity-60">
-              <div className="text-2xl font-bold text-gray-400">Company A</div>
-              <div className="text-2xl font-bold text-gray-400">Company B</div>
-              <div className="text-2xl font-bold text-gray-400">Company C</div>
-            </div>
-          </div>
-        </div>
+
 
         {/* Chat Demo Section */}
         <div className="px-4 py-12 sm:px-0">

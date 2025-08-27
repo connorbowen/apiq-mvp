@@ -8,6 +8,7 @@ interface WaitlistFormData {
   company: string;
   role: string;
   interests: string[];
+  useCase: string;
 }
 
 const INTEREST_OPTIONS = [
@@ -27,14 +28,15 @@ export default function WaitlistSignup() {
     name: '',
     company: '',
     role: '',
-    interests: []
+    interests: [],
+    useCase: ''
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [submitMessage, setSubmitMessage] = useState('');
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -73,7 +75,8 @@ export default function WaitlistSignup() {
           name: '',
           company: '',
           role: '',
-          interests: []
+          interests: [],
+          useCase: ''
         });
       } else {
         setSubmitStatus('error');
@@ -199,6 +202,21 @@ export default function WaitlistSignup() {
                 </label>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="useCase" className="block text-sm font-medium text-gray-700 mb-2">
+              Tell us about your use case
+            </label>
+            <textarea
+              id="useCase"
+              name="useCase"
+              value={formData.useCase}
+              onChange={handleInputChange}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+              placeholder="Describe how you plan to use APIQ or what problems you're trying to solve..."
+            />
           </div>
 
           {submitStatus === 'error' && (
