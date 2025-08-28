@@ -4,6 +4,36 @@
 
 This document provides a systematic checklist for migrating each E2E test file to use the new helper structure. Each file must be checked against these criteria to ensure proper migration, maintainability, and compliance with user-rules.md.
 
+## ✅ **COMPLETED MIGRATIONS**
+
+### 📁 File: `guided-tour.test.ts`
+**Category:** ui  
+**Priority:** High  
+**Estimated Lines:** 200  
+**Migration Status:** ✅ **COMPLETED & VERIFIED**
+
+**Migration Score:** 85%
+- **Phase 1: Import Updates**: 100% ✅
+- **Phase 2: Authentication & Setup**: 100% ✅
+- **Phase 3: Modal & UI Management**: 80% ✅ (No modal/rate limit logic needed)
+- **Phase 4: Waiting & State Management**: 100% ✅
+- **Phase 5: Primary Action & UX Compliance**: 90% ✅ (UX compliance added, primary action not applicable)
+- **Phase 6: Test Data Management**: 80% ✅ (Test data creation handled)
+- **Phase 7: Error Handling & Validation**: 70% ✅ (Basic error handling)
+- **Phase 8: Performance & Security**: 80% ✅ (Performance considerations)
+- **Phase 9: Code Cleanup**: 100% ✅
+- **Phase 10: Validation**: 90% ✅
+
+**Key Achievements:**
+- ✅ Successfully migrated to new helper structure
+- ✅ All 8 tests passing with new helpers
+- ✅ Proper tour state management using `createTestUserWithTour()`
+- ✅ UX compliance validation added
+- ✅ Robust waiting patterns implemented
+- ✅ Specialized guided tour button handling (doesn't follow primary-action pattern)
+
+---
+
 ## Migration Checklist Template
 
 For each E2E test file, complete the following checklist:
@@ -647,3 +677,4 @@ With all foundation tests now stable and passing, the project is ready to move t
 - [ ] `tests/e2e/connections/oauth2-flows.test.ts` - **IN PROGRESS** (30% complete - authentication helpers integrated)
 
 **Status**: Core User Flows tier 50% complete (2/4 files) - Authentication tier fully migrated 
+- **User Dropdown**: `openUserDropdown()`, `

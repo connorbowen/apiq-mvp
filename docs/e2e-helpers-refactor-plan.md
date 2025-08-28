@@ -87,18 +87,19 @@ This document outlines a comprehensive plan to refactor and organize E2E helpers
 - [x] Split `testUtils.ts`
 - [x] Integrate testIsolation.ts hooks into setupE2E to guarantee teardown even on failure (use Playwright’s test hooks and test.info().attach as needed).
 
-### Phase 4: Refactor E2E Tests ✅ **AUTHENTICATION TIER COMPLETE**
+### Phase 4: Refactor E2E Tests ✅ **AUTHENTICATION TIER COMPLETE + GUIDED TOUR MIGRATED**
 - ✅ Update imports in all E2E test files
 - ✅ Replace inline logic with helper calls
 - ✅ Ensure test isolation is maintained
-- **Progress**: 4/23 E2E test files migrated (authentication tier 100% complete)
+- **Progress**: 5/23 E2E test files migrated (authentication tier 100% complete + guided tour)
   - ✅ `authentication-session.test.ts` (23/23 tests passing)
   - ✅ `password-reset.test.ts` (36/36 tests passing)
   - ✅ `navigation.test.ts` (22/22 tests passing)
   - ✅ `registration-verification.test.ts` (25/25 tests passing) - **NEWLY MIGRATED**
+  - ✅ `guided-tour.test.ts` (8/8 tests passing) - **NEWLY MIGRATED - UI TIER**
   - ❌ `connections-management.test.ts` (REMOVED from e2e:current - not working)
-- **Status**: Authentication tier 100% complete - 106/106 tests passing with new helper structure
-- **Achievement**: Authentication tier fully migrated and validated, serves as template for remaining migrations
+- **Status**: Authentication tier 100% complete + 1 UI tier file migrated - 114/114 tests passing with new helper structure
+- **Achievement**: Authentication tier fully migrated and validated, serves as template for remaining migrations. UI tier migration started with guided tour tests.
 
 ### Phase 5: Cleanup & Documentation ✅ **COMPLETED**
 - ✅ Remove obsolete code
