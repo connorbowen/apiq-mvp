@@ -137,25 +137,41 @@ function DashboardContent() {
     });
   }, [user, onboardingState, tourState, isTourOpen]);
 
+  // Track if tour was temporarily dismissed in this session
+  const [tourTemporarilyDismissed, setTourTemporarilyDismissed] = useState(false);
+
   // Auto-start tour for new users who haven't completed it and haven't dismissed the tour
   useEffect(() => {
     console.log('🎯 Dashboard: Guided tour effect triggered:', {
       hasUser: !!user,
       tourState: onboardingState.tourState,
       tourDismissed: onboardingState.tourState?.dismissed,
+      tourTemporarilyDismissed,
       onboardingStage: onboardingState.stage,
       onboardingCompleted: onboardingState.stage === 'completed',
       isTourOpen,
       userEmail: user?.email
     });
+    
+    // If tour is already open, don't interfere with it
+    if (isTourOpen) {
+      console.log('🎯 Dashboard: Tour already open, skipping effect');
+      return;
+    }
+    
+    // If tour was temporarily dismissed this session, don't show it again
+    if (tourTemporarilyDismissed) {
+      console.log('🎯 Dashboard: Tour temporarily dismissed this session, skipping effect');
+      return;
+    }
+    
     if (
       user &&
       onboardingState.tourState &&
       !onboardingState.tourState.dismissed &&
-      onboardingState.stage !== 'completed' &&
-      !isTourOpen
+      onboardingState.stage !== 'completed'
     ) {
-      console.log('🎯 Dashboard: Scheduling guided tour to open in 1 second');
+      console.log('🎯 Dashboard: Scheduling guided tour to open in 2 seconds (waiting for DOM elements)');
       const timer = setTimeout(() => {
         // Re-evaluate conditions before opening tour
         if (
@@ -165,12 +181,29 @@ function DashboardContent() {
           onboardingState.stage !== 'completed' &&
           !isTourOpen
         ) {
-          console.log('🎯 Dashboard: Opening guided tour');
-          openTour(fullTourSteps);
+          // Wait for target elements to be available
+          const waitForElements = () => {
+            const chatInterface = document.querySelector('[data-testid="chat-interface"]');
+            if (chatInterface) {
+              console.log('🎯 Dashboard: Target elements found, opening guided tour');
+              console.log('🎯 Dashboard: fullTourSteps:', fullTourSteps);
+              console.log('🎯 Dashboard: openTour function:', typeof openTour);
+              try {
+                openTour(fullTourSteps);
+                console.log('🎯 Dashboard: openTour called successfully');
+              } catch (error) {
+                console.error('🎯 Dashboard: Error calling openTour:', error);
+              }
+            } else {
+              console.log('🎯 Dashboard: Target elements not ready, retrying in 500ms');
+              setTimeout(waitForElements, 500);
+            }
+          };
+          waitForElements();
         } else {
           console.log('🎯 Dashboard: Tour conditions no longer met, skipping tour');
         }
-      }, 1000);
+      }, 2000);
       return () => clearTimeout(timer);
     } else {
       console.log('🎯 Dashboard: Tour conditions not met:', {
@@ -181,7 +214,7 @@ function DashboardContent() {
         isTourOpen
       });
     }
-  }, [user, onboardingState.tourState, onboardingState.stage, isTourOpen, openTour, fullTourSteps]);
+  }, [user, onboardingState.tourState, onboardingState.stage, openTour, fullTourSteps, isTourOpen, tourTemporarilyDismissed]);
 
   const loadUser = useCallback(async () => {
     try {
@@ -212,6 +245,9 @@ function DashboardContent() {
         });
         
         setUser(userWithRole);
+        
+        // Reset temporary tour dismissal when user data is loaded (refresh/login)
+        setTourTemporarilyDismissed(false);
         
         // Sync onboarding context with user data from database
         console.log('🔄 Dashboard: Syncing onboarding context with user data');
@@ -480,13 +516,18 @@ function DashboardContent() {
     window.addEventListener('popstate', handleUrlChange);
     
     // Also listen for any programmatic URL changes in tests
-    const checkUrlInterval = setInterval(handleUrlChange, 1000);
+    // Temporarily disable URL polling when tour is active to prevent interference
+    const checkUrlInterval = setInterval(() => {
+      if (!isTourOpen) {
+        handleUrlChange();
+      }
+    }, 1000);
     
     return () => {
       window.removeEventListener('popstate', handleUrlChange);
       clearInterval(checkUrlInterval);
     };
-  }, [user]);
+  }, [user, isTourOpen]); // Added isTourOpen to dependency array
 
   if (isLoading) {
     return (
@@ -511,7 +552,16 @@ function DashboardContent() {
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Error</h2>
           <p className="text-gray-600 mb-4">Unable to load user data. Please try logging in again.</p>
           <button
-            onClick={() => router.push('/login')}
+            onClick={async () => {
+              // Clear authentication cookies to prevent redirect loop
+              try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+              } catch (error) {
+                console.warn('Failed to clear cookies via API, proceeding anyway:', error);
+              }
+              // Navigate to login page
+              router.push('/login');
+            }}
             className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
           >
             Go to Login
@@ -627,7 +677,7 @@ function DashboardContent() {
         )}
         {!isTabLoading && activeTab === 'connections' && (
           <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <div id="connections-section">
+            <div id="connections-section" data-testid="connections-section">
               <ConnectionsTab
                 connections={connections}
                 onConnectionCreated={() => {
@@ -712,9 +762,18 @@ function DashboardContent() {
     <GuidedTour
       steps={fullTourSteps}
       isOpen={isTourOpen}
-      onClose={closeTour}
+      onClose={async () => {
+        try {
+          await closeTour();
+          // Mark tour as temporarily dismissed for this session
+          setTourTemporarilyDismissed(true);
+        } catch (error) {
+          console.error('Error closing tour:', error);
+        }
+      }}
       onComplete={completeTour}
       onSkip={skipTour}
+      setActiveTab={(tab: string) => handleTabChange(tab as TabType)}
     />
     
   </main>

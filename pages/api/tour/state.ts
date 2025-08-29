@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: {
             userId: user.id,
             currentStep: 0,
-            totalSteps: 3,
+            totalSteps: 10,
             isActive: true,
             completedSteps: [],
             dismissed: false,
@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         create: {
           userId: user.id,
           currentStep: currentStep ?? 0,
-          totalSteps: 3,
+          totalSteps: 10,
           isActive: isActive ?? true,
           completedSteps: completedSteps ?? [],
           dismissed: dismissed ?? false,

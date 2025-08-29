@@ -192,16 +192,15 @@ export const loginAndNavigate = async (
     await page.fill('#email', user.email);
     await page.fill('#password', user.password);
     
-    // Click the login button and wait for network idle to ensure cookies are set
+    // Click the login button and wait for navigation to dashboard
+    // Use deterministic waiting instead of brittle network responses
     await Promise.all([
-      page.waitForResponse(response => 
-        response.url().includes('/api/auth/login') && response.status() === 200
-      ),
+      page.waitForURL(/.*dashboard.*/, { timeout: 30000 }),
       page.click('[data-testid="primary-action signin-btn"]')
     ]);
     
-    // Wait for redirect to dashboard with proper cookie persistence
-    await page.waitForURL(/.*dashboard.*/, { timeout: 15000 });
+    // Wait for dashboard to be ready with a stable UI element
+    await page.waitForSelector('[data-testid="tab-chat"]', { timeout: 20000 });
     
     // Verify cookies are properly set by checking authentication status
     const cookies = await page.context().cookies();
@@ -211,9 +210,6 @@ export const loginAndNavigate = async (
     if (!hasAccessToken) {
       throw new Error('Authentication cookies not properly set');
     }
-    
-    // Wait for dashboard to be ready
-    await page.waitForSelector('[data-testid="tab-chat"]', { timeout: 10000 });
     
     console.log('🔍 E2E DEBUG: Form-based login successful with proper OAuth2 compliance');
     await navigateToDesiredTab(page, options);

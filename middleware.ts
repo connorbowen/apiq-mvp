@@ -12,6 +12,34 @@ function getHeaderValue(request: NextRequest, key: string): string | undefined {
   return request.headers.get(key) || undefined;
 }
 
+// Utility: Basic JWT token validation (without verification)
+function isValidTokenFormat(token: string): boolean {
+  try {
+    // JWT tokens have 3 parts separated by dots
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return false;
+    }
+    
+    // Decode the payload (second part) without verification
+    const payload = JSON.parse(atob(parts[1]));
+    
+    // Check if token has expired
+    if (payload.exp && Date.now() >= payload.exp * 1000) {
+      return false;
+    }
+    
+    // Check if token has the required fields
+    if (!payload.userId || !payload.type || payload.type !== 'access') {
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 // Note: Secrets-first validation has been moved to feature-level gating
 // based on user onboarding stage. This provides better UX and aligns with
 // the product vision of progressive disclosure.
@@ -61,29 +89,32 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-    // --- Authentication validation for protected routes ---
+  // --- Authentication validation for protected routes ---
   if (isProtectedRoute) {
-    // Check for access token in cookies (more secure than localStorage for SSR)
+    // Check for access token in cookies and validate its format
     const accessToken = request.cookies.get('accessToken')?.value;
     console.log('🔍 MIDDLEWARE: Processing request for:', pathname);
     console.log('🔍 MIDDLEWARE: All cookies:', Array.from(request.cookies.getAll()).map(c => `${c.name}=${c.value.substring(0, 20)}...`));
     console.log('🔍 MIDDLEWARE: Access token present:', !!accessToken);
-    if (!accessToken) {
-      console.log('🔍 MIDDLEWARE: Redirecting dashboard to login');
-      // Redirect to login page with reason parameter
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('reason', 'auth');
-      return NextResponse.redirect(loginUrl);
+    
+    if (!accessToken || !isValidTokenFormat(accessToken)) {
+      console.log('🔍 MIDDLEWARE: Access token missing or invalid format, redirecting to login');
+      // Clear the invalid token cookie
+      const response = NextResponse.redirect(new URL('/login?reason=auth', request.url));
+      response.cookies.delete('accessToken');
+      response.cookies.delete('refreshToken');
+      return response;
     }
-    console.log('🔍 MIDDLEWARE: Allowing access to dashboard');
+    
+    console.log('🔍 MIDDLEWARE: Valid access token format found, allowing access to dashboard');
     // Allow access - feature-level gating will handle secrets-first validation
   }
 
   // If it's a public route and user is authenticated, redirect to dashboard
   if (isPublicRoute && pathname === '/login') {
     const accessToken = request.cookies.get('accessToken')?.value;
-    if (accessToken) {
-      // User is already authenticated, redirect to dashboard
+    if (accessToken && isValidTokenFormat(accessToken)) {
+      // User has a valid token format, redirect to dashboard
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }

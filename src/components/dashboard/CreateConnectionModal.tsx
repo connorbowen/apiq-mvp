@@ -576,6 +576,7 @@ export default function CreateConnectionModal({
                         : ''
                     }`}
                     placeholder="e.g., GitHub API"
+                    autoComplete="off"
                   />
                   {renderFieldError('name')}
                 </div>
@@ -615,6 +616,7 @@ export default function CreateConnectionModal({
                         : ''
                     }`}
                     placeholder="https://api.your-service.com"
+                    autoComplete="off"
                   />
                   {renderFieldError('baseUrl')}
                 </div>
@@ -659,12 +661,13 @@ export default function CreateConnectionModal({
                       aria-describedby={fieldErrors.apiKey ? 'apiKey-error' : undefined}
                       value={formData.credentials.apiKey}
                       onChange={(e) => handleCredentialsChange('apiKey', e.target.value)}
-                      className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
+                      className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:ring-2 ${
                         fieldErrors.apiKey 
                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                           : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                       }`}
                       placeholder="Enter your API key"
+                      autoComplete="new-password"
                     />
                     {renderFieldError('apiKey')}
                   </div>
@@ -691,6 +694,7 @@ export default function CreateConnectionModal({
                           : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                       }`}
                       placeholder="Enter your bearer token"
+                      autoComplete="new-password"
                     />
                     {renderFieldError('bearerToken')}
                   </div>
@@ -718,6 +722,7 @@ export default function CreateConnectionModal({
                             : ''
                         }`}
                         placeholder="Enter username"
+                        autoComplete="off"
                       />
                       {renderFieldError('username')}
                     </div>
@@ -736,10 +741,11 @@ export default function CreateConnectionModal({
                         onChange={(e) => handleCredentialsChange('password', e.target.value)}
                         className={`form-field-enhanced ${
                           fieldErrors.password 
-                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                            ? 'border-red-300 focus:ring-red-500 focus:ring-red-500' 
                             : ''
                         }`}
                         placeholder="Enter password"
+                        autoComplete="new-password"
                       />
                       {renderFieldError('password')}
                     </div>
@@ -792,6 +798,7 @@ export default function CreateConnectionModal({
                                 : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                             }`}
                             placeholder={`Enter ${formData.provider !== 'custom' ? OAUTH2_PROVIDERS[formData.provider]?.name : 'OAuth2'} client ID`}
+                            autoComplete="off"
                           />
                           {renderFieldError('clientId')}
                         </div>
@@ -814,6 +821,7 @@ export default function CreateConnectionModal({
                                 : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                             }`}
                             placeholder={`Enter ${formData.provider !== 'custom' ? OAUTH2_PROVIDERS[formData.provider]?.name : 'OAuth2'} client secret`}
+                            autoComplete="new-password"
                           />
                           {renderFieldError('clientSecret')}
                         </div>
@@ -836,6 +844,7 @@ export default function CreateConnectionModal({
                                 : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                             }`}
                             placeholder="http://localhost:3000/api/connections/oauth2/callback"
+                            autoComplete="off"
                           />
                           {renderFieldError('redirectUri')}
                         </div>
@@ -858,6 +867,7 @@ export default function CreateConnectionModal({
                                 : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                             }`}
                             placeholder="e.g., repo user (space-separated)"
+                            autoComplete="off"
                           />
                           {formData.provider !== 'custom' && OAUTH2_PROVIDERS[formData.provider] && (
                             <p className="mt-1 text-sm text-gray-500">

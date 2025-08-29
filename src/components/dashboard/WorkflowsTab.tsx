@@ -231,48 +231,51 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
 
       {/* Search and Filter */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 min-w-0">
-          <label htmlFor="workflow-search-input" className="block text-sm font-medium text-gray-700 mb-1">
-            Search workflows
-          </label>
-          <input
-            id="workflow-search-input"
-            data-testid="search-input"
-            type="text"
-            placeholder="Search workflows..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px] min-w-[200px] transition-colors duration-200"
-            aria-describedby="search-help"
-            aria-label="Search workflows by name or description"
-          />
-          <div id="search-help" className="sr-only">Search through your workflows by name or description</div>
-        </div>
-        <div className="sm:w-48 min-w-0">
-          <label htmlFor="workflow-filter-select" className="block text-sm font-medium text-gray-700 mb-1">
-            Filter by status
-          </label>
-          <select
-            id="workflow-filter-select"
-            data-testid="workflow-filter-select"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px] min-w-[200px] transition-colors duration-200"
-            aria-describedby="filter-help"
-            aria-label="Filter workflows by status"
-          >
-            <option value="all">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="RUNNING">Running</option>
-            <option value="PAUSED">Paused</option>
-            <option value="ERROR">Error</option>
-          </select>
-          <div id="filter-help" className="sr-only">Filter workflows by their current status</div>
+        <div data-testid="workflows-search-filter" className="flex flex-col sm:flex-row gap-4 flex-1">
+          <div className="flex-1 min-w-0">
+            <label htmlFor="workflow-search-input" className="block text-sm font-medium text-gray-700 mb-1">
+              Search workflows
+            </label>
+            <input
+              id="workflow-search-input"
+              data-testid="search-input"
+              type="text"
+              placeholder="Search workflows..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px] min-w-[200px] transition-colors duration-200"
+              aria-describedby="search-help"
+              aria-label="Search workflows by name or description"
+            />
+            <div id="search-help" className="sr-only">Search through your workflows by name or description</div>
+          </div>
+          <div className="sm:w-48 min-w-0">
+            <label htmlFor="workflow-filter-select" className="block text-sm font-medium text-gray-700 mb-1">
+              Filter by status
+            </label>
+            <select
+              id="workflow-filter-select"
+              data-testid="workflow-filter-select"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px] min-w-[200px] transition-colors duration-200"
+              aria-describedby="filter-help"
+              aria-label="Filter workflows by status"
+            >
+              <option value="all">All Status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="RUNNING">Running</option>
+              <option value="PAUSED">Paused</option>
+              <option value="ERROR">Error</option>
+            </select>
+            <div id="filter-help" className="sr-only">Filter workflows by their current status</div>
+          </div>
         </div>
         <Link
           href="/workflows/create"
           data-testid="primary-action create-workflow-btn"
+          id="create-workflow-button"
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors text-center min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="Create a new workflow"
         >

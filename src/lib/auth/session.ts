@@ -8,8 +8,12 @@ import { prisma } from '../../../lib/database/client';
 // JWT secret (in production, use environment variable)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-in-production';
 console.log('🔑 JWT_SECRET in use:', JWT_SECRET);
-const JWT_EXPIRES_IN = '15m'; // 15 minutes
+
+// JWT expiration times - configurable via environment variable
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || (process.env.NODE_ENV === 'test' ? '2h' : '15m');
 const REFRESH_TOKEN_EXPIRES_IN = '7d'; // 7 days
+
+console.log('🔑 JWT_EXPIRES_IN:', JWT_EXPIRES_IN);
 
 export interface AuthenticatedUser {
   id: string;

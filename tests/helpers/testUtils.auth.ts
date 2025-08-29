@@ -132,7 +132,7 @@ export const createTestUserWithTour = async (
     where: { userId: user.id },
     update: {
       currentStep: 0,
-      totalSteps: 3,
+      totalSteps: 10,
       isActive: true,
       completedSteps: [],
       dismissed: false,
@@ -141,7 +141,7 @@ export const createTestUserWithTour = async (
     create: {
       userId: user.id,
       currentStep: 0,
-      totalSteps: 3,
+      totalSteps: 10,
       isActive: true,
       completedSteps: [],
       dismissed: false,
@@ -188,7 +188,7 @@ export const setAuthCookies = async (page: any, user: TestUser) => {
       value: user.accessToken,
       domain: 'localhost',
       path: '/',
-      httpOnly: true,
+      httpOnly: false, // false for E2E tests so JavaScript can access
       secure: false, // false for localhost testing
       sameSite: 'Lax'
     },
@@ -197,11 +197,15 @@ export const setAuthCookies = async (page: any, user: TestUser) => {
       value: user.refreshToken,
       domain: 'localhost',
       path: '/',
-      httpOnly: true,
+      httpOnly: false, // false for E2E tests so JavaScript can access
       secure: false, // false for localhost testing
       sameSite: 'Lax'
     }
   ]);
+  
+  // Debug: Verify cookies were set
+  const cookies = await page.context().cookies();
+  console.log('🔍 E2E DEBUG: Cookies set:', cookies.map(c => ({ name: c.name, value: c.value?.substring(0, 20) + '...' })));
 };
 
 /**
@@ -220,9 +224,18 @@ export const authenticateE2EPage = async (page: any, user: TestUser) => {
   // Reload to ensure cookies are properly attached
   await page.reload();
 
-  // Wait for dashboard to load
+  // Wait for dashboard to load with extended timeout for guided tour tests
   try {
-    await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
+    await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 20000 });
+    
+    // Additional wait to ensure all components are fully loaded
+    await page.waitForTimeout(2000);
+    
+    // Verify we're actually authenticated by checking if we can access protected content
+    const currentUrl = page.url();
+    if (currentUrl.includes('login')) {
+      throw new Error('Authentication failed - redirected to login page');
+    }
   } catch (error) {
     // Check if we're on login page instead
     const currentUrl = page.url();

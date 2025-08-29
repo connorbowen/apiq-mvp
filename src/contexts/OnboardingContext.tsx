@@ -90,12 +90,39 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   console.log('🔄 OnboardingProvider: Initializing...');
   const [state, setState] = useState<OnboardingState>(defaultState);
 
-  // Fetch and sync tourState from backend on mount
+  // Fetch and sync tourState from backend on mount, but wait for authentication
   useEffect(() => {
     let isMounted = true;
     
-    (async () => {
+    const waitForAuthAndFetchTourState = async () => {
       try {
+        // Wait for authentication to be established by checking for user data
+        // This prevents 401 errors from API calls made too early
+        let authReady = false;
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds with 100ms intervals
+        
+        while (!authReady && attempts < maxAttempts && isMounted) {
+          try {
+            // Check if we can successfully get current user (indicates auth is ready)
+            const userResponse = await apiClient.getCurrentUser();
+            if (userResponse.success && userResponse.data) {
+              authReady = true;
+              console.log('🔄 OnboardingContext: Authentication confirmed, proceeding with tour state fetch');
+            }
+          } catch (error) {
+            // Auth not ready yet, wait and retry
+            console.log('🔄 OnboardingContext: Authentication not ready, waiting... (attempt', attempts + 1, ')');
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+          }
+        }
+        
+        if (!authReady) {
+          console.log('🔄 OnboardingContext: Authentication timeout, skipping tour state fetch');
+          return;
+        }
+        
         console.log('🔄 OnboardingContext: Fetching tour state from backend...');
         const response = await apiClient.getTourState();
         
@@ -115,7 +142,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           // Ignore error, tourState will remain undefined
         }
       }
-    })();
+    };
+    
+    // Start the authentication wait and fetch process
+    waitForAuthAndFetchTourState();
     
     // Cleanup function to prevent state updates after unmount
     return () => {
@@ -123,14 +153,22 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     };
   }, []); // Empty dependency array - only run once on mount
 
-  // Method to sync tourState from backend
+  // Method to sync tourState from backend, with authentication check
   const syncWithTourState = async () => {
     try {
+      // Check if authentication is ready before making API calls
+      const userResponse = await apiClient.getCurrentUser();
+      if (!userResponse.success || !userResponse.data) {
+        console.log('🔄 OnboardingContext: Authentication not ready, skipping tour state sync');
+        return;
+      }
+      
       const response = await apiClient.getTourState();
       if (response.success && response.data) {
         setState(prev => ({ ...prev, tourState: response.data }));
       }
     } catch (error) {
+      console.log('🔄 OnboardingContext: Error in syncWithTourState:', error);
       // Ignore error
     }
   };
@@ -152,9 +190,16 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   // Start guided tour
   const startTour = async () => {
     try {
+      // Check if authentication is ready before making API calls
+      const userResponse = await apiClient.getCurrentUser();
+      if (!userResponse.success || !userResponse.data) {
+        console.log('🔄 OnboardingContext: Authentication not ready, skipping tour start');
+        return;
+      }
+      
       const response = await apiClient.updateTourState({
         currentStep: 0,
-        totalSteps: 3,
+        totalSteps: 10, // Updated to match the actual tour steps
         isActive: true,
         completedSteps: [],
         dismissed: false,
@@ -175,11 +220,18 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   // Complete guided tour
   const completeTour = async () => {
     try {
+      // Check if authentication is ready before making API calls
+      const userResponse = await apiClient.getCurrentUser();
+      if (!userResponse.success || !userResponse.data) {
+        console.log('🔄 OnboardingContext: Authentication not ready, skipping tour completion');
+        return;
+      }
+      
       const response = await apiClient.updateTourState({
         currentStep: 0,
-        totalSteps: 3,
+        totalSteps: 10, // Updated to match the actual tour steps
         isActive: false,
-        completedSteps: [0, 1, 2], // Mark all steps as completed
+        completedSteps: Array.from({ length: 10 }, (_, i) => i), // Mark all 10 steps as completed
         dismissed: false,
         lastShown: new Date().toISOString(),
       });
@@ -199,9 +251,21 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const nextTourStep = async () => {
     const nextStep = Math.min(state.currentTourStep + 1, state.tourSteps.length - 1);
     try {
+      // Check if authentication is ready before making API calls
+      const userResponse = await apiClient.getCurrentUser();
+      if (!userResponse.success || !userResponse.data) {
+        console.log('🔄 OnboardingContext: Authentication not ready, skipping tour step update');
+        // Fallback to local state update
+        setState(prev => ({ 
+          ...prev, 
+          currentTourStep: nextStep
+        }));
+        return;
+      }
+      
       const response = await apiClient.updateTourState({
         currentStep: nextStep,
-        totalSteps: 3,
+        totalSteps: 10, // Updated to match the actual tour steps
         isActive: true,
         completedSteps: Array.from({ length: nextStep }, (_, i) => i), // Mark previous steps as completed
         dismissed: false,
@@ -228,9 +292,21 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const previousTourStep = async () => {
     const prevStep = Math.max(state.currentTourStep - 1, 0);
     try {
+      // Check if authentication is ready before making API calls
+      const userResponse = await apiClient.getCurrentUser();
+      if (!userResponse.success || !userResponse.data) {
+        console.log('🔄 OnboardingContext: Authentication not ready, skipping tour step update');
+        // Fallback to local state update
+        setState(prev => ({ 
+          ...prev, 
+          currentTourStep: prevStep
+        }));
+        return;
+      }
+      
       const response = await apiClient.updateTourState({
         currentStep: prevStep,
-        totalSteps: 3,
+        totalSteps: 10, // Updated to match the actual tour steps
         isActive: true,
         completedSteps: Array.from({ length: prevStep }, (_, i) => i),
         dismissed: false,

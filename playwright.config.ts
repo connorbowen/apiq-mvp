@@ -54,6 +54,7 @@ export default defineConfig({
       PLAYWRIGHT_TEST: 'true',
       DISABLE_RATE_LIMITING: 'true',
       ENABLE_TEST_OAUTH2: 'true',
+      E2E: 'true',
     }
   },
 }); 

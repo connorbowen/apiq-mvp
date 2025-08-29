@@ -365,7 +365,7 @@ describe('GuidedTour', () => {
           <div>
             <span data-testid="chat-steps">{tour.chatTourSteps.length}</span>
             <span data-testid="workflow-steps">{tour.workflowsTourSteps.length}</span>
-            <span data-testid="settings-steps">{tour.settingsTourSteps.length}</span>
+            <span data-testid="connections-steps">{tour.connectionsTourSteps.length}</span>
             <span data-testid="full-steps">{tour.fullTourSteps.length}</span>
           </div>
         );
@@ -378,9 +378,9 @@ describe('GuidedTour', () => {
       );
 
       expect(screen.getByTestId('chat-steps')).toHaveTextContent('3');
-      expect(screen.getByTestId('workflow-steps')).toHaveTextContent('2');
-      expect(screen.getByTestId('settings-steps')).toHaveTextContent('3');
-      expect(screen.getByTestId('full-steps')).toHaveTextContent('8');
+      expect(screen.getByTestId('workflow-steps')).toHaveTextContent('4');
+      expect(screen.getByTestId('connections-steps')).toHaveTextContent('3');
+      expect(screen.getByTestId('full-steps')).toHaveTextContent('10');
     });
   });
 

@@ -366,6 +366,7 @@ export default function EditConnectionModal({
                         : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
                     }`}
                     placeholder="https://api.your-service.com"
+                    autoComplete="off"
                   />
                   {renderFieldError('baseUrl')}
                 </div>
