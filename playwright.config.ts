@@ -49,12 +49,11 @@ export default defineConfig({
     env: {
       ENCRYPTION_MASTER_KEY: `test-master-key-${Date.now()}-32-chars-long-for-secrets`,
       NODE_ENV: 'test',
-      JWT_SECRET: `test-jwt-secret-${Date.now()}-key-for-testing-only`,
+      JWT_SECRET: 'test-jwt-secret-key-for-e2e-testing-only-never-use-in-production',
       TEST_MODE: 'true',
       PLAYWRIGHT_TEST: 'true',
       DISABLE_RATE_LIMITING: 'true',
       ENABLE_TEST_OAUTH2: 'true',
-      E2E: 'true',
     }
   },
 }); 

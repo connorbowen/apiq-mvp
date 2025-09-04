@@ -279,36 +279,30 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
     if (isLastStep) {
       onComplete();
     } else {
-      // Switch to workflows tab before workflows steps
       const nextStepIndex = currentStepIndex + 1;
       const nextStep = steps[nextStepIndex];
       
       console.log('🎯 GuidedTour: handleNext called, current step:', currentStep?.id, 'next step:', nextStep?.id);
       console.log('🎯 GuidedTour: nextStep details:', nextStep);
       
+      // Handle tab switching logic
       if (nextStep && nextStep.id === 'workflows-tab-highlight' && setActiveTab) {
-        console.log('🎯 GuidedTour: Switching to workflows tab after user clicked Next');
+        console.log('🎯 GuidedTour: Switching to workflows tab before workflows-tab-highlight step');
         setActiveTab('workflows');
         // Wait for tab switch to complete before advancing
         setTimeout(() => {
+          console.log('🎯 GuidedTour: Tab switch completed, advancing to step:', nextStepIndex);
           setCurrentStepIndex(nextStepIndex);
-        }, 500);
+        }, 1000);
         return;
-      } else if (currentStep.id === 'workflows-tab-highlight' && setActiveTab) {
-        console.log('🎯 GuidedTour: Switching to workflows tab after user clicked Next on workflows-tab-highlight');
-        setActiveTab('workflows');
-        // Wait for tab switch to complete before advancing
-        setTimeout(() => {
-          setCurrentStepIndex(nextStepIndex);
-        }, 500);
-        return;
-      } else if (currentStep.id === 'connections-tab-highlight' && setActiveTab) {
-        console.log('🎯 GuidedTour: Switching to connections tab after user clicked Next on connections-tab-highlight');
+      } else if (nextStep && nextStep.id === 'connections-tab-highlight' && setActiveTab) {
+        console.log('🎯 GuidedTour: Switching to connections tab before connections-tab-highlight step');
         setActiveTab('connections');
         // Wait for tab switch to complete before advancing
         setTimeout(() => {
+          console.log('🎯 GuidedTour: Tab switch completed, advancing to step:', nextStepIndex);
           setCurrentStepIndex(nextStepIndex);
-        }, 500);
+        }, 1000);
         return;
       }
       
@@ -324,29 +318,34 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
 
   const handlePrevious = () => {
     if (!isFirstStep) {
-      // Switch back to chat tab when going from workflows back to workflows-tab-highlight
       const previousStepIndex = currentStepIndex - 1;
       const previousStep = steps[previousStepIndex];
       
-      if (currentStep.id === 'workflows-intro' && previousStep && previousStep.id === 'workflows-tab-highlight' && setActiveTab) {
-        console.log('🎯 GuidedTour: Switching back to chat tab after user clicked Previous');
+      console.log('🎯 GuidedTour: handlePrevious called, current step:', currentStep?.id, 'previous step:', previousStep?.id);
+      
+      // Handle tab switching logic for previous navigation
+      if (previousStep && previousStep.id === 'workflows-tab-highlight' && setActiveTab) {
+        console.log('🎯 GuidedTour: Switching back to chat tab before workflows-tab-highlight step');
         setActiveTab('chat');
         // Wait for tab switch to complete before going back
         setTimeout(() => {
+          console.log('🎯 GuidedTour: Tab switch completed, going back to step:', previousStepIndex);
           setCurrentStepIndex(previousStepIndex);
-        }, 500);
+        }, 1000);
         return;
-      } else if (currentStep.id === 'connections-intro' && previousStep && previousStep.id === 'connections-tab-highlight' && setActiveTab) {
-        console.log('🎯 GuidedTour: Switching back to workflows tab after user clicked Previous');
+      } else if (previousStep && previousStep.id === 'connections-tab-highlight' && setActiveTab) {
+        console.log('🎯 GuidedTour: Switching back to workflows tab before connections-tab-highlight step');
         setActiveTab('workflows');
         // Wait for tab switch to complete before going back
         setTimeout(() => {
+          console.log('🎯 GuidedTour: Tab switch completed, going back to step:', previousStepIndex);
           setCurrentStepIndex(previousStepIndex);
-        }, 500);
+        }, 1000);
         return;
       }
       
       // Normal previous step navigation
+      console.log('🎯 GuidedTour: No tab switch needed, going back to previous step:', previousStep?.id);
       setCurrentStepIndex(previousStepIndex);
     }
   };

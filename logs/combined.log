@@ -1,0 +1,1524 @@
+2025-09-03 17:31:03 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4njbch0007vj1lon9m138b"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4njbch0007vj1lon9m138b\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 17:31:03 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 18:23:50 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4pzoy10007vjb7ds7svf6v"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4pzoy10007vjb7ds7svf6v\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 18:23:50 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 18:32:45 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4qeoet0000vj2cbil57jmf"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4qeoet0000vj2cbil57jmf\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 18:32:45 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 18:34:08 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4qgg710000vj5teyc0u8sk"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4qgg710000vj5teyc0u8sk\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 18:34:08 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 18:34:59 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4qhjup0000vjy4k9yv0le5"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4qhjup0000vjy4k9yv0le5\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 18:34:59 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 18:35:47 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-03 18:35:47 [ERROR]: Workflows API error {
+  "service": "apiq-mvp",
+  "error": "Please log in to access this feature. Click the login button to continue.",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at l (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows.js:1:1073)\n    at /Users/connorbowen/apiq-mvp/.next/server/chunks/4684.js:1:11211\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)"
+}
+2025-09-03 19:31:04 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4sho8p0000vju4n6lw65n7"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4sho8p0000vju4n6lw65n7\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 19:31:04 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 19:32:13 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4sj55s0000vjq17br5pznf"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4sj55s0000vjq17br5pznf\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 19:32:13 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 19:33:28 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4skrmn0000vjoygf46epzt"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4skrmn0000vjoygf46epzt\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 19:33:28 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 19:34:33 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-03 21:01:51 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4vqetk0000vjvbztunh6by"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4vqetk0000vjvbztunh6by\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 21:01:51 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 21:02:31 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at o (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:8065)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:3704)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-03 21:03:22 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4vsd5s0000vj845419mepf"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4vsd5s0000vj845419mepf\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 21:03:22 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 21:04:15 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4vtibb0000vjyyvw1xdca4"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4vtibb0000vjyyvw1xdca4\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 21:04:15 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 21:05:09 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4vuo2k0000vjpf3rgagttz"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4vuo2k0000vjpf3rgagttz\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 21:05:09 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 21:06:06 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf4vvvyk0000vjhjn6uar8id"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf4vvvyk0000vjhjn6uar8id\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-03 21:06:06 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-03 21:15:04 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/health.js:1:6884)\n    at g (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/register.js:1:6828)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-03 21:16:24 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/health.js:1:6884)\n    at g (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/register.js:1:6828)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-03 21:17:55 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/health.js:1:6884)\n    at g (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/register.js:1:6828)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-03 21:18:41 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/health.js:1:6884)\n    at g (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/register.js:1:6828)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-03 21:19:24 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/health.js:1:6884)\n    at g (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/register.js:1:6828)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-03 21:20:15 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/health.js:1:6884)\n    at g (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/register.js:1:6828)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:38:03 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:38:03 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:38:20 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:38:24 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:38:38 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:38:42 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:38:44 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:38:58 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:39:13 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:39:27 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:39:30 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:39:48 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:39:48 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf5ko0fa000fvj8q4okxhjbc"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf5ko0fa000fvj8q4okxhjbc\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-04 08:39:48 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-04 08:49:52 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:49:52 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 08:59:38 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:04:55 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:04:55 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:05:13 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:05:17 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:05:30 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:05:34 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf5ll58g0006vjkb6j1hr2o8"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf5ll58g0006vjkb6j1hr2o8\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-04 09:05:34 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-04 09:05:51 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:05:52 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:06:19 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:06:20 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:06:37 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:06:42 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:06:54 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:07:12 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:07:14 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:07:25 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:10:21 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf5lr9vw0000vj1tiqng68hj"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf5lr9vw0000vj1tiqng68hj\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-04 09:10:21 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-04 09:10:21 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf5lr9vw0000vj1u4kepv0oc"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf5lr9vw0000vj1u4kepv0oc\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-04 09:10:21 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-04 09:10:51 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:10:51 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:12:13 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf5lto4m0000vjjipqbcg6ro"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf5lto4m0000vjjipqbcg6ro\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-04 09:12:13 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-04 09:12:13 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf5lto4m0000vjjjzsgnwix1"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf5lto4m0000vjjjzsgnwix1\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-04 09:12:13 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-04 09:12:33 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:12:43 [ERROR]: Profile API error: Please log in to access this feature. Click the login button to continue. {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 401,
+  "code": "UNAUTHENTICATED",
+  "stack": "ApplicationError: Please log in to access this feature. Click the login button to continue.\n    at s (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:10823)\n    at p (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:6462)\n    at d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1077)\n    at K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16887)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
+}
+2025-09-04 09:13:31 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf5lvcdn0000vjle9gjtedqd"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf5lvcdn0000vjle9gjtedqd\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-04 09:13:31 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}
+2025-09-04 09:14:35 [ERROR]: Get profile error: 
+Invalid `prisma.user.findUnique()` invocation:
+
+{
+  where: {
+    id: "cmf5lwq9o0000vjgdsvgb6tip"
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    firstName: true,
+    lastName: true,
+    avatar: true,
+    ~~~~~~
+    timezone: true,
+    language: true,
+    emailVerified: true,
+    emailVerifiedAt: true,
+    notificationsEnabled: true,
+    marketingEmailsEnabled: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+    provider: true,
+?   password?: true,
+?   onboardingStage?: true,
+?   onboardingCompletedAt?: true,
+?   providerUserId?: true,
+?   refreshToken?: true,
+?   tokenExpiresAt?: true,
+?   accessToken?: true,
+?   apiConnections?: true,
+?   workflows?: true,
+?   executions?: true,
+?   auditLogs?: true,
+?   credentials?: true,
+?   secrets?: true,
+?   workflowShares?: true,
+?   tourState?: true,
+?   _count?: true
+  }
+}
+
+Unknown field `avatar` for select statement on model `User`. Available options are marked with ?. {
+  "service": "apiq-mvp",
+  "name": "PrismaClientValidationError",
+  "clientVersion": "6.11.1",
+  "stack": "PrismaClientValidationError: \nInvalid `prisma.user.findUnique()` invocation:\n\n{\n  where: {\n    id: \"cmf5lwq9o0000vjgdsvgb6tip\"\n  },\n  select: {\n    id: true,\n    email: true,\n    name: true,\n    firstName: true,\n    lastName: true,\n    avatar: true,\n    ~~~~~~\n    timezone: true,\n    language: true,\n    emailVerified: true,\n    emailVerifiedAt: true,\n    notificationsEnabled: true,\n    marketingEmailsEnabled: true,\n    role: true,\n    isActive: true,\n    lastLogin: true,\n    createdAt: true,\n    updatedAt: true,\n    provider: true,\n?   password?: true,\n?   onboardingStage?: true,\n?   onboardingCompletedAt?: true,\n?   providerUserId?: true,\n?   refreshToken?: true,\n?   tokenExpiresAt?: true,\n?   accessToken?: true,\n?   apiConnections?: true,\n?   workflows?: true,\n?   executions?: true,\n?   auditLogs?: true,\n?   credentials?: true,\n?   secrets?: true,\n?   workflowShares?: true,\n?   tourState?: true,\n?   _count?: true\n  }\n}\n\nUnknown field `avatar` for select statement on model `User`. Available options are marked with ?.\n    at aj (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:21:7535)\n    at lC.handleRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7425)\n    at lC.handleAndLogRequestError (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:7049)\n    at lC.request (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:114:6756)\n    at async s (/Users/connorbowen/apiq-mvp/.next/server/chunks/2938.js:126:7631)\n    at async D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1451)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)"
+}
+2025-09-04 09:14:35 [ERROR]: Profile API error: Failed to retrieve profile {
+  "service": "apiq-mvp",
+  "name": "ApplicationError",
+  "status": 500,
+  "stack": "ApplicationError: Failed to retrieve profile\n    at D (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1921)\n    at async d (/Users/connorbowen/apiq-mvp/.next/server/pages/api/profile.js:1:1130)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)\n    at async handleRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:359:24)\n    at async requestHandlerImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:383:13)"
+}

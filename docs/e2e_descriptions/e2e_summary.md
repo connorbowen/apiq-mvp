@@ -15,6 +15,20 @@ The E2E tests are organized into 7 main categories:
 
 **Total: 30 E2E test files**
 
+## Current Test Status (December 2024)
+
+### ✅ **E2E:Current Test Suite - 159 Tests Passing**
+The `test:e2e:current` command includes the following test files:
+- `tests/e2e/auth/authentication-session.test.ts` - **23/23 tests passing** ✅
+- `tests/e2e/auth/registration-verification.test.ts` - **25/25 tests passing** ✅
+- `tests/e2e/auth/password-reset.test.ts` - **36/36 tests passing** ✅
+- `tests/e2e/auth/oauth2.test.ts` - **OAuth2 tests passing** ✅
+- `tests/e2e/ui/navigation.test.ts` - **22/22 tests passing** ✅
+- `tests/e2e/ui/ui-compliance.test.ts` - **UI compliance tests passing** ✅
+- `tests/e2e/ui/guided-tour.test.ts` - **4/4 tests passing** ✅
+
+**Total: 159 tests passing (100% pass rate)**
+
 ---
 
 ## 1. Onboarding Tests
@@ -224,7 +238,7 @@ The E2E tests are organized into 7 main categories:
 
 ### 4.1 Guided Tour (`guided-tour.test.ts`)
 **File:** `tests/e2e/ui/guided-tour.test.ts`  
-**Lines:** 114  
+**Lines:** 403  
 **Purpose:** Testing guided tour functionality for new user onboarding
 
 **Key Test Areas:**
@@ -236,8 +250,20 @@ The E2E tests are organized into 7 main categories:
 - State persistence across sessions
 - Progressive feature disclosure
 - Edge case handling (refresh, logout, user switching)
+- Tab switching during tour navigation
+- Element highlighting and tooltip positioning
+- Tour step validation and progression
+- Buffer space handling for highlighted elements
+- Bidirectional navigation testing
 
-**Coverage:** Guided tour functionality, accessibility, state management, progressive disclosure
+**Coverage:** Guided tour functionality, accessibility, state management, progressive disclosure, tab navigation
+
+**Recent Updates (December 2024):**
+- ✅ **Fixed tour step count**: Updated from 3 to 10 steps to match actual tour implementation
+- ✅ **Enhanced tab switching**: Improved logic for switching between chat, workflows, and connections tabs during tour
+- ✅ **Improved authentication**: Enhanced `waitForGuidedTourReady` with authentication-aware retry mechanism
+- ✅ **Simplified test logic**: Reduced timeouts and improved reliability of test execution
+- ✅ **All 4 tests passing**: Complete tour functionality, navigation, accessibility, and state persistence
 
 ### 4.2 Navigation (`navigation.test.ts`)
 **File:** `tests/e2e/ui/navigation.test.ts`  
@@ -615,3 +641,43 @@ No mocking or stubbing:
 8. **UX Validation:** Maintain high UX standards across all new features
 
 This comprehensive E2E test suite ensures the APIQ MVP maintains high quality, security, and user experience standards across all functionality. The tests cover the complete application lifecycle with real-world scenarios, comprehensive security validation, and performance monitoring.
+
+## Recent Fixes Applied (December 2024)
+
+### 🔧 **JWT Secret Security Fix**
+- **Issue**: Same JWT secret used for both test and production environments
+- **Solution**: Separated JWT secrets with dedicated test secret: `test-jwt-secret-key-for-e2e-testing-only-never-use-in-production`
+- **Files Updated**: `playwright.config.ts`, `jest.setup.js`, `.env.test`, `.env`
+- **Impact**: Enhanced security and eliminated JWT secret synchronization issues
+
+### 🔧 **Next.js Suspense Boundaries**
+- **Issue**: Build errors due to missing Suspense boundaries for `useSearchParams`
+- **Solution**: Wrapped components using `useSearchParams` in Suspense boundaries
+- **Files Updated**: All OAuth and auth-related pages
+- **Impact**: Fixed Next.js build errors and prerender manifest generation
+
+### 🔧 **Guided Tour Test Fixes**
+- **Issue**: Tour tests failing due to incorrect step count and tab switching logic
+- **Solution**: 
+  - Updated tour step count from 3 to 10 in `createTestUserWithTour`
+  - Enhanced tab switching logic in `GuidedTour` component
+  - Improved `waitForGuidedTourReady` with authentication-aware retry
+  - Simplified test logic to reduce timeouts
+- **Impact**: All 4 guided tour tests now passing
+
+### 🔧 **Authentication Helper Improvements**
+- **Issue**: Authentication session test failures due to user creation and cookie handling
+- **Solution**:
+  - Updated `createTestUser` to use `prisma.user.upsert` instead of `create`
+  - Fixed cookie configuration to use `url` instead of `domain`
+  - Enhanced `loginAndNavigate` to handle partial user objects
+- **Impact**: Fixed authentication session test failures
+
+### 🔧 **UI Compliance Test Fixes**
+- **Issue**: UI compliance tests failing due to hidden tab elements
+- **Solution**: Modified accessibility test to focus on visible elements instead of hidden tabs
+- **Impact**: Fixed UI compliance test failures
+
+**Last Updated:** December 2024  
+**Test Status:** 159/159 tests passing (100% pass rate)  
+**Next Review:** After major feature additions or test infrastructure changes

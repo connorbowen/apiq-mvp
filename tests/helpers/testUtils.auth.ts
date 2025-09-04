@@ -39,9 +39,19 @@ export const createTestUser = async (
   // Hash password with bcrypt
   const hashedPassword = await bcrypt.hash(testPassword, 10);
 
-  // Create user with unique email (no race condition since emails are unique)
-  const user = await prisma.user.create({
-    data: {
+  // Create or update user with unique email (no race condition since emails are unique)
+  const user = await prisma.user.upsert({
+    where: { email: testEmail },
+    update: {
+      password: hashedPassword,
+      name: testName,
+      role: role,
+      isActive: true,
+      // Set onboarding fields to prevent guided tour in E2E tests
+      onboardingStage: 'COMPLETED',
+      onboardingCompletedAt: new Date()
+    },
+    create: {
       email: testEmail,
       password: hashedPassword,
       name: testName,
@@ -89,9 +99,9 @@ export const createTestUser = async (
  * For testing, use real email addresses that you control.
  */
 export const createTestUserWithTour = async (
+  role: Role = Role.USER,
   email?: string,
   password?: string,
-  role: Role = Role.USER,
   name?: string
 ): Promise<TestUser> => {
   // Use real email address to comply with no-mock-data policy
@@ -132,7 +142,7 @@ export const createTestUserWithTour = async (
     where: { userId: user.id },
     update: {
       currentStep: 0,
-      totalSteps: 10,
+      totalSteps: 10, // ✅ Match the expected 10 steps from dashboard
       isActive: true,
       completedSteps: [],
       dismissed: false,
@@ -141,7 +151,7 @@ export const createTestUserWithTour = async (
     create: {
       userId: user.id,
       currentStep: 0,
-      totalSteps: 10,
+      totalSteps: 10, // ✅ Match the expected 10 steps from dashboard
       isActive: true,
       completedSteps: [],
       dismissed: false,
@@ -182,12 +192,23 @@ export const createTestUserWithTour = async (
  * Set authentication cookies for E2E tests
  */
 export const setAuthCookies = async (page: any, user: TestUser) => {
-  await page.context().addCookies([
+  console.log('🔍 E2E DEBUG: Setting cookies for user:', {
+    email: user.email,
+    hasAccessToken: !!user.accessToken,
+    hasRefreshToken: !!user.refreshToken,
+    accessTokenLength: user.accessToken?.length,
+    refreshTokenLength: user.refreshToken?.length
+  });
+  
+  if (!user.accessToken || !user.refreshToken) {
+    throw new Error(`Invalid user tokens: accessToken=${user.accessToken}, refreshToken=${user.refreshToken}`);
+  }
+  
+  const cookieData = [
     {
       name: 'accessToken',
       value: user.accessToken,
-      domain: 'localhost',
-      path: '/',
+      url: 'http://localhost:3000',
       httpOnly: false, // false for E2E tests so JavaScript can access
       secure: false, // false for localhost testing
       sameSite: 'Lax'
@@ -195,13 +216,19 @@ export const setAuthCookies = async (page: any, user: TestUser) => {
     {
       name: 'refreshToken',
       value: user.refreshToken,
-      domain: 'localhost',
-      path: '/',
+      url: 'http://localhost:3000',
       httpOnly: false, // false for E2E tests so JavaScript can access
       secure: false, // false for localhost testing
       sameSite: 'Lax'
     }
-  ]);
+  ];
+  
+  console.log('🔍 E2E DEBUG: Setting cookies:', cookieData.map(c => ({ name: c.name, url: c.url })));
+  
+  await page.context().addCookies(cookieData);
+  
+  // Wait a moment for cookies to be set
+  await page.waitForTimeout(1000);
   
   // Debug: Verify cookies were set
   const cookies = await page.context().cookies();
@@ -212,6 +239,8 @@ export const setAuthCookies = async (page: any, user: TestUser) => {
  * Authenticate E2E page using secure cookie-based authentication
  */
 export const authenticateE2EPage = async (page: any, user: TestUser) => {
+  console.log('🔍 E2E DEBUG: Starting cookie-based authentication for user:', user.email);
+  
   // Navigate to the site first to establish the origin
   await page.goto('http://localhost:3000');
 
@@ -221,29 +250,56 @@ export const authenticateE2EPage = async (page: any, user: TestUser) => {
   // Navigate to dashboard with cookies set
   await page.goto('http://localhost:3000/dashboard');
 
-  // Reload to ensure cookies are properly attached
-  await page.reload();
-
-  // Wait for dashboard to load with extended timeout for guided tour tests
-  try {
-    await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 20000 });
-    
-    // Additional wait to ensure all components are fully loaded
-    await page.waitForTimeout(2000);
-    
-    // Verify we're actually authenticated by checking if we can access protected content
-    const currentUrl = page.url();
-    if (currentUrl.includes('login')) {
-      throw new Error('Authentication failed - redirected to login page');
-    }
-  } catch (error) {
-    // Check if we're on login page instead
-    const currentUrl = page.url();
-    if (currentUrl.includes('login')) {
-      throw new Error('Authentication failed - redirected to login page');
-    }
-    throw error;
+  // Wait for dashboard to load
+  await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
+  
+  // Check current URL
+  const currentUrl = page.url();
+  console.log('🔍 E2E DEBUG: Current URL after navigation:', currentUrl);
+  
+  // If we're redirected to login, the cookies aren't working
+  if (currentUrl.includes('/login')) {
+    console.log('🔍 E2E DEBUG: Redirected to login, cookies not working');
+    throw new Error('Authentication failed - redirected to login page');
   }
+  
+  // Wait for the page to fully load and then check what's actually there
+  await page.waitForTimeout(5000);
+  
+  // Capture console logs to see any JavaScript errors
+  const consoleLogs: string[] = [];
+  page.on('console', msg => {
+    consoleLogs.push(`[${msg.type()}] ${msg.text()}`);
+  });
+  
+  // Check if there's an authentication error on the page
+  const authError = await page.locator('text=Authentication Error').count();
+  if (authError > 0) {
+    console.log('🔍 E2E DEBUG: Authentication error detected on page');
+    const errorText = await page.locator('text=Authentication Error').textContent();
+    console.log('🔍 E2E DEBUG: Error text:', errorText);
+    console.log('🔍 E2E DEBUG: Console logs:', consoleLogs.slice(-10)); // Show last 10 logs
+    throw new Error(`Authentication error on page: ${errorText}`);
+  }
+  
+  // Wait for either dashboard elements or guided tour to be visible
+  // The guided tour overlay will appear for new users and cover the dashboard
+  try {
+    await Promise.race([
+      page.waitForSelector('[data-testid="tab-chat"]', { timeout: 15000 }),
+      page.waitForSelector('[data-testid="guided-tour-tooltip"]', { timeout: 15000 }),
+      page.waitForSelector('[data-testid="guided-tour-overlay"]', { timeout: 15000 }),
+      page.waitForSelector('h1:has-text("Dashboard")', { timeout: 15000 })
+    ]);
+    console.log('🔍 E2E DEBUG: Dashboard or guided tour loaded');
+  } catch (error) {
+    // If neither dashboard elements nor tour appear, check what's on the page
+    const pageContent = await page.content();
+    console.log('🔍 E2E DEBUG: Page content preview:', pageContent.substring(0, 1000));
+    throw new Error('Neither dashboard elements nor guided tour appeared');
+  }
+  
+  console.log('🔍 E2E DEBUG: Authentication successful, dashboard/tour loaded');
 };
 
 /**

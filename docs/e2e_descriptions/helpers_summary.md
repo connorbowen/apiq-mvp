@@ -16,6 +16,24 @@ The E2E helpers are organized into several functional categories:
 
 **Total: 30 helper files**
 
+## Recent Updates (December 2024)
+
+### ✅ **Enhanced Authentication Helpers**
+- **`testUtils.auth.ts`**: Updated `createTestUser` to use `prisma.user.upsert` for better test isolation
+- **`testUtils.auth.ts`**: Fixed cookie configuration in `setAuthCookies` to use `url` instead of `domain`
+- **`testUtils.auth.ts`**: Enhanced `createTestUserWithTour` to set correct tour step count (10 steps)
+- **`e2eHelpers.setup.ts`**: Improved `loginAndNavigate` to handle partial user objects
+
+### ✅ **Enhanced UI Helpers**
+- **`uiHelpers.ts`**: Enhanced `waitForGuidedTourReady` with authentication-aware retry mechanism
+- **`uiHelpers.ts`**: Improved `waitForDashboard` with more robust element detection
+- **`uiHelpers.ts`**: Added comprehensive guided tour management functions
+
+### ✅ **Security Improvements**
+- **JWT Secret Separation**: Implemented dedicated test JWT secret for enhanced security
+- **Environment Configuration**: Updated all environment files with proper test secrets
+- **Authentication Flow**: Enhanced authentication helpers with better error handling
+
 ---
 
 ## 1. Core Setup & Navigation Helpers

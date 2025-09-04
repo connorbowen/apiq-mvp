@@ -38,7 +38,7 @@ export interface JWTPayload {
   role: Role;
   type: 'access' | 'refresh';
   iat: number;
-  exp: number;
+  exp?: number; // Optional because JWT library adds it automatically
 }
 
 /**
@@ -63,8 +63,13 @@ export const generateToken = (user: AuthenticatedUser, type: 'access' | 'refresh
  */
 export const verifyToken = (token: string): JWTPayload => {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
+    console.log('🔍 DEBUG: verifyToken - JWT_SECRET in use:', JWT_SECRET);
+    console.log('🔍 DEBUG: verifyToken - token to verify:', token.substring(0, 50) + '...');
+    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    console.log('🔍 DEBUG: verifyToken - token verified successfully:', decoded);
+    return decoded;
   } catch (error) {
+    console.log('🔍 DEBUG: verifyToken - verification failed:', error);
     throw unauthenticated('Please log in again to continue. Your session may have expired.');
   }
 };
@@ -182,6 +187,7 @@ export const requireAuth = async (req: AuthenticatedRequest, res: NextApiRespons
   }
   
   try {
+    console.log('🔍 DEBUG: requireAuth - about to call verifyToken with token:', token.substring(0, 50) + '...');
     const payload = verifyToken(token);
     console.log('🔍 DEBUG: requireAuth - payload:', payload);
     

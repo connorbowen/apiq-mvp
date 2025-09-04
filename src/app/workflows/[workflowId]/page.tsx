@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
+
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '../../../lib/api/client';
