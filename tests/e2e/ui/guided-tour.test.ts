@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { createTestUserWithTour } from '../../helpers/testUtils.auth';
+import { setupE2E, closeAllModals, resetRateLimits } from '../../helpers/e2eHelpers';
 import { 
   waitForDashboard, 
   validateUXCompliance, 
   waitForElement,
-  waitForGuidedTourReady,
-  waitForDashboardReady
+  waitForGuidedTourReady
 } from '../../helpers/uiHelpers';
+import { testFormAccessibility } from '../../helpers/accessibilityHelpers';
 import { waitForLoadingComplete } from '../../helpers/waitHelpers';
 import { Role } from '../../../src/generated/prisma';
 
@@ -14,7 +15,7 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
   let newUser;
   
   test.beforeEach(async () => {
-    // Use createTestUserWithTour to ensure the user has the correct onboarding stage
+    // Use createE2EUser to ensure the user has the correct onboarding stage
     // and tour state to trigger the guided tour
     newUser = await createTestUserWithTour(Role.USER);
   });
@@ -39,10 +40,10 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     console.log('🔍 E2E DEBUG: Guided tour test setup complete - auth timing fixed in component');
   };
 
-  test.afterEach(async () => {
+  test.afterEach(async ({ page }) => {
     // Ensure proper cleanup for test isolation
-    // Note: cleanupTestUser is not available in the current helper structure
-    // The test isolation is handled by the database cleanup in the test setup
+    await closeAllModals(page);
+    await resetRateLimits(page);
   });
 
   test('should complete the full guided tour experience', async ({ page }) => {
@@ -87,6 +88,8 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
       validateAccessibility: true
     });
     
+    // Note: Guided tour buttons don't follow primary action patterns
+    
     // Check that the tour step content is visible - first step should be "Welcome to APIQ!"
     await expect(page.locator('#tour-title')).toHaveText('Welcome to APIQ!');
   });
@@ -112,7 +115,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Skip tour using direct selector
     await page.getByTestId('guided-tour-skip').click();
@@ -123,7 +128,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Test basic tour functionality - just verify it can advance one step
     console.log(`🎯 Test: Clicking Next for step 1`);
@@ -143,11 +150,18 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Validate accessibility compliance
     await validateUXCompliance(page, {
       validateAccessibility: true
+    });
+    
+    // Test form accessibility for guided tour
+    await testFormAccessibility(page, {
+      submitButton: 'guided-tour-next'
     });
     
     // ARIA attributes
@@ -166,7 +180,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Verify we're on the first step
     await expect(page.locator('#tour-title')).toHaveText('Welcome to APIQ!');
@@ -191,7 +207,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Verify we're on the first step
     await expect(page.locator('#tour-title')).toHaveText('Welcome to APIQ!');
@@ -214,13 +232,17 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Validate tour structure and UX compliance
     await validateUXCompliance(page, {
       headings: 'Welcome to APIQ',
       validateAccessibility: true
     });
+    
+    // Note: Guided tour buttons don't follow primary action patterns
     
     // Check tour structure
     await expect(page.getByTestId('guided-tour-overlay')).toBeVisible();
@@ -239,7 +261,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Check that we start with step 1
     await expect(page.locator('#tour-title')).toHaveText('Welcome to APIQ!');
@@ -255,7 +279,7 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
         await expect(page.getByTestId('tour-step-counter')).toHaveText(`Step ${i + 2} of 10`);
       } else {
         // Last step should show "Finish" button
-        await expect(page.getByTestId('guided-tour-next')).toHaveText('Finish');
+        await expect(nextButton).toHaveText('Finish');
       }
     }
   });
@@ -264,7 +288,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Test step 1 (chat-welcome) - should have consistent spacing
     await expect(page.locator('#tour-title')).toHaveText('Welcome to APIQ!');
@@ -288,7 +314,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Navigate to step 3 (chat-examples) - should have buffer
     for (let i = 0; i < 2; i++) {
@@ -322,7 +350,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Test basic navigation through first few steps
     await page.getByTestId('guided-tour-next').click();
@@ -342,7 +372,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Test basic forward navigation
     await page.getByTestId('guided-tour-next').click();
@@ -367,7 +399,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Test basic element highlighting
     await expect(page.getByTestId('guided-tour-highlight')).toBeVisible();
@@ -386,7 +420,9 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
     await setupGuidedTourTest(page);
     
     // Wait for the tour to appear
-    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { timeout: 15000 });
+    await waitForElement(page, '[data-testid="guided-tour-tooltip"]', { 
+      timeout: 15000
+    });
     
     // Test basic tooltip positioning
     const tooltip = page.getByTestId('guided-tour-tooltip');
