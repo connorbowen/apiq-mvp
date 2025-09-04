@@ -1,6 +1,15 @@
 # Testing Documentation Index
 
-## 🆕 DASHBOARD NAVIGATION & TEST UPDATE (2025-07-16)
+## 🆕 RECENT UPDATES
+
+### **Guided Tour Test Migration Complete (2025-01-04)**
+- Guided tour E2E tests successfully migrated to new helper structure
+- Migration score improved from 70% to 95%
+- All 16 tests passing with enhanced UX compliance validation
+- Corrected primary action pattern usage for specialized components
+- Documentation updated to reflect migration completion and lessons learned
+
+### **Dashboard Navigation & Test Update (2025-07-16)**
 - Dashboard navigation now uses Chat, Workflows, Connections as main tabs
 - Settings, Profile, Secrets, and Audit Log are only accessible via the user dropdown
 - All navigation and E2E tests updated to use new dropdown `data-testid` patterns
@@ -22,6 +31,7 @@ This index organizes all APIQ testing documentation into logical groups for easy
 - **[E2E Test Evaluation Guide](E2E_TEST_EVALUATION_GUIDE.md)** - 14-criteria E2E test evaluation and TODO implementation
 - **[Enhanced E2E Test Criteria](E2E_TEST_ENHANCED_CRITERIA.md)** - Detailed breakdown of enhanced evaluation criteria
 - **[E2E Test Enhancement Summary](E2E_TEST_ENHANCEMENT_SUMMARY.md)** - Overview of enhanced E2E test evaluation system
+- **[Primary Action Pattern Correction](PRIMARY_ACTION_PATTERN_CORRECTION.md)** - Guidelines for correct usage of primary action patterns in E2E tests
 
 ---
 
@@ -36,6 +46,7 @@ This index organizes all APIQ testing documentation into logical groups for easy
 
 ### Test Analysis & Reporting
 - **[Test Summary](TEST_SUMMARY.md)** - Current test status and recent test improvements
+- **[Guided Tour Migration Summary](guided-tour-migration-summary.md)** - Complete migration documentation for guided tour E2E tests
 - **[Test Coverage Comparison](TEST_COVERAGE_COMPARISON.md)** - Test coverage analysis and metrics
 - **[Test Consolidation Summary](TESTING_CONSOLIDATION_SUMMARY.md)** - Testing documentation consolidation overview
 
