@@ -133,6 +133,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 6. **Check [Test Summary](TEST_SUMMARY.md)** - Current test status
 7. **Reference specific optimization guides** - For targeted test improvements
 8. **Use [UX Compliant Testing](UX_COMPLIANT_TESTING.md)** - UX compliance and accessibility testing
+9. **Check [Onboarding Migration Complete](ONBOARDING_MIGRATION_COMPLETE.md)** - ✅ Complete migration of onboarding tests to new helper structure
 
 #### **OAuth2 & Authentication Development**
 1. **Follow [OAuth2 Guide](OAUTH2_GUIDE.md)** - Comprehensive OAuth2 setup, testing, and integration

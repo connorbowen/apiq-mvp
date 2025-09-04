@@ -453,3 +453,20 @@ model TourState {
 
   @@map("tour_states")
 }
+
+// Waitlist for Landing Page
+model Waitlist {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  company   String?
+  role      String?
+  source    String?  // How they found us (e.g., "landing_page", "social_media", "referral")
+  interests Json?    // Array of interests or use cases
+  status    String   @default("pending") // pending, approved, contacted
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("waitlist")
+}

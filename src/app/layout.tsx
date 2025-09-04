@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
+import SessionProvider from "../components/SessionProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,7 +39,9 @@ export default function RootLayout({
         {/* Global ARIA live region for announcements */}
         <div id="aria-live-announcements" aria-live="assertive" aria-atomic="true" className="sr-only"></div>
         <div id="aria-live-polite" aria-live="polite" aria-atomic="true" className="sr-only"></div>
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
         <Toaster position="top-right" />
       </body>
     </html>

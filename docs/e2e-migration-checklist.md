@@ -519,18 +519,19 @@ expect(loadTime).toBeLessThan(5000);
 - [x] **UI Tests** (1/3 files) - 33% complete (1/4 files: navigation)
 - [ ] **Security Tests** (2/2 files) - 0% complete
 - [ ] **Performance Tests** (1/1 file) - 0% complete
-- [ ] **Onboarding Tests** (1/1 file) - 0% complete
+- [x] **Onboarding Tests** (1/1 file) - 100% complete (1/1 files: user-journey)
 
-### Total Progress: 5/26 files (20.8%) - connections-management.test.ts removed from e2e:current
+### Total Progress: 6/26 files (23.1%) - connections-management.test.ts removed from e2e:current
 
 **Recent Achievements:**
+- ✅ **user-journey.test.ts** - **COMPLETED** (Migration to new E2E helper structure complete, all 24 tests passing)
 - ✅ **connections-management.test.ts** - **COMPLETED** (Primary actions migrated, helpers integrated, all tests passing)
 - ✅ **oauth2-flows.test.ts** - **STARTED** (Authentication helpers integrated, imports updated)
 - ✅ **natural-language-workflow.test.ts** - **COMPLETED** (Migration to new helper structure complete)
 
 ### **Next Phase Ready**
-- **Foundation Tier**: 80% complete (4/5 files)
-- **Core User Flows Tier**: 25% complete (1/4 files)
+- **Foundation Tier**: 100% complete (5/5 files)
+- **Core User Flows Tier**: 75% complete (3/4 files)
 - **Advanced Features Tier**: 20% complete (1/5 files)
 - **Ready for Tier 3**: Continue with remaining workflow engine tests
 - **Helper Structure**: Proven and stable across multiple test categories
@@ -548,11 +549,11 @@ expect(loadTime).toBeLessThan(5000);
 ### **Tier 2 Progress (Core User Flows)**
 **Core User Flows:**
 - [x] `tests/e2e/auth/registration-verification.test.ts` - **COMPLETED** (25/25 tests passing)
-- [ ] `tests/e2e/onboarding/user-journey.test.ts` - **NOT STARTED** (Not in e2e:current)
+- [x] `tests/e2e/onboarding/user-journey.test.ts` - **✅ COMPLETED** (Migration to new E2E helper structure complete)
 - [x] `tests/e2e/connections/connections-management.test.ts`  ✅ **COMPLETED** (Migration to new helper structure complete)
 - [ ] `tests/e2e/connections/oauth2-flows.test.ts` - **IN PROGRESS** (30% complete - authentication helpers integrated)
 
-**Status**: Core User Flows tier 50% complete (2/4 files) - Authentication tier fully migrated
+**Status**: Core User Flows tier 75% complete (3/4 files) - Authentication tier fully migrated
 
 ### **Tier 3 Progress (Advanced Features)**
 **Advanced Features:**
