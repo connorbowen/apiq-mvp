@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import WaitlistSignup from '../components/WaitlistSignup';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [healthStatus, setHealthStatus] = useState<any>(null);
   const [userOnboardingStage, setUserOnboardingStage] = useState<string | null>(null);
   const router = useRouter();
+  
 
   // Check user onboarding state on component mount
   useEffect(() => {
@@ -85,12 +85,20 @@ export default function Home() {
                   </Link>
                 </>
               ) : (
-                <a
-                  href="#waitlist"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-                >
-                  Join Waitlist
-                </a>
+                <>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                  >
+                    Register
+                  </Link>
+                </>
               )}
             </div>
           </div>
@@ -122,19 +130,20 @@ export default function Home() {
               </div>
             ) : (
               <div className="flex justify-center space-x-4">
-                <a
-                  href="#waitlist"
+                <Link
+                  href="/login"
                   className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200"
-                  data-testid="primary-action join-waitlist"
+                  data-testid="primary-action login-dev"
                 >
-                  Join Waitlist
-                </a>
-                <a
-                  href="#examples"
+                  Get Started
+                </Link>
+                <Link
+                  href="/register"
                   className="inline-flex items-center px-8 py-4 border border-gray-300 text-lg font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                  data-testid="primary-action register-dev"
                 >
-                  See Examples
-                </a>
+                  Sign Up
+                </Link>
               </div>
             )}
           </div>
@@ -350,23 +359,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Waitlist Section */}
-        <div id="waitlist" className="px-4 py-16 sm:px-0">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Get Early Access
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We're building the future of API orchestration. Join our waitlist to be among the first to experience APIQ when we launch. 
-              Get exclusive early access, special pricing, and help shape the product.
-            </p>
-            <div className="mt-6 text-sm text-gray-500">
-              <p>Currently in development - not yet available for production use</p>
-            </div>
-          </div>
-          
-          <WaitlistSignup />
-        </div>
 
         {/* CTA Section */}
         <div className="px-4 py-16 sm:px-0">
@@ -375,7 +367,7 @@ export default function Home() {
               Ready to Stop Writing API Code?
             </h2>
             <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
-              Join the waitlist and be among the first to experience the future of API orchestration.
+              Start building intelligent API workflows with natural language today.
             </p>
             <div className="flex justify-center space-x-4">
               {userOnboardingStage ? (
@@ -387,13 +379,13 @@ export default function Home() {
                   Start Building Now
                 </Link>
               ) : (
-                <a
-                  href="#waitlist"
+                <Link
+                  href="/login"
                   className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-lg text-indigo-600 bg-white hover:bg-gray-50 transition-colors duration-200"
-                  data-testid="primary-action cta-waitlist"
+                  data-testid="primary-action cta-login-dev"
                 >
-                  Join Waitlist
-                </a>
+                  Start Building Now
+                </Link>
               )}
             </div>
           </div>
