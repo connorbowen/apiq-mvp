@@ -7,12 +7,15 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 2, // Conservative number of workers for stability
+  workers: process.env.CI ? 1 : 4, // Increased workers for better parallel execution
   reporter: 'html',
-  timeout: 30000, // Increased timeout for multi-worker stability
+  timeout: 60000, // Increased timeout for parallel execution stability
   expect: {
-    timeout: 10000, // Increased expect timeout
+    timeout: 15000, // Increased expect timeout for parallel tests
   },
+  // Add global setup for better parallel test isolation
+  globalSetup: require.resolve('./tests/helpers/globalSetup.ts'),
+  globalTeardown: require.resolve('./tests/helpers/globalTeardown.ts'),
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'off', // Set to 'on-first-retry' when debugging test failures

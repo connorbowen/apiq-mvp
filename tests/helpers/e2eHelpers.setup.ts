@@ -222,9 +222,14 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
       await navigateToSettings(page);
     } else if (options.tab === 'profile') {
       await navigateToProfile(page);
+    } else if (options.tab === 'connections') {
+      // Navigate to connections tab by URL since the tab might not be visible
+      console.log(`🔍 E2E DEBUG: Navigating to connections tab via URL`);
+      await page.goto('/dashboard?tab=connections', { waitUntil: 'domcontentloaded', timeout: 10000 });
+      await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+      console.log(`🔍 E2E DEBUG: Successfully navigated to connections tab via URL`);
     } else {
-      // For UI compliance tests, we don't need to navigate to specific tabs
-      // Just ensure the dashboard is loaded and continue
+      // For other tabs, just ensure the dashboard is loaded and continue
       console.log(`🔍 E2E DEBUG: Skipping tab navigation for ${options.tab} - dashboard is ready`);
     }
   }

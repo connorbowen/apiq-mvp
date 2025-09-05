@@ -342,9 +342,12 @@ export default function CreateConnectionModal({
       console.log('🔍 handleSubmit - formData.credentials:', formData.credentials);
       console.log('🔍 handleSubmit - formData.provider:', formData.provider);
       const response = await apiClient.createConnection(connectionData);
+      console.log('🔍 API response:', JSON.stringify(response, null, 2));
       if (response.success) {
+        console.log('✅ Connection created successfully, calling onSuccess callback');
         setSubmitSuccess(true);
         onSuccess();
+        console.log('✅ onSuccess callback called, now calling onClose');
         onClose();
       } else {
         // Rollback any created secrets

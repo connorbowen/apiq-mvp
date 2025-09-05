@@ -462,7 +462,7 @@ function ConnectionsTab({
                       </div>
                       <div className="ml-4">
                         <div className="flex items-center">
-                          <p className="text-sm font-medium text-gray-900">{connection.name}</p>
+                          <p className="text-sm font-medium text-gray-900" data-testid="connection-name">{connection.name}</p>
                           <span 
                             data-testid="connection-status"
                             className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(connection)}`}

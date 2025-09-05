@@ -566,25 +566,27 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         return res.status(201).json({
           success: true,
           data: {
-            id: finalConnection?.id,
-            userId: finalConnection?.userId,
-            name: finalConnection?.name,
-            description: finalConnection?.description,
-            baseUrl: finalConnection?.baseUrl,
-            authType: finalConnection?.authType,
-            authConfig: finalConnection?.authConfig,
-            documentationUrl: finalConnection?.documentationUrl,
-            status: finalConnection?.status,
-            ingestionStatus: finalConnection?.ingestionStatus,
-            rawSpec: finalConnection?.rawSpec,
-            specHash: finalConnection?.specHash,
-            lastTested: finalConnection?.lastTested,
-            createdAt: finalConnection?.createdAt,
-            updatedAt: finalConnection?.updatedAt,
-            endpointCount,
-            lastUsed: finalConnection?.updatedAt,
-            secretId: finalConnection?.secretId,
-            createdSecretIds
+            connection: {
+              id: finalConnection?.id,
+              userId: finalConnection?.userId,
+              name: finalConnection?.name,
+              description: finalConnection?.description,
+              baseUrl: finalConnection?.baseUrl,
+              authType: finalConnection?.authType,
+              authConfig: finalConnection?.authConfig,
+              documentationUrl: finalConnection?.documentationUrl,
+              status: finalConnection?.status,
+              ingestionStatus: finalConnection?.ingestionStatus,
+              rawSpec: finalConnection?.rawSpec,
+              specHash: finalConnection?.specHash,
+              lastTested: finalConnection?.lastTested,
+              createdAt: finalConnection?.createdAt,
+              updatedAt: finalConnection?.updatedAt,
+              endpointCount,
+              lastUsed: finalConnection?.updatedAt,
+              secretId: finalConnection?.secretId,
+              createdSecretIds
+            }
           },
           message: 'API connection created successfully'
         });

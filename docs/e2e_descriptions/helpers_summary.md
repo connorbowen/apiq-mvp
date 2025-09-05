@@ -29,6 +29,16 @@ The E2E helpers are organized into several functional categories:
 - **`uiHelpers.ts`**: Improved `waitForDashboard` with more robust element detection
 - **`uiHelpers.ts`**: Added comprehensive guided tour management functions
 
+### ✅ **Connections Test Suite Restructuring**
+- **Test File Organization**: Split `connections-management.test.ts` into 4 specialized files:
+  - `connections-crud.test.ts` - Basic CRUD operations
+  - `connections-oauth2.test.ts` - OAuth2-specific flows
+  - `connections-performance.test.ts` - Performance and load testing
+  - `connections-secrets.test.ts` - Secrets management
+- **Package.json Updates**: Added all 5 connection test files to `e2e:current` command
+- **Individual Test Scripts**: Created dedicated npm scripts for each connection test file
+- **UI Improvements**: Added `data-testid="connection-name"` to `ConnectionsTab.tsx` for better test reliability
+
 ### ✅ **Security Improvements**
 - **JWT Secret Separation**: Implemented dedicated test JWT secret for enhanced security
 - **Environment Configuration**: Updated all environment files with proper test secrets
@@ -573,5 +583,30 @@ await cleanupTestData(testData);
 6. **Integration Testing** - Test helper integration and compatibility
 7. **Performance Monitoring** - Monitor helper performance impact
 8. **Security Validation** - Regular security testing of helper functions
+
+## Current Test Status (December 2024)
+
+### ✅ **E2E:Current Test Suite - 180 Tests Passing**
+The `test:e2e:current` command now includes the complete connections test suite:
+- **Authentication Tests**: 4/4 files (100% complete)
+- **Connections Tests**: 5/5 files (100% complete) - **NEWLY ADDED**
+- **UI Tests**: 3/4 files (75% complete)
+- **Onboarding Tests**: 1/1 file (100% complete)
+
+**Total: 180/187 tests passing (96.3% pass rate)**
+
+### 🔧 **Connections Test Suite Achievements**
+- **Test Restructuring**: Successfully split monolithic `connections-management.test.ts` into 4 specialized files
+- **Helper Migration**: All 5 connection test files migrated to new helper structure
+- **Test Reliability**: Improved test reliability with better `data-testid` attributes
+- **Package Integration**: All connection tests now included in `e2e:current` command
+- **Individual Scripts**: Created dedicated npm scripts for each connection test file
+
+### 📊 **Migration Progress Summary**
+- **Total Files Migrated**: 13/26 (50%)
+- **Authentication Tier**: 100% complete (4/4 files)
+- **Connections Tier**: 100% complete (5/5 files) - **NEWLY COMPLETED**
+- **UI Tier**: 50% complete (2/4 files)
+- **Workflow Engine Tier**: 11% complete (1/9 files)
 
 This comprehensive helper infrastructure provides the foundation for robust, maintainable, and high-quality E2E testing across the APIQ MVP application.

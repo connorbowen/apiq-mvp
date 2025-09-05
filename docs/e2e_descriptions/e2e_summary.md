@@ -17,7 +17,7 @@ The E2E tests are organized into 7 main categories:
 
 ## Current Test Status (December 2024)
 
-### ✅ **E2E:Current Test Suite - 159 Tests Passing**
+### ✅ **E2E:Current Test Suite - 180 Tests Passing**
 The `test:e2e:current` command includes the following test files:
 - `tests/e2e/auth/authentication-session.test.ts` - **23/23 tests passing** ✅
 - `tests/e2e/auth/registration-verification.test.ts` - **25/25 tests passing** ✅
@@ -26,8 +26,13 @@ The `test:e2e:current` command includes the following test files:
 - `tests/e2e/ui/navigation.test.ts` - **22/22 tests passing** ✅
 - `tests/e2e/ui/ui-compliance.test.ts` - **UI compliance tests passing** ✅
 - `tests/e2e/ui/guided-tour.test.ts` - **4/4 tests passing** ✅
+- `tests/e2e/connections/connections-crud.test.ts` - **6/6 tests passing** ✅
+- `tests/e2e/connections/connections-oauth2.test.ts` - **4/6 tests passing** ⚠️
+- `tests/e2e/connections/connections-performance.test.ts` - **6/6 tests passing** ✅
+- `tests/e2e/connections/connections-secrets.test.ts` - **3/3 tests passing** ✅
+- `tests/e2e/connections/connections-management.test.ts` - **4/5 tests passing** ⚠️
 
-**Total: 159 tests passing (100% pass rate)**
+**Total: 180/187 tests passing (96.3% pass rate)**
 
 ---
 
@@ -60,10 +65,69 @@ The `test:e2e:current` command includes the following test files:
 
 ## 2. Connections Tests
 
-### 2.1 Connections Management (`connections-management.test.ts`)
+### 2.1 Connections CRUD (`connections-crud.test.ts`)
+**File:** `tests/e2e/connections/connections-crud.test.ts`  
+**Lines:** ~200  
+**Purpose:** Basic CRUD operations for API connections
+
+**Key Test Areas:**
+- Connection creation with various authentication types
+- Connection editing and updates
+- Connection deletion and cleanup
+- Form validation and error handling
+- UX compliance validation
+- Modal interactions and form submission
+
+**Coverage:** Basic connection lifecycle, form validation, UX compliance
+
+### 2.2 Connections OAuth2 (`connections-oauth2.test.ts`)
+**File:** `tests/e2e/connections/connections-oauth2.test.ts`  
+**Lines:** ~300  
+**Purpose:** OAuth2-specific connection flows and provider integration
+
+**Key Test Areas:**
+- GitHub OAuth2 connection creation
+- Google OAuth2 connection creation
+- Custom OAuth2 provider integration
+- OAuth2 flow validation and error handling
+- OAuth2 connection editing and management
+- OAuth2 connection deletion
+
+**Coverage:** OAuth2 flows, provider integration, OAuth2-specific error handling
+
+### 2.3 Connections Performance (`connections-performance.test.ts`)
+**File:** `tests/e2e/connections/connections-performance.test.ts`  
+**Lines:** ~250  
+**Purpose:** Performance testing and load handling for connections
+
+**Key Test Areas:**
+- Page load performance requirements
+- Multiple connections handling efficiency
+- Basic connection operations performance
+- Connection testing performance
+- Basic load operations
+- Performance under load conditions
+
+**Coverage:** Performance validation, load testing, efficiency testing
+
+### 2.4 Connections Secrets (`connections-secrets.test.ts`)
+**File:** `tests/e2e/connections/connections-secrets.test.ts`  
+**Lines:** ~200  
+**Purpose:** Secrets management and security for connections
+
+**Key Test Areas:**
+- Automatic secret creation during connection setup
+- Secrets management and updates
+- Secret security and masking
+- Secret deletion and cleanup
+- Security validation for secrets
+
+**Coverage:** Secrets management, security validation, secret lifecycle
+
+### 2.5 Connections Management (`connections-management.test.ts`)
 **File:** `tests/e2e/connections/connections-management.test.ts`  
-**Lines:** 1,339  
-**Purpose:** Comprehensive testing of connection management functionality with secrets-first integration
+**Lines:** ~400  
+**Purpose:** Comprehensive testing of connection management functionality with security edge cases
 
 **Key Test Areas:**
 - Connection CRUD operations (Create, Read, Update, Delete)

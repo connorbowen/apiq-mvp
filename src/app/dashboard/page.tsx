@@ -275,6 +275,7 @@ function DashboardContent() {
   const loadConnections = useCallback(async (retryCount = 0) => {
     try {
       console.info('[dashboard] loadConnections called (attempt', retryCount + 1, ')');
+      console.info('[dashboard] loadConnections - current connections state:', connections.length);
       const response = await apiClient.getConnections();
       console.info('[dashboard] loadConnections API response:', JSON.stringify(response, null, 2));
       if (response.success && response.data) {
@@ -462,7 +463,7 @@ function DashboardContent() {
       hasRole: 'role' in user
     });
     
-    // Filter tabs: only show main navigation tabs (not settings)
+    // Filter tabs: show main navigation tabs (chat, workflows, connections) and exclude settings/profile
     const mainTabs = (Object.keys(tabConfig) as TabType[]).filter(tab => {
       const config = tabConfig[tab];
       const isAdminOnly = config.adminOnly;
@@ -476,7 +477,9 @@ function DashboardContent() {
         willShow: !isAdminOnly || hasAdminAccess
       });
       
-      return tab !== 'settings' && tab !== 'profile' && (!isAdminOnly || hasAdminAccess);
+      // Include main navigation tabs: chat, workflows, connections
+      // Exclude settings and profile (they're accessed via dropdown)
+      return (tab === 'chat' || tab === 'workflows' || tab === 'connections') && (!isAdminOnly || hasAdminAccess);
     });
     
     // If settings tab is active (accessed via dropdown), include it

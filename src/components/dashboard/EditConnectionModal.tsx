@@ -313,6 +313,7 @@ export default function EditConnectionModal({
                   <input
                     ref={nameInputRef}
                     id="connection-name"
+                    name="connection-name"
                     data-testid="connection-name-input"
                     type="text"
                     aria-required="true"
@@ -337,6 +338,7 @@ export default function EditConnectionModal({
                   </label>
                   <textarea
                     id="connection-description"
+                    name="connection-description"
                     data-testid="connection-description-input"
                     aria-label="Connection description"
                     value={formData.description}
@@ -353,6 +355,7 @@ export default function EditConnectionModal({
                   </label>
                   <input
                     id="connection-base-url"
+                    name="connection-base-url"
                     data-testid="connection-baseurl-input"
                     type="url"
                     aria-required="true"
@@ -383,6 +386,7 @@ export default function EditConnectionModal({
                   </label>
                   <select
                     id="connection-auth-type"
+                    name="connection-auth-type"
                     data-testid="connection-authtype-select"
                     aria-required="true"
                     value={formData.authType}
