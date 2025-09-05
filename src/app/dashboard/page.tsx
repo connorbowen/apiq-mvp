@@ -575,47 +575,58 @@ function DashboardContent() {
   }
 
   return (
-    <main role="main" className="min-h-screen bg-gray-50">
+    <>
       <SupportModal open={showSupportModal} onClose={() => setShowSupportModal(false)} user={user ? { email: user.email, name: user.name || user.email } : { email: '', name: '' }} />
-    
-    {/* Skip link for accessibility */}
-    <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
-      Skip to main content
-    </a>
-    
-    {/* Additional skip links for better accessibility */}
-    <a href="#workflows-section" className="sr-only focus:not-sr-only focus:absolute focus:top-16 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
-      Skip to workflows
-    </a>
-    <a href="#admin-section" className="sr-only focus:not-sr-only focus:absolute focus:top-28 focus:left-4 bg-indigo-600 text-white px-4 py-2 rounded-md z-50 min-w-[44px] min-h-[44px]">
-      Skip to admin
-    </a>
-    
-    <header role="banner" className="bg-white shadow">
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          {/* Back to Dashboard link for settings/profile/admin tabs */}
-          {['settings', 'profile'].includes(activeTab) && (
-            <Link
-              href="/dashboard?tab=chat"
-              className="flex items-center text-indigo-600 hover:text-indigo-500 transition-colors"
-              data-testid="back-to-dashboard-link"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="text-sm font-medium">Back to Dashboard</span>
-            </Link>
-          )}
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        </div>
-        <div className="flex items-center space-x-4">
-          {user && <UserDropdown user={{ ...user, name: user.name || user.email }} onLogout={handleLogout} onHelp={() => setShowSupportModal(true)} />}
+      
+      <header role="banner" className="bg-white shadow relative z-50">
+      <div className="w-full py-3 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            {/* Back to Dashboard link for settings/profile/admin tabs */}
+            {['settings', 'profile'].includes(activeTab) && (
+              <Link
+                href="/dashboard?tab=chat"
+                className="flex items-center text-indigo-600 hover:text-indigo-500 transition-colors"
+                data-testid="back-to-dashboard-link"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="text-xs sm:text-sm font-medium">Back</span>
+              </Link>
+            )}
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard</h1>
+          </div>
+          <div className="flex items-center justify-between sm:justify-end">
+            {/* Mobile tab navigation */}
+            {user && !['profile', 'settings'].includes(activeTab) && (
+              <div className="sm:hidden flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                {filteredTabs.map((tab) => (
+                  <button
+                    key={tab}
+                    data-testid={`mobile-${tabConfig[tab].testId}`}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      activeTab === tab 
+                        ? 'bg-white text-indigo-700 shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => handleTabChange(tab)}
+                  >
+                    {tabConfig[tab].label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              {user && <UserDropdown user={{ ...user, name: user.name || user.email }} onLogout={handleLogout} onHelp={() => setShowSupportModal(true)} />}
+            </div>
+          </div>
         </div>
       </div>
-    </header>
+      </header>
 
-    <section id="main-content" className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <main role="main" className="flex flex-col dashboard-background dashboard-pattern" style={{ height: 'calc(100vh - 80px)' }}>
+        <section id="main-content" className="flex-1 flex flex-col w-full px-4 sm:px-6 lg:px-8 py-2 pb-6 min-h-0 relative z-0 overflow-y-auto">
       {/* Message Banner - only render when there's a message */}
       {(successMessage || errorMessage) && (
         <MessageBanner
@@ -628,24 +639,41 @@ function DashboardContent() {
         />
       )}
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation - Enhanced with better visual hierarchy */}
       {user && !['profile', 'settings'].includes(activeTab) && (
-        <div className="mb-6 hidden lg:block">
-          <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm" aria-label="Tabs" role="tablist">
+        <div className="mb-4 hidden lg:block">
+          <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm border border-gray-200" aria-label="Tabs" role="tablist">
             {filteredTabs.map((tab) => (
               <button
                 key={tab}
                 data-testid={tabConfig[tab].testId}
                 aria-selected={activeTab === tab ? 'true' : 'false'}
                 role="tab"
-                className={`px-4 py-2 font-medium text-sm rounded-md transition-colors min-h-[44px] ${
+                className={`px-4 py-2.5 font-semibold text-sm rounded-md transition-all duration-200 min-h-[40px] flex-1 flex items-center justify-center ${
                   activeTab === tab 
-                    ? 'bg-indigo-100 text-indigo-700' 
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'bg-indigo-600 text-white shadow-md' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 hover:shadow-sm'
                 }`}
                 onClick={() => handleTabChange(tab)}
               >
-                {tabConfig[tab].label}
+                <span className="flex items-center space-x-2">
+                  {tab === 'chat' && (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  )}
+                  {tab === 'workflows' && (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  )}
+                  {tab === 'connections' && (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  )}
+                  <span>{tabConfig[tab].label}</span>
+                </span>
               </button>
             ))}
           </nav>
@@ -653,18 +681,80 @@ function DashboardContent() {
       )}
 
       {/* Tab Content */}
-      <div className="tab-content">
+      <div className="tab-content flex-1 flex flex-col min-h-0 dashboard-content relative z-0">
         {isTabLoading && (
           <div className="flex items-center justify-center p-8">
             <LoadingSpinner size="medium" text="Loading..." />
           </div>
         )}
         {!isTabLoading && activeTab === 'chat' && (
-          <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
+          <div className="flex-1 flex flex-col min-h-0 pb-4">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 min-h-0">
+              {/* Left Sidebar - Compact Features - Hidden on mobile, shown on desktop */}
+              <div className="hidden lg:flex lg:col-span-1 flex-col min-h-0">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-full flex flex-col min-h-0">
+                  <div className="text-center mb-4 flex-shrink-0">
+                    <div className="mx-auto h-12 w-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-3">
+                      <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-lg font-bold text-gray-900 mb-1">APIQ</h2>
+                    <p className="text-xs text-gray-500">AI automation platform</p>
+                  </div>
+                  
+                  {/* Scrollable Content */}
+                  <div className="flex-1 min-h-0 overflow-y-auto">
+                    {/* Compact Features */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center p-2 bg-indigo-50 rounded-md">
+                        <svg className="h-4 w-4 text-indigo-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-xs text-gray-700">API Connections</span>
+                      </div>
+                      <div className="flex items-center p-2 bg-indigo-50 rounded-md">
+                        <svg className="h-4 w-4 text-indigo-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-xs text-gray-700">Auto Workflows</span>
+                      </div>
+                      <div className="flex items-center p-2 bg-indigo-50 rounded-md">
+                        <svg className="h-4 w-4 text-indigo-600 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-xs text-gray-700">Secure Secrets</span>
+                      </div>
+                    </div>
+                    
+                    {/* Quick Stats */}
+                    <div className="border-t pt-3">
+                      <div className="text-xs text-gray-500 mb-1">Quick Stats</div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Workflows</span>
+                          <span className="font-medium text-indigo-600">{workflows.length}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Connections</span>
+                          <span className="font-medium text-indigo-600">{connections.length}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Main Chat Area - Full width on mobile, 3/4 on desktop */}
+              <div className="col-span-1 lg:col-span-3 flex flex-col min-h-0">
+                <ChatInterface onWorkflowGenerated={handleWorkflowGenerated} />
+              </div>
+            </div>
+          </div>
         )}
         {!isTabLoading && activeTab === 'workflows' && (
           <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <div id="workflows-section">
+            <div id="workflows-section" className="flex-1 flex flex-col min-h-0 w-full h-full pb-4">
               <WorkflowsTab
                 workflows={workflows}
                 onWorkflowCreated={() => {
@@ -680,7 +770,7 @@ function DashboardContent() {
         )}
         {!isTabLoading && activeTab === 'connections' && (
           <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <div id="connections-section" data-testid="connections-section">
+            <div id="connections-section" data-testid="connections-section" className="flex-1 flex flex-col min-h-0 w-full h-full pb-4">
               <ConnectionsTab
                 connections={connections}
                 onConnectionCreated={() => {
@@ -707,7 +797,8 @@ function DashboardContent() {
         )}
         {!isTabLoading && activeTab === 'settings' && (
           <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <SettingsTab
+            <div className="flex-1 flex flex-col min-h-0 w-full">
+              <SettingsTab
               connections={connections}
               secrets={secrets}
               user={user}
@@ -737,16 +828,19 @@ function DashboardContent() {
                 setErrorMessage(error);
               }}
             />
+            </div>
           </Suspense>
         )}
         {!isTabLoading && activeTab === 'profile' && (
           <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
-            <ProfileTab
+            <div className="flex-1 flex flex-col min-h-0 w-full">
+              <ProfileTab
               user={user}
               onProfileUpdated={() => {
                 setSuccessMessage('Profile updated successfully!');
               }}
             />
+            </div>
           </Suspense>
         )}
       </div>
@@ -779,7 +873,8 @@ function DashboardContent() {
       setActiveTab={(tab: string) => handleTabChange(tab as TabType)}
     />
     
-  </main>
+      </main>
+    </>
   );
 }
 

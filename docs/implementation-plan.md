@@ -11,7 +11,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 ## Current Status
 
 **Core MVP**: 4/4 P0 features complete ✅  
-**User Experience**: 1/4 P1 features complete (25%) 🚧  
+**User Experience**: 1/5 P1 features complete (20%) 🚧  
 **Enterprise Features**: 1/2 P2 features complete (50%) 🚧  
 **Test Coverage**: 1201+ tests with 100% pass rate ✅  
 
@@ -98,10 +98,27 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 #### **P1.3: Single API Operations** 🚧 **PLANNED**
 **Status**: Not started
-**Next Steps**: Build on completed UX simplification foundation
-**Success Criteria**: Users can invoke any stored endpoint with custom parameters
+**Description**: Enable users to execute individual API calls without creating workflows
+**Requirements**:
+- "Try it out" buttons in API Explorer for each endpoint
+- Parameter input forms for required/optional parameters
+- Real-time API execution with response display
+- Quick-execute mode that doesn't require creating a workflow
+- Response visualization and error handling
+**Success Criteria**: Users can invoke any stored endpoint with custom parameters, test APIs before building workflows, perform one-off operations
 
-#### **P1.4: Advanced Analytics & Reporting** 🚧 **PLANNED**
+#### **P1.4: API Connection Guidance in Chat** 🚧 **PLANNED**
+**Status**: Not started
+**Description**: Guide users through API connection setup when they need APIs for workflows
+**Requirements**:
+- Detect when workflow requires unconnected APIs
+- Provide contextual guidance in chat interface
+- Offer to redirect to connection setup
+- Suggest specific APIs needed for the workflow
+- Provide step-by-step connection instructions
+**Success Criteria**: Users get helpful guidance instead of generic errors, chat can suggest which APIs to connect, seamless flow from chat to connection setup
+
+#### **P1.5: Advanced Analytics & Reporting** 🚧 **PLANNED**
 **Status**: Not started
 **Next Steps**: See [Future Roadmap](docs/future-roadmap.md#p14-analytics)
 **Success Criteria**: Users can track workflow performance and optimize automation
@@ -345,7 +362,8 @@ Since your onboarding system is complete, you can now focus on:
 ### **Q2 2025: User Experience & Adoption**
 - **Month 1**: P1.1 Workflow Templates & Libraries
 - **Month 2**: P1.3 Single API Operations
-- **Month 3**: P1.4 Advanced Analytics & Reporting
+- **Month 3**: P1.4 API Connection Guidance in Chat
+- **Month 4**: P1.5 Advanced Analytics & Reporting
 
 ### **Q3 2025: Enterprise Readiness**
 - **Month 1**: P2.2 Team Collaboration

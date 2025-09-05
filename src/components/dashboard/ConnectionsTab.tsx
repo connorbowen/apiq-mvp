@@ -360,15 +360,14 @@ function ConnectionsTab({
   };
 
   return (
-    <div data-testid="connections-management">
+    <div data-testid="connections-management" className="h-full flex flex-col min-h-0">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Connections</h2>
-        <p className="text-gray-600">Manage your API integrations and connections</p>
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">Manage your API integrations and connections</h2>
       </div>
 
       {/* Search and Filter */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+      <div className="mb-4 flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
           <label htmlFor="search-input" className="sr-only">Search connections</label>
           <input
@@ -378,7 +377,7 @@ function ConnectionsTab({
             placeholder="Search connections..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px]"
           />
         </div>
         <div className="sm:w-48 min-w-[200px]">
@@ -388,7 +387,7 @@ function ConnectionsTab({
             data-testid="filter-dropdown"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="w-full min-w-[200px] px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full min-w-[200px] px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px]"
           >
             <option value="all">All Types</option>
             <option value="API_KEY">API Key</option>
@@ -397,21 +396,23 @@ function ConnectionsTab({
             <option value="OAUTH2">OAuth2</option>
           </select>
         </div>
-        <button
-          data-testid="primary-action create-connection-header-btn"
-          onClick={() => setShowCreateForm(true)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px]"
-        >
-          Add Connection
-        </button>
+        <div className="sm:w-48">
+          <button
+            data-testid="primary-action create-connection-header-btn"
+            onClick={() => setShowCreateForm(true)}
+            className="w-full px-3 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px]"
+          >
+            Add Connection
+          </button>
+        </div>
       </div>
 
       {/* Connections List */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
+      <div className="bg-white shadow overflow-hidden sm:rounded-md flex-1 min-h-0">
         {filteredConnections.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-16 px-8">
             <svg
-              className="mx-auto h-12 w-12 text-gray-400"
+              className="mx-auto h-20 w-20 text-gray-300"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -420,34 +421,34 @@ function ConnectionsTab({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={1.5}
                 d="M13 10V3L4 14h7v7l9-11h-7z"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No connections</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="mt-6 text-2xl font-semibold text-gray-900">No connections</h3>
+            <p className="mt-3 text-lg text-gray-500 max-w-md mx-auto leading-relaxed">
               {searchTerm || filterType !== 'all' 
                 ? 'No connections match your search criteria.'
-                : 'Get started by creating your first API connection.'
+                : 'Get started by creating your first API connection to integrate with external services.'
               }
             </p>
             {!searchTerm && filterType === 'all' && (
-              <div className="mt-6">
+              <div className="mt-8">
                 <button
                   data-testid="primary-action create-connection-empty-btn"
                   onClick={() => setShowCreateForm(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
+                  className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
-                  <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="-ml-1 mr-3 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  Add Connection
+                  Create Your First Connection
                 </button>
               </div>
             )}
           </div>
         ) : (
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-gray-200 overflow-y-auto max-h-full connections-list overflow-container">
             {filteredConnections.map((connection) => (
               <li key={connection.id} data-testid="connection-card" data-connection-id={connection.id}>
                 <div className="px-4 py-4 sm:px-6">

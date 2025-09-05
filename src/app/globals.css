@@ -332,3 +332,147 @@ a:focus,
   border: 1px solid #bbf7d0;
   color: #16a34a;
 }
+
+/* Dashboard space optimization for better content density */
+.dashboard-content {
+  /* Remove restrictive height constraints, let flexbox handle it */
+}
+
+.tab-content {
+  /* Remove restrictive height constraints, let flexbox handle it */
+}
+
+.chat-interface {
+  /* Remove restrictive height constraints, let flexbox handle it */
+}
+
+.workflows-list,
+.connections-list {
+  /* Remove restrictive height constraints, let flexbox handle it */
+}
+
+/* Full-width immersive layout */
+.dashboard-main {
+  width: 100%;
+  max-width: none;
+}
+
+/* Background patterns to eliminate blank space */
+.dashboard-background {
+  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 25%, #f3e8ff 50%, #e0e7ff 75%, #f8fafc 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Subtle pattern overlay */
+.dashboard-pattern {
+  position: relative;
+}
+
+.dashboard-pattern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dashboard-pattern > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile responsiveness improvements */
+@media (max-width: 640px) {
+  .dashboard-background {
+    background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #f8fafc 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 15s ease infinite;
+  }
+  
+  /* Ensure proper touch targets on mobile */
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve text readability on mobile */
+  .text-xs {
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+  }
+  
+  /* Better spacing for mobile */
+  .space-y-2 > * + * {
+    margin-top: 0.5rem;
+  }
+  
+  .space-y-3 > * + * {
+    margin-top: 0.75rem;
+  }
+}
+
+/* Tablet responsiveness */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .dashboard-background {
+    background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 30%, #f3e8ff 60%, #e0e7ff 80%, #f8fafc 100%);
+    background-size: 300% 300%;
+  }
+}
+
+/* Compact spacing for better space utilization */
+@media (max-height: 768px) {
+  .compact-spacing {
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .compact-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .compact-tabs {
+    padding: 0.25rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .compact-content {
+    padding: 0.75rem;
+  }
+}
+
+/* Ensure proper scrolling behavior */
+.overflow-container {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.overflow-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-container::-webkit-scrollbar-track {
+  background: #f7fafc;
+}
+
+.overflow-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.overflow-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}

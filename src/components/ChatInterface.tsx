@@ -255,54 +255,48 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   }, []);
 
   return (
-    <div data-testid="chat-interface" className="flex flex-col h-full bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">Chat with AI</h3>
-        <p className="text-sm text-gray-500 mt-1">
-          Describe what you want to automate in plain English
-        </p>
-      </div>
-
+    <div data-testid="chat-interface" className="flex flex-col h-full bg-white rounded-lg shadow-sm border border-gray-200 min-h-0 chat-interface">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
         {messages.length === 0 && (
-          <div className="text-center py-8">
-            {/* Welcome Header */}
-            <div className="mb-8">
-              <div className="mx-auto h-16 w-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
-                <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="space-y-6">
+            {/* Hero Section - Fixed height */}
+            <div className="text-center py-6 max-h-[160px] flex flex-col justify-center">
+              <div className="mx-auto h-12 w-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-3">
+                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{welcomeMessage.title}</h2>
-              <p className="text-lg text-gray-600 mb-2">{welcomeMessage.subtitle}</p>
-              <p className="text-sm text-gray-500">{welcomeMessage.description}</p>
-            </div>
-
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 max-w-2xl mx-auto">
-              {welcomeMessage.features.map((feature, index) => (
-                <div key={index} className="flex items-center p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                  <svg className="h-5 w-5 text-indigo-600 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-sm text-gray-700">{feature}</span>
-                </div>
-              ))}
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Welcome to APIQ! 🚀</h2>
+              <p className="text-sm text-gray-600 mb-3">Your AI automation assistant</p>
+              <p className="text-xs text-gray-500 mb-4 max-w-xl mx-auto">
+                Connect APIs, create workflows, and automate tasks in plain English.
+              </p>
             </div>
             
-            {/* Quick Examples */}
-            <div data-testid="chat-examples" className="space-y-3">
-              <p className="text-sm font-medium text-gray-700">Try one of these examples:</p>
-              <div className="space-y-2 max-w-2xl mx-auto">
+            {/* Examples Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Try these examples:</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-4xl mx-auto">
                 {quickExamples.map((example, index) => (
                   <button
                     key={index}
                     onClick={() => handleQuickExample(example)}
-                    className="block w-full text-left p-4 text-sm text-gray-600 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-indigo-300 hover:text-indigo-700 transition-all duration-200 shadow-sm"
+                    className="group p-3 text-left bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all duration-200"
                   >
-                    &quot;{example}&quot;
+                    <div className="flex items-start space-x-2">
+                      <div className="flex-shrink-0 w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                        <span className="text-indigo-600 font-medium text-xs">{index + 1}</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-700 group-hover:text-indigo-700 transition-colors leading-relaxed">
+                          {example}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1 group-hover:text-indigo-600 transition-colors">
+                          Tap to try
+                        </p>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -438,41 +432,56 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       </div>
 
       {/* Input */}
-      <div className="px-6 py-4 border-t border-gray-200">
-        <form onSubmit={handleSubmit} className="flex space-x-3">
-          <input
-            data-testid="chat-input"
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Describe what you want to automate..."
-            disabled={isLoading}
-            className="input-enhanced flex-1 disabled:opacity-50"
-          />
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 relative">
+            <input
+              data-testid="chat-input"
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Describe what you want to automate..."
+              disabled={isLoading}
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 text-sm sm:text-base"
+            />
+            {inputMessage && (
+              <button
+                type="button"
+                onClick={() => setInputMessage('')}
+                className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+              >
+                <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
           <button
             data-testid="chat-send-button"
             type="submit"
             disabled={!inputMessage.trim() || isLoading}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-200 shadow-sm hover:shadow-md min-h-[44px]"
           >
             {isLoading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Creating...
+                <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white mr-2"></div>
+                <span className="hidden sm:inline">Creating...</span>
+                <span className="sm:hidden">Creating</span>
               </>
             ) : (
               <>
-                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
-                Send
+                <span className="hidden sm:inline">Send</span>
+                <span className="sm:hidden">Send</span>
               </>
             )}
           </button>
         </form>
         
         {error && (
-          <div className="mt-2 text-sm text-red-600">
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
             {error}
           </div>
         )}

@@ -211,7 +211,7 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
       role="region" 
       aria-labelledby="workflows-heading"
       onKeyDown={handleKeyDown}
-      className="focus:outline-none"
+      className="focus:outline-none h-full flex flex-col min-h-0"
     >
       {/* ARIA live region for announcements */}
       <div 
@@ -225,17 +225,13 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
       
       {/* Header */}
       <div className="mb-6">
-        <h2 id="workflows-heading" className="text-2xl font-semibold text-gray-900 mb-2">Workflows</h2>
-        <p className="text-gray-600">Manage your automated workflows and integrations</p>
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">Manage your automated workflows and integrations</h2>
       </div>
 
       {/* Search and Filter */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div data-testid="workflows-search-filter" className="flex flex-col sm:flex-row gap-4 flex-1">
+      <div className="mb-4 flex flex-col sm:flex-row gap-3">
+        <div data-testid="workflows-search-filter" className="flex flex-col sm:flex-row gap-3 flex-1">
           <div className="flex-1 min-w-0">
-            <label htmlFor="workflow-search-input" className="block text-sm font-medium text-gray-700 mb-1">
-              Search workflows
-            </label>
             <input
               id="workflow-search-input"
               data-testid="search-input"
@@ -250,9 +246,6 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
             <div id="search-help" className="sr-only">Search through your workflows by name or description</div>
           </div>
           <div className="sm:w-48 min-w-0">
-            <label htmlFor="workflow-filter-select" className="block text-sm font-medium text-gray-700 mb-1">
-              Filter by status
-            </label>
             <select
               id="workflow-filter-select"
               data-testid="workflow-filter-select"
@@ -272,23 +265,36 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
             <div id="filter-help" className="sr-only">Filter workflows by their current status</div>
           </div>
         </div>
-        <Link
-          href="/workflows/create"
-          data-testid="primary-action create-workflow-btn"
-          id="create-workflow-button"
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors text-center min-h-[44px] min-w-[44px] flex items-center justify-center"
-          aria-label="Create a new workflow"
-        >
-          Create Workflow
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-2 sm:w-48">
+          <button
+            data-testid="refresh-workflows"
+            onClick={() => onWorkflowCreated()}
+            className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition-colors h-[44px] w-[44px] flex items-center justify-center"
+            aria-label="Refresh workflows list"
+            title="Refresh workflows"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+          <Link
+            href="/workflows/create"
+            data-testid="primary-action create-workflow-btn"
+            id="create-workflow-button"
+            className="px-3 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors text-center h-[44px] flex items-center justify-center"
+            aria-label="Create a new workflow"
+          >
+            Create Workflow
+          </Link>
+        </div>
       </div>
 
       {/* Workflows List */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
+      <div className="bg-white shadow overflow-hidden sm:rounded-md flex-1 min-h-0">
         {filteredWorkflows.length === 0 ? (
-          <div className="text-center py-12" role="status" aria-live="polite">
+          <div className="text-center py-16 px-8" role="status" aria-live="polite">
             <svg
-              className="mx-auto h-12 w-12 text-gray-400"
+              className="mx-auto h-20 w-20 text-gray-300"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -297,35 +303,35 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={1.5}
                 d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No workflows</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <h3 className="mt-6 text-2xl font-semibold text-gray-900">No workflows</h3>
+            <p className="mt-3 text-lg text-gray-500 max-w-md mx-auto leading-relaxed">
               {searchTerm || filterStatus !== 'all' 
                 ? 'No workflows match your search criteria.'
-                : 'Get started by creating your first workflow.'
+                : 'Get started by creating your first workflow to automate your API integrations.'
               }
             </p>
             {!searchTerm && filterStatus === 'all' && (
-              <div className="mt-6">
+              <div className="mt-8">
                 <Link
                   href="/workflows/create"
                   data-testid="primary-action create-workflow-btn-empty-state"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+                  className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                   aria-label="Create your first workflow"
                 >
-                  <svg className="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <svg className="-ml-1 mr-3 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  Create Workflow
+                  Create Your First Workflow
                 </Link>
               </div>
             )}
           </div>
         ) : (
-          <ul className="divide-y divide-gray-200" role="list" aria-label="Workflows list">
+          <ul className="divide-y divide-gray-200 overflow-y-auto max-h-full workflows-list overflow-container" role="list" aria-label="Workflows list">
             {filteredWorkflows.map((workflow) => (
               <li key={workflow.id} data-testid="workflow-card" role="listitem">
                 <Link
@@ -409,17 +415,6 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
         )}
       </div>
 
-      {/* Refresh Button */}
-      <div className="mt-4 flex justify-end">
-        <button
-          data-testid="refresh-workflows"
-          onClick={() => onWorkflowCreated()}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px] min-w-[44px]"
-          aria-label="Refresh workflows list"
-        >
-          Refresh
-        </button>
-      </div>
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
