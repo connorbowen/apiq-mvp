@@ -207,7 +207,6 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
 
   return (
     <div 
-      data-testid="workflows-page"
       data-testid="workflows-management" 
       role="region" 
       aria-labelledby="workflows-heading"
@@ -279,7 +278,7 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
             </svg>
           </button>
           <Link
-            href="/workflows/create"
+            href="/workflows/new"
             data-testid="primary-action create-workflow-btn"
             id="create-workflow-button"
             className="px-3 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors text-center h-[44px] flex items-center justify-center"
@@ -318,7 +317,7 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
             {!searchTerm && filterStatus === 'all' && (
               <div className="mt-8">
                 <Link
-                  href="/workflows/create"
+                  href="/workflows/new"
                   data-testid="primary-action create-workflow-btn-empty-state"
                   className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                   aria-label="Create your first workflow"

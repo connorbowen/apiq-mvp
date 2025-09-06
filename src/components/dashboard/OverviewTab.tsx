@@ -176,7 +176,7 @@ export default function OverviewTab({ connections, workflows, secrets, user }: O
               Add API Connection
             </button>
             <button
-              onClick={() => window.location.href = '/workflows/create'}
+              onClick={() => window.location.href = '/workflows/new'}
               className="flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors"
             >
               <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

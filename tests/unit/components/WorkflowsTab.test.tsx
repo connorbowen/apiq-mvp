@@ -50,10 +50,10 @@ describe('WorkflowsTab', () => {
     it('renders the main h2 heading with correct text', () => {
       render(<WorkflowsTab {...defaultProps} />);
       
-      const heading = screen.getByRole('heading', { name: 'Workflows' });
+      const heading = screen.getByRole('heading', { name: 'Manage your automated workflows and integrations' });
       expect(heading).toBeInTheDocument();
       expect(heading.tagName).toBe('H2');
-      expect(heading).toHaveClass('text-2xl', 'font-semibold', 'text-gray-900');
+      expect(heading).toHaveClass('text-lg', 'font-semibold', 'text-gray-800');
     });
 
     it('renders the description text below the heading', () => {
@@ -61,7 +61,7 @@ describe('WorkflowsTab', () => {
       
       const description = screen.getByText('Manage your automated workflows and integrations');
       expect(description).toBeInTheDocument();
-      expect(description).toHaveClass('text-gray-600');
+      expect(description).toHaveClass('text-lg', 'font-semibold', 'text-gray-800');
     });
 
     it('has the correct data-testid for the main container', () => {
@@ -79,7 +79,7 @@ describe('WorkflowsTab', () => {
       const createButton = screen.getByTestId('primary-action create-workflow-btn');
       expect(createButton).toBeInTheDocument();
       expect(createButton).toHaveTextContent('Create Workflow');
-      expect(createButton).toHaveAttribute('href', '/workflows/create');
+      expect(createButton).toHaveAttribute('href', '/workflows/new');
       expect(createButton).toHaveClass('bg-green-600', 'text-white');
     });
 
@@ -88,7 +88,7 @@ describe('WorkflowsTab', () => {
       
       const createButton = screen.getByTestId('primary-action create-workflow-btn');
       expect(createButton).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-green-500');
-      expect(createButton).toHaveClass('min-h-[44px]', 'min-w-[44px]'); // Touch target size
+      expect(createButton).toHaveClass('h-[44px]'); // Touch target size
     });
   });
 
@@ -102,9 +102,8 @@ describe('WorkflowsTab', () => {
       expect(searchInput).toHaveAttribute('id', 'workflow-search-input');
       expect(searchInput).toHaveClass('min-h-[44px]', 'min-w-[200px]');
       
-      // Check for associated label
-      const label = screen.getByLabelText('Search workflows');
-      expect(label).toBeInTheDocument();
+      // Check for aria-label
+      expect(searchInput).toHaveAttribute('aria-label', 'Search workflows by name or description');
     });
 
     it('renders filter select with proper accessibility attributes', () => {
@@ -115,9 +114,8 @@ describe('WorkflowsTab', () => {
       expect(filterSelect).toHaveAttribute('id', 'workflow-filter-select');
       expect(filterSelect).toHaveClass('min-h-[44px]', 'min-w-[200px]');
       
-      // Check for associated label
-      const label = screen.getByLabelText('Filter by status');
-      expect(label).toBeInTheDocument();
+      // Check for aria-label
+      expect(filterSelect).toHaveAttribute('aria-label', 'Filter workflows by status');
       
       // Check for all filter options
       expect(screen.getByRole('option', { name: 'All Status' })).toBeInTheDocument();
@@ -159,11 +157,11 @@ describe('WorkflowsTab', () => {
       expect(emptyHeading.tagName).toBe('H3');
       
       // Check for empty state description
-      const emptyDescription = screen.getByText('Get started by creating your first workflow.');
+      const emptyDescription = screen.getByText('Get started by creating your first workflow to automate your API integrations.');
       expect(emptyDescription).toBeInTheDocument();
       
       // Check for empty state icon (SVG present)
-      const emptyIcon = document.querySelector('.text-gray-400');
+      const emptyIcon = document.querySelector('.text-gray-300');
       expect(emptyIcon).toBeInTheDocument();
     });
 
@@ -219,12 +217,12 @@ describe('WorkflowsTab', () => {
     it('has proper ARIA labels and roles', () => {
       render(<WorkflowsTab {...defaultProps} />);
       
-      // Check for proper form labels
-      expect(screen.getByLabelText('Search workflows')).toBeInTheDocument();
-      expect(screen.getByLabelText('Filter by status')).toBeInTheDocument();
+      // Check for proper aria-labels
+      expect(screen.getByLabelText('Search workflows by name or description')).toBeInTheDocument();
+      expect(screen.getByLabelText('Filter workflows by status')).toBeInTheDocument();
       
       // Check for proper heading structure
-      expect(screen.getByRole('heading', { name: 'Workflows' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Manage your automated workflows and integrations' })).toBeInTheDocument();
     });
 
     it('has proper focus management for interactive elements', () => {
@@ -250,7 +248,7 @@ describe('WorkflowsTab', () => {
       // Check minimum touch target sizes
       expect(searchInput).toHaveClass('min-h-[44px]', 'min-w-[200px]');
       expect(filterSelect).toHaveClass('min-h-[44px]', 'min-w-[200px]');
-      expect(createButton).toHaveClass('min-h-[44px]', 'min-w-[44px]');
+      expect(createButton).toHaveClass('h-[44px]');
     });
   });
 

@@ -2,11 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2025-01-27] - E2E Test Migration & Workflow Engine Optimization (Uncommitted)
-
-### ⚠️ **Note**: These changes are currently uncommitted and represent work-in-progress E2E test migration improvements.
+## [2025-01-27] - Workflow Creation UX Enhancement & E2E Test Migration
 
 ### ✨ Added
+- **Visual Workflow Builder Route**: New `/workflows/new` route for form-based workflow creation
+- **Workflow Creation Methods Documentation**: Comprehensive guide for natural language vs visual workflow creation
+- **Enhanced E2E Test Coverage**: New test suite for visual workflow builder functionality
+
+### 🔧 Enhanced
+- **Workflow Creation Navigation**: All "Create Workflow" buttons now navigate to visual builder (`/workflows/new`)
+- **Natural Language Interface**: Remains accessible at `/workflows/create` for direct navigation
+- **Unit Test Updates**: Updated WorkflowsTab tests to reflect new navigation behavior
 - **Workflow Testing Helper Functions**: 4 comprehensive helper functions for workflow testing
   - `testWorkflowGeneration()` - Comprehensive workflow generation testing with configurable options
   - `testWorkflowExecution()` - Workflow execution with pause/resume/cancel functionality

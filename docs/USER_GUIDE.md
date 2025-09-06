@@ -301,6 +301,8 @@ The API Explorer helps you understand what each connected API can do:
 
 The easiest way to create workflows is using natural language! Simply describe what you want to happen in plain English, and our AI will create multi-step workflows for you automatically.
 
+**Access**: Navigate to `/workflows/create` or use the Chat tab in the dashboard.
+
 #### How It Works:
 1. **Start a Conversation** - Click "New Workflow" or "Chat"
 2. **Describe Your Workflow** - Tell us what you want to happen, for example:
@@ -365,8 +367,10 @@ generate a report, and send it to our team Slack channel"
 
 For more complex workflows, use the visual builder:
 
+**Access**: Click any "Create Workflow" button throughout the application.
+
 1. **Create New Workflow**
-   - Click "New Workflow" → "Visual Builder"
+   - Click "Create Workflow" button → Goes to Visual Builder
    - Give your workflow a name and description
 
 2. **Add Steps**

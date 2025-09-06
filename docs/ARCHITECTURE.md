@@ -56,8 +56,8 @@ APIQ is a semi-agentic, low-code web application designed to orchestrate complex
 
 **Key Components:**
 - **Dashboard**: Main application interface with tabbed navigation
-- **Natural Language Chat**: AI-powered workflow creation interface
-- **Workflow Management**: Visual workflow builder and execution monitoring
+- **Natural Language Chat**: AI-powered workflow creation interface (`/workflows/create`)
+- **Workflow Management**: Visual workflow builder (`/workflows/new`) and execution monitoring
 - **Secrets Management**: Secure secrets vault interface
 - **API Explorer**: Browse and test connected APIs
 - **Audit Viewer**: Review execution logs and history

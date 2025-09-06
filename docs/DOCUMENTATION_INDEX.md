@@ -74,6 +74,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **[User Guide](USER_GUIDE.md)** - End-user functionality and feature descriptions
 - **[UI Pages](UI_PAGES.md)** - User interface flows, page functionality, and UX patterns
 - **[UX Specification](UX_SPEC.md)** - Comprehensive UX design principles, patterns, and specifications
+- **[Workflow Creation Methods](WORKFLOW_CREATION_METHODS.md)** - Natural language vs visual workflow creation guide
 - **[UX Compliant Testing](UX_COMPLIANT_TESTING.md)** - E2E testing guide for UX compliance and accessibility
 - **[Secrets Vault UX Guide](SECRETS_VAULT_UX_GUIDE.md)** - Comprehensive UX guide for secrets vault with accessibility and security patterns
 - **[Enhanced Styling System](ENHANCED_STYLING_SYSTEM.md)** - Automatic text readability enhancement system with WCAG 2.1 AA compliance

@@ -107,11 +107,6 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
         validateAccessibility: true
       });
       
-      // Test form accessibility for chat interface
-      await testFormAccessibility(page, {
-        submitButton: 'primary-action chat-send-btn'
-      });
-      
       // Test security validation
       await testXSSPrevention(page, '[data-testid="chat-input"]', '<script>alert("xss")</script>');
       await testDataExposure(page, ['[data-testid="chat-interface"]', '[data-testid="workflow-list"]']);
@@ -122,6 +117,11 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       
       // Wait for input to be processed and button to be enabled
       await page.waitForTimeout(100);
+      
+      // Test form accessibility after input is filled
+      await testFormAccessibility(page, {
+        submitButton: 'primary-action chat-send-btn'
+      });
       
       // Start generation
       await getPrimaryActionButton(page, 'chat-send').click();
