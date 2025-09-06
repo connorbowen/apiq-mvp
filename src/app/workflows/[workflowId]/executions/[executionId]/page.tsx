@@ -37,7 +37,7 @@ export default async function ExecutionDetailsPage({ params }: ExecutionDetailsP
   const { execution, workflow, progress, queueJobStatus, recentLogs } = executionData;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" data-testid="execution-details-page">
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,7 +49,7 @@ export default async function ExecutionDetailsPage({ params }: ExecutionDetailsP
                   {workflow.name} • {executionId}
                 </p>
                 <div className="mt-2 flex flex-col gap-1">
-                  <span data-testid="workflow-status">Status: {execution.status || 'N/A'}</span>
+                  <span data-testid="execution-status">Status: {execution.status || 'N/A'}</span>
                   <span data-testid="workflow-last-run">Last run: {execution.completedAt ? new Date(execution.completedAt).toLocaleString() : 'Never'}</span>
                   <span data-testid="workflow-steps">Steps: {execution.totalSteps ?? 'N/A'}</span>
                 </div>
@@ -170,8 +170,17 @@ export default async function ExecutionDetailsPage({ params }: ExecutionDetailsP
                   {execution.queueJobId && (
                     <div>
                       <dt className="text-sm font-medium text-gray-500">Queue Job</dt>
-                      <dd className="mt-1 text-sm text-gray-900 font-mono">
+                      <dd className="mt-1 text-sm text-gray-900 font-mono" data-testid="queue-job-id">
                         {execution.queueJobId}
+                      </dd>
+                    </div>
+                  )}
+                  
+                  {queueJobStatus && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Job Status</dt>
+                      <dd className="mt-1 text-sm text-gray-900" data-testid="job-status">
+                        {queueJobStatus}
                       </dd>
                     </div>
                   )}

@@ -207,6 +207,7 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
 
   return (
     <div 
+      data-testid="workflows-page"
       data-testid="workflows-management" 
       role="region" 
       aria-labelledby="workflows-heading"

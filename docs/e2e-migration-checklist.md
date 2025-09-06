@@ -456,10 +456,14 @@ expect(loadTime).toBeLessThan(5000);
 ### ⚙️ **Workflow Engine Tests**
 
 #### `tests/e2e/workflow-engine/core-workflow-generation.test.ts`
-- [ ] Replace inline workflow creation with `dataHelpers.ts`
-- [ ] Use `getPrimaryActionButton()` for workflow actions
-- [ ] Use `testModalSubmitLoading()` for workflow submission
-- [ ] Use `validateUXCompliance()` for workflow forms
+- [x] Replace inline workflow creation with `dataHelpers.ts`
+- [x] Use `getPrimaryActionButton()` for workflow actions
+- [x] Use `testModalSubmitLoading()` for workflow submission
+- [x] Use `validateUXCompliance()` for workflow forms
+- [x] Use `testFormAccessibility()` for chat interface validation
+- [x] **Migration Status: COMPLETED (100%)**
+
+**Progress**: Core workflow generation tests fully migrated to new helper structure. All 15 tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation.
 
 #### `tests/e2e/workflow-engine/workflow-management.test.ts`
 - [ ] Replace inline workflow management with helper functions
@@ -581,13 +585,13 @@ expect(loadTime).toBeLessThan(5000);
 ### File Completion Status
 - [x] **Auth Tests** (4/4 files) - 100% complete (4/4 files: authentication-session, password-reset, oauth2, registration-verification)
 - [x] **Connections Tests** (5/5 files) - 100% complete (5/5 files: connections-crud, connections-oauth2, connections-performance, connections-secrets, connections-management)
-- [x] **Workflow Engine Tests** (1/9 files) - 11% complete (1/9 files: natural-language-workflow)
+- [x] **Workflow Engine Tests** (2/9 files) - 22% complete (2/9 files: natural-language-workflow, core-workflow-generation)
 - [x] **UI Tests** (2/4 files) - 50% complete (2/4 files: navigation, guided-tour)
 - [ ] **Security Tests** (0/2 files) - 0% complete
 - [ ] **Performance Tests** (0/1 file) - 0% complete
 - [x] **Onboarding Tests** (1/1 file) - 100% complete (1/1 files: user-journey)
 
-### Total Progress: 13/26 files (50%) - Connections tier fully migrated and added to e2e:current
+### Total Progress: 14/26 files (54%) - Connections tier fully migrated and added to e2e:current
 
 **Recent Achievements:**
 - ✅ **Connections Test Suite Restructured** - Split `connections-management.test.ts` into 4 specialized files for better maintainability

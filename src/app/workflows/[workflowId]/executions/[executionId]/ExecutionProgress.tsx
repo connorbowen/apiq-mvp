@@ -46,16 +46,22 @@ export default function ExecutionProgress({ progress, execution, queueJobStatus 
 
       {/* Step Information */}
       <div className="grid grid-cols-2 gap-4 text-sm" data-testid="step-execution">
-        <div>
+        <div data-testid="current-step">
           <dt className="text-gray-500">Current Step</dt>
           <dd className="font-medium text-gray-900">
             {progress.currentStep} of {progress.totalSteps}
           </dd>
         </div>
-        <div>
+        <div data-testid="completed-steps">
           <dt className="text-gray-500">Completed Steps</dt>
           <dd className="font-medium text-gray-900">
             {progress.completedSteps}
+          </dd>
+        </div>
+        <div data-testid="pending-steps">
+          <dt className="text-gray-500">Pending Steps</dt>
+          <dd className="font-medium text-gray-900">
+            {progress.totalSteps - progress.completedSteps - progress.failedSteps}
           </dd>
         </div>
         <div>
@@ -79,7 +85,7 @@ export default function ExecutionProgress({ progress, execution, queueJobStatus 
         <div className="mt-4 p-3 bg-gray-50 rounded-md">
           <h4 className="text-sm font-medium text-gray-700 mb-2">Queue Status</h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div>
+            <div data-testid="queue-status">
               <span className="text-gray-500">State:</span>
               <span className={`ml-1 font-medium ${
                 queueJobStatus.state === 'completed' ? 'text-green-600' :
@@ -109,6 +115,25 @@ export default function ExecutionProgress({ progress, execution, queueJobStatus 
           </div>
         </div>
       )}
+
+      {/* Worker Status */}
+      <div className="mt-4 p-3 bg-gray-50 rounded-md">
+        <h4 className="text-sm font-medium text-gray-700 mb-2">Worker Status</h4>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div data-testid="worker-status">
+            <span className="text-gray-500">Worker:</span>
+            <span className={`ml-1 font-medium ${
+              execution.status === 'RUNNING' ? 'text-green-600' :
+              execution.status === 'PAUSED' ? 'text-yellow-600' :
+              execution.status === 'COMPLETED' ? 'text-gray-600' :
+              'text-gray-600'
+            }`}>
+              {execution.status === 'RUNNING' ? 'ACTIVE' : 
+               execution.status === 'PAUSED' ? 'PAUSED' : 'IDLE'}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Execution Status Details */}
       <div className="mt-4 p-3 bg-gray-50 rounded-md" data-testid="execution-status">

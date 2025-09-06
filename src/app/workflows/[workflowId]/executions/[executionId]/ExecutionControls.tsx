@@ -12,29 +12,67 @@ interface ExecutionControlsProps {
 export default function ExecutionControls({ executionId, status, workflowId }: ExecutionControlsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [action, setAction] = useState<string | null>(null);
+  const [showPauseConfirmation, setShowPauseConfirmation] = useState(false);
+  const [showResumeConfirmation, setShowResumeConfirmation] = useState(false);
+  const [pauseTimestamp, setPauseTimestamp] = useState<string | null>(null);
+  const [resumeTimestamp, setResumeTimestamp] = useState<string | null>(null);
 
   const handleAction = async (actionType: 'pause' | 'resume' | 'cancel') => {
+    if (actionType === 'pause') {
+      setShowPauseConfirmation(true);
+      return;
+    }
+    if (actionType === 'resume') {
+      setShowResumeConfirmation(true);
+      return;
+    }
+    
+    // For cancel, execute immediately
     setIsLoading(true);
     setAction(actionType);
     
     try {
-      switch (actionType) {
-        case 'pause':
-          await apiClient.pauseExecution(executionId);
-          break;
-        case 'resume':
-          await apiClient.resumeExecution(executionId);
-          break;
-        case 'cancel':
-          await apiClient.cancelExecution(executionId);
-          break;
-      }
-      
-      // Refresh the page to show updated status
+      await apiClient.cancelExecution(executionId);
       window.location.reload();
     } catch (error) {
       console.error(`Failed to ${actionType} execution:`, error);
       alert(`Failed to ${actionType} execution. Please try again.`);
+    } finally {
+      setIsLoading(false);
+      setAction(null);
+    }
+  };
+
+  const confirmPause = async () => {
+    setIsLoading(true);
+    setAction('pause');
+    setShowPauseConfirmation(false);
+    
+    try {
+      await apiClient.pauseExecution(executionId);
+      setPauseTimestamp(new Date().toISOString());
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to pause execution:', error);
+      alert('Failed to pause execution. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setAction(null);
+    }
+  };
+
+  const confirmResume = async () => {
+    setIsLoading(true);
+    setAction('resume');
+    setShowResumeConfirmation(false);
+    
+    try {
+      await apiClient.resumeExecution(executionId);
+      setResumeTimestamp(new Date().toISOString());
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to resume execution:', error);
+      alert('Failed to resume execution. Please try again.');
     } finally {
       setIsLoading(false);
       setAction(null);
@@ -52,7 +90,7 @@ export default function ExecutionControls({ executionId, status, workflowId }: E
           <button
             onClick={() => handleAction('pause')}
             disabled={isLoading}
-            data-testid="primary-action pause-workflow-btn"
+            data-testid="pause-execution-btn"
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading && action === 'pause' ? (
@@ -78,7 +116,7 @@ export default function ExecutionControls({ executionId, status, workflowId }: E
           <button
             onClick={() => handleAction('resume')}
             disabled={isLoading}
-            data-testid="primary-action resume-workflow-btn"
+            data-testid="resume-execution-btn"
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading && action === 'resume' ? (
@@ -131,6 +169,78 @@ export default function ExecutionControls({ executionId, status, workflowId }: E
         <p className="text-sm text-gray-500">
           No actions available for execution in status: <span className="font-medium">{status}</span>
         </p>
+      )}
+
+      {/* Pause Confirmation Modal */}
+      {showPauseConfirmation && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" data-testid="pause-confirmation">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Pause Execution</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to pause this workflow execution? The execution will be stopped and can be resumed later.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => setShowPauseConfirmation(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmPause}
+                  disabled={isLoading}
+                  data-testid="confirm-pause-btn"
+                  className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50"
+                >
+                  {isLoading ? 'Pausing...' : 'Pause Execution'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Resume Confirmation Modal */}
+      {showResumeConfirmation && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" data-testid="resume-confirmation">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Resume Execution</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to resume this workflow execution? The execution will continue from where it was paused.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => setShowResumeConfirmation(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmResume}
+                  disabled={isLoading}
+                  data-testid="confirm-resume-btn"
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                >
+                  {isLoading ? 'Resuming...' : 'Resume Execution'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Timestamps */}
+      {pauseTimestamp && (
+        <div className="text-sm text-gray-500" data-testid="pause-timestamp">
+          Paused at: {new Date(pauseTimestamp).toLocaleString()}
+        </div>
+      )}
+      {resumeTimestamp && (
+        <div className="text-sm text-gray-500" data-testid="resume-timestamp">
+          Resumed at: {new Date(resumeTimestamp).toLocaleString()}
+        </div>
       )}
     </div>
   );

@@ -39,6 +39,8 @@
     "test:e2e:connections-secrets": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/connections-secrets.test.ts",
     "test:e2e:oauth2-flows": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/oauth2-flows.test.ts",
     "test:e2e:openapi-integration": "./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/openapi-integration.test.ts",
+    "test:e2e:single-api-operations": "./scripts/kill-port-3000.sh && playwright test tests/e2e/api-explorer/single-api-operations.test.ts",
+    "test:e2e:connection-guidance": "./scripts/kill-port-3000.sh && playwright test tests/e2e/chat/connection-guidance.test.ts",
     "test:e2e:ui": "./scripts/kill-port-3000.sh && playwright test tests/e2e/ui/",
     "test:e2e:ui-fast": "playwright test --config=playwright.ui.config.ts",
     "test:e2e:ui-script": "./scripts/run-ui-tests.sh",

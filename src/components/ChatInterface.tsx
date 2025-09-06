@@ -43,6 +43,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   const [savingWorkflow, setSavingWorkflow] = useState<string | null>(null);
   const [executingWorkflow, setExecutingWorkflow] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,6 +52,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   React.useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  // Auto-focus on chat input when component mounts
+  React.useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -275,7 +283,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             </div>
             
             {/* Examples Section */}
-            <div>
+            <div data-testid="chat-examples">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Try these examples:</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-4xl mx-auto">
                 {quickExamples.map((example, index) => (
@@ -340,7 +348,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                     <div className="text-xs font-medium text-gray-700 mb-2">
                       📋 Workflow Steps ({message.steps.length} step{message.steps.length !== 1 ? 's' : ''})
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2" data-testid="workflow-steps-container">
                       {message.steps.map((step: any, index: number) => (
                         <div key={step.id || index} className="flex items-start space-x-2 p-2 bg-gray-50 rounded border border-gray-100">
                           <div className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-medium">
@@ -436,6 +444,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
             <input
+              ref={inputRef}
               data-testid="chat-input"
               type="text"
               value={inputMessage}
@@ -457,7 +466,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             )}
           </div>
           <button
-            data-testid="chat-send-button"
+            data-testid="primary-action chat-send-btn"
             type="submit"
             disabled={!inputMessage.trim() || isLoading}
             className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-200 shadow-sm hover:shadow-md min-h-[44px]"

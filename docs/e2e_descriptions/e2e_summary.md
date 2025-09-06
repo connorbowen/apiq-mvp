@@ -4,7 +4,7 @@ This document provides a comprehensive overview of all end-to-end (E2E) tests in
 
 ## Test Organization
 
-The E2E tests are organized into 7 main categories:
+The E2E tests are organized into 9 main categories:
 - **Onboarding** (1 test file)
 - **Connections** (4 test files)
 - **Authentication** (8 test files)
@@ -12,8 +12,10 @@ The E2E tests are organized into 7 main categories:
 - **Workflow Engine** (9 test files)
 - **Security** (2 test files)
 - **Performance** (1 test file)
+- **API Explorer** (1 test file) - **NEW**
+- **Chat Guidance** (1 test file) - **NEW**
 
-**Total: 30 E2E test files**
+**Total: 32 E2E test files**
 
 ## Current Test Status (December 2024)
 
@@ -626,6 +628,59 @@ The `test:e2e:current` command includes the following test files:
 - Bundle optimization validation
 
 **Coverage:** Load performance, concurrent users, optimization, performance budgets, bundle optimization
+
+---
+
+## 8. API Explorer Tests
+
+### 8.1 Single API Operations (`single-api-operations.test.ts`)
+**File:** `tests/e2e/api-explorer/single-api-operations.test.ts`  
+**Lines:** 400+  
+**Purpose:** Tests P1.3 Single API Operations functionality - executing individual API calls without creating workflows
+
+**Key Test Areas:**
+- API Explorer "Try it out" functionality
+- Individual endpoint execution (GET, POST)
+- Quick-execute mode for one-off operations
+- Parameter input forms and validation
+- API response display and formatting
+- Workflow vs Single Call mode distinction
+- Performance requirements (under 5 seconds)
+- Error handling and recovery
+- Security validation (XSS prevention, input sanitization)
+- Accessibility and mobile responsiveness
+- UX compliance validation
+
+**Coverage:** P1.3 Single API Operations, API Explorer, Quick-execute mode, Response handling, Security, Performance, Accessibility
+
+**Status:** ✅ **READY FOR IMPLEMENTATION** - Tests created but features not yet implemented
+
+---
+
+## 9. Chat Guidance Tests
+
+### 9.1 API Connection Guidance (`connection-guidance.test.ts`)
+**File:** `tests/e2e/chat/connection-guidance.test.ts`  
+**Lines:** 500+  
+**Purpose:** Tests P1.4 API Connection Guidance in Chat - contextual help for API connection setup
+
+**Key Test Areas:**
+- Contextual guidance detection for missing APIs
+- Helpful guidance instead of generic errors
+- Specific API suggestions for workflows
+- Connection setup redirection functionality
+- Step-by-step connection instructions
+- API-specific guidance (OAuth2, API Key)
+- Seamless flow from chat to connection setup
+- Context maintenance across navigation
+- Error handling and recovery options
+- UX compliance throughout guidance flow
+- Accessibility and mobile support
+- Performance requirements for guidance generation
+
+**Coverage:** P1.4 API Connection Guidance, Chat interface, Contextual help, Connection redirection, Step-by-step instructions, Error handling, UX compliance
+
+**Status:** ✅ **READY FOR IMPLEMENTATION** - Tests created but features not yet implemented
 
 ---
 
