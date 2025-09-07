@@ -524,10 +524,13 @@ expect(loadTime).toBeLessThan(5000);
 - [ ] Use `validateUXCompliance()` for template forms
 
 #### `tests/e2e/workflow-engine/workflow-planning.test.ts`
-- [ ] Replace inline planning with helper functions
-- [ ] Use `testPageLoadTime()` for planning performance
-- [ ] Use `validateUXCompliance()` for planning interface
-- [ ] Use `testPrimaryActionPatterns()` for planning actions
+- [x] Replace inline planning with helper functions
+- [x] Use `testPageLoadTime()` for planning performance
+- [x] Use `validateUXCompliance()` for planning interface
+- [x] Use `testPrimaryActionPatterns()` for planning actions
+- [x] **Migration Status: COMPLETED (100%)**
+
+**Progress**: Workflow planning tests fully migrated to new helper structure. All 5 tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation. Added to current test suite in package.json.
 
 ### �� **UI Tests**
 
@@ -601,13 +604,13 @@ expect(loadTime).toBeLessThan(5000);
 ### File Completion Status
 - [x] **Auth Tests** (4/4 files) - 100% complete (4/4 files: authentication-session, password-reset, oauth2, registration-verification)
 - [x] **Connections Tests** (5/5 files) - 100% complete (5/5 files: connections-crud, connections-oauth2, connections-performance, connections-secrets, connections-management)
-- [x] **Workflow Engine Tests** (3/9 files) - 33% complete (3/9 files: natural-language-workflow, core-workflow-generation, multi-step-workflow-generation)
+- [x] **Workflow Engine Tests** (4/9 files) - 44% complete (4/9 files: natural-language-workflow, core-workflow-generation, multi-step-workflow-generation, workflow-planning)
 - [x] **UI Tests** (3/4 files) - 75% complete (3/4 files: navigation, guided-tour, ui-compliance)
 - [ ] **Security Tests** (0/2 files) - 0% complete
 - [ ] **Performance Tests** (0/1 file) - 0% complete
 - [x] **Onboarding Tests** (1/1 file) - 100% complete (1/1 files: user-journey)
 
-### Total Progress: 16/26 files (62%) - Core infrastructure complete, workflow engine enhanced
+### Total Progress: 17/26 files (65%) - Core infrastructure complete, workflow engine enhanced
 
 **Recent Achievements:**
 - ✅ **Connections Test Suite Restructured** - Split `connections-management.test.ts` into 4 specialized files for better maintainability
