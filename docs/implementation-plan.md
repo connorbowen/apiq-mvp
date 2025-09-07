@@ -167,7 +167,26 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - Provide step-by-step connection instructions
 **Success Criteria**: Users get helpful guidance instead of generic errors, chat can suggest which APIs to connect, seamless flow from chat to connection setup
 
-#### **P1.5: Advanced Analytics & Reporting** 🚧 **PLANNED**
+#### **P1.5: AI Service Usage Tracking & Billing** 🚧 **PLANNED**
+**Status**: Not started
+**Description**: Track OpenAI API usage and costs for AI chat interface service
+**Requirements**:
+- Database schema for usage tracking (UsageRecord, UsageSummary, PricingConfig models)
+- OpenAI token usage tracking and cost calculation
+- Usage tracking service with billing calculations
+- Usage tracking middleware for AI service calls
+- Usage analytics and reporting endpoints
+- Monthly usage summaries for billing
+- Plan limits and overage tracking
+- Real-time usage monitoring dashboard
+**Success Criteria**: 
+- Track token usage and costs for each AI service call
+- Generate monthly usage summaries for billing
+- Enforce plan limits and calculate overages
+- Provide usage analytics to customers
+- Support different pricing tiers and models
+
+#### **P1.6: Advanced Analytics & Reporting** 🚧 **PLANNED**
 **Status**: Not started
 **Next Steps**: See [Future Roadmap](docs/future-roadmap.md#p14-analytics)
 **Success Criteria**: Users can track workflow performance and optimize automation
@@ -358,6 +377,125 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 ---
 
+## 💰 **AI SERVICE USAGE TRACKING & BILLING** 🚧 **PLANNED**
+
+### **Overview**
+**Goal**: Track OpenAI API usage and costs for the AI chat interface service to enable usage-based billing and cost management.
+
+**Business Impact**: Enables usage-based pricing, cost control, and revenue optimization
+**User Value**: Transparent usage tracking, cost visibility, and plan management
+**Technical Value**: Comprehensive usage analytics and billing infrastructure
+
+### **Implementation Plan**
+
+#### **Phase 1: Database Schema & Core Models** 🚧 **PLANNED**
+**Goal**: Create comprehensive database schema for usage tracking
+
+**Database Models**:
+- **UsageRecord**: Individual API call tracking with token counts and costs
+- **UsageSummary**: Monthly aggregated usage for billing
+- **PricingConfig**: Dynamic pricing configuration for different models and services
+
+**Key Features**:
+- Token usage tracking (prompt, completion, total)
+- Cost calculation in cents (avoid floating point issues)
+- Request metadata (endpoint, workflow, execution tracking)
+- Monthly aggregation for billing
+- Plan limits and overage tracking
+
+#### **Phase 2: Usage Tracking Service** 🚧 **PLANNED**
+**Goal**: Implement core usage tracking and cost calculation service
+
+**Core Service Features**:
+- OpenAI token usage extraction from API responses
+- Real-time cost calculation based on current pricing
+- Usage record creation and storage
+- Monthly usage aggregation
+- Plan limit enforcement
+- Overage calculation and billing
+
+**Integration Points**:
+- OpenAIService wrapper for automatic tracking
+- WorkflowExecution tracking
+- Chat interface usage tracking
+- Natural language workflow generation tracking
+
+#### **Phase 3: Usage Analytics & Reporting** 🚧 **PLANNED**
+**Goal**: Provide comprehensive usage analytics and reporting
+
+**Analytics Features**:
+- Real-time usage dashboard
+- Monthly usage summaries
+- Cost breakdown by service type
+- Usage trends and patterns
+- Plan utilization tracking
+- Overage alerts and notifications
+
+**API Endpoints**:
+- `/api/usage/current` - Current month usage
+- `/api/usage/history` - Historical usage data
+- `/api/usage/summary` - Monthly summaries
+- `/api/usage/analytics` - Detailed analytics
+
+#### **Phase 4: Billing Integration** 🚧 **PLANNED**
+**Goal**: Integrate with billing system for usage-based pricing
+
+**Billing Features**:
+- Monthly usage summaries for billing
+- Overage charge calculation
+- Plan upgrade recommendations
+- Usage limit enforcement
+- Billing notification system
+
+### **Technical Architecture**
+
+#### **Usage Tracking Flow**:
+1. **AI Service Call** → Extract token usage from OpenAI response
+2. **Cost Calculation** → Calculate costs based on current pricing config
+3. **Usage Record** → Store individual usage record in database
+4. **Real-time Aggregation** → Update monthly usage summary
+5. **Limit Checking** → Enforce plan limits and calculate overages
+6. **Analytics Update** → Update usage analytics and reporting
+
+#### **Database Schema**:
+```sql
+-- Individual usage records
+UsageRecord {
+  id, userId, serviceType, model
+  promptTokens, completionTokens, totalTokens
+  promptCost, completionCost, totalCost (in cents)
+  requestId, endpoint, workflowId, executionId
+  createdAt
+}
+
+-- Monthly usage summaries
+UsageSummary {
+  id, userId, year, month, serviceType
+  totalRequests, totalTokens, totalCost
+  planLimit, overageAmount, overageCharges
+  createdAt, updatedAt
+}
+
+-- Pricing configuration
+PricingConfig {
+  id, serviceType, model
+  promptPricePer1K, completionPricePer1K (in cents)
+  freeTierLimit, proTierLimit, businessTierLimit
+  overagePricePer1K, isActive, effectiveFrom, effectiveTo
+}
+```
+
+### **Success Criteria**
+- ✅ Track token usage and costs for each AI service call
+- ✅ Generate monthly usage summaries for billing
+- ✅ Enforce plan limits and calculate overages
+- ✅ Provide usage analytics to customers
+- ✅ Support different pricing tiers and models
+- ✅ Real-time usage monitoring dashboard
+- ✅ Integration with existing AI services
+
+---
+
 ## 🎉 **IMPLEMENTATION COMPLETE!**
 
 ### **What You Actually Have** ✅
@@ -412,7 +550,8 @@ Since your onboarding system is complete, you can now focus on:
 - **Month 1**: P1.1 Workflow Templates & Libraries
 - **Month 2**: P1.3 Single API Operations
 - **Month 3**: P1.4 API Connection Guidance in Chat
-- **Month 4**: P1.5 Advanced Analytics & Reporting
+- **Month 4**: P1.5 AI Service Usage Tracking & Billing
+- **Month 5**: P1.6 Advanced Analytics & Reporting
 
 ### **Q3 2025: Enterprise Readiness**
 - **Month 1**: P2.2 Team Collaboration
