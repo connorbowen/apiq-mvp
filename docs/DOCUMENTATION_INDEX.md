@@ -50,6 +50,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **[Testing Index](TESTING_INDEX.md)** - Complete testing documentation organization and navigation
 - **[E2E Test Evaluation Guide](E2E_TEST_EVALUATION_GUIDE.md)** - 14-criteria E2E test evaluation and TODO implementation
 - **[E2E Test Migration Summary](E2E_TEST_MIGRATION_SUMMARY.md)** - Workflow engine test migration progress and helper functions
+- **[Multi-Step Workflow Migration Summary](MULTI_STEP_WORKFLOW_MIGRATION_SUMMARY.md)** - Complete migration summary for multi-step workflow generation tests
 - **[Enhanced E2E Test Criteria](E2E_TEST_ENHANCED_CRITERIA.md)** - Detailed breakdown of enhanced evaluation criteria
 - **[E2E Test Enhancement Summary](E2E_TEST_ENHANCEMENT_SUMMARY.md)** - Overview of enhanced E2E test evaluation system
 - **[Test Summary](TEST_SUMMARY.md)** - Current test status and recent test improvements
