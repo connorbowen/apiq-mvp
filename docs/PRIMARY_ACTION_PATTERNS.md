@@ -26,6 +26,42 @@
 - `data-testid="primary-action save-workflow-btn"`
 - `data-testid="primary-action execute-workflow-btn"`
 - `data-testid="primary-action create-connection-header-btn"`
+- `data-testid="primary-action create-connection-empty-btn"`
+- `data-testid="primary-action submit-connection-btn"`
 - ...and all other core flows
 
-_Last updated: 2025-08-25 (Enhanced styling system integration)_ 
+## 🆕 CONNECTION CREATION PATTERNS
+
+### **Connection Modal Actions**
+- **Create Connection Buttons**: 
+  - `data-testid="primary-action create-connection-header-btn"` (when connections exist)
+  - `data-testid="primary-action create-connection-empty-btn"` (when no connections)
+- **Form Submission**: 
+  - `data-testid="primary-action submit-connection-btn"` (submit button)
+  - Uses `form.requestSubmit()` for reliable submission
+
+### **Mobile Navigation Patterns**
+- **Mobile Tab Navigation**: 
+  - `data-testid="mobile-dashboard-tab-{tab}"` (e.g., `mobile-dashboard-tab-chat`)
+  - Consistent with desktop tab patterns but mobile-specific
+
+### **Form Field Patterns**
+- **Connection Form Fields**:
+  - `data-testid="connection-name-input"`
+  - `data-testid="connection-description-input"`
+  - `data-testid="connection-baseurl-input"`
+  - `data-testid="connection-authtype-select"`
+  - `data-testid="connection-apikey-input"`
+  - `data-testid="connection-bearertoken-input"`
+  - `data-testid="connection-username-input"`
+  - `data-testid="connection-password-input"`
+
+### **Error Handling Patterns**
+- **Error Message Selectors**:
+  - `data-testid="error-message"`
+  - `data-testid="registration-error"`
+  - `.text-sm.font-medium.text-red-800`
+  - `.text-red-600`
+  - `.text-red-800`
+
+_Last updated: 2025-01-27 (Connection creation patterns and mobile navigation updates)_ 

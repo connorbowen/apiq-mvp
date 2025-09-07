@@ -606,6 +606,7 @@ export default function CreateConnectionModal({
                   </label>
                   <input
                     id="connection-base-url"
+                    name="connection-base-url"
                     data-testid="connection-baseurl-input"
                     type="url"
                     aria-required="true"

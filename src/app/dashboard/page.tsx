@@ -604,7 +604,7 @@ function DashboardContent() {
                 {filteredTabs.map((tab) => (
                   <button
                     key={tab}
-                    data-testid={`mobile-${tabConfig[tab].testId}`}
+                    data-testid={`mobile-dashboard-tab-${tab}`}
                     className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                       activeTab === tab 
                         ? 'bg-white text-indigo-700 shadow-sm' 

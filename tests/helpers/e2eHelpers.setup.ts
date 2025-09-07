@@ -388,67 +388,34 @@ export const cleanupTestConnections = async (page: Page): Promise<void> => {
   try {
     console.log('🔗 Cleaning up test connections...');
     
-    // Navigate to connections page if not already there
-    const currentUrl = page.url();
-    if (!currentUrl.includes('connections')) {
-      await page.goto('/dashboard?tab=connections');
-      await page.waitForLoadState('domcontentloaded');
-    }
-    
-    // Find all connection cards and delete them
-    const connectionCards = page.locator('[data-testid="connection-card"]');
-    const count = await connectionCards.count();
-    
-    if (count > 0) {
-      console.log(`🗑️ Found ${count} connections to clean up`);
+    // Get all connections via API instead of UI (much more reliable)
+    const response = await page.request.get('/api/connections');
+    if (response.ok()) {
+      const connections = await response.json();
       
-      for (let i = 0; i < count; i++) {
-        try {
-          // Find delete button for this connection
-          const deleteButton = connectionCards.nth(i).locator('[data-testid*="delete"]').first();
-          
-          if (await deleteButton.isVisible()) {
-            // Click delete button
-            await deleteButton.click();
-            
-            // Wait for confirmation dialog with better error handling
-            try {
-              // Look for various confirmation button patterns
-              const confirmButton = page.locator('[data-testid="confirm-delete"], button:has-text("Delete"), button:has-text("Confirm"), [data-testid="delete-connection-btn"]').first();
-              
-              if (await confirmButton.isVisible({ timeout: 5000 })) {
-                await confirmButton.click();
-                
-                // Wait for connection to be removed
-                await page.waitForTimeout(500);
-              } else {
-                console.log('⚠️ No confirmation dialog found, connection may already be deleted');
-              }
-            } catch (confirmError) {
-              console.log('⚠️ Confirmation dialog interaction failed:', confirmError);
-              // Try to close any open modals
-              await closeAllModals(page);
+      if (connections && connections.length > 0) {
+        console.log(`🗑️ Found ${connections.length} connections to clean up via API`);
+        
+        // Delete each connection via API (bypasses UI interception issues)
+        for (const connection of connections) {
+          try {
+            const deleteResponse = await page.request.delete(`/api/connections/${connection.id}`);
+            if (deleteResponse.ok()) {
+              console.log(`🗑️ Cleaned up connection: ${connection.id}`);
+            } else {
+              console.log(`⚠️ Failed to delete connection ${connection.id}: ${deleteResponse.status()}`);
             }
+          } catch (deleteError) {
+            console.log(`⚠️ Failed to delete connection ${connection.id}:`, deleteError);
           }
-        } catch (error) {
-          console.warn(`Failed to delete connection ${i}:`, error);
         }
-      }
-      
-      // Wait for all connections to be removed
-      await page.waitForTimeout(1000);
-      
-      // Verify connections are gone
-      const remainingConnections = page.locator('[data-testid="connection-card"]');
-      const finalCount = await remainingConnections.count();
-      
-      if (finalCount === 0) {
-        console.log('✅ All test connections cleaned up successfully');
+        
+        console.log('✅ All test connections cleaned up via API');
       } else {
-        console.log(`⚠️ ${finalCount} connections still remain after cleanup`);
+        console.log('✅ No test connections to clean up');
       }
     } else {
-      console.log('✅ No connections to clean up');
+      console.log('⚠️ Failed to fetch connections for cleanup:', response.status());
     }
     
   } catch (error) {

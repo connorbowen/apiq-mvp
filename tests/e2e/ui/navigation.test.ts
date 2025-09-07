@@ -244,6 +244,26 @@ test.describe('Message Banner', () => {
     await waitForChatResponse(page, 15000);
     const hasResponse = await validateChatResponse(page);
     expect(hasResponse).toBeTruthy();
+    
+    // Check if a workflow was generated and look for save button
+    const saveButton = page.getByTestId('save-workflow-btn');
+    if (await saveButton.isVisible()) {
+      // Click save to trigger success message
+      await saveButton.click();
+      
+      // Wait for success message to appear
+      await page.waitForSelector('text=✅ Workflow', { timeout: 10000 });
+      
+      // Verify success message is displayed
+      await expect(page.getByText(/✅ Workflow.*has been saved successfully/)).toBeVisible();
+      
+      // Note: Success messages in chat are persistent (not auto-cleared)
+      // They remain as part of the chat history
+    } else {
+      // If no save button, the workflow might have been auto-saved or executed
+      // Check for execution success message
+      await expect(page.getByText(/✅ Executed successfully/)).toBeVisible();
+    }
   });
   test('should display error messages', async ({ page }) => {
     // Navigate to connections tab

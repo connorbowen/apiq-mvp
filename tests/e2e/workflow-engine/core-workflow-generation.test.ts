@@ -37,7 +37,7 @@ async function testWorkflowGeneration(page: any, description: string, expectedKe
   
   // Validate workflow response was generated
   const hasWorkflow = await page.getByText(/✨ Created:/).isVisible();
-  const hasError = await page.getByText(/I'm sorry, I couldn't create that workflow/).isVisible();
+  const hasError = await page.getByText(/I'm sorry, I couldn't create that workflow/).first().isVisible();
   expect(hasWorkflow || hasError).toBeTruthy();
   
   // If workflow was created, validate the response contains relevant keywords
@@ -132,7 +132,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       // CRITICAL: Validate that workflow response was generated
       // The workflow creation might succeed or fail, so check for either response
       const hasWorkflow = await page.getByText(/✨ Created:/).isVisible();
-      const hasError = await page.getByText(/I'm sorry, I couldn't create that workflow/).isVisible();
+      const hasError = await page.getByText(/I'm sorry, I couldn't create that workflow/).first().isVisible();
       expect(hasWorkflow || hasError).toBeTruthy();
       
       // If workflow was created, validate the response structure
@@ -348,7 +348,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       
       // Validate workflow response was generated
       const hasWorkflow = await page.getByText(/✨ Created:/).isVisible();
-      const hasError = await page.getByText(/I'm sorry, I couldn't create that workflow/).isVisible();
+      const hasError = await page.getByText(/I'm sorry, I couldn't create that workflow/).first().isVisible();
       expect(hasWorkflow || hasError).toBeTruthy();
     });
   });
@@ -380,7 +380,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       
       // Should generate workflow response
       const hasWorkflow = await page.getByText(/✨ Created:/).isVisible();
-      const hasError = await page.getByText(/I'm sorry, I couldn't create that workflow/).isVisible();
+      const hasError = await page.getByText(/I'm sorry, I couldn't create that workflow/).first().isVisible();
       expect(hasWorkflow || hasError).toBeTruthy();
     });
 
@@ -402,7 +402,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
             
             await getPrimaryActionButton(newPage, 'chat-send').click();
             await waitForElement(newPage, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 30000 });
-            return newPage.getByText(/✨ Created:|I'm sorry, I couldn't create that workflow/).isVisible();
+            return newPage.getByText(/✨ Created:|I'm sorry, I couldn't create that workflow/).first().isVisible();
           })
         );
       }

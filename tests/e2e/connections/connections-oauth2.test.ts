@@ -6,7 +6,7 @@ import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUti
 import { closeAllModals, resetRateLimits, getPrimaryActionButton, completeTestTeardown, setupE2E } from '../../helpers/e2eHelpers';
 import { createE2EUser } from '../../helpers/authHelpers';
 import { validateUXCompliance } from '../../helpers/uiHelpers';
-import { testConnectionCreation, testConnectionCreationWithValidation } from '../../helpers/dataHelpers';
+import { testConnectionCreation, testConnectionCreationWithValidation, testOAuth2ConnectionCreation } from '../../helpers/dataHelpers';
 import { testModalSuccessMessage } from '../../helpers/modalHelpers';
 import { waitForMessage } from '../../helpers/waitHelpers';
 import { Role } from '../../../src/generated/prisma';
@@ -173,11 +173,10 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
     });
 
     test('should create OAuth2 connection with custom provider', async ({ page }) => {
-      const connectionId = await testConnectionCreation(page, {
+      const connectionId = await testOAuth2ConnectionCreation(page, {
         name: 'Custom OAuth2 Connection',
         description: 'Custom OAuth2 test connection',
         baseUrl: 'https://api.custom.com',
-        authType: 'OAUTH2',
         provider: 'custom',
         clientId: 'test-custom-client-id',
         clientSecret: 'test-custom-client-secret',

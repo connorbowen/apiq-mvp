@@ -202,7 +202,9 @@ export class UXComplianceHelper {
       '[data-testid="error-message"]',
       '[data-testid="workflow-error-message"]',
       '[data-testid="validation-errors"]',
+      '[data-testid="registration-error"]',
       '.bg-red-50 .text-red-800',
+      '.text-sm.font-medium.text-red-800',
       '[role="alert"]',
       '.text-red-600',
       '.text-red-800'
@@ -258,6 +260,7 @@ export class UXComplianceHelper {
     if (!errorFound) {
       const fieldErrorSelectors = [
         '[data-testid*="error"]',
+        '[data-testid="registration-error"] .text-sm.font-medium.text-red-800',
         '[id*="error"]',
         '.text-red-600',
         '.text-red-800'

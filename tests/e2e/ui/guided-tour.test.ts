@@ -279,6 +279,7 @@ test.describe('Guided Tour (Onboarding) E2E', () => {
         await expect(page.getByTestId('tour-step-counter')).toHaveText(`Step ${i + 2} of 10`);
       } else {
         // Last step should show "Finish" button
+        const nextButton = page.getByTestId('guided-tour-next');
         await expect(nextButton).toHaveText('Finish');
       }
     }

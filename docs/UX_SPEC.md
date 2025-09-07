@@ -9,6 +9,13 @@
 - **Button Consistency**: All form elements (search, filter, buttons) standardized to consistent sizing and styling
 - **Z-Index Management**: Comprehensive z-index hierarchy ensuring proper UI element layering
 
+## 🆕 MOBILE NAVIGATION & FORM IMPROVEMENTS
+- **Mobile Tab Navigation**: Uses `data-testid="mobile-dashboard-tab-{tab}"` pattern for consistent testing
+- **Form Accessibility**: All form inputs include proper `name` attributes for better form handling
+- **Connection Modal**: Enhanced form submission reliability with proper React controlled component handling
+- **Error Handling**: Multiple error selector patterns for comprehensive error detection
+- **Test Reliability**: Improved form submission using `form.requestSubmit()` to avoid UI interception issues
+
 ## 🆕 DASHBOARD NAVIGATION & UX UPDATE
 - Dashboard navigation now uses Chat, Workflows, Connections as main tabs
 - Settings, Profile, Secrets, and Audit Log are only accessible via the user dropdown

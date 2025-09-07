@@ -12,7 +12,7 @@ import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUti
 import { closeAllModals, resetRateLimits, getPrimaryActionButton, completeTestTeardown, setupE2E } from '../../helpers/e2eHelpers';
 import { createE2EUser } from '../../helpers/authHelpers';
 import { validateUXCompliance } from '../../helpers/uiHelpers';
-import { testConnectionCreation, testConnectionCreationWithValidation } from '../../helpers/dataHelpers';
+import { testConnectionCreation, testConnectionCreationWithValidation, testApiKeyConnectionCreation, testBearerTokenConnectionCreation, testBasicAuthConnectionCreation } from '../../helpers/dataHelpers';
 import { testModalSuccessMessage } from '../../helpers/modalHelpers';
 import { testPageLoadTime } from '../../helpers/performanceHelpers';
 import { testXSSPrevention } from '../../helpers/securityHelpers';
@@ -71,11 +71,10 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
 
   test.describe('Connection Creation', () => {
     test('should create a new API connection with UX compliance', async ({ page, request }) => {
-      const connectionId = await testConnectionCreation(page, {
+      const connectionId = await testApiKeyConnectionCreation(page, {
         name: 'Test Connection',
         description: 'Connection for testing',
         baseUrl: 'https://httpbin.org/get',
-        authType: 'API_KEY',
         apiKey: 'test-key'
       });
       
@@ -99,11 +98,10 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
     });
 
     test('should create connection with Bearer token auth', async ({ page }) => {
-      const connectionId = await testConnectionCreation(page, {
+      const connectionId = await testBearerTokenConnectionCreation(page, {
         name: 'Bearer Token Connection',
         description: 'Bearer token test connection',
         baseUrl: 'https://api.example.com',
-        authType: 'BEARER_TOKEN',
         bearerToken: 'test-bearer-token-123'
       });
       
@@ -113,11 +111,10 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
     });
 
     test('should create connection with Basic auth', async ({ page }) => {
-      const connectionId = await testConnectionCreation(page, {
+      const connectionId = await testBasicAuthConnectionCreation(page, {
         name: 'Basic Auth Connection',
         description: 'Basic auth test connection',
         baseUrl: 'https://api.example.com',
-        authType: 'BASIC_AUTH',
         username: 'testuser',
         password: 'testpass'
       });
@@ -567,12 +564,20 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
         throw new Error('Connection card not found after multiple attempts');
       }
       
-      // Find and click delete button for the created connection
-      await connectionCard.locator('[data-testid="delete-connection-btn"]').click();
+      // Find and click delete button for the created connection (with robust clicking)
+      const deleteButton = connectionCard.locator('[data-testid="delete-connection-btn"]');
+      await deleteButton.waitFor({ state: 'visible' });
       
-      // Confirm deletion using the correct primary action button
+      // Use robust clicking method to avoid UI interception
+      await deleteButton.click({ force: true });
+      
+      // Wait for confirmation dialog to appear (using the correct selector)
+      await page.waitForSelector('[data-testid*="confirm"]', { timeout: 5000 });
+      
+      // Confirm deletion using the correct primary action button (with robust clicking)
       const confirmButton = getPrimaryActionButton(page, 'confirm-delete');
-      await confirmButton.click();
+      await confirmButton.waitFor({ state: 'visible' });
+      await confirmButton.click({ force: true });
       
       // Wait for deletion processing
       await testModalSuccessMessage(page, '[data-testid="success-message"]', 'Connection deleted successfully');
@@ -632,12 +637,18 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
         throw new Error('Connection card not found after multiple attempts');
       }
       
-      // Find and click delete button
-      await connectionCard.locator('[data-testid="delete-connection-btn"]').click();
+      // Find and click delete button (with robust clicking)
+      const deleteButton = connectionCard.locator('[data-testid="delete-connection-btn"]');
+      await deleteButton.waitFor({ state: 'visible' });
+      await deleteButton.click({ force: true });
       
-      // Cancel deletion using the correct button selector
+      // Wait for confirmation dialog to appear (using the correct selector)
+      await page.waitForSelector('[data-testid*="confirm"]', { timeout: 5000 });
+      
+      // Cancel deletion using the correct button selector (with robust clicking)
       const cancelButton = page.locator('[data-testid="cancel-delete-btn"]');
-      await cancelButton.click();
+      await cancelButton.waitFor({ state: 'visible' });
+      await cancelButton.click({ force: true });
       
       // Should still show the connection in the list
       await expect(page.locator('[data-testid="connection-card"]:has-text("Connection to Cancel Delete")')).toBeVisible();

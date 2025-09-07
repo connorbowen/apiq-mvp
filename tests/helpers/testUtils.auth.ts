@@ -350,4 +350,4 @@ export const createUnauthenticatedRequest = (
     body: body ? JSON.stringify(body) : undefined,
     query
   };
-}; 
+};

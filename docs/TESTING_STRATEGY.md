@@ -165,6 +165,79 @@ test.describe('UX Simplification - Navigation', () => {
 });
 ```
 
+### **Connection Testing Patterns**
+
+#### **Specialized Connection Creation Helpers**
+```typescript
+// API Key Connection Creation
+const connectionId = await testApiKeyConnectionCreation(page, {
+  name: 'Test API Connection',
+  description: 'Test connection for API key auth',
+  baseUrl: 'https://api.example.com',
+  apiKey: 'test-key-123'
+});
+
+// Bearer Token Connection Creation
+const connectionId = await testBearerTokenConnectionCreation(page, {
+  name: 'Test Bearer Connection',
+  description: 'Test connection for Bearer token auth',
+  baseUrl: 'https://api.example.com',
+  bearerToken: 'bearer-token-123'
+});
+
+// Basic Auth Connection Creation
+const connectionId = await testBasicAuthConnectionCreation(page, {
+  name: 'Test Basic Auth Connection',
+  description: 'Test connection for Basic auth',
+  baseUrl: 'https://api.example.com',
+  username: 'testuser',
+  password: 'testpass'
+});
+
+// OAuth2 Connection Creation
+const connectionId = await testOAuth2ConnectionCreation(page, {
+  name: 'Test OAuth2 Connection',
+  description: 'Test connection for OAuth2 auth',
+  baseUrl: 'https://api.example.com',
+  provider: 'github',
+  clientId: 'client-id-123',
+  clientSecret: 'client-secret-456',
+  redirectUri: 'https://app.example.com/callback',
+  scope: 'read:user'
+});
+```
+
+#### **Form Submission Improvements**
+```typescript
+// Reliable form submission using requestSubmit()
+await modal.locator('form').evaluate((form: HTMLFormElement) => {
+  form.requestSubmit();
+});
+
+// Enhanced error handling with multiple selectors
+const errorSelectors = [
+  '[data-testid="error-message"]',
+  '[data-testid="registration-error"]',
+  '.text-sm.font-medium.text-red-800',
+  '.text-red-600',
+  '.text-red-800'
+];
+```
+
+#### **API-Based Cleanup**
+```typescript
+// More reliable cleanup using API calls instead of UI
+export const cleanupTestConnections = async (page: Page): Promise<void> => {
+  const response = await page.request.get('/api/connections');
+  if (response.ok()) {
+    const connections = await response.json();
+    for (const connection of connections) {
+      await page.request.delete(`/api/connections/${connection.id}`);
+    }
+  }
+};
+```
+
 ## ♿ **Accessibility Testing**
 
 ### **WCAG 2.1 AA Compliance**

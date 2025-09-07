@@ -358,6 +358,19 @@ expect(loadTime).toBeLessThan(5000);
 
 **Progress**: Complete migration to new helper structure. All 6 tests passing. Includes CRUD operations, form validation, and UX compliance.
 
+#### `tests/e2e/connections/connections-management.test.ts`
+- [x] Replace inline connection creation with specialized helper functions
+- [x] Use `testApiKeyConnectionCreation()` for API key connections
+- [x] Use `testBearerTokenConnectionCreation()` for Bearer token connections
+- [x] Use `testBasicAuthConnectionCreation()` for Basic Auth connections
+- [x] Use `testOAuth2ConnectionCreation()` for OAuth2 connections
+- [x] Use `form.requestSubmit()` for reliable form submission
+- [x] Use API-based cleanup for connection management
+- [x] Enhanced error handling with multiple error selectors
+- [x] **Migration Status: COMPLETED (100%)**
+
+**Progress**: Connection management tests fully migrated with specialized helper functions for each authentication type. All tests passing with improved form submission reliability and API-based cleanup. Enhanced error handling and UX compliance validation.
+
 #### `tests/e2e/connections/connections-oauth2.test.ts`
 - [x] Replace inline OAuth2 flow with helper functions
 - [x] Use `getPrimaryActionButton()` for OAuth2 actions
@@ -463,7 +476,7 @@ expect(loadTime).toBeLessThan(5000);
 - [x] Use `testFormAccessibility()` for chat interface validation
 - [x] **Migration Status: COMPLETED (100%)**
 
-**Progress**: Core workflow generation tests fully migrated to new helper structure. All 15 tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation.
+**Progress**: Core workflow generation tests fully migrated to new helper structure. All 18 tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation. Added to current test suite in package.json.
 
 #### `tests/e2e/workflow-engine/workflow-management.test.ts`
 - [ ] Replace inline workflow management with helper functions
