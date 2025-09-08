@@ -103,17 +103,17 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Google Analytics */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-L4W82C9BBE"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-L4W82C9BBE');
-          `}
+               <Script
+                 src="https://www.googletagmanager.com/gtag/js?id=G-BH42DH58GY"
+                 strategy="afterInteractive"
+               />
+               <Script id="google-analytics" strategy="afterInteractive">
+                 {`
+                   window.dataLayer = window.dataLayer || [];
+                   function gtag(){dataLayer.push(arguments);}
+                   gtag('js', new Date());
+                   gtag('config', 'G-BH42DH58GY');
+                 `}
         </Script>
       </head>
       <body
