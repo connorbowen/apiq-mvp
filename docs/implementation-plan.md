@@ -167,7 +167,24 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - Provide step-by-step connection instructions
 **Success Criteria**: Users get helpful guidance instead of generic errors, chat can suggest which APIs to connect, seamless flow from chat to connection setup
 
-#### **P1.5: AI Service Usage Tracking & Billing** 🚧 **PLANNED**
+#### **P1.5: API Catalog Architecture** 🚧 **PLANNED**
+**Status**: Not started
+**Description**: Separate shared API documentation from user-specific credentials to enable API discovery and reuse
+**Requirements**:
+- Database schema for shared API catalog (ApiCatalog, CatalogEndpoint models)
+- Migration strategy to move existing rawSpec/specHash data to catalog
+- API endpoints for catalog management (browse, search, connect to APIs)
+- UI components for API discovery and connection flow
+- User-specific connection management linking to shared catalog
+- Comprehensive e2e tests for catalog functionality
+**Success Criteria**: 
+- Users can browse available APIs without providing credentials
+- API documentation is shared across all users
+- User credentials remain private and isolated
+- Seamless connection flow from catalog to user-specific setup
+- 100% e2e test coverage for catalog functionality
+
+#### **P1.6: AI Service Usage Tracking & Billing** 🚧 **PLANNED**
 **Status**: Not started
 **Description**: Track OpenAI API usage and costs for AI chat interface service
 **Requirements**:
@@ -186,7 +203,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - Provide usage analytics to customers
 - Support different pricing tiers and models
 
-#### **P1.6: Advanced Analytics & Reporting** 🚧 **PLANNED**
+#### **P1.7: Advanced Analytics & Reporting** 🚧 **PLANNED**
 **Status**: Not started
 **Next Steps**: See [Future Roadmap](docs/future-roadmap.md#p14-analytics)
 **Success Criteria**: Users can track workflow performance and optimize automation

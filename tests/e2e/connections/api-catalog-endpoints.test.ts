@@ -1,0 +1,594 @@
+import { test, expect } from '@playwright/test';
+import { TestUser, generateTestId } from '../../helpers/testUtils';
+import { createE2EUser, cleanupTestUser } from '../../helpers/authHelpers';
+import { setupE2E, resetRateLimits } from '../../helpers/e2eHelpers';
+import { testAPIPerformance } from '../../helpers/performanceHelpers';
+import { testXSSPrevention, testDataExposure } from '../../helpers/securityHelpers';
+import { prisma } from '../../../lib/database/client';
+
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
+let testUser: TestUser;
+let jwt: string;
+let createdCatalogIds: string[] = [];
+
+// Test data for API catalog endpoints
+const TEST_API_CATALOG = {
+  name: 'Test API Catalog',
+  description: 'A test API for catalog endpoint testing',
+  baseUrl: 'https://api.test.com',
+  documentationUrl: 'https://api.test.com/openapi.json',
+  category: 'testing',
+  version: '1.0.0'
+};
+
+test.describe('API Catalog Endpoints E2E Tests', () => {
+  test.beforeAll(async () => {
+    // Create a real test user using new helper
+    testUser = await createE2EUser('ADMIN', {
+      email: `e2e-catalog-endpoints-${generateTestId('user')}@example.com`,
+      password: 'e2eTestPass123',
+      name: 'E2E API Catalog Endpoints Test User'
+    });
+    jwt = testUser.accessToken;
+  });
+
+  test.afterAll(async ({ request }) => {
+    // Clean up created catalog entries
+    for (const id of createdCatalogIds) {
+      try {
+        await request.delete(`${BASE_URL}/api/catalog/${id}`, {
+          headers: { 'Authorization': `Bearer ${jwt}` }
+        });
+      } catch (error) {
+        console.warn(`Failed to cleanup catalog entry ${id}:`, error);
+      }
+    }
+
+    // Clean up test user
+    await cleanupTestUser(testUser.id);
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await setupE2E(page, testUser);
+    await resetRateLimits();
+  });
+
+  test.describe('GET /api/catalog', () => {
+    test('should return list of available APIs in catalog', async ({ request }) => {
+      const response = await request.get(`${BASE_URL}/api/catalog`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(response.status()).toBe(200);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', true);
+      expect(data).toHaveProperty('data');
+      expect(Array.isArray(data.data)).toBe(true);
+      
+      // Verify API performance
+      await testAPIPerformance(response, 1000); // 1 second budget
+    });
+
+    test('should support pagination for large catalogs', async ({ request }) => {
+      const response = await request.get(`${BASE_URL}/api/catalog?page=1&limit=10`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(response.status()).toBe(200);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', true);
+      expect(data).toHaveProperty('data');
+      expect(data).toHaveProperty('pagination');
+      expect(data.pagination).toHaveProperty('page', 1);
+      expect(data.pagination).toHaveProperty('limit', 10);
+      expect(data.pagination).toHaveProperty('total');
+      expect(data.pagination).toHaveProperty('totalPages');
+    });
+
+    test('should support filtering by category', async ({ request }) => {
+      const response = await request.get(`${BASE_URL}/api/catalog?category=testing`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(response.status()).toBe(200);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', true);
+      expect(data).toHaveProperty('data');
+      
+      // Verify all returned APIs have the correct category
+      if (data.data.length > 0) {
+        data.data.forEach((api: any) => {
+          expect(api.category).toBe('testing');
+        });
+      }
+    });
+
+    test('should support search by name and description', async ({ request }) => {
+      const response = await request.get(`${BASE_URL}/api/catalog?search=pet`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(response.status()).toBe(200);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', true);
+      expect(data).toHaveProperty('data');
+      
+      // Verify search results contain the search term
+      if (data.data.length > 0) {
+        data.data.forEach((api: any) => {
+          const searchableText = `${api.name} ${api.description}`.toLowerCase();
+          expect(searchableText).toContain('pet');
+        });
+      }
+    });
+
+    test('should prevent XSS attacks in search parameters', async ({ request }) => {
+      const maliciousSearch = '<script>alert("xss")</script>';
+      const response = await request.get(`${BASE_URL}/api/catalog?search=${encodeURIComponent(maliciousSearch)}`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(response.status()).toBe(200);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', true);
+      
+      // Verify no script tags in response
+      const responseText = JSON.stringify(data);
+      expect(responseText).not.toContain('<script>');
+      expect(responseText).not.toContain('alert(');
+    });
+  });
+
+  test.describe('GET /api/catalog/[id]', () => {
+    test('should return specific API details from catalog', async ({ request }) => {
+      // First, get list of APIs to find an ID
+      const listResponse = await request.get(`${BASE_URL}/api/catalog`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(listResponse.status()).toBe(200);
+      const listData = await listResponse.json();
+      
+      if (listData.data.length > 0) {
+        const apiId = listData.data[0].id;
+        
+        const response = await request.get(`${BASE_URL}/api/catalog/${apiId}`, {
+          headers: { 'Authorization': `Bearer ${jwt}` }
+        });
+
+        expect(response.status()).toBe(200);
+        
+        const data = await response.json();
+        expect(data).toHaveProperty('success', true);
+        expect(data).toHaveProperty('data');
+        expect(data.data).toHaveProperty('id', apiId);
+        expect(data.data).toHaveProperty('name');
+        expect(data.data).toHaveProperty('description');
+        expect(data.data).toHaveProperty('baseUrl');
+        expect(data.data).toHaveProperty('endpoints');
+        expect(Array.isArray(data.data.endpoints)).toBe(true);
+      }
+    });
+
+    test('should return 404 for non-existent API', async ({ request }) => {
+      const response = await request.get(`${BASE_URL}/api/catalog/non-existent-id`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(response.status()).toBe(404);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', false);
+      expect(data).toHaveProperty('error');
+    });
+
+    test('should include endpoint details in API response', async ({ request }) => {
+      // First, get list of APIs to find an ID
+      const listResponse = await request.get(`${BASE_URL}/api/catalog`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(listResponse.status()).toBe(200);
+      const listData = await listResponse.json();
+      
+      if (listData.data.length > 0) {
+        const apiId = listData.data[0].id;
+        
+        const response = await request.get(`${BASE_URL}/api/catalog/${apiId}`, {
+          headers: { 'Authorization': `Bearer ${jwt}` }
+        });
+
+        expect(response.status()).toBe(200);
+        
+        const data = await response.json();
+        expect(data).toHaveProperty('success', true);
+        expect(data).toHaveProperty('data');
+        expect(data.data).toHaveProperty('endpoints');
+        
+        // Verify endpoint structure
+        if (data.data.endpoints.length > 0) {
+          const endpoint = data.data.endpoints[0];
+          expect(endpoint).toHaveProperty('id');
+          expect(endpoint).toHaveProperty('path');
+          expect(endpoint).toHaveProperty('method');
+          expect(endpoint).toHaveProperty('summary');
+          expect(endpoint).toHaveProperty('parameters');
+          expect(endpoint).toHaveProperty('responses');
+        }
+      }
+    });
+  });
+
+  test.describe('POST /api/catalog', () => {
+    test('should create new API in catalog', async ({ request }) => {
+      const response = await request.post(`${BASE_URL}/api/catalog`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: TEST_API_CATALOG
+      });
+
+      expect(response.status()).toBe(201);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', true);
+      expect(data).toHaveProperty('data');
+      expect(data.data).toHaveProperty('id');
+      expect(data.data).toHaveProperty('name', TEST_API_CATALOG.name);
+      expect(data.data).toHaveProperty('description', TEST_API_CATALOG.description);
+      expect(data.data).toHaveProperty('baseUrl', TEST_API_CATALOG.baseUrl);
+      expect(data.data).toHaveProperty('category', TEST_API_CATALOG.category);
+      
+      // Store ID for cleanup
+      createdCatalogIds.push(data.data.id);
+    });
+
+    test('should validate required fields for API creation', async ({ request }) => {
+      const invalidApi = {
+        name: '', // Empty name
+        description: 'Test API',
+        baseUrl: 'invalid-url', // Invalid URL
+        documentationUrl: 'not-a-url' // Invalid URL
+      };
+
+      const response = await request.post(`${BASE_URL}/api/catalog`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: invalidApi
+      });
+
+      expect(response.status()).toBe(400);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', false);
+      expect(data).toHaveProperty('error');
+    });
+
+    test('should prevent duplicate APIs in catalog', async ({ request }) => {
+      // Create first API
+      const firstResponse = await request.post(`${BASE_URL}/api/catalog`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: TEST_API_CATALOG
+      });
+
+      expect(firstResponse.status()).toBe(201);
+      const firstData = await firstResponse.json();
+      createdCatalogIds.push(firstData.data.id);
+
+      // Try to create duplicate API
+      const duplicateApi = {
+        ...TEST_API_CATALOG,
+        name: 'Duplicate Test API'
+      };
+
+      const secondResponse = await request.post(`${BASE_URL}/api/catalog`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: duplicateApi
+      });
+
+      expect(secondResponse.status()).toBe(409);
+      
+      const data = await secondResponse.json();
+      expect(data).toHaveProperty('success', false);
+      expect(data).toHaveProperty('error');
+    });
+
+    test('should handle OpenAPI specification parsing', async ({ request }) => {
+      const apiWithValidSpec = {
+        ...TEST_API_CATALOG,
+        name: 'API with Valid Spec',
+        documentationUrl: 'https://petstore3.swagger.io/api/v3/openapi.json'
+      };
+
+      const response = await request.post(`${BASE_URL}/api/catalog`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: apiWithValidSpec
+      });
+
+      expect(response.status()).toBe(201);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', true);
+      expect(data).toHaveProperty('data');
+      expect(data.data).toHaveProperty('endpoints');
+      expect(Array.isArray(data.data.endpoints)).toBe(true);
+      expect(data.data.endpoints.length).toBeGreaterThan(0);
+      
+      // Store ID for cleanup
+      createdCatalogIds.push(data.data.id);
+    });
+  });
+
+  test.describe('PUT /api/catalog/[id]', () => {
+    test('should update existing API in catalog', async ({ request }) => {
+      // First, create an API
+      const createResponse = await request.post(`${BASE_URL}/api/catalog`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: TEST_API_CATALOG
+      });
+
+      expect(createResponse.status()).toBe(201);
+      const createData = await createResponse.json();
+      const apiId = createData.data.id;
+      createdCatalogIds.push(apiId);
+
+      // Update the API
+      const updatedApi = {
+        ...TEST_API_CATALOG,
+        name: 'Updated Test API',
+        description: 'Updated description'
+      };
+
+      const response = await request.put(`${BASE_URL}/api/catalog/${apiId}`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: updatedApi
+      });
+
+      expect(response.status()).toBe(200);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', true);
+      expect(data).toHaveProperty('data');
+      expect(data.data).toHaveProperty('name', 'Updated Test API');
+      expect(data.data).toHaveProperty('description', 'Updated description');
+    });
+
+    test('should return 404 for non-existent API update', async ({ request }) => {
+      const response = await request.put(`${BASE_URL}/api/catalog/non-existent-id`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: TEST_API_CATALOG
+      });
+
+      expect(response.status()).toBe(404);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', false);
+      expect(data).toHaveProperty('error');
+    });
+  });
+
+  test.describe('DELETE /api/catalog/[id]', () => {
+    test('should delete API from catalog', async ({ request }) => {
+      // First, create an API
+      const createResponse = await request.post(`${BASE_URL}/api/catalog`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: TEST_API_CATALOG
+      });
+
+      expect(createResponse.status()).toBe(201);
+      const createData = await createResponse.json();
+      const apiId = createData.data.id;
+
+      // Delete the API
+      const response = await request.delete(`${BASE_URL}/api/catalog/${apiId}`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(response.status()).toBe(200);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', true);
+      expect(data).toHaveProperty('message');
+    });
+
+    test('should return 404 for non-existent API deletion', async ({ request }) => {
+      const response = await request.delete(`${BASE_URL}/api/catalog/non-existent-id`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(response.status()).toBe(404);
+      
+      const data = await response.json();
+      expect(data).toHaveProperty('success', false);
+      expect(data).toHaveProperty('error');
+    });
+  });
+
+  test.describe('GET /api/catalog/[id]/endpoints', () => {
+    test('should return endpoints for specific API', async ({ request }) => {
+      // First, get list of APIs to find an ID
+      const listResponse = await request.get(`${BASE_URL}/api/catalog`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(listResponse.status()).toBe(200);
+      const listData = await listResponse.json();
+      
+      if (listData.data.length > 0) {
+        const apiId = listData.data[0].id;
+        
+        const response = await request.get(`${BASE_URL}/api/catalog/${apiId}/endpoints`, {
+          headers: { 'Authorization': `Bearer ${jwt}` }
+        });
+
+        expect(response.status()).toBe(200);
+        
+        const data = await response.json();
+        expect(data).toHaveProperty('success', true);
+        expect(data).toHaveProperty('data');
+        expect(Array.isArray(data.data)).toBe(true);
+        
+        // Verify endpoint structure
+        if (data.data.length > 0) {
+          const endpoint = data.data[0];
+          expect(endpoint).toHaveProperty('id');
+          expect(endpoint).toHaveProperty('path');
+          expect(endpoint).toHaveProperty('method');
+          expect(endpoint).toHaveProperty('summary');
+          expect(endpoint).toHaveProperty('parameters');
+          expect(endpoint).toHaveProperty('responses');
+        }
+      }
+    });
+
+    test('should support filtering endpoints by method', async ({ request }) => {
+      // First, get list of APIs to find an ID
+      const listResponse = await request.get(`${BASE_URL}/api/catalog`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(listResponse.status()).toBe(200);
+      const listData = await listResponse.json();
+      
+      if (listData.data.length > 0) {
+        const apiId = listData.data[0].id;
+        
+        const response = await request.get(`${BASE_URL}/api/catalog/${apiId}/endpoints?method=GET`, {
+          headers: { 'Authorization': `Bearer ${jwt}` }
+        });
+
+        expect(response.status()).toBe(200);
+        
+        const data = await response.json();
+        expect(data).toHaveProperty('success', true);
+        expect(data).toHaveProperty('data');
+        
+        // Verify all returned endpoints are GET methods
+        if (data.data.length > 0) {
+          data.data.forEach((endpoint: any) => {
+            expect(endpoint.method).toBe('GET');
+          });
+        }
+      }
+    });
+  });
+
+  test.describe('API Catalog Security', () => {
+    test('should require authentication for all catalog endpoints', async ({ request }) => {
+      const endpoints = [
+        'GET /api/catalog',
+        'GET /api/catalog/test-id',
+        'POST /api/catalog',
+        'PUT /api/catalog/test-id',
+        'DELETE /api/catalog/test-id'
+      ];
+
+      for (const endpoint of endpoints) {
+        const [method, path] = endpoint.split(' ');
+        const url = `${BASE_URL}${path}`;
+        
+        let response;
+        if (method === 'GET') {
+          response = await request.get(url);
+        } else if (method === 'POST') {
+          response = await request.post(url, { data: {} });
+        } else if (method === 'PUT') {
+          response = await request.put(url, { data: {} });
+        } else if (method === 'DELETE') {
+          response = await request.delete(url);
+        }
+
+        expect(response!.status()).toBe(401);
+        
+        const data = await response!.json();
+        expect(data).toHaveProperty('error');
+      }
+    });
+
+    test('should prevent data exposure between users', async ({ request }) => {
+      // Create API with user 1
+      const createResponse = await request.post(`${BASE_URL}/api/catalog`, {
+        headers: { 
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        },
+        data: TEST_API_CATALOG
+      });
+
+      expect(createResponse.status()).toBe(201);
+      const createData = await createResponse.json();
+      const apiId = createData.data.id;
+      createdCatalogIds.push(apiId);
+
+      // Verify API is accessible (catalog is shared)
+      const getResponse = await request.get(`${BASE_URL}/api/catalog/${apiId}`, {
+        headers: { 'Authorization': `Bearer ${jwt}` }
+      });
+
+      expect(getResponse.status()).toBe(200);
+      
+      const data = await getResponse.json();
+      expect(data).toHaveProperty('success', true);
+      expect(data).toHaveProperty('data');
+      
+      // Verify no user-specific data is exposed
+      expect(data.data).not.toHaveProperty('userId');
+      expect(data.data).not.toHaveProperty('userCredentials');
+      expect(data.data).not.toHaveProperty('userApiKeys');
+    });
+
+    test('should handle rate limiting for catalog endpoints', async ({ request }) => {
+      // Make multiple requests to test rate limiting
+      const requests = [];
+      for (let i = 0; i < 20; i++) {
+        requests.push(
+          request.get(`${BASE_URL}/api/catalog`, {
+            headers: { 'Authorization': `Bearer ${jwt}` }
+          })
+        );
+      }
+
+      const responses = await Promise.all(requests);
+      
+      // Check if any requests were rate limited
+      const rateLimitedResponses = responses.filter(r => r.status() === 429);
+      
+      if (rateLimitedResponses.length > 0) {
+        const rateLimitedResponse = rateLimitedResponses[0];
+        const data = await rateLimitedResponse.json();
+        expect(data).toHaveProperty('error');
+        expect(data).toHaveProperty('retryAfter');
+      }
+    });
+  });
+});
