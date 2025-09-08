@@ -238,6 +238,42 @@ export const cleanupTestConnections = async (page: Page): Promise<void> => {
 };
 ```
 
+#### **Enhanced Test Helpers with Logging and Retry Logic**
+```typescript
+// Enhanced connection creation with comprehensive logging
+const connectionId = await createTestApiConnection(page, {
+  name: 'Enhanced Test Connection',
+  description: 'Test connection with enhanced logging',
+  baseUrl: 'https://api.example.com',
+  authType: 'API_KEY',
+  authConfig: { apiKey: 'test-key-123' }
+}, {
+  enableLogging: true,
+  retryAttempts: 3,
+  timeout: 30000
+});
+
+// Enhanced workflow testing with retry logic
+const workflowId = await testWorkflowGeneration(page, {
+  userDescription: 'Create a workflow to send notifications',
+  context: 'Test context for workflow generation'
+}, {
+  enableLogging: true,
+  retryAttempts: 2,
+  validateResponse: true
+});
+
+// Enhanced step runner testing with comprehensive logging
+const executionId = await testWorkflowExecution(page, workflowId, {
+  input: { testData: 'value' }
+}, {
+  enableLogging: true,
+  retryAttempts: 3,
+  timeout: 60000,
+  validateSteps: true
+});
+```
+
 ## ♿ **Accessibility Testing**
 
 ### **WCAG 2.1 AA Compliance**

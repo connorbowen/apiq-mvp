@@ -136,7 +136,9 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
   try {
     // Require authentication for all operations (allow regular users to create connections)
     const user = await requireAuth(req, res);
-    console.log('🔍 User authenticated:', user.id);
+    console.log('🔍 CONNECTIONS API - User authenticated:', user.id);
+    console.log('🔍 CONNECTIONS API - User email:', user.email);
+    console.log('🔍 CONNECTIONS API - Request body:', JSON.stringify(req.body, null, 2));
 
     if (req.method === 'GET') {
       console.log('🔍 GET branch entered');

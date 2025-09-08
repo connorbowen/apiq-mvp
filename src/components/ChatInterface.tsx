@@ -78,18 +78,34 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     setError('');
 
     try {
+      console.log('🔍 ChatInterface: About to call generateWorkflow with:', inputMessage);
       const response = await apiClient.generateWorkflow(inputMessage);
+      console.log('🔍 ChatInterface: generateWorkflow response:', response);
       
       if (response.success && response.data) {
+        console.log('🔍 Workflow generation response:', {
+          workflow: response.data.workflow,
+          steps: response.data.steps,
+          explanation: response.data.explanation
+        });
+        
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: 'assistant',
           content: response.data.explanation || 'I\'ve created a workflow for you!',
           timestamp: new Date(),
-          workflow: response.data.workflow,
+          workflow: {
+            ...response.data.workflow,
+            isSaved: false  // Ensure the workflow is marked as not saved initially
+          },
           steps: response.data.steps,
           explanation: response.data.explanation
         };
+        
+        console.log('🔍 Created assistant message:', {
+          workflow: assistantMessage.workflow,
+          steps: assistantMessage.steps
+        });
 
         setMessages(prev => [...prev, assistantMessage]);
 
@@ -124,11 +140,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     setSavingWorkflow(messageId);
     
     try {
+      console.log('🔍 Saving workflow:', {
+        workflow: message.workflow,
+        steps: message.steps,
+        workflowName: message.workflow.name,
+        workflowDescription: message.workflow.description
+      });
+      
       const response = await apiClient.createWorkflow({
         name: message.workflow.name,
         description: message.workflow.description,
         steps: message.steps || []
       });
+      
+      console.log('🔍 Save workflow response:', response);
 
       if (response.success && response.data && response.data.workflow) {
         const workflowId = response.data.workflow.id;
@@ -219,6 +244,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         }
       }
     } catch (error) {
+      // Update message to show execution failed
+      setMessages(prev => prev.map(m => 
+        m.id === messageId 
+          ? { ...m, isExecuted: true, executionResult: { status: 'FAILED', error: error instanceof Error ? error.message : 'Unknown error' } }
+          : m
+      ));
+
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
@@ -410,12 +442,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                   
                   {/* Execution result */}
                   {message.isExecuted && message.executionResult && (
-                    <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
-                      <div className="text-xs text-green-800">
-                        ✅ Executed successfully
+                    <div className={`mt-3 p-2 border rounded ${message.executionResult.status === 'FAILED' ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`} data-testid="execution-progress">
+                      <div className={`text-xs ${message.executionResult.status === 'FAILED' ? 'text-red-800' : 'text-green-800'}`} data-testid="execution-status">
+                        {message.executionResult.status === 'FAILED' ? '❌ Execution failed - FAILED' : '✅ Executed successfully - COMPLETED'}
                       </div>
-                      <div className="text-xs text-green-600">
-                        Execution ID: {message.executionResult.executionId}
+                      {message.executionResult.executionId && (
+                        <div className={`text-xs ${message.executionResult.status === 'FAILED' ? 'text-red-600' : 'text-green-600'}`}>
+                          Execution ID: {message.executionResult.executionId}
+                        </div>
+                      )}
+                      <div className={`text-xs mt-1 ${message.executionResult.status === 'FAILED' ? 'text-red-600' : 'text-gray-600'}`} data-testid="step-execution">
+                        {message.executionResult.status === 'FAILED' ? `Step execution failed: ${message.executionResult.error}` : 'Step execution completed successfully'}
                       </div>
                     </div>
                   )}

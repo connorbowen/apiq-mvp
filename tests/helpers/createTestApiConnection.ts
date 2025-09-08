@@ -9,8 +9,8 @@ import petstoreOpenApi from '../fixtures/petstore-openapi.json';
  * @returns The created API connection
  */
 export async function createTestApiConnection(userId: string) {
-  // Use a unique name for test connections
-  const name = `Test API Connection (${Date.now()})`;
+  // Use a unique name for test connections (avoid "Test API" pattern that triggers cleanup)
+  const name = `E2E Connection for Testing (${Date.now()})`;
   
   // Create the API connection
   const connection = await prisma.apiConnection.create({
@@ -76,7 +76,7 @@ export async function cleanupTestApiConnections(userId: string) {
   await prisma.apiConnection.deleteMany({
     where: {
       userId,
-      name: { contains: 'Test ' },
+      name: { contains: 'E2E Connection for Testing' },
     },
   });
 } 

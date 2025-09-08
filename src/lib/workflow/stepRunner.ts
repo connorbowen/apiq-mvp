@@ -179,8 +179,23 @@ export class ApiCallStepExecutor implements StepExecutor {
   }
 
   validate(step: any): boolean {
-    // Only accept new format: method and endpoint must be present
-    return !!(step.apiConnectionId && step.method && step.endpoint);
+    // Basic validation for API call steps
+    if (!step.apiConnectionId) {
+      console.error('❌ [ApiCallStepExecutor] Missing API connection ID');
+      return false;
+    }
+    
+    if (!step.method) {
+      console.error('❌ [ApiCallStepExecutor] Missing method');
+      return false;
+    }
+    
+    if (!step.endpoint) {
+      console.error('❌ [ApiCallStepExecutor] Missing endpoint');
+      return false;
+    }
+    
+    return true;
   }
 
   private async getApiConnection(apiConnectionId: string | null): Promise<ApiConnection | null> {

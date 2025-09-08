@@ -122,36 +122,81 @@ export class NaturalLanguageWorkflowService {
       // Prepare OpenAI prompt and call
       const openaiClient = this.openai;
       const model = process.env.OPENAI_MODEL || 'gpt-4-turbo-preview';
-      const systemPrompt = this.createSystemPrompt();
+      const systemPrompt = this.createSystemPrompt(connectionsWithEndpoints);
       const userPrompt = request.userDescription;
 
       console.log('→ System prompt:', systemPrompt);
       console.log('→ User prompt:', userPrompt);
       console.log('→ Model:', model);
 
+      // Retry mechanism for invalid connection IDs
       let openaiResponse;
-      try {
-        openaiResponse = await openaiClient.chat.completions.create({
-          model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          functions,
-          function_call: { name: 'create_workflow' },
-          temperature: 0.1,
-          max_tokens: 2000
-        });
-        console.log('→ Raw OpenAI response:', JSON.stringify(openaiResponse, null, 2));
-      } catch (openaiError) {
-        console.error('→ OpenAI API error:', openaiError);
-        return {
-          success: false,
-          error: 'OpenAI API error: ' + (openaiError instanceof Error ? openaiError.message : String(openaiError)),
-          alternatives: []
-        };
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          openaiResponse = await openaiClient.chat.completions.create({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ],
+            functions,
+            function_call: { name: 'create_workflow' },
+            temperature: 0.1,
+            max_tokens: 2000
+          });
+          console.log('→ Raw OpenAI response:', JSON.stringify(openaiResponse, null, 2));
+          
+          // Check if the response has valid connection IDs
+          const functionCall = openaiResponse.choices[0]?.message?.function_call;
+          if (functionCall && functionCall.name === 'create_workflow') {
+            try {
+              const result = JSON.parse(functionCall.arguments);
+              const validConnectionIds = new Set(connectionsWithEndpoints.map(conn => conn.id));
+              const invalidSteps = result.steps?.filter((step: any) => 
+                step.type === 'api_call' && step.apiConnectionId && !validConnectionIds.has(step.apiConnectionId)
+              ) || [];
+              
+              if (invalidSteps.length === 0) {
+                // Valid response, break out of retry loop
+                break;
+              } else {
+                console.log(`❌ Retry ${retryCount + 1}/${maxRetries}: Invalid connection IDs found, retrying...`);
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                  console.error('❌ Max retries reached, giving up');
+                  return {
+                    success: false,
+                    error: `Failed to generate valid workflow after ${maxRetries} attempts. The AI keeps generating invalid connection IDs.`,
+                    alternatives: []
+                  };
+                }
+                // Add a small delay before retry
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                continue;
+              }
+            } catch (parseError) {
+              console.error('→ Failed to parse OpenAI function call arguments:', functionCall.arguments);
+              return {
+                success: false,
+                error: 'Failed to parse workflow from OpenAI response',
+                alternatives: []
+              };
+            }
+          }
+        } catch (openaiError) {
+          console.error('→ OpenAI API error:', openaiError);
+          return {
+            success: false,
+            error: 'OpenAI API error: ' + (openaiError instanceof Error ? openaiError.message : String(openaiError)),
+            alternatives: []
+          };
+        }
       }
 
+      // Parse the final result
       const functionCall = openaiResponse.choices[0]?.message?.function_call;
       if (!functionCall || functionCall.name !== 'create_workflow') {
         console.error('→ Invalid OpenAI function call:', functionCall);
@@ -198,6 +243,28 @@ export class NaturalLanguageWorkflowService {
         confidence: 0.8,
         explanation: `This workflow executes ${result.steps.length || 1} steps in sequence.`
       };
+
+      // Validate that all API call steps use valid connection IDs
+      const validConnectionIds = new Set(connectionsWithEndpoints.map(conn => conn.id));
+      const invalidSteps = workflow.steps.filter(step => 
+        step.type === 'api_call' && step.apiConnectionId && !validConnectionIds.has(step.apiConnectionId)
+      );
+
+      if (invalidSteps.length > 0) {
+        console.error('❌ Workflow generation failed: Invalid connection IDs found');
+        console.error('Invalid steps:', invalidSteps.map(step => ({
+          name: step.name,
+          apiConnectionId: step.apiConnectionId,
+          validIds: Array.from(validConnectionIds)
+        })));
+        
+        // Completely reject the workflow and force retry
+        return {
+          success: false,
+          error: `Invalid API connection IDs found in generated workflow. The AI generated invalid connection IDs: ${invalidSteps.map(s => s.apiConnectionId).join(', ')}. Valid IDs are: ${Array.from(validConnectionIds).join(', ')}. Please retry the request.`,
+          alternatives: []
+        };
+      }
 
       return {
         success: true,
@@ -248,8 +315,10 @@ export class NaturalLanguageWorkflowService {
                 type: { type: 'string', enum: ['api_call', 'data_transform', 'condition', 'webhook'], description: 'Step type' },
                 apiConnectionId: { 
                   type: 'string', 
-                  description: 'API connection ID (must be one of the available connection IDs)',
-                  enum: connections.map(conn => conn.id)
+                  description: 'API connection ID - MUST be exactly one of these valid IDs: ' + connections.map(conn => conn.id).join(', ') + '. NEVER use any other ID. This field is REQUIRED and MUST match one of the provided IDs exactly.',
+                  enum: connections.map(conn => conn.id),
+                  pattern: '^(' + connections.map(conn => conn.id).join('|') + ')$',
+                  examples: connections.map(conn => conn.id)
                 },
                 endpoint: { type: 'string', description: 'API endpoint (if applicable)' },
                 method: { type: 'string', description: 'HTTP method (if applicable)' },
@@ -452,12 +521,16 @@ export class NaturalLanguageWorkflowService {
   /**
    * Create system prompt for workflow generation
    */
-  private createSystemPrompt(): string {
+  private createSystemPrompt(connectionsWithEndpoints: WorkflowGenerationRequest['availableConnections']): string {
+    const connectionIds = connectionsWithEndpoints.map(conn => `${conn.name}: ${conn.id}`).join(', ');
+    
     return `You are an expert workflow automation specialist. Your job is to create multi-step workflows from natural language descriptions.
 
-IMPORTANT: Always generate MULTI-STEP workflows for complex requests. Break down complex workflows into 2-5 logical steps.
+CRITICAL REQUIREMENT: You MUST use ONLY the exact connection IDs provided in the available connections list. Do NOT generate or make up connection IDs.
 
-CRITICAL: When creating API call steps, you MUST use the exact connection IDs provided in the available connections. The apiConnectionId field must match one of the connection IDs from the available connections list.
+AVAILABLE CONNECTION IDS: ${connectionIds}
+
+IMPORTANT: Always generate MULTI-STEP workflows for complex requests. Break down complex workflows into 2-5 logical steps.
 
 WORKFLOW PLANNING RULES:
 1. For complex requests, create multiple steps (2-5 steps)
@@ -465,53 +538,40 @@ WORKFLOW PLANNING RULES:
 3. Steps should flow logically from one to the next
 4. Use data mapping between steps when possible
 5. Include conditional logic when appropriate
-6. For API calls, use the exact connection ID from the available connections
-
-COMMON WORKFLOW PATTERNS:
-- Webhook → Transform → Action (3 steps)
-- Monitor → Filter → Notify → Log (4 steps)
-- Collect → Process → Store → Notify (4 steps)
-- Trigger → Validate → Execute → Confirm (4 steps)
+6. For API calls, use ONLY the exact connection ID from the available connections
 
 STEP TYPES:
-- api_call: Make an API request (requires valid apiConnectionId)
+- api_call: Make an API request (REQUIRES valid apiConnectionId from available connections)
 - data_transform: Transform data between steps
 - condition: Add conditional logic
 - webhook: Set up webhook monitoring
 
-DATA FLOW:
-- Map outputs from one step to inputs of the next step
-- Use JSON path expressions for data mapping
-- Include data validation between steps
+CONNECTION ID REQUIREMENTS (CRITICAL):
+- For api_call steps, the apiConnectionId MUST be exactly one of the available connection IDs listed above
+- NEVER use hardcoded, example, or generated connection IDs
+- ALWAYS use the exact connection ID from the available connections list
+- If you cannot find a suitable connection, do not create the step
 
-CONNECTION ID REQUIREMENTS:
-- For api_call steps, the apiConnectionId must be one of the available connection IDs
-- Do not use hardcoded or example connection IDs
-- Use the exact connection ID from the available connections list
+VALIDATION RULES:
+- Before creating any api_call step, verify the connection ID exists in the available connections
+- If no suitable connection exists, use a different step type or skip the step
+- Never generate or guess connection IDs
 
 EXAMPLES:
 User: "When a new GitHub issue is created, send a Slack notification and create a Trello card"
 Steps:
 1. Monitor GitHub issues (webhook)
-2. Send Slack notification (api_call with correct connection ID)
-3. Create Trello card (api_call with correct connection ID)
+2. Send Slack notification (api_call with correct connection ID from available connections)
+3. Create Trello card (api_call with correct connection ID from available connections)
 
 User: "When a customer places an order, create invoice, send email, update inventory"
 Steps:
 1. Monitor orders (webhook)
-2. Create invoice in QuickBooks (api_call with correct connection ID)
-3. Send confirmation email (api_call with correct connection ID)
-4. Update inventory in Shopify (api_call with correct connection ID)
+2. Create invoice in QuickBooks (api_call with correct connection ID from available connections)
+3. Send confirmation email (api_call with correct connection ID from available connections)
+4. Update inventory in Shopify (api_call with correct connection ID from available connections)
 
-Available API endpoints are provided as functions. Use the most appropriate endpoints for each step and ensure you use the correct connection IDs.
-
-Generate workflows that are:
-- Practical and executable
-- Well-structured with clear step purposes
-- Include proper data flow between steps
-- Handle errors gracefully
-- Follow best practices for workflow automation
-- Use valid connection IDs for all API calls`;
+REMEMBER: Only use connection IDs that are explicitly provided in the available connections list. Do not generate or assume any connection IDs.`;
   }
 
   /**

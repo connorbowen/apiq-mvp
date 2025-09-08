@@ -330,7 +330,13 @@ export default function CreateConnectionModal({
           clientSecret: formData.credentials.clientSecret,
           redirectUri: formData.credentials.redirectUri,
           scopes: formData.credentials.scopes
-        } : {}, // Include OAuth2 config for validation, but credentials are stored as secrets
+        } : {
+          // Map credentials to authConfig for secret creation
+          apiKey: formData.credentials.apiKey,
+          token: formData.credentials.bearerToken,
+          username: formData.credentials.username,
+          password: formData.credentials.password
+        },
         documentationUrl: formData.openApiUrl || undefined,
         secretIds,
         secretReferences
@@ -643,6 +649,7 @@ export default function CreateConnectionModal({
                     onChange={(e) => setFormData({ ...formData, authType: e.target.value as 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM' })}
                     className="form-field-enhanced"
                   >
+                    <option value="NONE">No Authentication</option>
                     <option value="API_KEY">API Key</option>
                     <option value="BEARER_TOKEN">Bearer Token</option>
                     <option value="BASIC_AUTH">Basic Authentication</option>

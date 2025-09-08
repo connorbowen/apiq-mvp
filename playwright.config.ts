@@ -15,7 +15,7 @@ export default defineConfig({
   },
   // Add global setup for better parallel test isolation
   globalSetup: require.resolve('./tests/helpers/globalSetup.ts'),
-  globalTeardown: require.resolve('./tests/helpers/globalTeardown.ts'),
+  // globalTeardown: require.resolve('./tests/helpers/globalTeardown.ts'), // Disabled to prevent premature cleanup
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'off', // Set to 'on-first-retry' when debugging test failures

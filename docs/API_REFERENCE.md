@@ -78,7 +78,7 @@ The Natural Language Workflow Generation API allows users to create complex mult
 
 #### `POST /api/workflows/generate`
 
-Generate a workflow from natural language description.
+Generate a workflow from natural language description with enhanced logging and retry mechanisms.
 
 **Request Body:**
 
@@ -88,6 +88,12 @@ Generate a workflow from natural language description.
   "context": "Optional additional context for the workflow"
 }
 ```
+
+**Enhanced Features:**
+- **Comprehensive Logging**: Detailed console logging for debugging workflow generation
+- **Retry Logic**: Automatic retry with exponential backoff for OpenAI API calls
+- **Error Handling**: Enhanced error messages with specific failure reasons
+- **Performance Monitoring**: Request timing and response validation
 
 **Response:**
 
@@ -194,6 +200,23 @@ Generate a workflow from natural language description.
   "error": "Unable to generate workflow. Please provide more specific details about what you want to accomplish."
 }
 ```
+
+**Error Response (OpenAI Service Error):**
+
+```json
+{
+  "success": false,
+  "error": "AI service temporarily unavailable. Please try again in a moment.",
+  "code": "AI_SERVICE_ERROR",
+  "retryAfter": 30
+}
+```
+
+**Enhanced Error Handling:**
+- **Retry Logic**: Automatic retry for transient OpenAI API failures
+- **Rate Limiting**: Built-in rate limiting with retry-after headers
+- **Detailed Logging**: Comprehensive error logging for debugging
+- **Graceful Degradation**: Fallback responses when AI service is unavailable
 
 ### Workflow Management 🆕
 
@@ -321,6 +344,83 @@ Delete a workflow.
   "message": "Workflow deleted successfully"
 }
 ```
+
+### API Connection Management 🆕
+
+The API Connection Management system provides secure storage and management of API connections with comprehensive authentication support and enhanced logging.
+
+#### `GET /api/connections`
+
+List all API connections for the authenticated user with enhanced logging and validation.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "connections": [
+      {
+        "id": "conn_123",
+        "name": "GitHub API",
+        "baseUrl": "https://api.github.com",
+        "authType": "API_KEY",
+        "isActive": true,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+**Enhanced Features:**
+- **Comprehensive Logging**: Detailed console logging for connection operations
+- **Enhanced Validation**: Improved input validation with better error messages
+- **Performance Monitoring**: Request timing and response validation
+- **Error Handling**: Enhanced error messages with specific failure reasons
+
+#### `POST /api/connections`
+
+Create a new API connection with enhanced validation and logging.
+
+**Request Body:**
+
+```json
+{
+  "name": "GitHub API",
+  "description": "GitHub API connection for repository management",
+  "baseUrl": "https://api.github.com",
+  "authType": "API_KEY",
+  "authConfig": {
+    "apiKey": "ghp_your_github_token_here"
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "conn_123",
+    "name": "GitHub API",
+    "baseUrl": "https://api.github.com",
+    "authType": "API_KEY",
+    "isActive": true,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  "message": "API connection created successfully"
+}
+```
+
+**Enhanced Features:**
+- **Comprehensive Logging**: Detailed console logging for connection creation
+- **Enhanced Validation**: Improved input validation with better error messages
+- **Performance Monitoring**: Request timing and response validation
+- **Error Handling**: Enhanced error messages with specific failure reasons
 
 ### Workflow Execution Control 🆕
 

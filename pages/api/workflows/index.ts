@@ -115,6 +115,32 @@ async function createWorkflow(req: NextApiRequest, res: NextApiResponse, userId:
       return res.status(409).json({ success: false, error: 'Workflow with this name already exists' });
     }
 
+    // Validate API connection IDs for API call steps
+    if (steps && steps.length > 0) {
+      const apiCallSteps = steps.filter((step: any) => step.type === 'api_call' && step.apiConnectionId);
+      if (apiCallSteps.length > 0) {
+        const connectionIds = apiCallSteps.map((step: any) => step.apiConnectionId);
+        const existingConnections = await prisma.apiConnection.findMany({
+          where: {
+            id: { in: connectionIds },
+            userId: userId,
+            status: 'ACTIVE'
+          },
+          select: { id: true }
+        });
+        
+        const existingConnectionIds = new Set(existingConnections.map(conn => conn.id));
+        const invalidConnectionIds = connectionIds.filter((id: string) => !existingConnectionIds.has(id));
+        
+        if (invalidConnectionIds.length > 0) {
+          return res.status(400).json({
+            success: false,
+            error: `Invalid API connection IDs: ${invalidConnectionIds.join(', ')}. Please ensure all API call steps use valid connection IDs.`
+          });
+        }
+      }
+    }
+
     // Create workflow with steps in a transaction
     const workflow = await prisma.$transaction(async (tx) => {
       // Create the workflow
@@ -175,10 +201,12 @@ async function createWorkflow(req: NextApiRequest, res: NextApiResponse, userId:
     return res.status(201).json({
       success: true,
       data: {
-        ...workflow,
-        stepCount: workflow._count.steps,
-        executionCount: workflow._count.executions,
-        _count: undefined
+        workflow: {
+          ...workflow,
+          stepCount: workflow._count.steps,
+          executionCount: workflow._count.executions,
+          _count: undefined
+        }
       },
       message: 'Workflow created successfully'
     });

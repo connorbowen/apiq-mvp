@@ -10,32 +10,49 @@ async function globalTeardown(config: FullConfig) {
   console.log('🧹 Starting global test teardown...');
   
   try {
-    // Clean up any remaining test data
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          startsWith: 'e2e-'
-        }
-      }
-    });
+    // Only clean up if we're actually done with all tests
+    // This prevents premature cleanup during parallel test execution
+    const isLastTestRun = process.env.PLAYWRIGHT_LAST_TEST === 'true';
     
-    await prisma.apiConnection.deleteMany({
-      where: {
-        name: {
-          contains: 'Test'
+    if (isLastTestRun) {
+      // Clean up any remaining test data
+      await prisma.user.deleteMany({
+        where: {
+          email: {
+            startsWith: 'e2e-'
+          }
         }
-      }
-    });
-    
-    await prisma.secret.deleteMany({
-      where: {
-        name: {
-          contains: 'Test'
+      });
+      
+      await prisma.apiConnection.deleteMany({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: 'Test API'
+              }
+            },
+            {
+              name: {
+                contains: 'e2e-step-runner'
+              }
+            }
+          ]
         }
-      }
-    });
-    
-    console.log('✅ Global test teardown completed');
+      });
+      
+      await prisma.secret.deleteMany({
+        where: {
+          name: {
+            contains: 'Test'
+          }
+        }
+      });
+      
+      console.log('✅ Global test teardown completed');
+    } else {
+      console.log('⏭️ Skipping cleanup - not the last test run');
+    }
   } catch (error) {
     console.warn('⚠️ Global teardown cleanup failed:', error);
   } finally {

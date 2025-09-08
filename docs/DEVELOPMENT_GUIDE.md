@@ -558,7 +558,7 @@ npm run setup-dev
 
 ### API Development Guidelines
 
-1. **API Route Structure**
+1. **API Route Structure with Enhanced Logging**
 
    ```typescript
    // pages/api/workflows/generate.ts
@@ -573,10 +573,14 @@ npm run setup-dev
      req: NextApiRequest,
      res: NextApiResponse<ApiResponse>,
    ) {
+     const startTime = Date.now();
+     console.log(`🔍 [${req.method}] ${req.url} - Request started`);
+     
      try {
        // 1. Authentication check
        const session = await getServerSession(req, res, authOptions);
        if (!session) {
+         console.log(`❌ Authentication failed for ${req.url}`);
          return res.status(401).json({
            success: false,
            error: "Unauthorized",
@@ -584,20 +588,24 @@ npm run setup-dev
          });
        }
 
+       console.log(`✅ User authenticated: ${session.user.email}`);
+
        // 2. Method validation
        if (req.method === "POST") {
-         return await handleGenerateWorkflow(req, res, session);
+         return await handleGenerateWorkflow(req, res, session, startTime);
        }
 
        // 3. Method not allowed
+       console.log(`❌ Method not allowed: ${req.method} for ${req.url}`);
        return res.status(405).json({
          success: false,
          error: "Method not allowed",
          timestamp: new Date(),
        });
      } catch (error) {
-       // 4. Error handling
-       console.error("API Error:", error);
+       // 4. Enhanced error handling with logging
+       const duration = Date.now() - startTime;
+       console.error(`❌ API Error in ${req.url} after ${duration}ms:`, error);
        return res.status(500).json({
          success: false,
          error: "Internal server error",
@@ -609,12 +617,16 @@ npm run setup-dev
    async function handleGenerateWorkflow(
      req: NextApiRequest,
      res: NextApiResponse<ApiResponse>,
-     session: any
+     session: any,
+     startTime: number
    ) {
      const { message } = req.body;
+     console.log(`📝 Generating workflow for user: ${session.user.email}`);
+     console.log(`💬 User description: ${message}`);
      
      // Validate input
      if (!message || typeof message !== 'string') {
+       console.log(`❌ Invalid input: message is ${typeof message}`);
        return res.status(400).json({
          success: false,
          error: "Message is required",
@@ -622,17 +634,44 @@ npm run setup-dev
        });
      }
 
-     // Generate workflow using AI
-     const workflow = await naturalLanguageWorkflowService.generateWorkflow(
-       message,
-       session.user.id
-     );
+     try {
+       // Generate workflow using AI with retry logic
+       console.log(`🤖 Calling OpenAI service for workflow generation...`);
+       const workflow = await naturalLanguageWorkflowService.generateWorkflow(
+         message,
+         session.user.id
+       );
 
-     return res.status(200).json({
-       success: true,
-       data: workflow,
-       timestamp: new Date(),
-     });
+       const duration = Date.now() - startTime;
+       console.log(`✅ Workflow generated successfully in ${duration}ms`);
+       console.log(`📊 Generated workflow: ${workflow.name} with ${workflow.steps.length} steps`);
+
+       return res.status(200).json({
+         success: true,
+         data: workflow,
+         timestamp: new Date(),
+       });
+     } catch (error) {
+       const duration = Date.now() - startTime;
+       console.error(`❌ Workflow generation failed after ${duration}ms:`, error);
+       
+       // Enhanced error handling with retry logic
+       if (error.message.includes('rate limit') || error.message.includes('timeout')) {
+         return res.status(429).json({
+           success: false,
+           error: "AI service temporarily unavailable. Please try again in a moment.",
+           code: "AI_SERVICE_ERROR",
+           retryAfter: 30,
+           timestamp: new Date(),
+         });
+       }
+
+       return res.status(500).json({
+         success: false,
+         error: "Failed to generate workflow. Please try again.",
+         timestamp: new Date(),
+       });
+     }
    }
    ```
 

@@ -178,18 +178,31 @@ class ApiClient {
 
   private async request<T>(config: any): Promise<ApiResponse<T>> {
     try {
+      // Get cookies from document.cookie for client-side requests
+      const cookies = typeof document !== 'undefined' ? document.cookie : '';
+      const accessToken = cookies.split(';').find(c => c.trim().startsWith('accessToken='))?.split('=')[1];
+      
+      console.log('🔍 API Client: Making request to:', config.url);
+      console.log('🔍 API Client: Access token found:', !!accessToken);
+      console.log('🔍 API Client: Cookies:', cookies);
+      
       const response: AxiosResponse<ApiResponse<T>> = await axios({
         ...config,
         url: `${this.baseURL}${config.url}`,
         headers: {
           'Content-Type': 'application/json',
+          ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
           ...config.headers,
         },
         withCredentials: true, // Include cookies in requests
       });
       
+      console.log('🔍 API Client: Response status:', response.status);
+      console.log('🔍 API Client: Response data:', response.data);
+      
       return response.data;
     } catch (error: any) {
+      console.log('🔍 API Client: Request failed:', error.response?.status, error.response?.data);
       return {
         success: false,
         error: error.response?.data?.error || error.message || 'Network error',
@@ -525,11 +538,14 @@ class ApiClient {
 
   // Natural language workflow generation
   async generateWorkflow(userDescription: string): Promise<ApiResponse<{ workflow: any; steps: any[]; explanation: string }>> {
-    return this.request({
+    console.log('🔍 API Client: generateWorkflow called with:', userDescription);
+    const result = await this.request({
       method: 'POST',
       url: '/api/workflows/generate',
       data: { userDescription },
     });
+    console.log('🔍 API Client: generateWorkflow response:', result);
+    return result;
   }
 
   async getWorkflow(id: string): Promise<ApiResponse<{ workflow: any }>> {
