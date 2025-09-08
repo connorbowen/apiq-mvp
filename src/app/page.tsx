@@ -54,10 +54,50 @@ export default function Home() {
     return '/dashboard'; // Direct to chat for returning users
   };
 
+  // Structured data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "APIQ",
+    "description": "AI-powered API orchestrator that automatically builds workflows, handles authentication, and orchestrates everything across multiple APIs using natural language.",
+    "url": "https://apiq.co",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "description": "Free tier available"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "APIQ Team"
+    },
+    "featureList": [
+      "Zero-code workflow building",
+      "AI-powered API orchestration", 
+      "Multi-API integration",
+      "Natural language workflow creation",
+      "Enterprise security",
+      "Real-time API monitoring"
+    ],
+    "screenshot": "https://apiq.co/og-image.png",
+    "softwareVersion": "1.0.0",
+    "datePublished": "2024-01-01",
+    "dateModified": new Date().toISOString().split('T')[0]
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <>
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b" role="banner">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center">
@@ -98,7 +138,7 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8" role="main">
         {/* Hero Section */}
         <div className="px-4 py-12 sm:px-0 text-center">
           <div className="max-w-4xl mx-auto">
@@ -399,6 +439,66 @@ export default function Home() {
           </div>
         </div>
 
+        {/* SEO Content Section */}
+        <section className="px-4 py-12 sm:px-0" aria-labelledby="seo-content-heading">
+          <div className="max-w-4xl mx-auto">
+            <h2 id="seo-content-heading" className="text-3xl font-bold text-gray-900 mb-8 text-center">
+              Why Choose APIQ for API Integration?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">For Developers</h3>
+                <ul className="space-y-2 text-gray-600">
+                  <li>• Reduce API integration time by 90%</li>
+                  <li>• No more writing boilerplate API code</li>
+                  <li>• Automatic error handling and retry logic</li>
+                  <li>• Built-in rate limiting and monitoring</li>
+                  <li>• Support for REST, GraphQL, and webhooks</li>
+                </ul>
+              </div>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">For Business Teams</h3>
+                <ul className="space-y-2 text-gray-600">
+                  <li>• Connect any SaaS tool in minutes</li>
+                  <li>• Automate complex business processes</li>
+                  <li>• Real-time data synchronization</li>
+                  <li>• Enterprise-grade security and compliance</li>
+                  <li>• No technical knowledge required</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section for SEO */}
+        <section className="px-4 py-12 sm:px-0 bg-gray-50" aria-labelledby="faq-heading">
+          <div className="max-w-4xl mx-auto">
+            <h2 id="faq-heading" className="text-3xl font-bold text-gray-900 mb-8 text-center">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">What is API orchestration?</h3>
+                <p className="text-gray-600">
+                  API orchestration is the process of coordinating multiple API calls to create complex workflows and business processes. APIQ automates this by understanding your requirements in natural language and building the necessary API integrations.
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">How does AI-powered workflow generation work?</h3>
+                <p className="text-gray-600">
+                  Our AI analyzes your API documentation, understands your business requirements, and automatically generates optimized workflows. Simply describe what you want to accomplish, and APIQ handles the technical implementation.
+                </p>
+              </div>
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Is my data secure?</h3>
+                <p className="text-gray-600">
+                  Yes, APIQ uses enterprise-grade encryption for all API keys and sensitive data. We're SOC 2 compliant and never store your actual data - only the configuration needed to orchestrate your APIs.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Health Status - Only show for logged in users */}
         {userOnboardingStage && healthStatus && (
           <div className="mt-8 px-4 sm:px-0">
@@ -439,5 +539,6 @@ export default function Home() {
         )}
       </main>
     </div>
+    </>
   );
 }

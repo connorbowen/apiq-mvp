@@ -15,10 +15,77 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "APIQ - Multi-API Orchestrator",
-  description: "AI-powered workflow automation across multiple APIs",
-  keywords: ["API", "orchestrator", "workflow", "automation", "AI", "OpenAI"],
+  title: {
+    default: "APIQ - AI-Powered API Orchestrator | Stop Writing API Code",
+    template: "%s | APIQ - AI-Powered API Orchestrator"
+  },
+  description: "Stop writing API code. Connect any API in seconds, then describe what you want in plain English. APIQ automatically builds workflows, handles authentication, and orchestrates everything across multiple APIs.",
+  keywords: [
+    "API orchestrator",
+    "API automation",
+    "workflow automation",
+    "AI API integration",
+    "multi-API platform",
+    "API workflow builder",
+    "no-code API integration",
+    "API management",
+    "workflow automation tool",
+    "API connector",
+    "automation platform",
+    "API integration platform",
+    "workflow builder",
+    "API orchestration",
+    "business process automation"
+  ],
   authors: [{ name: "APIQ Team" }],
+  creator: "APIQ Team",
+  publisher: "APIQ",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL('https://apiq.co'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://apiq.co',
+    siteName: 'APIQ',
+    title: 'APIQ - AI-Powered API Orchestrator | Stop Writing API Code',
+    description: 'Stop writing API code. Connect any API in seconds, then describe what you want in plain English. APIQ automatically builds workflows, handles authentication, and orchestrates everything.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'APIQ - AI-Powered API Orchestrator',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'APIQ - AI-Powered API Orchestrator | Stop Writing API Code',
+    description: 'Stop writing API code. Connect any API in seconds, then describe what you want in plain English. APIQ automatically builds workflows.',
+    images: ['/og-image.png'],
+    creator: '@apiq',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'your-google-verification-code',
+  },
 };
 
 export const viewport: Viewport = {
