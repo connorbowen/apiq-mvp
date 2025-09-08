@@ -167,7 +167,33 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - Provide step-by-step connection instructions
 **Success Criteria**: Users get helpful guidance instead of generic errors, chat can suggest which APIs to connect, seamless flow from chat to connection setup
 
-#### **P1.5: API Catalog Architecture** 🚧 **PLANNED**
+#### **P1.5: OpenAPI Base URL Auto-Extraction** 🚧 **PLANNED**
+**Status**: Not started
+**Description**: Automatically extract base URL from OpenAPI specifications to improve user experience and reduce manual entry errors
+**Requirements**:
+- Enhance `parseOpenApiSpecData` function in `src/lib/api/parser.ts` to extract base URL
+- Support both OpenAPI 3.0+ (servers array) and OpenAPI 2.0 (host/basePath/schemes)
+- Auto-populate base URL field in connection creation form
+- Allow user override of auto-extracted base URL
+- Handle multiple servers by selecting first server or allowing user choice
+- Update connection creation UI to show auto-extraction status
+- Comprehensive e2e tests for base URL extraction functionality
+- Error handling for specs without server information
+**Technical Implementation**:
+- Add `extractBaseUrlFromSpec()` function to parser
+- Update `CreateConnectionModal` to use extracted base URL
+- Enhance OpenAPI validation to include base URL extraction
+- Update connection creation API to handle auto-extracted base URLs
+- Add fallback logic for specs without server information
+**Success Criteria**: 
+- Users only need to provide OpenAPI URL, base URL is auto-extracted
+- Reduces manual entry errors and improves connection success rate
+- Supports both OpenAPI 2.0 and 3.0+ specifications
+- Users can override auto-extracted base URL when needed
+- 100% e2e test coverage for base URL extraction
+- Improved UX compliance with streamlined connection flow
+
+#### **P1.6: API Catalog Architecture** 🚧 **PLANNED**
 **Status**: Not started
 **Description**: Separate shared API documentation from user-specific credentials to enable API discovery and reuse
 **Requirements**:
@@ -184,7 +210,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - Seamless connection flow from catalog to user-specific setup
 - 100% e2e test coverage for catalog functionality
 
-#### **P1.6: AI Service Usage Tracking & Billing** 🚧 **PLANNED**
+#### **P1.7: AI Service Usage Tracking & Billing** 🚧 **PLANNED**
 **Status**: Not started
 **Description**: Track OpenAI API usage and costs for AI chat interface service
 **Requirements**:
@@ -203,7 +229,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - Provide usage analytics to customers
 - Support different pricing tiers and models
 
-#### **P1.7: Advanced Analytics & Reporting** 🚧 **PLANNED**
+#### **P1.8: Advanced Analytics & Reporting** 🚧 **PLANNED**
 **Status**: Not started
 **Next Steps**: See [Future Roadmap](docs/future-roadmap.md#p14-analytics)
 **Success Criteria**: Users can track workflow performance and optimize automation
@@ -567,8 +593,10 @@ Since your onboarding system is complete, you can now focus on:
 - **Month 1**: P1.1 Workflow Templates & Libraries
 - **Month 2**: P1.3 Single API Operations
 - **Month 3**: P1.4 API Connection Guidance in Chat
-- **Month 4**: P1.5 AI Service Usage Tracking & Billing
-- **Month 5**: P1.6 Advanced Analytics & Reporting
+- **Month 4**: P1.5 OpenAPI Base URL Auto-Extraction
+- **Month 5**: P1.6 API Catalog Architecture
+- **Month 6**: P1.7 AI Service Usage Tracking & Billing
+- **Month 7**: P1.8 Advanced Analytics & Reporting
 
 ### **Q3 2025: Enterprise Readiness**
 - **Month 1**: P2.2 Team Collaboration

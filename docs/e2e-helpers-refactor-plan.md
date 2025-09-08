@@ -91,7 +91,7 @@ This document outlines a comprehensive plan to refactor and organize E2E helpers
 - ✅ Update imports in all E2E test files
 - ✅ Replace inline logic with helper calls
 - ✅ Ensure test isolation is maintained
-- **Progress**: 16/26 E2E test files migrated (authentication tier 100% complete, connections tier 100% complete, workflow engine 44% complete, UI tier 75% complete)
+- **Progress**: 18/26 E2E test files migrated (authentication tier 100% complete, connections tier 100% complete, workflow engine 44% complete, UI tier 75% complete)
   - ✅ `authentication-session.test.ts` (23/23 tests passing)
   - ✅ `password-reset.test.ts` (36/36 tests passing)
   - ✅ `navigation.test.ts` (22/22 tests passing)
@@ -104,11 +104,12 @@ This document outlines a comprehensive plan to refactor and organize E2E helpers
   - ✅ `connections-performance.test.ts` (6/6 tests passing)
   - ✅ `connections-secrets.test.ts` (3/3 tests passing)
   - ✅ `connections-management.test.ts` (4/5 tests passing)
+  - ✅ `openapi-integration.test.ts` (20/20 tests passing) - **RECENTLY MIGRATED**
   - ✅ `natural-language-workflow.test.ts` (14/14 tests passing) - **MIGRATED**
   - ✅ `core-workflow-generation.test.ts` (18/18 tests passing) - **MIGRATED**
   - ✅ `multi-step-workflow-generation.test.ts` (16/16 tests passing) - **MIGRATED**
   - ✅ `workflow-planning.test.ts` (5/5 tests passing) - **RECENTLY MIGRATED**
-- **Status**: Core test infrastructure 100% complete, Workflow engine 44% complete, UI tier 75% complete - 201/208 tests passing with new helper structure
+- **Status**: Core test infrastructure 100% complete, Connections tier 100% complete, Workflow engine 44% complete, UI tier 75% complete - 221/228 tests passing with new helper structure
 - **Achievement**: All core user flows migrated and validated. Workflow engine tests enhanced with comprehensive helper integration.
 
 ### Phase 5: Cleanup & Documentation ✅ **COMPLETED**

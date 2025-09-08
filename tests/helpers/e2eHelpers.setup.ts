@@ -223,10 +223,10 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
     } else if (options.tab === 'profile') {
       await navigateToProfile(page);
     } else if (options.tab === 'connections') {
-      // Navigate to connections tab by URL since the tab might not be visible
+      // Navigate to connections tab by URL since desktop tabs might not be visible
       console.log(`🔍 E2E DEBUG: Navigating to connections tab via URL`);
       await page.goto('/dashboard?tab=connections', { waitUntil: 'domcontentloaded', timeout: 10000 });
-      await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+      await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
       console.log(`🔍 E2E DEBUG: Successfully navigated to connections tab via URL`);
     } else {
       // For other tabs, just ensure the dashboard is loaded and continue
@@ -237,15 +237,15 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
   if (options.section) {
     // Handle section navigation within tabs with reduced timeout
     if (options.section === 'connections') {
-      // Connections are in the Settings tab, so we need to navigate there first
-      if (options.tab !== 'settings') {
-        await page.waitForSelector('[data-testid="tab-settings"]', { timeout: 5000 });
-        await page.click('[data-testid="tab-settings"]');
+      // Connections are in the Connections tab, not Settings tab
+      if (options.tab !== 'connections') {
+        console.log(`🔍 E2E DEBUG: Navigating to connections tab for section`);
+        await page.goto('/dashboard?tab=connections', { waitUntil: 'domcontentloaded', timeout: 10000 });
         await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
       }
       
-      // Wait for connections section to be visible
-      await page.waitForSelector('[data-testid="connections-section"]', { timeout: 5000 });
+      // Wait for connections management section to be visible
+      await page.waitForSelector('[data-testid="connections-management"]', { timeout: 10000 });
     }
   }
 };
@@ -254,13 +254,52 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
  * Close all open modals to prevent test isolation issues
  */
 export const closeAllModals = async (page: Page): Promise<void> => {
-  const modalOverlay = page.locator('.fixed.inset-0.bg-gray-600.bg-opacity-50');
-  if (await modalOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
-    const closeButton = page.locator('button[aria-label="Close modal"]');
-    if (await closeButton.isVisible().catch(() => false)) {
-      await closeButton.click();
-      await page.waitForTimeout(100);
+  try {
+    // Check if any modal is visible
+    const modalOverlay = page.locator('.fixed.inset-0.bg-gray-600.bg-opacity-50');
+    const isModalVisible = await modalOverlay.isVisible({ timeout: 1000 }).catch(() => false);
+    
+    if (isModalVisible) {
+      console.log('🔍 Modal detected, attempting to close...');
+      
+      // Try multiple ways to close the modal
+      const closeButton = page.locator('button[aria-label="Close modal"]');
+      const isCloseButtonVisible = await closeButton.isVisible({ timeout: 1000 }).catch(() => false);
+      
+      if (isCloseButtonVisible) {
+        try {
+          console.log('🔍 Clicking close button...');
+          // Force click to bypass interception
+          await closeButton.click({ force: true });
+          await page.waitForTimeout(200);
+          console.log('✅ Close button clicked successfully');
+        } catch (error) {
+          console.log('⚠️ Close button click failed, trying Escape key...');
+          // If force click fails, try pressing Escape key
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(200);
+        }
+      } else {
+        console.log('⚠️ Close button not visible, trying Escape key...');
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(200);
+      }
+      
+      // Verify modal is closed
+      const isStillVisible = await modalOverlay.isVisible({ timeout: 1000 }).catch(() => false);
+      if (isStillVisible) {
+        console.log('⚠️ Modal still visible after close attempt, trying additional methods...');
+        // Try clicking outside the modal
+        await page.click('body', { position: { x: 10, y: 10 } });
+        await page.waitForTimeout(200);
+      } else {
+        console.log('✅ Modal closed successfully');
+      }
+    } else {
+      console.log('✅ No modal detected');
     }
+  } catch (error) {
+    console.log('⚠️ Error in closeAllModals:', error);
   }
 };
 

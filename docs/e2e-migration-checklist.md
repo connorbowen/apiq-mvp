@@ -450,10 +450,20 @@ expect(loadTime).toBeLessThan(5000);
 - [ ] Use `testDataExposure()` for security validation
 
 #### `tests/e2e/connections/openapi-integration.test.ts`
-- [ ] Replace inline OpenAPI parsing with helper functions
-- [ ] Use `testAPIPerformance()` for API performance testing
-- [ ] Use `testConcurrentOperations()` for concurrent testing
-- [ ] Use `validateUXCompliance()` for OpenAPI forms
+- [x] Replace inline OpenAPI parsing with helper functions
+- [x] Use `testAPIPerformance()` for API performance testing
+- [x] Use `testConcurrentOperations()` for concurrent testing
+- [x] Use `validateUXCompliance()` for OpenAPI forms
+- [x] Replace inline authentication with `setupE2E()`
+- [x] Replace inline modal cleanup with `closeAllModals()`
+- [x] Replace inline rate limit reset with `resetRateLimits()`
+- [x] Replace primary action selectors with `getPrimaryActionButton()`
+- [x] Replace inline waiting logic with helper functions
+- [x] Replace inline error handling with helper functions
+- [x] Remove obsolete imports and duplicate code
+- [x] **Migration Status: COMPLETED (100%)**
+
+**Progress**: OpenAPI integration tests fully migrated to new helper structure. All 20 tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation. Enhanced form submission reliability using `form.requestSubmit()` pattern.
 
 #### `tests/e2e/connections/oauth2-flows.test.ts`
 - [x] Replace inline authentication with `setupE2E()`
@@ -603,14 +613,14 @@ expect(loadTime).toBeLessThan(5000);
 
 ### File Completion Status
 - [x] **Auth Tests** (4/4 files) - 100% complete (4/4 files: authentication-session, password-reset, oauth2, registration-verification)
-- [x] **Connections Tests** (5/5 files) - 100% complete (5/5 files: connections-crud, connections-oauth2, connections-performance, connections-secrets, connections-management)
+- [x] **Connections Tests** (6/6 files) - 100% complete (6/6 files: connections-crud, connections-oauth2, connections-performance, connections-secrets, connections-management, openapi-integration)
 - [x] **Workflow Engine Tests** (4/9 files) - 44% complete (4/9 files: natural-language-workflow, core-workflow-generation, multi-step-workflow-generation, workflow-planning)
 - [x] **UI Tests** (3/4 files) - 75% complete (3/4 files: navigation, guided-tour, ui-compliance)
 - [ ] **Security Tests** (0/2 files) - 0% complete
 - [ ] **Performance Tests** (0/1 file) - 0% complete
 - [x] **Onboarding Tests** (1/1 file) - 100% complete (1/1 files: user-journey)
 
-### Total Progress: 17/26 files (65%) - Core infrastructure complete, workflow engine enhanced
+### Total Progress: 18/26 files (69%) - Core infrastructure complete, connections tier fully migrated
 
 **Recent Achievements:**
 - ✅ **Connections Test Suite Restructured** - Split `connections-management.test.ts` into 4 specialized files for better maintainability
