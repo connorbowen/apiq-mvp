@@ -407,32 +407,29 @@ The `test:e2e:current` command includes the following test files:
 
 ### 5.1 Workflow Management (`workflow-management.test.ts`)
 **File:** `tests/e2e/workflow-engine/workflow-management.test.ts`  
-**Lines:** 2,344  
-**Purpose:** Comprehensive testing of workflow management functionality with best-in-class UX
+**Lines:** 736  
+**Purpose:** Streamlined testing of unique workflow management functionality (duplicates removed, 10 unique tests)
 
 **Key Test Areas:**
-- Workflow creation and generation
-- Natural language workflow description processing
-- Workflow editing and modification
-- Workflow execution and monitoring
-- Workflow templates and reuse
-- Workflow sharing and collaboration
-- Error handling and recovery
-- Performance testing for workflow operations
-- UX compliance validation
-- OpenAI API integration testing
-- Workflow state management
-- Concurrent workflow handling
-- Workflow generation with proper flow
-- Workflow saving and persistence
-- Workflow list management
-- Workflow search and filtering
-- Workflow status monitoring
-- Workflow performance optimization
-- Retry mechanisms for flaky operations
-- Workflow cleanup and maintenance
+- **Workflow Management Operations** (2 tests)
+  - Edit workflow configuration
+  - Delete workflow with confirmation
+- **Workflow Security and Permissions** (1 test)
+  - Encrypt sensitive workflow data
+- **Workflow Monitoring and Logs** (1 test)
+  - Export execution logs
+- **Workflow Performance Monitoring** (1 test)
+  - Monitor workflow performance metrics
+- **Workflow Versioning and History** (2 tests)
+  - Track workflow version history
+  - Support workflow rollback
+- **Workflow Scheduling** (2 tests)
+  - Schedule workflow execution
+  - Handle scheduled execution failures
+- **Workflow Collaboration** (1 test)
+  - Share workflows with team members
 
-**Coverage:** Workflow lifecycle, natural language processing, execution, collaboration, UX compliance, OpenAI integration, performance optimization
+**Coverage:** Unique workflow management operations, security, monitoring, versioning, scheduling, collaboration
 
 ### 5.2 Natural Language Workflow (`natural-language-workflow.test.ts`)
 **File:** `tests/e2e/workflow-engine/natural-language-workflow.test.ts`  
