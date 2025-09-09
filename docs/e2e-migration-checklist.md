@@ -489,10 +489,13 @@ expect(loadTime).toBeLessThan(5000);
 **Progress**: Core workflow generation tests fully migrated to new helper structure. All 18 tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation. Added to current test suite in package.json.
 
 #### `tests/e2e/workflow-engine/workflow-management.test.ts`
-- [ ] Replace inline workflow management with helper functions
-- [ ] Use `testModalSuccessMessage()` for workflow success
-- [ ] Use `testModalErrorHandling()` for workflow errors
-- [ ] Use `testConcurrentOperations()` for concurrent workflows
+- [x] Replace inline workflow management with helper functions
+- [x] Use `testModalSuccessMessage()` for workflow success
+- [x] Use `testModalErrorHandling()` for workflow errors
+- [x] Use `testConcurrentOperations()` for concurrent workflows
+- [x] **Migration Status: COMPLETED (100%)**
+
+**Progress**: Workflow management tests fully migrated to new helper structure. All tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation.
 
 #### `tests/e2e/workflow-engine/natural-language-workflow.test.ts`
 - [ ] Replace inline NLP workflow with helper functions
@@ -510,10 +513,13 @@ expect(loadTime).toBeLessThan(5000);
 **Progress**: Multi-step workflow generation tests fully migrated to new helper structure. All 16 tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation. Added to current test suite in package.json.
 
 #### `tests/e2e/workflow-engine/step-runner-engine.test.ts`
-- [ ] Replace inline step execution with helper functions
-- [ ] Use `testConcurrentOperations()` for step concurrency
-- [ ] Use `testMemoryLeak()` for memory validation
-- [ ] Use `validateUXCompliance()` for step UI
+- [x] Replace inline step execution with helper functions
+- [x] Use `testConcurrentOperations()` for step concurrency
+- [x] Use `testMemoryLeak()` for memory validation
+- [x] Use `validateUXCompliance()` for step UI
+- [x] **Migration Status: COMPLETED (100%)**
+
+**Progress**: Step runner engine tests fully migrated to new helper structure. All tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation.
 
 #### `tests/e2e/workflow-engine/queue-concurrency.test.ts`
 - [ ] Replace inline queue testing with helper functions
@@ -595,6 +601,113 @@ expect(loadTime).toBeLessThan(5000);
 - [ ] Use `testPrimaryActionPatterns()` for onboarding actions
 - [ ] Use `testMobileResponsiveness()` for mobile testing
 
+## 🚀 **HIGH PRIORITY - Core User Operations (Tier 3)**
+
+### 🔧 **API Operations Tests**
+
+#### `tests/e2e/api-operations/single-api-operations.test.ts`
+- [x] Replace inline API operations with helper functions
+- [x] Use `testAPIPerformance()` for API performance testing
+- [x] Use `testConcurrentOperations()` for concurrent API calls
+- [x] Use `validateUXCompliance()` for API operation forms
+- [x] Use `testModalSubmitLoading()` for API operation submission
+- [x] Use `testModalSuccessMessage()` for API operation success
+- [x] Use `testModalErrorHandling()` for API operation errors
+- [x] **Migration Status: COMPLETED (100%)**
+
+**Progress**: Single API operations tests fully migrated to new helper structure. All 8 tests passing with comprehensive UX compliance validation, security testing, performance validation, and accessibility testing. Complete migration with proper data helpers, modal helpers, and form accessibility validation. **Feature implementation complete with full E2E test coverage.**
+
+#### `tests/e2e/api-operations/quick-execute.test.ts`
+- [ ] Replace inline quick execution with helper functions
+- [ ] Use `testPageLoadTime()` for quick execution performance
+- [ ] Use `testPrimaryActionPatterns()` for quick execution actions
+- [ ] Use `validateUXCompliance()` for quick execution interface
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+#### `tests/e2e/api-operations/direct-api-calls-chat.test.ts` 🆕 **NEW HIGH PRIORITY**
+- [ ] Replace inline chat API execution with helper functions
+- [ ] Use `testAPIPerformance()` for chat API performance testing
+- [ ] Use `testConcurrentOperations()` for concurrent chat API calls
+- [ ] Use `validateUXCompliance()` for chat interface validation
+- [ ] Use `testModalSubmitLoading()` for chat API execution
+- [ ] Use `testModalSuccessMessage()` for chat API success
+- [ ] Use `testModalErrorHandling()` for chat API errors
+- [ ] Use `testFormAccessibility()` for chat form validation
+- [ ] Use `testPrimaryActionPatterns()` for chat actions
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+**Description**: Tests the ability to execute API calls directly through the chat interface without creating workflows. Covers AI-powered API execution, context management, and multi-step API call sequences.
+
+### 🎯 **User Experience Tests**
+
+#### `tests/e2e/ux/connection-guidance.test.ts`
+- [ ] Replace inline connection guidance with helper functions
+- [ ] Use `testFormAccessibility()` for guidance forms
+- [ ] Use `testPrimaryActionPatterns()` for guidance actions
+- [ ] Use `validateUXCompliance()` for guidance interface
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+#### `tests/e2e/ux/contextual-help.test.ts`
+- [ ] Replace inline contextual help with helper functions
+- [ ] Use `testModalAccessibility()` for help modals
+- [ ] Use `testKeyboardNavigation()` for help navigation
+- [ ] Use `validateUXCompliance()` for help interface
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+## 📊 **HIGH PRIORITY - Analytics & Usage Tracking (Tier 4)**
+
+#### `tests/e2e/analytics/real-usage-tracking.test.ts`
+- [ ] Replace inline usage tracking with helper functions
+- [ ] Use `testDataExposure()` for usage data security
+- [ ] Use `testXSSPrevention()` for usage data validation
+- [ ] Use `validateUXCompliance()` for tracking interface
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+#### `tests/e2e/analytics/usage-dashboard.test.ts`
+- [ ] Replace inline usage dashboard with helper functions
+- [ ] Use `testPageLoadTime()` for dashboard performance
+- [ ] Use `testConcurrentOperations()` for dashboard data loading
+- [ ] Use `validateUXCompliance()` for dashboard interface
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+#### `tests/e2e/analytics/usage-analytics.test.ts`
+- [ ] Replace inline usage analytics with helper functions
+- [ ] Use `testAPIPerformance()` for analytics API calls
+- [ ] Use `testMemoryLeak()` for analytics data processing
+- [ ] Use `validateUXCompliance()` for analytics interface
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+## 💳 **HIGH PRIORITY - Billing & API Catalog (Tier 5)**
+
+#### `tests/e2e/billing/billing-integration.test.ts`
+- [ ] Replace inline billing integration with helper functions
+- [ ] Use `testXSSPrevention()` for billing data security
+- [ ] Use `testDataExposure()` for billing data protection
+- [ ] Use `validateUXCompliance()` for billing interface
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+#### `tests/e2e/api-catalog/api-catalog.test.ts`
+- [ ] Replace inline API catalog with helper functions
+- [ ] Use `testPageLoadTime()` for catalog performance
+- [ ] Use `testConcurrentOperations()` for catalog data loading
+- [ ] Use `validateUXCompliance()` for catalog interface
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+#### `tests/e2e/api-catalog/api-catalog-endpoints.test.ts`
+- [ ] Replace inline endpoint management with helper functions
+- [ ] Use `testAPIPerformance()` for endpoint operations
+- [ ] Use `testModalSubmitLoading()` for endpoint creation
+- [ ] Use `testModalSuccessMessage()` for endpoint success
+- [ ] Use `testModalErrorHandling()` for endpoint errors
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
+#### `tests/e2e/api-catalog/api-catalog-ui.test.ts`
+- [ ] Replace inline catalog UI with helper functions
+- [ ] Use `testFormAccessibility()` for catalog forms
+- [ ] Use `testPrimaryActionPatterns()` for catalog actions
+- [ ] Use `testMobileResponsiveness()` for mobile catalog
+- [ ] **Migration Status: HIGH PRIORITY - Not Started**
+
 ---
 
 ## Migration Progress Tracking
@@ -614,13 +727,13 @@ expect(loadTime).toBeLessThan(5000);
 ### File Completion Status
 - [x] **Auth Tests** (4/4 files) - 100% complete (4/4 files: authentication-session, password-reset, oauth2, registration-verification)
 - [x] **Connections Tests** (6/6 files) - 100% complete (6/6 files: connections-crud, connections-oauth2, connections-performance, connections-secrets, connections-management, openapi-integration)
-- [x] **Workflow Engine Tests** (4/9 files) - 44% complete (4/9 files: natural-language-workflow, core-workflow-generation, multi-step-workflow-generation, workflow-planning)
+- [x] **Workflow Engine Tests** (6/9 files) - 67% complete (6/9 files: natural-language-workflow, core-workflow-generation, multi-step-workflow-generation, workflow-planning, step-runner-engine, workflow-management)
 - [x] **UI Tests** (3/4 files) - 75% complete (3/4 files: navigation, guided-tour, ui-compliance)
 - [ ] **Security Tests** (0/2 files) - 0% complete
 - [ ] **Performance Tests** (0/1 file) - 0% complete
 - [x] **Onboarding Tests** (1/1 file) - 100% complete (1/1 files: user-journey)
 
-### Total Progress: 18/26 files (69%) - Core infrastructure complete, connections tier fully migrated
+### Total Progress: 20/37 files (54%) - Core infrastructure complete, connections tier fully migrated, workflow engine 67% complete
 
 **Recent Achievements:**
 - ✅ **Connections Test Suite Restructured** - Split `connections-management.test.ts` into 4 specialized files for better maintainability

@@ -6,7 +6,7 @@ The APIQ MVP is **COMPLETE** with all core P0 features implemented and working. 
 
 ## Current Status Overview
 
-### ✅ **Completed Components (5/5 P0 items)**
+### ✅ **Completed Components (5/5 P0 items + 2/5 P1 items)**
 
 #### **P0.2: Workflow Execution Engine** ✅ **FULLY COMPLETE**
 - **Step Runner Engine**: Complete implementation with multiple executors
@@ -41,6 +41,25 @@ The APIQ MVP is **COMPLETE** with all core P0 features implemented and working. 
 - **Breadcrumbs, loading, error, and success states**: All implemented
 - **Accessible, testable, and UX-compliant components**: Full accessibility support
 - **Execution Monitoring**: Real-time workflow execution tracking
+
+#### **P1.2: Onboarding & User Journey** ✅ **FULLY COMPLETE**
+- **UX Simplification**: 3-tab dashboard structure (Chat, Workflows, Connections)
+- **Guided Tour System**: Comprehensive onboarding with progressive disclosure
+- **Welcome Experience**: Integrated welcome flow in ChatInterface
+- **Progressive Feature Unlocking**: Database schema and API endpoints
+- **Mobile-Optimized Navigation**: Bottom navigation for mobile devices
+- **Performance Optimizations**: React.memo, lazy loading, optimized re-renders
+
+#### **P1.3: Single API Operations** ✅ **FULLY COMPLETE**
+- **API Explorer Integration**: "Try it out" buttons for each endpoint
+- **Quick Execute Modal**: Direct API execution from connections list
+- **Parameter Input Forms**: Dynamic forms for required/optional parameters
+- **Real-time Execution**: Live API call execution with response display
+- **Database Schema**: ApiOperation and OperationExecution models
+- **API Endpoints**: /api/operations/execute, /api/operations/history, /api/operations/[id]
+- **Frontend Components**: ApiOperationTester, QuickExecuteModal
+- **E2E Test Coverage**: 8/8 tests passing with comprehensive coverage
+- **Error Handling**: Graceful handling of failed API calls and missing endpoints
 
 #### **P2.1: Security & Compliance** ✅ **FULLY COMPLETE**
 - **Encrypted Secrets Vault**: AES-256 encryption for all sensitive data

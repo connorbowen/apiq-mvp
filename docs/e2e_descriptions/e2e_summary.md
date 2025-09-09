@@ -19,7 +19,7 @@ The E2E tests are organized into 9 main categories:
 
 ## Current Test Status (December 2024)
 
-### ✅ **E2E:Current Test Suite - 201 Tests Passing**
+### ✅ **E2E:Current Test Suite - 212 Tests Passing**
 The `test:e2e:current` command includes the following test files:
 - `tests/e2e/auth/authentication-session.test.ts` - **23/23 tests passing** ✅
 - `tests/e2e/auth/registration-verification.test.ts` - **25/25 tests passing** ✅
@@ -37,12 +37,42 @@ The `test:e2e:current` command includes the following test files:
 - `tests/e2e/workflow-engine/multi-step-workflow-generation.test.ts` - **16/16 tests passing** ✅
 - `tests/e2e/workflow-engine/workflow-planning.test.ts` - **5/5 tests passing** ✅
 - `tests/e2e/connections/openapi-integration.test.ts` - **20/20 tests passing** ✅
+- `tests/e2e/api-operations/single-api-operations.test.ts` - **8/8 tests passing** ✅ **FEATURE COMPLETE**
 
-**Total: 241/248 tests passing (97.2% pass rate)**
+**Total: 212/219 tests passing (96.8% pass rate)**
 
 ---
 
-## 1. Onboarding Tests
+## 1. API Operations Tests
+
+### 1.1 Single API Operations Test (`single-api-operations.test.ts`)
+**File:** `tests/e2e/api-operations/single-api-operations.test.ts`  
+**Lines:** 268  
+**Purpose:** Tests the ability to execute individual API calls without creating workflows  
+**Status:** ✅ **COMPLETED WITH FEATURE IMPLEMENTATION**
+
+**Test Coverage:**
+- **API Explorer Integration**: "Try it out" buttons for each endpoint
+- **Quick Execute Modal**: Direct API execution from connections list
+- **Parameter Input Forms**: Dynamic forms for required/optional parameters
+- **Real-time Execution**: Live API call execution with response display
+- **Error Handling**: Graceful handling of failed API calls and missing endpoints
+- **Modal Interactions**: Open, close, execute with proper UX
+- **No Endpoints Scenarios**: Graceful handling when connections have no endpoints
+
+**Key Features Tested:**
+- API Explorer "Try It Out" functionality
+- Quick Execute modal from connections tab
+- Parameter input and validation
+- Real-time API execution with response display
+- Error handling and user feedback
+- Modal state management and interactions
+
+**Test Results:** 8/8 tests passing (100% success rate)
+
+---
+
+## 2. Onboarding Tests
 
 ### 1.1 User Journey Test (`user-journey.test.ts`)
 **File:** `tests/e2e/onboarding/user-journey.test.ts`  

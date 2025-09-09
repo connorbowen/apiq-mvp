@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { apiClient } from '../../../lib/api/client';
+import ApiOperationTester from '../../../components/ApiOperationTester';
 
 interface Endpoint {
   id: string;
@@ -167,6 +168,12 @@ export default function APIExplorerPage() {
           </button>
         </div>
 
+        {/* API Explorer Section */}
+        <div data-testid="api-explorer-section" className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">API Explorer</h2>
+          <p className="text-gray-600 mb-4">Explore and test the available endpoints for this API connection.</p>
+        </div>
+
         <div data-testid="endpoint-list" className="space-y-4">
           {endpoints.length > 0 ? (
             endpoints.map((endpoint) => (
@@ -178,13 +185,16 @@ export default function APIExplorerPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      endpoint.method === 'GET' ? 'bg-green-100 text-green-800' :
-                      endpoint.method === 'POST' ? 'bg-blue-100 text-blue-800' :
-                      endpoint.method === 'PUT' ? 'bg-yellow-100 text-yellow-800' :
-                      endpoint.method === 'DELETE' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span 
+                      data-testid={`endpoint-method-${endpoint.method}`}
+                      className={`px-2 py-1 rounded text-xs font-medium ${
+                        endpoint.method === 'GET' ? 'bg-green-100 text-green-800' :
+                        endpoint.method === 'POST' ? 'bg-blue-100 text-blue-800' :
+                        endpoint.method === 'PUT' ? 'bg-yellow-100 text-yellow-800' :
+                        endpoint.method === 'DELETE' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}
+                    >
                       {endpoint.method}
                     </span>
                     <span className="font-mono text-sm text-gray-900">{endpoint.path}</span>
@@ -303,6 +313,14 @@ export default function APIExplorerPage() {
                         </div>
                       </div>
                     )}
+                    
+                    {/* Try It Out Section */}
+                    <ApiOperationTester 
+                      endpoint={endpoint}
+                      connectionName={connection?.name || 'Unknown'}
+                      baseUrl={connection?.baseUrl || ''}
+                    />
+                    
                   </div>
                 )}
               </div>

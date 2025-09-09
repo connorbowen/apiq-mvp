@@ -30,6 +30,7 @@ import { useState, useEffect, memo, useRef } from 'react';
 import { apiClient, ApiConnection, Secret } from '../../lib/api/client';
 import CreateConnectionModal from './CreateConnectionModal';
 import EditConnectionModal from './EditConnectionModal';
+import QuickExecuteModal from '../QuickExecuteModal';
 import { useUser } from '../../contexts/UserContext';
 
 interface ConnectionsTabProps {
@@ -72,6 +73,13 @@ function ConnectionsTab({
   const [rotateError, setRotateError] = useState<Record<string, string>>({});
   const [rotateSuccess, setRotateSuccess] = useState<Record<string, string>>({});
   const [viewingSecret, setViewingSecret] = useState<Secret | null>(null);
+  
+  // Quick execute modal state
+  const [quickExecuteModal, setQuickExecuteModal] = useState<{
+    isOpen: boolean;
+    connection: ApiConnection | null;
+    endpoint: any | null;
+  }>({ isOpen: false, connection: null, endpoint: null });
   
   // Ref to prevent duplicate API calls for the same connection set
   const lastFetchedConnectionIds = useRef<string>('');
@@ -239,6 +247,43 @@ function ConnectionsTab({
 
   const handleEditClick = (connection: ApiConnection) => {
     setEditingConnection(connection);
+  };
+
+  const handleQuickExecute = async (connection: ApiConnection) => {
+    console.log('🚀 Quick Execute clicked for connection:', connection.id);
+    try {
+      // Get the first available endpoint for quick execution
+      const endpointsResponse = await apiClient.getConnectionEndpoints(connection.id);
+      console.log('📡 Endpoints response:', endpointsResponse);
+      let firstEndpoint = null;
+      
+      if (endpointsResponse.success && endpointsResponse.data?.endpoints?.length > 0) {
+        firstEndpoint = endpointsResponse.data.endpoints[0];
+        console.log('✅ Found endpoint:', firstEndpoint);
+      } else {
+        console.log('❌ No endpoints found');
+      }
+      
+      // Always open the modal, even if there are no endpoints
+      // The modal will handle the case where there are no endpoints
+      console.log('🎯 Setting modal state:', { isOpen: true, connection: connection.id, endpoint: firstEndpoint?.id || null });
+      setQuickExecuteModal({
+        isOpen: true,
+        connection,
+        endpoint: firstEndpoint
+      });
+      console.log('✅ Modal state set');
+    } catch (error) {
+      console.error('❌ Failed to get endpoints for quick execution:', error);
+      // Still open the modal, but without an endpoint
+      console.log('🎯 Setting modal state (error case):', { isOpen: true, connection: connection.id, endpoint: null });
+      setQuickExecuteModal({
+        isOpen: true,
+        connection,
+        endpoint: null
+      });
+      console.log('✅ Modal state set (error case)');
+    }
   };
 
   const handleEditSuccess = () => {
@@ -546,6 +591,13 @@ function ConnectionsTab({
                         className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
                       >
                         Explore
+                      </button>
+                      <button
+                        data-testid={`quick-execute-${connection.id}`}
+                        onClick={() => handleQuickExecute(connection)}
+                        className="text-green-600 hover:text-green-900 text-sm font-medium"
+                      >
+                        Try It Out
                       </button>
                       <button
                         data-testid={`connection-details-${connection.id}`}
@@ -862,6 +914,16 @@ function ConnectionsTab({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Quick Execute Modal */}
+      {quickExecuteModal.isOpen && quickExecuteModal.connection && (
+        <QuickExecuteModal
+          isOpen={quickExecuteModal.isOpen}
+          onClose={() => setQuickExecuteModal({ isOpen: false, connection: null, endpoint: null })}
+          connection={quickExecuteModal.connection}
+          endpoint={quickExecuteModal.endpoint}
+        />
       )}
     </div>
   );

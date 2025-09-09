@@ -39,11 +39,22 @@ export const waitForDashboard = async (page: Page): Promise<void> => {
   
   // Wait for dashboard heading with multiple selectors for robustness
   try {
-    await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 });
+    // Wait for the h1 element to be present
+    await page.waitForSelector('h1', { timeout: 10000 });
+    
+    // Wait a bit more for the text to be rendered
+    await page.waitForTimeout(1000);
+    
+    // Check if the h1 contains "Dashboard" text
+    const dashboardHeading = await page.locator('h1').filter({ hasText: 'Dashboard' }).first();
+    if (!(await dashboardHeading.isVisible())) {
+      throw new Error('Dashboard heading not found');
+    }
   } catch (error) {
     // Fallback: look for any heading with "Dashboard" text
     console.log('🔍 E2E DEBUG: Primary dashboard selector failed, trying fallback');
     await page.waitForSelector('h1, h2, h3', { timeout: 5000 });
+    await page.waitForTimeout(1000);
     const dashboardHeading = await page.locator('h1, h2, h3').filter({ hasText: 'Dashboard' }).first();
     if (!(await dashboardHeading.isVisible())) {
       throw new Error('Dashboard heading not found');
@@ -503,7 +514,7 @@ export const testKeyboardNavigation = async (page: Page, startTab: string, targe
 export const sendChatMessage = async (page: Page, message: string): Promise<void> => {
   const chatInput = page.getByTestId('chat-input');
   await chatInput.fill(message);
-  await page.getByTestId('chat-send-button').click();
+  await page.getByTestId('primary-action chat-send-btn').click();
 };
 
 /**

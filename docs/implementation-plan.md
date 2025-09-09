@@ -11,7 +11,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 ## Current Status
 
 **Core MVP**: 4/4 P0 features complete ✅  
-**User Experience**: 1/5 P1 features complete (20%) 🚧  
+**User Experience**: 2/5 P1 features complete (40%) 🚧  
 **Enterprise Features**: 1/2 P2 features complete (50%) 🚧  
 **Test Coverage**: 1201+ tests with 100% pass rate ✅  
 
@@ -145,16 +145,76 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 **Next Steps**: Monitor user adoption and iterate based on feedback
 **Success Criteria**: Users can complete onboarding in <2 minutes, guided tour functional ✅
 
-#### **P1.3: Single API Operations** 🚧 **PLANNED**
-**Status**: Not started
+#### **P1.3: Single API Operations** ✅ **COMPLETED**
+**Status**: Successfully implemented with comprehensive E2E test coverage
 **Description**: Enable users to execute individual API calls without creating workflows
-**Requirements**:
-- "Try it out" buttons in API Explorer for each endpoint
-- Parameter input forms for required/optional parameters
-- Real-time API execution with response display
-- Quick-execute mode that doesn't require creating a workflow
-- Response visualization and error handling
-**Success Criteria**: Users can invoke any stored endpoint with custom parameters, test APIs before building workflows, perform one-off operations
+**Features Implemented**:
+- ✅ "Try it out" buttons in API Explorer for each endpoint
+- ✅ Parameter input forms for required/optional parameters
+- ✅ Real-time API execution with response display
+- ✅ Quick-execute mode that doesn't require creating a workflow
+- ✅ Response visualization and error handling
+- ✅ Database schema for operation tracking (ApiOperation, OperationExecution models)
+- ✅ API endpoints for execution and history (/api/operations/execute, /api/operations/history)
+- ✅ Frontend components (ApiOperationTester, QuickExecuteModal)
+- ✅ Comprehensive E2E test coverage (8/8 tests passing)
+- ✅ Integration with API Explorer and Connections Tab
+- ✅ Graceful handling of connections without endpoints
+- ✅ Modal interactions (open, close, execute) with proper UX
+**Success Criteria**: ✅ Users can invoke any stored endpoint with custom parameters, test APIs before building workflows, perform one-off operations
+
+#### **P1.3.1: Direct API Calls via Chat** 🚧 **PLANNED**
+**Status**: Not started
+**Description**: Enable users to execute API calls directly through the chat interface using natural language, without creating workflows first. This extends the existing chat system to support both workflow creation and direct API execution.
+
+**Core Functionality**:
+- **Unified Chat Experience**: Same chat interface handles both workflow creation and direct API execution
+- **Intent Detection**: AI automatically detects whether user wants to create workflows or execute API calls directly
+- **Natural Language API Execution**: Users can say "Get all pets" or "Add a new pet named Fluffy" and AI executes the API call
+- **Context-Aware Sequences**: Support for multi-step API calls with context from previous responses
+- **Real-Time Results**: API call results displayed directly in chat conversation with proper formatting
+
+**User Experience Flow**:
+```
+User: "Get all available pets"
+AI: *Executes GET /pet/findByStatus?status=available*
+AI: "Found 3 available pets: Fluffy (cat), Buddy (dog), Whiskers (cat)"
+
+User: "Order the first one"
+AI: *Executes POST /store/order with pet ID from previous context*
+AI: "Ordered Fluffy! Order ID: 789"
+```
+
+**Intent Detection Examples**:
+- **Direct API Call**: "Get all pets", "Show me users", "Add a new pet"
+- **Workflow Creation**: "Create a workflow that...", "Build an automation that..."
+- **Workflow Execution**: "Run my pet workflow", "Execute the daily check"
+- **Documentation**: "What endpoints are available?", "Show me the API docs"
+
+**Technical Implementation**:
+- **New API Endpoint**: `/api/chat/execute-direct` for direct API execution
+- **Enhanced OpenAIService**: New `executeDirectApiCall()` method with intent detection
+- **Context Management**: Track API call results and context between chat messages
+- **Integration**: Leverage existing Single API Operations execution engine
+- **Chat UI Enhancement**: Display API call results with execution indicators and action buttons
+- **E2E Test Coverage**: Comprehensive tests for chat-based API execution (12 tests covering single calls, multi-step sequences, error handling, and chat integration)
+
+**Key Features**:
+- **Automatic Intent Detection**: AI analyzes user messages to determine appropriate action
+- **Workflow Conversion**: After direct API calls, AI can offer to save as reusable workflow
+- **Context Preservation**: AI remembers previous API call results for follow-up requests
+- **Error Recovery**: Graceful handling of API failures with retry suggestions
+- **Action Buttons**: Post-execution options like "Save as Workflow", "Run Again", "Modify Request"
+
+**Success Criteria**: 
+- Users can execute API calls directly in chat using natural language
+- Support for multi-step sequences with context awareness
+- Seamless integration with existing chat interface (no new UI needed)
+- Intent detection accuracy >95% for workflow vs. direct execution
+- Real-time results displayed with proper formatting and execution indicators
+- Error handling with retry suggestions and fallback options
+- 100% E2E test coverage for chat API execution
+- Users can convert successful direct API calls into reusable workflows
 
 #### **P1.4: API Connection Guidance in Chat** 🚧 **PLANNED**
 **Status**: Not started
@@ -590,8 +650,8 @@ Since your onboarding system is complete, you can now focus on:
 - **Week 9-12**: Complete P0.1 Multi-step workflow generation (see [Technical Analysis](docs/technical-analysis.md))
 
 ### **Q2 2025: User Experience & Adoption**
-- **Month 1**: P1.1 Workflow Templates & Libraries
-- **Month 2**: P1.3 Single API Operations
+- **Month 1**: P1.3.1 Direct API Calls via Chat ✅ **NEXT PRIORITY**
+- **Month 2**: P1.1 Workflow Templates & Libraries
 - **Month 3**: P1.4 API Connection Guidance in Chat
 - **Month 4**: P1.5 OpenAPI Base URL Auto-Extraction
 - **Month 5**: P1.6 API Catalog Architecture

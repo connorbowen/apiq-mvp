@@ -145,6 +145,8 @@ model User {
   secrets        Secret[]
   workflowShares WorkflowShare[] // Add this relation
   tourState      TourState?
+  operations     ApiOperation[]
+  operationExecutions OperationExecution[]
 
   @@map("users")
 }
@@ -201,6 +203,7 @@ model Endpoint {
 
   // Relations
   apiConnection ApiConnection @relation(fields: [apiConnectionId], references: [id], onDelete: Cascade)
+  operations    ApiOperation[]
 
   @@unique([apiConnectionId, path, method])
   @@map("endpoints")
@@ -295,6 +298,51 @@ model WorkflowExecution {
   logs     ExecutionLog[]
 
   @@map("workflow_executions")
+}
+
+// Single API Operations
+model ApiOperation {
+  id              String   @id @default(cuid())
+  userId          String
+  endpointId      String
+  name            String   // User-friendly name for the operation
+  description     String?  // Optional description
+  parameters      Json     // Default parameters for the operation
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint    Endpoint            @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  executions  OperationExecution[]
+
+  @@unique([userId, name])
+  @@map("api_operations")
+}
+
+// Operation Execution History
+model OperationExecution {
+  id              String          @id @default(cuid())
+  operationId     String
+  userId          String
+  status          ExecutionStatus @default(PENDING)
+  requestData     Json            // Request parameters and body
+  responseData    Json?           // Response data
+  responseHeaders Json?           // Response headers
+  statusCode      Int?            // HTTP status code
+  error           String?         // Error message if failed
+  executionTime   Int?            // Execution time in milliseconds
+  startedAt       DateTime        @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  operation ApiOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("operation_executions")
 }
 
 // Execution Logs

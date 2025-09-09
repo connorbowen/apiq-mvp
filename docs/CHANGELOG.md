@@ -2,7 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2025-01-27] - Enhanced Logging, Retry Logic & Debugging Improvements
+## [2025-01-27] - Single API Operations Feature Complete & Enhanced Logging
+
+### ✨ Added
+- **P1.3: Single API Operations** ✅ **COMPLETED**
+  - "Try it out" buttons in API Explorer for each endpoint
+  - Parameter input forms for required/optional parameters
+  - Real-time API execution with response display
+  - Quick-execute mode that doesn't require creating a workflow
+  - Response visualization and error handling
+  - Database schema for operation tracking (ApiOperation, OperationExecution models)
+  - API endpoints for execution and history (/api/operations/execute, /api/operations/history)
+  - Frontend components (ApiOperationTester, QuickExecuteModal)
+  - Comprehensive E2E test coverage (8/8 tests passing)
+  - Integration with API Explorer and Connections Tab
+  - Graceful handling of connections without endpoints
+  - Modal interactions (open, close, execute) with proper UX
+
+### 🔧 Enhanced
+- **Comprehensive Logging System**: Enhanced console logging across all API endpoints and services
 
 ### ✨ Added
 - **Comprehensive Logging System**: Enhanced console logging across all API endpoints and services

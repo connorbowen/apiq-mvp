@@ -737,6 +737,95 @@ class ApiClient {
       data: { feature },
     });
   }
+
+  // Single API Operations methods
+  async executeOperation(params: {
+    endpointId: string;
+    parameters?: Record<string, any>;
+    requestBody?: any;
+    headers?: Record<string, string>;
+  }): Promise<ApiResponse<{
+    executionId: string;
+    status: string;
+    responseData?: any;
+    responseHeaders?: Record<string, string>;
+    statusCode?: number;
+    executionTime?: number;
+    error?: string;
+  }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/operations/execute',
+      data: params,
+    });
+  }
+
+  async getOperationHistory(params?: {
+    page?: number;
+    limit?: number;
+    endpointId?: string;
+    status?: string;
+  }): Promise<ApiResponse<{
+    executions: Array<{
+      id: string;
+      operationId: string;
+      status: string;
+      statusCode?: number;
+      executionTime?: number;
+      error?: string;
+      startedAt: string;
+      completedAt?: string;
+      endpoint?: {
+        path: string;
+        method: string;
+        summary?: string;
+      };
+      connection?: {
+        name: string;
+        baseUrl: string;
+      };
+    }>;
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>> {
+    return this.request({
+      method: 'GET',
+      url: '/api/operations/history',
+      params,
+    });
+  }
+
+  async getOperationExecution(executionId: string): Promise<ApiResponse<{
+    id: string;
+    operationId: string;
+    status: string;
+    requestData: any;
+    responseData?: any;
+    responseHeaders?: Record<string, string>;
+    statusCode?: number;
+    executionTime?: number;
+    error?: string;
+    startedAt: string;
+    completedAt?: string;
+    endpoint?: {
+      path: string;
+      method: string;
+      summary?: string;
+    };
+    connection?: {
+      name: string;
+      baseUrl: string;
+    };
+  }>> {
+    return this.request({
+      method: 'GET',
+      url: `/api/operations/${executionId}`,
+    });
+  }
 }
 
 export const apiClient = new ApiClient(); 
