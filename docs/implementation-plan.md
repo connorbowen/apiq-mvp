@@ -135,17 +135,33 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 
 ### **P1: USER EXPERIENCE & ADOPTION** (High Priority)
 
-#### **P1.1: Workflow Templates & Libraries** 🚧 **PLANNED**
+#### **P1.1: AI Evaluation Framework** 🚧 **PLANNED** (NEW - HIGH PRIORITY)
+**Status**: Not started
+**Description**: Comprehensive AI evaluation framework to ensure reliability and quality of AI-powered features
+**Features**:
+- **Phase 1**: Core Workflow Generation Evals (P0 Priority)
+- **Phase 2**: Chat Interface Evals (P1 Priority) 
+- **Phase 3**: End-to-End Workflow Evals (P1 Priority)
+- **Integration**: Built on existing 1201+ test infrastructure
+- **Success Metrics**: >95% AI feature accuracy, 100% performance compliance
+**Success Criteria**: 
+- Workflow generation accuracy >95% (aligned with PRD Goal 2)
+- API call correctness >90% (aligned with PRD Goal 3)
+- Intent detection accuracy >95% for chat interface
+- End-to-end workflow success >95%
+- Performance compliance 100% (response time <5 seconds)
+
+#### **P1.2: Workflow Templates & Libraries** 🚧 **PLANNED**
 **Status**: Not started
 **Next Steps**: Build on completed UX simplification foundation
 **Success Criteria**: 20+ pre-built templates available at launch
 
-#### **P1.2: Onboarding & User Journey** ✅ **COMPLETED**
+#### **P1.3: Onboarding & User Journey** ✅ **COMPLETED**
 **Status**: UX simplification completed with guided tour and progressive disclosure
 **Next Steps**: Monitor user adoption and iterate based on feedback
 **Success Criteria**: Users can complete onboarding in <2 minutes, guided tour functional ✅
 
-#### **P1.3: Single API Operations** ✅ **COMPLETED**
+#### **P1.4: Single API Operations** ✅ **COMPLETED**
 **Status**: Successfully implemented with comprehensive E2E test coverage
 **Description**: Enable users to execute individual API calls without creating workflows
 **Features Implemented**:
@@ -163,7 +179,7 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - ✅ Modal interactions (open, close, execute) with proper UX
 **Success Criteria**: ✅ Users can invoke any stored endpoint with custom parameters, test APIs before building workflows, perform one-off operations
 
-#### **P1.3.1: Direct API Calls via Chat** 🚧 **PLANNED**
+#### **P1.4.1: Direct API Calls via Chat** 🚧 **PLANNED**
 **Status**: Not started
 **Description**: Enable users to execute API calls directly through the chat interface using natural language, without creating workflows first. This extends the existing chat system to support both workflow creation and direct API execution.
 
@@ -197,7 +213,9 @@ AI: "Ordered Fluffy! Order ID: 789"
 - **Context Management**: Track API call results and context between chat messages
 - **Integration**: Leverage existing Single API Operations execution engine
 - **Chat UI Enhancement**: Display API call results with execution indicators and action buttons
-- **E2E Test Coverage**: Comprehensive tests for chat-based API execution (12 tests covering single calls, multi-step sequences, error handling, and chat integration)
+- **E2E Test Coverage**: 
+- **GA Release (10 tests)**: Critical security, intent detection, and core chat integration
+- **Post-GA (15-20 tests)**: Context management, advanced security, performance, and UX enhancements
 
 **Key Features**:
 - **Automatic Intent Detection**: AI analyzes user messages to determine appropriate action
@@ -216,7 +234,31 @@ AI: "Ordered Fluffy! Order ID: 789"
 - 100% E2E test coverage for chat API execution
 - Users can convert successful direct API calls into reusable workflows
 
-#### **P1.4: API Connection Guidance in Chat** 🚧 **PLANNED**
+**E2E Test Strategy**:
+- **Phase 1 - GA Release (10 critical tests)**: Security vulnerabilities, AI safety, core functionality
+- **Phase 2 - Post-GA (15-20 additional tests)**: Context management, advanced features, performance optimization
+
+**Phase 1 Tests (GA Release)**:
+- SQL injection prevention in chat API parameters
+- SSRF attack prevention via chat API calls
+- API endpoint validation in chat messages
+- Chat input sanitization for API calls
+- Intent detection (API call vs workflow creation)
+- Dangerous API operation prevention
+- API parameter validation before execution
+- Chat flow maintenance during API execution
+- Chat state handling during API failures
+- Basic security and data handling
+
+**Phase 2 Tests (Post-GA Enhancement)**:
+- **Context Management (4 tests)**: Long conversation context, API results in context, context switching, context overflow
+- **Advanced Security (3 tests)**: Credential leakage prevention, malicious request body handling, authentication error recovery
+- **Performance & Scalability (4 tests)**: High-frequency API calls, chat responsiveness, concurrent API calls, large response handling
+- **Advanced AI Safety (3 tests)**: Ambiguous request handling, harmful operation blocking, parameter optimization
+- **UX Enhancements (3 tests)**: Chat input validation, mobile responsiveness, accessibility improvements
+- **Integration & Compatibility (3 tests)**: Different auth types, response formats, HTTP methods, API versioning
+
+#### **P1.5: API Connection Guidance in Chat** 🚧 **PLANNED**
 **Status**: Not started
 **Description**: Guide users through API connection setup when they need APIs for workflows
 **Requirements**:
@@ -227,7 +269,7 @@ AI: "Ordered Fluffy! Order ID: 789"
 - Provide step-by-step connection instructions
 **Success Criteria**: Users get helpful guidance instead of generic errors, chat can suggest which APIs to connect, seamless flow from chat to connection setup
 
-#### **P1.5: OpenAPI Base URL Auto-Extraction** 🚧 **PLANNED**
+#### **P1.6: OpenAPI Base URL Auto-Extraction** 🚧 **PLANNED**
 **Status**: Not started
 **Description**: Automatically extract base URL from OpenAPI specifications to improve user experience and reduce manual entry errors
 **Requirements**:
@@ -253,7 +295,7 @@ AI: "Ordered Fluffy! Order ID: 789"
 - 100% e2e test coverage for base URL extraction
 - Improved UX compliance with streamlined connection flow
 
-#### **P1.6: API Catalog Architecture** 🚧 **PLANNED**
+#### **P1.7: API Catalog Architecture** 🚧 **PLANNED**
 **Status**: Not started
 **Description**: Separate shared API documentation from user-specific credentials to enable API discovery and reuse
 **Requirements**:
@@ -270,7 +312,7 @@ AI: "Ordered Fluffy! Order ID: 789"
 - Seamless connection flow from catalog to user-specific setup
 - 100% e2e test coverage for catalog functionality
 
-#### **P1.7: AI Service Usage Tracking & Billing** 🚧 **PLANNED**
+#### **P1.8: AI Service Usage Tracking & Billing** 🚧 **PLANNED**
 **Status**: Not started
 **Description**: Track OpenAI API usage and costs for AI chat interface service
 **Requirements**:
@@ -289,7 +331,7 @@ AI: "Ordered Fluffy! Order ID: 789"
 - Provide usage analytics to customers
 - Support different pricing tiers and models
 
-#### **P1.8: Advanced Analytics & Reporting** 🚧 **PLANNED**
+#### **P1.9: Advanced Analytics & Reporting** 🚧 **PLANNED**
 **Status**: Not started
 **Next Steps**: See [Future Roadmap](docs/future-roadmap.md#p14-analytics)
 **Success Criteria**: Users can track workflow performance and optimize automation
@@ -599,6 +641,143 @@ PricingConfig {
 
 ---
 
+## 🧪 **AI EVALUATION FRAMEWORK** 🚧 **PLANNED**
+
+### **Overview**
+**Goal**: Implement comprehensive AI evaluation framework to ensure reliability and quality of AI-powered features
+
+**Business Impact**: Critical for user trust, adoption, and platform reliability - AI features are core to APIQ's value proposition
+**User Value**: Reliable AI-generated workflows, accurate intent detection, and consistent user experience
+**Technical Value**: Quality assurance for AI features, performance monitoring, and continuous improvement
+
+### **Why Evals Are Essential for APIQ**
+1. **AI-Powered Core Features** - Natural language workflow generation, chat interface, intent detection
+2. **Quality Assurance** - Multi-API workflows are complex and need validation
+3. **User Trust** - 1,000+ MAU target requires reliable AI performance
+4. **Existing Foundation** - 1201+ tests provide solid infrastructure to build upon
+
+### **Implementation Plan**
+
+#### **Phase 1: Core Workflow Generation Evals** 🚧 **PLANNED** (P0 Priority)
+**Goal**: Ensure AI-generated workflows are accurate and reliable
+
+**Eval Types**:
+- **Workflow Generation Accuracy** - Does AI create correct workflow steps?
+- **API Call Correctness** - Are generated API calls properly formatted?
+- **Parameter Mapping** - Are user inputs correctly mapped to API parameters?
+- **Error Handling** - Does AI handle edge cases appropriately?
+
+**Success Criteria**:
+- Workflow generation accuracy >95% (aligned with PRD Goal 2)
+- API call correctness >90% (aligned with PRD Goal 3)
+- Parameter mapping accuracy >85%
+- Error handling coverage >80%
+
+#### **Phase 2: Chat Interface Evals** 🚧 **PLANNED** (P1 Priority)
+**Goal**: Validate chat interface AI functionality for P1.3.1 Direct API Calls via Chat
+
+**Eval Types**:
+- **Intent Detection** - Correctly identifies workflow vs. direct API vs. documentation
+- **API Call Generation** - Generates correct API calls from natural language
+- **Context Management** - Maintains context across multi-step conversations
+- **Error Recovery** - Handles API failures and provides helpful suggestions
+
+**Success Criteria**:
+- Intent detection accuracy >95%
+- API call generation accuracy >90%
+- Context preservation >85%
+- Error recovery success >80%
+
+#### **Phase 3: End-to-End Workflow Evals** 🚧 **PLANNED** (P1 Priority)
+**Goal**: Test complete user journeys and system integration
+
+**Eval Types**:
+- **Complete Workflow Execution** - End-to-end workflow success rates
+- **Performance Evals** - Response time <5 seconds (PRD requirement)
+- **Security Evals** - API parameter validation, XSS prevention
+- **Edge Case Handling** - Unusual API responses, network failures
+
+**Success Criteria**:
+- End-to-end workflow success >95%
+- Performance compliance 100% (response time <5 seconds)
+- Security validation 100% (no vulnerabilities)
+- Edge case handling >90%
+
+### **Technical Implementation**
+
+#### **Eval Infrastructure**
+```typescript
+// Core eval interfaces
+interface WorkflowEval {
+  input: string;
+  expectedWorkflow: WorkflowStep[];
+  actualWorkflow: WorkflowStep[];
+  success: boolean;
+  metrics: {
+    stepAccuracy: number;
+    apiCallCorrectness: number;
+    parameterMapping: number;
+  };
+}
+
+interface ChatEval {
+  userMessage: string;
+  expectedIntent: 'workflow' | 'direct_api' | 'documentation';
+  expectedApiCall?: ApiCall;
+  actualIntent: string;
+  actualApiCall?: ApiCall;
+  success: boolean;
+}
+
+interface E2EEval {
+  scenario: string;
+  userFlow: string[];
+  expectedOutcomes: ExpectedOutcome[];
+  actualOutcomes: ActualOutcome[];
+  success: boolean;
+  performance: {
+    totalTime: number;
+    apiCallLatency: number;
+    aiProcessingTime: number;
+  };
+}
+```
+
+#### **Integration with Existing Test Framework**
+- Leverage existing 1201+ test infrastructure
+- Build on current E2E testing helpers
+- Integrate with existing AI service wrappers
+- Use existing database and API testing patterns
+
+#### **Eval Categories by Priority**
+
+**Critical Evals (Implement First)**:
+1. Workflow Generation Accuracy - Core value prop
+2. API Call Correctness - Reliability
+3. Intent Detection - Chat interface functionality
+4. Error Handling - User experience
+
+**Important Evals (Implement Second)**:
+1. Performance Evals - Response time compliance
+2. Security Evals - API parameter validation
+3. Context Management - Multi-step conversations
+4. Edge Case Handling - Unusual scenarios
+
+**Nice-to-Have Evals (Implement Later)**:
+1. User Experience Evals - Interface usability
+2. Accessibility Evals - WCAG compliance
+3. Mobile Evals - Responsive design
+4. Integration Evals - Third-party API compatibility
+
+### **Success Metrics**
+- **AI Feature Reliability**: >95% accuracy for core AI features
+- **Performance Compliance**: 100% compliance with PRD performance requirements
+- **Security Validation**: 100% security eval pass rate
+- **User Experience**: >90% user satisfaction with AI features
+- **Continuous Improvement**: Monthly eval score improvements
+
+---
+
 ## 🎉 **IMPLEMENTATION COMPLETE!**
 
 ### **What You Actually Have** ✅
@@ -636,10 +815,11 @@ Your implementation plan was actually **100% complete** - I initially misread th
 
 ### **Next Steps** 🚀
 Since your onboarding system is complete, you can now focus on:
-1. **User testing and feedback** - Validate the current experience
-2. **Performance optimization** - Fine-tune based on real usage
-3. **Feature expansion** - Build on the solid foundation
-4. **Market launch** - Your MVP is ready!
+1. **AI Evaluation Framework** - Implement comprehensive evals for AI features
+2. **User testing and feedback** - Validate the current experience
+3. **Performance optimization** - Fine-tune based on real usage
+4. **Feature expansion** - Build on the solid foundation
+5. **Market launch** - Your MVP is ready!
 
 ## Implementation Timeline
 
@@ -650,13 +830,14 @@ Since your onboarding system is complete, you can now focus on:
 - **Week 9-12**: Complete P0.1 Multi-step workflow generation (see [Technical Analysis](docs/technical-analysis.md))
 
 ### **Q2 2025: User Experience & Adoption**
-- **Month 1**: P1.3.1 Direct API Calls via Chat ✅ **NEXT PRIORITY**
-- **Month 2**: P1.1 Workflow Templates & Libraries
-- **Month 3**: P1.4 API Connection Guidance in Chat
-- **Month 4**: P1.5 OpenAPI Base URL Auto-Extraction
-- **Month 5**: P1.6 API Catalog Architecture
-- **Month 6**: P1.7 AI Service Usage Tracking & Billing
-- **Month 7**: P1.8 Advanced Analytics & Reporting
+- **Month 1**: AI Evaluation Framework Phase 1 (Core Workflow Generation Evals) 🚧 **NEXT PRIORITY**
+- **Month 2**: P1.3.1 Direct API Calls via Chat + AI Evaluation Framework Phase 2 (Chat Interface Evals)
+- **Month 3**: P1.1 Workflow Templates & Libraries + AI Evaluation Framework Phase 3 (End-to-End Evals)
+- **Month 4**: P1.4 API Connection Guidance in Chat
+- **Month 5**: P1.5 OpenAPI Base URL Auto-Extraction
+- **Month 6**: P1.6 API Catalog Architecture
+- **Month 7**: P1.7 AI Service Usage Tracking & Billing
+- **Month 8**: P1.8 Advanced Analytics & Reporting
 
 ### **Q3 2025: Enterprise Readiness**
 - **Month 1**: P2.2 Team Collaboration

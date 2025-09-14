@@ -26,7 +26,7 @@ const trackConnection = (connectionId: string) => {
 test.describe('Connections Performance and Concurrent Operations E2E Tests', () => {
   test.beforeAll(async () => {
     testUser = await createE2EUser(Role.ADMIN, {
-      email: `e2e-conn-perf-${generateTestId('user')}@example.com`,
+      email: `e2e-conn-perf-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E Connections Performance Test User'
     });
@@ -175,7 +175,7 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
           description: 'Connection for testing',
           baseUrl: 'https://httpbin.org/get',
           authType: 'API_KEY',
-          apiKey: 'test-test-key'
+          apiKey: 'test-test-api-key-12345'
         });
         
         if (connectionId) {
@@ -217,7 +217,7 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
           description: 'Connection for load testing',
           baseUrl: 'https://httpbin.org/get',
           authType: 'API_KEY',
-          apiKey: 'load-test-key'
+          apiKey: 'load-test-api-key-12345'
         });
         
         if (connectionId) {

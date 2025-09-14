@@ -35,7 +35,7 @@ describe('Step Runner Engine', () => {
     mockExecutionContext = {
       executionId: 'test-execution-id',
       workflowId: 'test-workflow-id',
-      userId: 'test-user-id',
+      userId: 'testuser-id',
       parameters: { testParam: 'testValue' },
       stepResults: {},
       globalVariables: {}

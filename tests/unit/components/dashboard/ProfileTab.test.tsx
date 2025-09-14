@@ -16,7 +16,7 @@ global.fetch = jest.fn();
 
 const mockUser = {
   id: 'user-1',
-  email: 'test@example.com',
+  email: 'test@testuser.local',
   name: 'Test User',
   firstName: 'Test',
   lastName: 'User',
@@ -46,7 +46,7 @@ describe('ProfileTab', () => {
     expect(screen.getByText('Manage your account information and preferences.')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Test')).toBeInTheDocument();
     expect(screen.getByDisplayValue('User')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('test@testuser.local')).toBeInTheDocument();
     expect(screen.getByText('✓ Email verified')).toBeInTheDocument();
   });
 

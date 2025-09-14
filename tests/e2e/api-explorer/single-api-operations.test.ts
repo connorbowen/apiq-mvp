@@ -33,7 +33,7 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
 
   test.beforeAll(async () => {
     testUser = await createE2EUser(Role.USER, {
-      email: `e2e-api-ops-${generateTestId('user')}@example.com`,
+      email: `e2e-api-ops-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E API Operations Test User'
     });

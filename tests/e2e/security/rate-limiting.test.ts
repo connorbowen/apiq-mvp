@@ -14,7 +14,7 @@ test.describe('Rate Limiting and Security Tests', () => {
     
     // Create test user for authenticated requests
     testUser = await createTestUser(
-      `rate-limit-test-${Date.now()}@example.com`,
+      `rate-limit-test-${Date.now()}@testuser.local`,
       'e2eTestPass123',
       'ADMIN',
       'Rate Limit Test User'
@@ -88,7 +88,7 @@ test.describe('Rate Limiting and Security Tests', () => {
     await uxHelper.validateHeadingHierarchy(['Reset your password']);
     await uxHelper.validateFormAccessibility();
     
-    const email = 'security-test@example.com';
+    const email = 'security-test@testuser.local';
     
     // Make multiple rapid requests to test UI behavior
     for (let i = 0; i < 3; i++) {
@@ -201,7 +201,7 @@ test.describe('Rate Limiting and Security Tests', () => {
 // TODO: Add deterministic test data (P0)
 // - Create predictable test data with unique identifiers
 // - Use timestamps or UUIDs to avoid conflicts
-// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@example.com` });
+// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@testuser.local` });
 // - Ensure test data is isolated and doesn't interfere with other tests
 
 // TODO: Ensure test independence (P0)

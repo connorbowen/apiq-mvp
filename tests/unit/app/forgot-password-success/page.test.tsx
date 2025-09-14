@@ -19,7 +19,7 @@ describe('ForgotPasswordSuccessPage', () => {
   });
 
   it('should render success message with user email', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<ForgotPasswordSuccessPage />);
     
@@ -29,7 +29,7 @@ describe('ForgotPasswordSuccessPage', () => {
   });
 
   it('should render security note', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<ForgotPasswordSuccessPage />);
     
@@ -38,7 +38,7 @@ describe('ForgotPasswordSuccessPage', () => {
   });
 
   it('should render step-by-step instructions', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<ForgotPasswordSuccessPage />);
     
@@ -49,7 +49,7 @@ describe('ForgotPasswordSuccessPage', () => {
   });
 
   it('should render navigation links', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<ForgotPasswordSuccessPage />);
     
@@ -58,7 +58,7 @@ describe('ForgotPasswordSuccessPage', () => {
   });
 
   it('should have correct href attributes for navigation links', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<ForgotPasswordSuccessPage />);
     
@@ -79,7 +79,7 @@ describe('ForgotPasswordSuccessPage', () => {
   });
 
   it('should render success icon', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<ForgotPasswordSuccessPage />);
     
@@ -89,7 +89,7 @@ describe('ForgotPasswordSuccessPage', () => {
   });
 
   it('should render all required elements', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<ForgotPasswordSuccessPage />);
     

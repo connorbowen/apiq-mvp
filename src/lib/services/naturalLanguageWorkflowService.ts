@@ -129,7 +129,7 @@ export class NaturalLanguageWorkflowService {
       console.log('→ User prompt:', userPrompt);
       console.log('→ Model:', model);
 
-      // Retry mechanism for invalid connection IDs
+      // Retry mechanism for invalid connection IDs and transient failures
       let openaiResponse;
       let retryCount = 0;
       const maxRetries = 3;
@@ -188,6 +188,19 @@ export class NaturalLanguageWorkflowService {
           }
         } catch (openaiError) {
           console.error('→ OpenAI API error:', openaiError);
+          
+          // Check if this is a transient error that should be retried
+          const isTransientError = this.isTransientError(openaiError);
+          
+          if (isTransientError && retryCount < maxRetries - 1) {
+            console.log(`🔄 Retry ${retryCount + 1}/${maxRetries}: Transient error detected, retrying...`);
+            retryCount++;
+            // Exponential backoff: 1s, 2s, 4s
+            const delay = Math.pow(2, retryCount - 1) * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          
           return {
             success: false,
             error: 'OpenAI API error: ' + (openaiError instanceof Error ? openaiError.message : String(openaiError)),
@@ -572,6 +585,40 @@ Steps:
 4. Update inventory in Shopify (api_call with correct connection ID from available connections)
 
 REMEMBER: Only use connection IDs that are explicitly provided in the available connections list. Do not generate or assume any connection IDs.`;
+  }
+
+  /**
+   * Check if an error is transient and should be retried
+   */
+  private isTransientError(error: any): boolean {
+    if (!error) return false;
+    
+    const errorMessage = error.message || error.toString();
+    const errorStatus = error.status || error.statusCode;
+    
+    // Check for HTTP status codes that indicate transient failures
+    if (errorStatus) {
+      const transientStatusCodes = [408, 429, 500, 502, 503, 504];
+      if (transientStatusCodes.includes(errorStatus)) {
+        return true;
+      }
+    }
+    
+    // Check for error messages that indicate transient failures
+    const transientErrorPatterns = [
+      /timeout/i,
+      /rate limit/i,
+      /service unavailable/i,
+      /temporarily unavailable/i,
+      /internal server error/i,
+      /bad gateway/i,
+      /gateway timeout/i,
+      /connection reset/i,
+      /network error/i,
+      /temporary failure/i
+    ];
+    
+    return transientErrorPatterns.some(pattern => pattern.test(errorMessage));
   }
 
   /**

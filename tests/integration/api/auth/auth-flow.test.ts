@@ -27,7 +27,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
   describe('PHASE 2.3: Streamline onboarding flow', () => {
     test('should complete simplified registration in under 30 seconds', async () => {
       const startTime = Date.now();
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       const registerHandler = require('../../../../pages/api/auth/register').default;
@@ -56,7 +56,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should allow access without email verification', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       const registerHandler = require('../../../../pages/api/auth/register').default;
@@ -100,7 +100,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should redirect to chat interface after registration', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       const registerHandler = require('../../../../pages/api/auth/register').default;
@@ -128,7 +128,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should handle simplified login flow', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // First register a user
@@ -166,7 +166,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should maintain security while reducing friction', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const weakPassword = 'weak';
 
       const registerHandler = require('../../../../pages/api/auth/register').default;
@@ -189,7 +189,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should work with optional email verification', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register user
@@ -236,7 +236,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
 
   describe('PHASE 2.4: Guided tour integration', () => {
     test('should set onboarding state for new users', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       const registerHandler = require('../../../../pages/api/auth/register').default;
@@ -262,7 +262,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should track onboarding progress', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register user
@@ -299,7 +299,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should handle guided tour state', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register user
@@ -335,7 +335,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should complete onboarding flow', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register user
@@ -376,7 +376,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
 
   describe('PHASE 2.2: Progressive disclosure', () => {
     test('should track user onboarding stages', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register user
@@ -416,7 +416,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should update onboarding state based on actions', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register user
@@ -457,7 +457,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should support progressive feature unlocking', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register user
@@ -514,7 +514,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
 
   describe('PHASE 2.1: 3-tab structure integration', () => {
     test('should redirect to chat tab after authentication', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register user
@@ -552,7 +552,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should maintain session across tab changes', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register and login user
@@ -594,7 +594,7 @@ describe('UX Simplification - Auth Flow Integration Tests', () => {
     });
 
     test('should handle authentication in new tab structure', async () => {
-      const testEmail = `ux-simplification-test-${generateTestId()}@example.com`;
+      const testEmail = `ux-simplification-test-${generateTestId()}@testuser.local`;
       const testPassword = 'SecurePass123!';
 
       // Register user

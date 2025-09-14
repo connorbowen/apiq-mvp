@@ -1,0 +1,303 @@
+
+> apiq-mvp@1.0.0 test:e2e
+> ./scripts/kill-port-3000.sh && playwright test tests/e2e/connections/openapi-integration.test.ts -g should validate request schemas from OpenAPI spec --reporter=line
+
+🔍 Checking for processes on port 3000...
+✅ Port 3000 is free
+✅ Port 3000 is confirmed free
+[dotenv@17.0.1] injecting env (37) from .env.test – [tip] encrypt with dotenvx: https://dotenvx.com
+[1A[2K[2m[WebServer] [22m [33m[1m⚠[22m[39m Using edge runtime on a page currently disables static generation for that page
+
+🚀 Starting global test setup...
+✅ Global test setup completed - database cleaned
+🔑 JWT_SECRET in use: test-jwt-secret-key-for-e2e-testing-only-never-use-in-production
+🔑 JWT_EXPIRES_IN: 2h
+
+Running 1 test using 1 worker
+
+[1A[2K[dotenv@17.0.1] injecting env (0) from .env.test – [tip] encrypt with dotenvx: https://dotenvx.com
+
+[1A[2K🔑 JWT_SECRET in use: test-jwt-secret-key-for-e2e-testing-only-never-use-in-production
+
+[1A[2K🔑 JWT_EXPIRES_IN: 2h
+
+[1A[2K[1/1] [chromium] › tests/e2e/connections/openapi-integration.test.ts:687:9 › OpenAPI/Swagger 3.0 Integration E2E Tests › Schema Validation › should validate request schemas from OpenAPI spec
+[1A[2K[chromium] › tests/e2e/connections/openapi-integration.test.ts:687:9 › OpenAPI/Swagger 3.0 Integration E2E Tests › Schema Validation › should validate request schemas from OpenAPI spec
+[34mprisma:query[39m INSERT INTO "public"."users" ("id","email","name","password","role","isActive","createdAt","updatedAt","timezone","language","emailVerified","notificationsEnabled","marketingEmailsEnabled","onboardingStage","onboardingCompletedAt") VALUES ($1,$2,$3,$4,CAST($5::text AS "public"."Role"),$6,$7,$8,$9,$10,$11,$12,$13,CAST($14::text AS "public"."OnboardingStage"),$15) ON CONFLICT ("email") DO UPDATE SET "password" = $16, "name" = $17, "role" = CAST($18::text AS "public"."Role"), "isActive" = $19, "onboardingStage" = CAST($20::text AS "public"."OnboardingStage"), "onboardingCompletedAt" = $21, "updatedAt" = $22 WHERE ("public"."users"."email" = $23 AND 1=1) RETURNING "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."lastLogin", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."timezone", "public"."users"."language", "public"."users"."emailVerified", "public"."users"."emailVerifiedAt", "public"."users"."notificationsEnabled", "public"."users"."marketingEmailsEnabled", "public"."users"."onboardingStage"::text, "public"."users"."onboardingCompletedAt", "public"."users"."provider", "public"."users"."providerUserId", "public"."users"."refreshToken", "public"."users"."tokenExpiresAt", "public"."users"."accessToken"
+
+[1A[2K[34mprisma:query[39m SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."lastLogin", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."timezone", "public"."users"."language", "public"."users"."emailVerified", "public"."users"."emailVerifiedAt", "public"."users"."notificationsEnabled", "public"."users"."marketingEmailsEnabled", "public"."users"."onboardingStage"::text, "public"."users"."onboardingCompletedAt", "public"."users"."provider", "public"."users"."providerUserId", "public"."users"."refreshToken", "public"."users"."tokenExpiresAt", "public"."users"."accessToken" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+
+[1A[2K[DEBUG] Login attempt for user: {
+  email: [32m'e2e-openapi-user-1757872326865-mzfyvc6vc@testuser.local'[39m,
+  dbHash: [32m'$2a$10$V8zpPrCpiOMMvUWN6beqN.l1kro56N/Ifgc3RTWR4z.OXiYPaaqvi'[39m,
+  incomingPassword: [32m'e2eTestPass123'[39m,
+  at: [32m'2025-09-14T17:52:07.239Z'[39m
+}
+
+[1A[2K[DEBUG] bcrypt.compare result: [33mtrue[39m
+
+[1A[2K[34mprisma:query[39m UPDATE "public"."users" SET "lastLogin" = $1, "updatedAt" = $2 WHERE ("public"."users"."id" = $3 AND 1=1) RETURNING "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."lastLogin", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."timezone", "public"."users"."language", "public"."users"."emailVerified", "public"."users"."emailVerifiedAt", "public"."users"."notificationsEnabled", "public"."users"."marketingEmailsEnabled", "public"."users"."onboardingStage"::text, "public"."users"."onboardingCompletedAt", "public"."users"."provider", "public"."users"."providerUserId", "public"."users"."refreshToken", "public"."users"."tokenExpiresAt", "public"."users"."accessToken"
+
+[1A[2K[34mprisma:query[39m SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."onboardingStage"::text FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+
+[1A[2K[34mprisma:query[39m SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."lastLogin", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."timezone", "public"."users"."language", "public"."users"."emailVerified", "public"."users"."emailVerifiedAt", "public"."users"."notificationsEnabled", "public"."users"."marketingEmailsEnabled", "public"."users"."onboardingStage"::text, "public"."users"."onboardingCompletedAt", "public"."users"."provider", "public"."users"."providerUserId", "public"."users"."refreshToken", "public"."users"."tokenExpiresAt", "public"."users"."accessToken" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+
+[1A[2K🧑‍💻 [DEBUG] User after creation: {
+  id: [32m'cmfjzsoex0000vj37on444gc9'[39m,
+  email: [32m'e2e-openapi-user-1757872326865-mzfyvc6vc@testuser.local'[39m,
+  name: [32m'E2E OpenAPI Test User'[39m,
+  password: [32m'$2a$10$V8zpPrCpiOMMvUWN6beqN.l1kro56N/Ifgc3RTWR4z.OXiYPaaqvi'[39m,
+  role: [32m'ADMIN'[39m,
+  isActive: [33mtrue[39m,
+  lastLogin: [35m2025-09-14T17:52:07.316Z[39m,
+  createdAt: [35m2025-09-14T17:52:07.065Z[39m,
+  updatedAt: [35m2025-09-14T17:52:07.317Z[39m,
+  firstName: [1mnull[22m,
+  lastName: [1mnull[22m,
+  timezone: [32m'UTC'[39m,
+  language: [32m'en'[39m,
+  emailVerified: [33mfalse[39m,
+  emailVerifiedAt: [1mnull[22m,
+  notificationsEnabled: [33mtrue[39m,
+  marketingEmailsEnabled: [33mfalse[39m,
+  onboardingStage: [32m'COMPLETED'[39m,
+  onboardingCompletedAt: [35m2025-09-14T17:52:06.962Z[39m,
+  provider: [1mnull[22m,
+  providerUserId: [1mnull[22m,
+  refreshToken: [1mnull[22m,
+  tokenExpiresAt: [1mnull[22m,
+  accessToken: [1mnull[22m
+}
+
+[1A[2K✅ No modal detected
+
+[1A[2K🔍 E2E DEBUG: Starting login process for user: e2e-openapi-user-1757872326865-mzfyvc6vc@testuser.local
+
+[1A[2K🔍 E2E DEBUG: Checking if user is already authenticated...
+
+[1A[2K🔍 E2E DEBUG: Current URL after navigating to login: http://localhost:3000/login
+
+[1A[2K🔍 E2E DEBUG: Using fixed authentication helper with JWT secret fix
+
+[1A[2K🔍 E2E DEBUG: Starting cookie-based authentication for user: e2e-openapi-user-1757872326865-mzfyvc6vc@testuser.local
+
+[1A[2K🔍 E2E DEBUG: Setting cookies for user: {
+  email: [32m'e2e-openapi-user-1757872326865-mzfyvc6vc@testuser.local'[39m,
+  hasAccessToken: [33mtrue[39m,
+  hasRefreshToken: [33mtrue[39m,
+  accessTokenLength: [33m307[39m,
+  refreshTokenLength: [33m308[39m
+}
+
+[1A[2K🔍 E2E DEBUG: Setting cookies: [
+  { name: [32m'accessToken'[39m, url: [32m'http://localhost:3000'[39m },
+  { name: [32m'refreshToken'[39m, url: [32m'http://localhost:3000'[39m }
+]
+
+[1A[2K🔍 E2E DEBUG: Cookies set: [
+  { name: [32m'accessToken'[39m, value: [32m'eyJhbGciOiJIUzI1NiIs...'[39m },
+  { name: [32m'refreshToken'[39m, value: [32m'eyJhbGciOiJIUzI1NiIs...'[39m }
+]
+
+[1A[2K🔍 E2E DEBUG: Current URL after navigation: http://localhost:3000/dashboard?tab=chat
+
+[1A[2K🔍 E2E DEBUG: Dashboard or guided tour loaded
+
+[1A[2K🔍 E2E DEBUG: Authentication successful, dashboard/tour loaded
+
+[1A[2K🔍 E2E DEBUG: Authentication successful using fixed helper
+
+[1A[2K🔍 E2E DEBUG: Desktop tabs not found, checking for main content
+
+[1A[2K🔍 E2E DEBUG: Dashboard loaded successfully
+
+[1A[2K🔍 E2E DEBUG: Navigating to connections tab for section
+
+[1A[2K🔍 E2E DEBUG: Checking for guided tour...
+
+[1A[2KPage title: "APIQ - AI-Powered API Orchestrator | Stop Writing API Code"
+
+[1A[2K🔍 E2E DEBUG: No guided tour overlay detected
+
+[1A[2K🔍 Submitting connection form using requestSubmit()...
+
+[1A[2K✅ Connection form submitted via requestSubmit()
+
+[1A[2K🔍 Available endpoints: [33m20[39m
+
+[1A[2K🔍 Endpoint 0: POST/petAdd a new pet to the store
+
+[1A[2K🔍 Endpoint 1: PUT/petUpdate an existing pet
+
+[1A[2K🔍 Endpoint 2: GET/pet/findByStatusFinds Pets by statusMultiple status values can be provided with comma separated strings
+
+[1A[2K🔍 Endpoint 3: GET/pet/findByTagsFinds Pets by tagsMultiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.
+
+[1A[2K🔍 Endpoint 4: DELETE/pet/{petId}Deletes a pet
+
+[1A[2K🔍 POST endpoints found: [33m7[39m
+
+[1A[2K🔍 Clicked on first POST endpoint
+
+[1A[2K🔍 All data-testid elements after click: [
+  [32m'primary-action refresh-spec-btn'[39m,
+  [32m'api-explorer-section'[39m,
+  [32m'endpoint-list'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-POST'[39m,
+  [32m'endpoint-description'[39m,
+  [32m'endpoint-parameters'[39m,
+  [32m'endpoint-responses'[39m,
+  [32m'try-it-out-toggle'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-PUT'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-GET'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-GET'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-DELETE'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-GET'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-POST'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-POST'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-GET'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-POST'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-DELETE'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-GET'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-POST'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-POST'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-POST'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-GET'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-GET'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-DELETE'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-GET'[39m,
+  [32m'endpoint-item'[39m,
+  [32m'endpoint-method-PUT'[39m
+]
+
+[1A[2K🔍 Schema-related elements found: [33m0[39m
+
+[1A[2K🔍 Expanded content elements: [33m0[39m
+
+[1A[2K🔍 No schema content found within 5 seconds
+
+[1A[2K🔍 No schema content found, taking screenshot for debugging
+
+[1A[2K🔍 Endpoint analysis: {
+  totalEndpoints: [33m20[39m,
+  endpointsWithSchema: [],
+  allTestIds: [
+    [32m'primary-action refresh-spec-btn'[39m,
+    [32m'api-explorer-section'[39m,
+    [32m'endpoint-list'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-POST'[39m,
+    [32m'endpoint-description'[39m,
+    [32m'endpoint-parameters'[39m,
+    [32m'endpoint-responses'[39m,
+    [32m'try-it-out-toggle'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-PUT'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-GET'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-GET'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-DELETE'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-GET'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-POST'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-POST'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-GET'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-POST'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-DELETE'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-GET'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-POST'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-POST'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-POST'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-GET'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-GET'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-DELETE'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-GET'[39m,
+    [32m'endpoint-item'[39m,
+    [32m'endpoint-method-PUT'[39m
+  ]
+}
+
+[1A[2Kℹ️ No endpoints with request schemas found - this may be normal for some APIs
+
+[1A[2K✅ No modal detected
+
+[1A[2K[34mprisma:query[39m SELECT 1
+
+[1A[2K[34mprisma:query[39m SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."lastLogin", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."timezone", "public"."users"."language", "public"."users"."emailVerified", "public"."users"."emailVerifiedAt", "public"."users"."notificationsEnabled", "public"."users"."marketingEmailsEnabled", "public"."users"."onboardingStage"::text, "public"."users"."onboardingCompletedAt", "public"."users"."provider", "public"."users"."providerUserId", "public"."users"."refreshToken", "public"."users"."tokenExpiresAt", "public"."users"."accessToken" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+
+[1A[2K🧑‍💻 [DEBUG] User before cleanup: {
+  id: [32m'cmfjzsoex0000vj37on444gc9'[39m,
+  email: [32m'e2e-openapi-user-1757872326865-mzfyvc6vc@testuser.local'[39m,
+  name: [32m'E2E OpenAPI Test User'[39m,
+  password: [32m'$2a$10$V8zpPrCpiOMMvUWN6beqN.l1kro56N/Ifgc3RTWR4z.OXiYPaaqvi'[39m,
+  role: [32m'ADMIN'[39m,
+  isActive: [33mtrue[39m,
+  lastLogin: [35m2025-09-14T17:52:07.316Z[39m,
+  createdAt: [35m2025-09-14T17:52:07.065Z[39m,
+  updatedAt: [35m2025-09-14T17:52:07.317Z[39m,
+  firstName: [1mnull[22m,
+  lastName: [1mnull[22m,
+  timezone: [32m'UTC'[39m,
+  language: [32m'en'[39m,
+  emailVerified: [33mfalse[39m,
+  emailVerifiedAt: [1mnull[22m,
+  notificationsEnabled: [33mtrue[39m,
+  marketingEmailsEnabled: [33mfalse[39m,
+  onboardingStage: [32m'COMPLETED'[39m,
+  onboardingCompletedAt: [35m2025-09-14T17:52:06.962Z[39m,
+  provider: [1mnull[22m,
+  providerUserId: [1mnull[22m,
+  refreshToken: [1mnull[22m,
+  tokenExpiresAt: [1mnull[22m,
+  accessToken: [1mnull[22m
+}
+
+[1A[2K[34mprisma:query[39m DELETE FROM "public"."endpoints" WHERE "public"."endpoints"."apiConnectionId" = $1
+
+[1A[2K[34mprisma:query[39m DELETE FROM "public"."api_connections" WHERE ("public"."api_connections"."id" = $1 AND 1=1) RETURNING "public"."api_connections"."id", "public"."api_connections"."userId", "public"."api_connections"."name", "public"."api_connections"."description", "public"."api_connections"."baseUrl", "public"."api_connections"."authType"::text, "public"."api_connections"."authConfig", "public"."api_connections"."documentationUrl", "public"."api_connections"."status"::text, "public"."api_connections"."connectionStatus"::text, "public"."api_connections"."oauthState", "public"."api_connections"."ingestionStatus"::text, "public"."api_connections"."rawSpec", "public"."api_connections"."specHash", "public"."api_connections"."lastTested", "public"."api_connections"."createdAt", "public"."api_connections"."updatedAt", "public"."api_connections"."secretId"
+
+[1A[2K[34mprisma:query[39m SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."lastLogin", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."timezone", "public"."users"."language", "public"."users"."emailVerified", "public"."users"."emailVerifiedAt", "public"."users"."notificationsEnabled", "public"."users"."marketingEmailsEnabled", "public"."users"."onboardingStage"::text, "public"."users"."onboardingCompletedAt", "public"."users"."provider", "public"."users"."providerUserId", "public"."users"."refreshToken", "public"."users"."tokenExpiresAt", "public"."users"."accessToken" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+
+[1A[2K[34mprisma:query[39m DELETE FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) RETURNING "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."lastLogin", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."timezone", "public"."users"."language", "public"."users"."emailVerified", "public"."users"."emailVerifiedAt", "public"."users"."notificationsEnabled", "public"."users"."marketingEmailsEnabled", "public"."users"."onboardingStage"::text, "public"."users"."onboardingCompletedAt", "public"."users"."provider", "public"."users"."providerUserId", "public"."users"."refreshToken", "public"."users"."tokenExpiresAt", "public"."users"."accessToken"
+
+[1A[2K✅ Cleaned up test user: cmfjzsoex0000vj37on444gc9
+
+[1A[2K[34mprisma:query[39m SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."isActive", "public"."users"."lastLogin", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."firstName", "public"."users"."lastName", "public"."users"."timezone", "public"."users"."language", "public"."users"."emailVerified", "public"."users"."emailVerifiedAt", "public"."users"."notificationsEnabled", "public"."users"."marketingEmailsEnabled", "public"."users"."onboardingStage"::text, "public"."users"."onboardingCompletedAt", "public"."users"."provider", "public"."users"."providerUserId", "public"."users"."refreshToken", "public"."users"."tokenExpiresAt", "public"."users"."accessToken" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+
+[1A[2Kℹ️ User cmfjzsoex0000vj37on444gc9 not found, skipping cleanup
+
+[1A[2K  1 passed (53.3s)

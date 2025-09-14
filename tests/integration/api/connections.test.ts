@@ -377,7 +377,7 @@ describe('API Connections Integration Tests', () => {
             name: 'Pre-existing Secret',
             type: 'API_KEY',
             encryptedData: 'encrypted-value',
-            keyId: 'test-key-id',
+            keyId: 'test-api-key-12345-id',
             connectionId: null
           }
         });
@@ -655,7 +655,7 @@ describe('API Connections Integration Tests', () => {
           name: `${createdConnection.name}_access_token`,
           type: 'OAUTH2_ACCESS_TOKEN',
           encryptedData: 'encrypted-token',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: createdConnection.id
         }
       });

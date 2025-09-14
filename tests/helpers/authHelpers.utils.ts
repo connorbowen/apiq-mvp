@@ -96,7 +96,7 @@ export const logoutUser = async (page: Page): Promise<void> => {
  */
 export const testPasswordReset = async (
   page: Page,
-  email: string = 'test@example.com'
+  email: string = 'test@testuser.local'
 ): Promise<void> => {
   // Navigate to forgot password page
   await page.goto('/forgot-password');
@@ -119,7 +119,7 @@ export const testPasswordReset = async (
  */
 export const testInvalidLogin = async (
   page: Page,
-  email: string = 'invalid@example.com',
+  email: string = 'invalid@testuser.local',
   password: string = 'wrongpassword'
 ): Promise<void> => {
   // Navigate to login

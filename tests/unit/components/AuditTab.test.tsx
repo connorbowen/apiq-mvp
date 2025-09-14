@@ -14,7 +14,7 @@ describe('AuditTab', () => {
       resource: 'Secret',
       resourceId: 'secret-1',
       userId: 'user-1',
-      userEmail: 'test@example.com',
+      userEmail: 'test@testuser.local',
       timestamp: '2024-01-01T00:00:00Z',
       details: {
         secretName: 'Test API Key',
@@ -34,7 +34,7 @@ describe('AuditTab', () => {
       resource: 'Secret',
       resourceId: 'secret-1',
       userId: 'user-1',
-      userEmail: 'test@example.com',
+      userEmail: 'test@testuser.local',
       timestamp: '2024-01-01T01:00:00Z',
       details: {
         secretName: 'Test API Key',
@@ -53,7 +53,7 @@ describe('AuditTab', () => {
       resource: 'User',
       resourceId: 'user-1',
       userId: 'user-1',
-      userEmail: 'test@example.com',
+      userEmail: 'test@testuser.local',
       timestamp: '2024-01-01T02:00:00Z',
       details: {
         loginMethod: 'password',

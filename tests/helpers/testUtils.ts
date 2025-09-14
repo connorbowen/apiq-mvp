@@ -24,7 +24,7 @@ export const createTestSuite = (suiteName: string) => {
   return {
     suiteId,
     getEmailPrefix,
-    generateEmail: (testName?: string) => `${getEmailPrefix(testName)}@example.com`
+    generateEmail: (testName?: string) => `${getEmailPrefix(testName)}@testuser.local`
   };
 };
 

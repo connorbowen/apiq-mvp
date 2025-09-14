@@ -14,7 +14,7 @@ describe('Debug Authentication Issue', () => {
   });
 
   it('should create and verify a test user', async () => {
-    const testEmail = `debug-test-${generateTestId()}@example.com`;
+    const testEmail = `debug-test-${generateTestId()}@testuser.local`;
     const testPassword = 'debugpass123';
 
     // Create a test user

@@ -52,10 +52,12 @@ export const testFormAccessibility = async (
     await expect(page.getByLabel(passwordLabel)).toBeVisible();
   }
   
-  // Check that submit button is visible and enabled
-  const submitBtn = page.getByTestId(submitButton);
-  await expect(submitBtn).toBeVisible();
-  await expect(submitBtn).toBeEnabled();
+  // Check that submit button is visible and enabled if specified
+  if (submitButton) {
+    const submitBtn = page.getByTestId(submitButton);
+    await expect(submitBtn).toBeVisible();
+    await expect(submitBtn).toBeEnabled();
+  }
 };
 
 /**

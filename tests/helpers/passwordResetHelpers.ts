@@ -36,10 +36,25 @@ export const requestPasswordReset = async (
 ): Promise<void> => {
   await page.goto(`${baseUrl}/forgot-password`);
   await page.fill('input[name="email"]', email);
-  await getPrimaryActionButton(page, 'send-reset-link').click();
   
-  // Wait for success page
-  await expect(page).toHaveURL(/.*forgot-password-success/, { timeout: 10000 });
+  // Wait for the button to be enabled and clickable
+  const button = getPrimaryActionButton(page, 'send-reset-link');
+  await button.waitFor({ state: 'visible' });
+  await button.waitFor({ state: 'attached' });
+  
+  // Listen for network requests to see if the API call is made
+  const responsePromise = page.waitForResponse(response => 
+    response.url().includes('/api/auth/forgot-password') && response.status() === 200
+  );
+  
+  // Click the button and wait for both navigation and API response
+  await Promise.all([
+    page.waitForURL(/.*forgot-password-success/, { timeout: 15000 }),
+    responsePromise,
+    button.click()
+  ]);
+  
+  // Verify success page content
   await expect(page.locator('h2')).toContainText('Reset Link Sent!');
 };
 
@@ -273,6 +288,16 @@ export const testMultiplePasswordResetRequests = async (
     // Get first token
     const firstToken = await getPasswordResetToken(testUser.email);
     expect(firstToken).toBeTruthy();
+    
+    // Navigate back to forgot password page for second request
+    await page.goto(`${baseUrl}/forgot-password`);
+    
+    // Wait for page to fully load before second request
+    await page.waitForLoadState('networkidle');
+    
+    // Clear any existing form state and ensure fresh form
+    await page.reload();
+    await page.waitForLoadState('networkidle');
     
     // Second password reset request (should invalidate first)
     await requestPasswordReset(page, testUser.email, baseUrl);

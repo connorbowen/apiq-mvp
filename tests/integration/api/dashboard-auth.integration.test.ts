@@ -21,7 +21,7 @@ describe('Dashboard Authentication Integration Tests', () => {
     const testData = await createCommonTestData();
     // Create an admin user for testing
     const adminUser = await createTestUser(
-      `admin-${generateTestId()}@example.com`,
+      `admin-${generateTestId()}@testuser.local`,
       'adminpass123',
       Role.ADMIN,
       'Test Admin'

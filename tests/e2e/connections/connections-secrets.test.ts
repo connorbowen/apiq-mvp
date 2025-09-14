@@ -26,7 +26,7 @@ const trackConnection = (connectionId: string) => {
 test.describe('Connections Secrets-First Integration E2E Tests', () => {
   test.beforeAll(async () => {
     testUser = await createE2EUser(Role.ADMIN, {
-      email: `e2e-conn-secrets-${generateTestId('user')}@example.com`,
+      email: `e2e-conn-secrets-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E Connections Secrets Test User'
     });
@@ -73,7 +73,7 @@ test.describe('Connections Secrets-First Integration E2E Tests', () => {
           description: 'Connection with automatic secret creation',
           baseUrl: 'https://httpbin.org/get',
           authType: 'API_KEY',
-          apiKey: 'secrets-first-test-key'
+          apiKey: 'secrets-first-test-api-key-12345'
         });
         
         if (connectionId) {

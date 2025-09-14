@@ -339,7 +339,7 @@ describe('OpenAIService', () => {
 
   describe('validateConfig', () => {
     it('should return true when API key is present', () => {
-      process.env.OPENAI_API_KEY = 'test-key';
+      process.env.OPENAI_API_KEY = 'test-api-key-12345';
       const { OpenAIService } = require('../../../src/services/openaiService');
       const service = new OpenAIService();
       expect(service.validateConfig()).toBe(true);

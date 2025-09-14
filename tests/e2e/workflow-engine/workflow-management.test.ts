@@ -23,7 +23,7 @@ test.describe('Workflow Management E2E Tests - Unique Management Operations', ()
   test.beforeAll(async () => {
     // Create a real test user
     testUser = await createTestUser(
-      `e2e-workflow-${generateTestId('user')}@example.com`,
+      `e2e-workflow-${generateTestId('user')}@testuser.local`,
       'e2eTestPass123',
       'ADMIN',
       'E2E Workflow Test User'
@@ -644,13 +644,13 @@ test.describe('Workflow Management E2E Tests - Unique Management Operations', ()
     test.beforeAll(async () => {
       // Create real users
       ownerUser = await createTestUser(
-        `e2e-owner-${generateTestId('user')}@example.com`,
+        `e2e-owner-${generateTestId('user')}@testuser.local`,
         'e2eTestPass123',
         'ADMIN',
         'E2E Owner User'
       );
       teammateUser = await createTestUser(
-        `e2e-teammate-${generateTestId('user')}@example.com`,
+        `e2e-teammate-${generateTestId('user')}@testuser.local`,
         'e2eTestPass123',
         'USER',
         'E2E Teammate User'

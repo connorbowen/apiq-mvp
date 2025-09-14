@@ -18,6 +18,15 @@ export default function EditConnectionModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
+  // Debug logging
+  console.log('🔍 EditConnectionModal rendered with connection:', connection?.id, connection?.name);
+  console.log('🔍 EditConnectionModal visibility check:', {
+    modalRef: modalRef.current,
+    isVisible: modalRef.current ? modalRef.current.offsetParent !== null : 'no ref',
+    display: modalRef.current ? (modalRef.current as HTMLElement).style.display : 'no ref',
+    visibility: modalRef.current ? (modalRef.current as HTMLElement).style.visibility : 'no ref'
+  });
+
   const [formData, setFormData] = useState({
     name: connection.name,
     description: connection.description || '',
@@ -45,6 +54,22 @@ export default function EditConnectionModal({
     endpoints?: number;
   } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Debug modal visibility after mount
+  useEffect(() => {
+    console.log('🔍 EditConnectionModal useEffect - checking visibility after mount');
+    if (modalRef.current) {
+      console.log('🔍 Modal ref found, checking visibility:', {
+        offsetParent: modalRef.current.offsetParent,
+        display: (modalRef.current as HTMLElement).style.display,
+        visibility: (modalRef.current as HTMLElement).style.visibility,
+        className: modalRef.current.className,
+        computedStyle: window.getComputedStyle(modalRef.current).display
+      });
+    } else {
+      console.log('🔍 Modal ref not found yet');
+    }
+  }, []);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [importMode, setImportMode] = useState<'manual' | 'url'>('url');
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -69,49 +94,69 @@ export default function EditConnectionModal({
   }, [onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('Edit form submission triggered');
+    console.log('🔍 Edit form submission triggered - handleSubmit called');
     e.preventDefault();
+    console.log('🔍 Prevented default form submission');
     
     // Clear previous errors
     setErrorMessage('');
     setFieldErrors({});
+    console.log('🔍 Cleared previous errors');
     
     // Simple rate limiting simulation
     const now = Date.now();
     const lastSubmission = (window as any).lastConnectionEditSubmission || 0;
+    console.log('🔍 Rate limiting check:', { now, lastSubmission, diff: now - lastSubmission });
     if (now - lastSubmission < 1000) { // 1 second rate limit
+      console.log('🔍 Rate limit exceeded, returning early');
       setErrorMessage('Rate limit exceeded. Please wait before trying again.');
       return;
     }
     (window as any).lastConnectionEditSubmission = now;
+    console.log('🔍 Rate limiting passed, continuing...');
     
     // Validate required fields
+    console.log('🔍 Starting validation with formData:', formData);
     const errors: Record<string, string> = {};
     
     if (!formData.name.trim()) {
+      console.log('🔍 Name validation failed - empty');
       errors.name = 'Connection name is required';
+    } else {
+      console.log('🔍 Name validation passed');
     }
     
     if (!formData.baseUrl.trim()) {
+      console.log('🔍 Base URL validation failed - empty');
       errors.baseUrl = 'Base URL is required';
+    } else {
+      console.log('🔍 Base URL validation passed');
     }
     
     // Security validation
     if (formData.baseUrl.trim() && !formData.baseUrl.startsWith('https://')) {
+      console.log('🔍 HTTPS validation failed');
       errors.baseUrl = 'HTTPS is required for security';
+    } else {
+      console.log('🔍 HTTPS validation passed');
     }
     
     // XSS validation
     if (formData.name.includes('<script>') || formData.name.includes('javascript:')) {
+      console.log('🔍 XSS validation failed');
       errors.name = 'Invalid characters detected';
+    } else {
+      console.log('🔍 XSS validation passed');
     }
     
+    console.log('🔍 Validation errors:', errors);
     // If there are validation errors, display them and return
     if (Object.keys(errors).length > 0) {
-      console.log('Validation errors found:', errors);
+      console.log('🔍 Validation errors found, returning early:', errors);
       setFieldErrors(errors);
       return;
     }
+    console.log('🔍 All validations passed, continuing to API call...');
 
     try {
       console.log('Setting isSubmitting true');
@@ -192,6 +237,43 @@ export default function EditConnectionModal({
     }
   };
 
+  const handleUpdateClick = (e: React.MouseEvent) => {
+    console.log('🔍 Update button clicked - handleUpdateClick called');
+    console.log('🔍 Event:', e);
+    console.log('🔍 Calling handleSubmit directly...');
+    
+    // Prevent default button behavior
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Create a synthetic form event
+    const syntheticEvent = {
+      ...e,
+      preventDefault: () => {},
+      currentTarget: e.currentTarget,
+      target: e.target
+    } as React.FormEvent;
+    
+    handleSubmit(syntheticEvent);
+  };
+
+  // Expose form submission function globally for testing
+  useEffect(() => {
+    (window as any).submitEditConnectionForm = () => {
+      console.log('🔍 Global form submission triggered');
+      const syntheticEvent = {
+        preventDefault: () => {},
+        currentTarget: null,
+        target: null
+      } as React.FormEvent;
+      handleSubmit(syntheticEvent);
+    };
+    
+    return () => {
+      delete (window as any).submitEditConnectionForm;
+    };
+  }, []);
+
   // Helper function to render field error
   const renderFieldError = (fieldName: string) => {
     if (!fieldErrors[fieldName]) return null;
@@ -217,7 +299,8 @@ export default function EditConnectionModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="edit-connection-modal-title"
-      className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+      data-testid="edit-connection-modal"
+      className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[70]"
     >
       <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
         <div className="mt-3">
@@ -301,7 +384,14 @@ export default function EditConnectionModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6" role="form">
+          <form 
+            onSubmit={handleSubmit} 
+            className="space-y-6" 
+            role="form" 
+            onInvalid={(e) => console.log('🔍 Form invalid:', e)} 
+            onInput={(e) => console.log('🔍 Form input:', e.target)}
+            data-testid="edit-connection-form"
+          >
             {/* Basic Information Section */}
             <section>
               <h4 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h4>
@@ -409,6 +499,114 @@ export default function EditConnectionModal({
               </div>
             </section>
 
+            {/* Connection Management Actions */}
+            <section className="pt-6 border-t border-gray-200">
+              <h4 className="text-lg font-medium text-gray-900 mb-4">Connection Management</h4>
+              
+              {/* Connection Details */}
+              <div className="bg-gray-50 p-4 rounded-md mb-4">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">Connection Details</h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-600">Connection ID:</span>
+                    <span className="ml-2 text-gray-900 font-mono">{connection.id}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Status:</span>
+                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                      connection.status === 'ACTIVE' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {connection.status}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Created:</span>
+                    <span className="ml-2 text-gray-900">
+                      {new Date(connection.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Last Updated:</span>
+                    <span className="ml-2 text-gray-900">
+                      {new Date(connection.updatedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Management Actions */}
+              <div className="flex flex-wrap gap-3">
+                {connection.authType === 'OAUTH2' && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        setIsSubmitting(true);
+                        const authConfig = (connection as any).authConfig || {};
+                        const provider = authConfig.provider || 'test';
+                        
+                        const response = await fetch(`/api/connections/oauth2/refresh`, {
+                          method: 'POST',
+                          credentials: 'include',
+                          headers: {
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({
+                            apiConnectionId: connection.id,
+                            provider
+                          })
+                        });
+                        
+                        if (response.ok) {
+                          onSuccess('OAuth2 token refreshed successfully');
+                        } else {
+                          throw new Error('Failed to refresh token');
+                        }
+                      } catch (error) {
+                        onError('Failed to refresh OAuth2 token');
+                      } finally {
+                        setIsSubmitting(false);
+                      }
+                    }}
+                    disabled={isSubmitting}
+                    className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 min-h-[44px]"
+                  >
+                    {isSubmitting ? 'Refreshing...' : 'Refresh Token'}
+                  </button>
+                )}
+                
+                <button
+                  type="button"
+                  data-testid="delete-connection-btn"
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to delete the connection "${connection.name}"? This action cannot be undone.`)) {
+                      // Call delete API
+                      fetch(`/api/connections/${connection.id}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                      })
+                      .then(response => {
+                        if (response.ok) {
+                          onSuccess('Connection deleted successfully');
+                          onClose();
+                        } else {
+                          throw new Error('Failed to delete connection');
+                        }
+                      })
+                      .catch(error => {
+                        onError('Failed to delete connection');
+                      });
+                    }
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 min-h-[44px]"
+                >
+                  Delete Connection
+                </button>
+              </div>
+            </section>
+
             {/* Form Actions */}
             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
               <button
@@ -428,9 +626,10 @@ export default function EditConnectionModal({
                 {isSubmitting ? 'Testing...' : 'Test Connection'}
               </button>
               <button
-                type="submit"
+                type="button"
                 data-testid="primary-action update-connection-btn"
                 disabled={isSubmitting}
+                onClick={handleUpdateClick}
                 className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 min-h-[44px]"
               >
                 {isSubmitting ? 'Updating...' : 'Update Connection'}

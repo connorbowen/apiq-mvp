@@ -14,11 +14,11 @@ export interface TestFixtures {
 export async function loadFixtures(tx: PrismaClient): Promise<TestFixtures> {
   // Create test users
   const testUser1 = await tx.user.upsert({
-    where: { email: 'test-user-1@example.com' },
+    where: { email: 'testuser-1@testuser.local' },
     update: {},
     create: {
-      id: 'test-user-1-id',
-      email: 'test-user-1@example.com',
+      id: 'testuser-1-id',
+      email: 'testuser-1@testuser.local',
       name: 'Test User 1',
       password: 'hashed-test-password-1',
       role: 'USER',
@@ -26,11 +26,11 @@ export async function loadFixtures(tx: PrismaClient): Promise<TestFixtures> {
   });
 
   const testUser2 = await tx.user.upsert({
-    where: { email: 'test-user-2@example.com' },
+    where: { email: 'testuser-2@testuser.local' },
     update: {},
     create: {
-      id: 'test-user-2-id',
-      email: 'test-user-2@example.com',
+      id: 'testuser-2-id',
+      email: 'testuser-2@testuser.local',
       name: 'Test User 2',
       password: 'hashed-test-password-2',
       role: 'USER',

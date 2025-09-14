@@ -16,7 +16,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
   test.beforeAll(async () => {
     // Create a real test user and get JWT
     testUser = await createTestUser(
-      `e2e-secrets-${generateTestId('user')}@example.com`,
+      `e2e-secrets-${generateTestId('user')}@testuser.local`,
       'e2eTestPass123',
       'ADMIN',
       'E2E Secrets-First Test User'
@@ -694,7 +694,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
       await page.fill('[data-testid="connection-description-input"]', 'Connection for rotation error testing');
       await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
       await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
-      await page.fill('[data-testid="connection-apikey-input"]', 'rotation-test-key');
+      await page.fill('[data-testid="connection-apikey-input"]', 'rotation-test-api-key-12345');
       
       await page.click('[data-testid="primary-action submit-connection-btn"]');
       
@@ -754,7 +754,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
       await page.fill('[data-testid="connection-description-input"]', 'Connection for workflow integration testing');
       await page.fill('[data-testid="connection-baseurl-input"]', 'https://httpbin.org');
       await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
-      await page.fill('[data-testid="connection-apikey-input"]', 'workflow-test-key');
+      await page.fill('[data-testid="connection-apikey-input"]', 'workflow-test-api-key-12345');
       
       await page.click('[data-testid="primary-action submit-connection-btn"]');
       
@@ -856,7 +856,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
       await page.fill('[data-testid="connection-description-input"]', 'Connection for permission testing');
       await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
       await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
-      await page.fill('[data-testid="connection-apikey-input"]', 'permission-test-key');
+      await page.fill('[data-testid="connection-apikey-input"]', 'permission-test-api-key-12345');
       
       await page.click('[data-testid="primary-action submit-connection-btn"]');
       
@@ -921,7 +921,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
       await page.fill('[data-testid="connection-description-input"]', 'Connection for audit testing');
       await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
       await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
-      await page.fill('[data-testid="connection-apikey-input"]', 'audit-test-key');
+      await page.fill('[data-testid="connection-apikey-input"]', 'audit-test-api-key-12345');
       
       await page.click('[data-testid="primary-action submit-connection-btn"]');
       
@@ -1028,7 +1028,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
 // TODO: Add deterministic test data (P0)
 // - Create predictable test data with unique identifiers
 // - Use timestamps or UUIDs to avoid conflicts
-// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@example.com` });
+// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@testuser.local` });
 // - Ensure test data is isolated and doesn't interfere with other tests
 
 // TODO: Ensure test independence (P0)

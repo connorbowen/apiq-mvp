@@ -25,7 +25,7 @@ const originalEnv = process.env;
 
 describe('SecretsVault', () => {
   let secretsVault: SecretsVault;
-  const testUserId = 'test-user-123';
+  const testUserId = 'testuser-123';
   const testSecretName = 'test-api-key';
   const testSecretValue = 'test-secret-value-123';
 

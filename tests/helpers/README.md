@@ -14,7 +14,7 @@ await createConnectionForm(page, {
   description: 'Test connection',
   baseUrl: 'https://api.example.com',
   authType: 'API_KEY',
-  apiKey: 'test-key'
+  apiKey: 'test-api-key-12345'
 });
 
 // OAuth2 connection

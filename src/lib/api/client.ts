@@ -826,6 +826,31 @@ class ApiClient {
       url: `/api/operations/${executionId}`,
     });
   }
+
+  // Direct API calls via chat
+  async executeDirectApiCall(message: string, context: any[] = []): Promise<ApiResponse<{
+    intent: 'api_call' | 'workflow_creation' | 'general_chat';
+    apiCallResult?: {
+      method: string;
+      url: string;
+      statusCode: number;
+      responseData: any;
+      responseHeaders: Record<string, string>;
+      executionTime: number;
+      error?: string;
+    };
+    explanation: string;
+    suggestedAction?: string;
+  }>> {
+    return this.request({
+      method: 'POST',
+      url: '/api/chat/execute-direct',
+      data: { 
+        message, 
+        context: { previousResults: context } 
+      },
+    });
+  }
 }
 
 export const apiClient = new ApiClient(); 

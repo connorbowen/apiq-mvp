@@ -26,7 +26,7 @@ describe('SignupSuccessPage', () => {
   });
 
   it('should render success message with user email', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     
@@ -37,7 +37,7 @@ describe('SignupSuccessPage', () => {
   });
 
   it('should render step-by-step instructions', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     
@@ -53,7 +53,7 @@ describe('SignupSuccessPage', () => {
   });
 
   it('should render resend verification button', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     
@@ -67,7 +67,7 @@ describe('SignupSuccessPage', () => {
       data: { message: 'Verification email sent successfully' }
     });
 
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     
@@ -75,7 +75,7 @@ describe('SignupSuccessPage', () => {
     fireEvent.click(resendButton);
     
     await waitFor(() => {
-      expect(apiClient.resendVerification).toHaveBeenCalledWith('test@example.com');
+      expect(apiClient.resendVerification).toHaveBeenCalledWith('test@testuser.local');
     });
     
     await waitFor(() => {
@@ -90,7 +90,7 @@ describe('SignupSuccessPage', () => {
       error: 'Failed to send verification email'
     });
 
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     
@@ -119,7 +119,7 @@ describe('SignupSuccessPage', () => {
     const { apiClient } = require('../../../../src/lib/api/client');
     apiClient.resendVerification.mockRejectedValue(new Error('Network error'));
 
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     
@@ -135,7 +135,7 @@ describe('SignupSuccessPage', () => {
     const { apiClient } = require('../../../../src/lib/api/client');
     apiClient.resendVerification.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
 
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     
@@ -147,7 +147,7 @@ describe('SignupSuccessPage', () => {
   });
 
   it('should render navigation links', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     
@@ -156,7 +156,7 @@ describe('SignupSuccessPage', () => {
   });
 
   it('should have correct href attributes for navigation links', () => {
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     
@@ -189,7 +189,7 @@ describe('SignupSuccessPage', () => {
         data: { message: 'Second email sent' }
       });
 
-    mockSearchParams.get.mockReturnValue('test@example.com');
+    mockSearchParams.get.mockReturnValue('test@testuser.local');
     
     render(<SignupSuccessPage />);
     

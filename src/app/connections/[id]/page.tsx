@@ -52,12 +52,15 @@ export default function APIExplorerPage() {
         }
 
         // Load endpoints from OpenAPI spec
+        console.log('🔍 [FRONTEND] Calling getConnectionEndpoints for:', connectionId);
         const endpointsResponse = await apiClient.getConnectionEndpoints(connectionId);
+        console.log('🔍 [FRONTEND] getConnectionEndpoints response:', endpointsResponse);
         if (endpointsResponse.success && endpointsResponse.data) {
+          console.log('🔍 [FRONTEND] Setting endpoints with request schemas:', endpointsResponse.data.endpoints?.filter(e => e.requestSchema).length || 0);
           setEndpoints(endpointsResponse.data.endpoints || []);
         } else {
           // No endpoints found - show empty state
-          console.warn('No endpoints found for this connection');
+          console.warn('🔍 [FRONTEND] No endpoints found for this connection:', endpointsResponse.error);
           setEndpoints([]);
         }
       } catch (error) {

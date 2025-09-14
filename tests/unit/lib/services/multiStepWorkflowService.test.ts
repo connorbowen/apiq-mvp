@@ -46,7 +46,7 @@ describe('MultiStepWorkflowService', () => {
     // Test data following user-rules.md: no mock data in dev/prod, only in test scripts
     const mockRequest = {
       userDescription: 'When a new GitHub issue is created, send a Slack notification and create a Trello card',
-      userId: 'test-user-id-123', // Test-specific user ID
+      userId: 'testuser-id-123', // Test-specific user ID
       availableConnections: [
         {
           id: 'test-github-conn',

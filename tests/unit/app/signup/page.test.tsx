@@ -73,7 +73,7 @@ describe('SignupPage', () => {
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: '123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: '123' } });
     fireEvent.click(submitButton);
@@ -113,14 +113,14 @@ describe('SignupPage', () => {
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'Password123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
     
     await waitFor(() => {
       expect(apiClient.register).toHaveBeenCalledWith(
-        'test@example.com',
+        'test@testuser.local',
         'Test User',
         'Password123'
       );
@@ -147,7 +147,7 @@ describe('SignupPage', () => {
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'Password123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
@@ -170,7 +170,7 @@ describe('SignupPage', () => {
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'Password123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
@@ -193,7 +193,7 @@ describe('SignupPage', () => {
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'Test User' } });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'Password123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
@@ -225,7 +225,7 @@ describe('SignupPage', () => {
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: '<script>alert("xss")</script>' } });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'Password123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
@@ -255,7 +255,7 @@ describe('SignupPage', () => {
     
     for (const name of validNames) {
       fireEvent.change(nameInput, { target: { value: name } });
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
       fireEvent.change(passwordInput, { target: { value: 'Password123' } });
       fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
       
@@ -274,7 +274,7 @@ describe('SignupPage', () => {
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'A' } });
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'Password123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
@@ -294,7 +294,7 @@ describe('SignupPage', () => {
     const submitButton = screen.getByRole('button', { name: /create account/i });
     
     fireEvent.change(nameInput, { target: { value: 'A'.repeat(51) } }); // 51 characters
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'Password123' } });
     fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
     fireEvent.click(submitButton);
@@ -333,7 +333,7 @@ describe('SignupPage', () => {
     
     for (const name of invalidNames) {
       fireEvent.change(nameInput, { target: { value: name } });
-      fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+      fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
       fireEvent.change(passwordInput, { target: { value: 'Password123' } });
       fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
       fireEvent.click(submitButton);

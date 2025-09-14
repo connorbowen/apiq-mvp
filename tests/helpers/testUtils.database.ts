@@ -41,7 +41,7 @@ export const createTestConnection = async (
   }
 
   const testName = name || generateTestId('connection');
-  const testBaseUrl = baseUrl || `https://${generateTestId('api')}.example.com`;
+  const testBaseUrl = baseUrl || `https://${generateTestId('api')}.testapi.local`;
 
   const connection = await prisma.apiConnection.create({
     data: {
@@ -88,7 +88,7 @@ export const createTestEndpoint = async (
       summary: testSummary,
       description: `Test endpoint for ${testPath}`,
       isActive: true,
-      parameters: {},
+      parameters: [],
       responses: {
         '200': {
           description: 'Success response',
@@ -189,9 +189,25 @@ export const cleanupTestConnections = async (connectionIds: string[]): Promise<v
 export const cleanupTestUsers = async (userIds: string[]): Promise<void> => {
   for (const id of userIds) {
     try {
-      await prisma.user.delete({ where: { id } });
+      // Skip undefined or empty IDs
+      if (!id || id.trim() === '') {
+        console.warn('Skipping cleanup for undefined or empty user ID');
+        continue;
+      }
+      
+      // Check if user exists before attempting to delete
+      const user = await prisma.user.findUnique({ where: { id } });
+      if (user) {
+        await prisma.user.delete({ where: { id } });
+        console.log(`✅ Cleaned up test user: ${id}`);
+      } else {
+        console.log(`ℹ️ User ${id} not found, skipping cleanup`);
+      }
     } catch (error) {
-      console.warn(`Failed to cleanup test user ${id}:`, error);
+      // Only log warnings for non-P2025 errors (record not found)
+      if (error instanceof Error && !error.message.includes('No record was found')) {
+        console.warn(`Failed to cleanup test user ${id}:`, error);
+      }
     }
   }
 };
@@ -200,6 +216,12 @@ export const cleanupTestUsers = async (userIds: string[]): Promise<void> => {
  * Clean up a single test user
  */
 export const cleanupTestUser = async (user: TestUser): Promise<void> => {
+  // Check if user has a valid ID before attempting cleanup
+  if (!user || !user.id) {
+    console.warn('Cannot cleanup test user: user or user.id is undefined');
+    return;
+  }
+  
   await cleanupTestUsers([user.id]);
 };
 

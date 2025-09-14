@@ -58,7 +58,7 @@ describe('Workflow Generation API Integration Tests', () => {
     const hashedPassword = await bcrypt.hash('testPassword123', 12);
     testUser = await prisma.user.create({
       data: {
-        email: 'workflow-test@example.com',
+        email: 'workflow-test@testuser.local',
         name: 'Workflow Test User',
         password: hashedPassword,
         role: 'USER',

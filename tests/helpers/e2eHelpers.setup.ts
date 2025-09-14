@@ -30,6 +30,17 @@ export const setupE2E = async (
   user: TestUser,
   options: E2ESetupOptions = {}
 ): Promise<void> => {
+  // Block external requests to prevent ERR_ABORTED errors in tests
+  await page.route('**/google-analytics.com/**', route => route.abort());
+  await page.route('**/googletagmanager.com/**', route => route.abort());
+  await page.route('**/googleadservices.com/**', route => route.abort());
+  await page.route('**/googlesyndication.com/**', route => route.abort());
+  await page.route('**/doubleclick.net/**', route => route.abort());
+  await page.route('**/facebook.com/tr/**', route => route.abort());
+  await page.route('**/connect.facebook.net/**', route => route.abort());
+  await page.route('**/twitter.com/i/adsct/**', route => route.abort());
+  await page.route('**/analytics.twitter.com/**', route => route.abort());
+  
   // Set up proper request management following user-rules.md testing requirements
   // Priority: Fast, reliable, isolated tests that don't overwhelm the system
   await page.context().addInitScript(() => {
@@ -228,6 +239,12 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
       await page.goto('/dashboard?tab=connections', { waitUntil: 'domcontentloaded', timeout: 10000 });
       await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
       console.log(`🔍 E2E DEBUG: Successfully navigated to connections tab via URL`);
+    } else if (options.tab === 'chat') {
+      // Navigate to chat tab by URL to ensure it's properly initialized
+      console.log(`🔍 E2E DEBUG: Navigating to chat tab via URL`);
+      await page.goto('/dashboard?tab=chat', { waitUntil: 'domcontentloaded', timeout: 10000 });
+      await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+      console.log(`🔍 E2E DEBUG: Successfully navigated to chat tab via URL`);
     } else {
       // For other tabs, just ensure the dashboard is loaded and continue
       console.log(`🔍 E2E DEBUG: Skipping tab navigation for ${options.tab} - dashboard is ready`);

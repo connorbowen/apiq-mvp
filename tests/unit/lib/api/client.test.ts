@@ -52,7 +52,7 @@ describe('ApiClient - UX Simplification', () => {
       const mockResponse: RegisterResponse = {
         user: {
           id: '1',
-          email: 'test@example.com',
+          email: 'test@testuser.local',
           role: 'user',
           isEmailVerified: false,
           onboardingState: {
@@ -81,16 +81,16 @@ describe('ApiClient - UX Simplification', () => {
         data: { success: true, data: mockResponse }
       });
 
-      const result = await apiClient.registerSimple('test@example.com', 'password123');
+      const result = await apiClient.registerSimple('test@testuser.local', 'password123');
 
       expect(result.success).toBe(true);
-      expect(result.data?.user.email).toBe('test@example.com');
+      expect(result.data?.user.email).toBe('test@testuser.local');
       expect(result.data?.requiresVerification).toBe(false);
       expect(mockAxios).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'POST',
           url: 'http://localhost:3000/api/auth/register',
-          data: { email: 'test@example.com', password: 'password123' }
+          data: { email: 'test@testuser.local', password: 'password123' }
         })
       );
     });
@@ -99,7 +99,7 @@ describe('ApiClient - UX Simplification', () => {
       const mockResponse: RegisterResponse = {
         user: {
           id: '1',
-          email: 'test@example.com',
+          email: 'test@testuser.local',
           role: 'user',
           isEmailVerified: false,
           onboardingState: {
@@ -128,7 +128,7 @@ describe('ApiClient - UX Simplification', () => {
         data: { success: true, data: mockResponse }
       });
 
-      const result = await apiClient.registerSimple('test@example.com', 'password123');
+      const result = await apiClient.registerSimple('test@testuser.local', 'password123');
 
       expect(result.success).toBe(true);
       expect(result.data?.requiresVerification).toBe(true);
@@ -138,7 +138,7 @@ describe('ApiClient - UX Simplification', () => {
       const mockResponse: LoginResponse = {
         user: {
           id: '1',
-          email: 'test@example.com',
+          email: 'test@testuser.local',
           role: 'user',
           isEmailVerified: true,
           onboardingState: {
@@ -169,7 +169,7 @@ describe('ApiClient - UX Simplification', () => {
         data: { success: true, data: mockResponse }
       });
 
-      const result = await apiClient.login('test@example.com', 'password123');
+      const result = await apiClient.login('test@testuser.local', 'password123');
 
       expect(result.success).toBe(true);
       expect(result.data?.redirectTo).toBe('/dashboard?tab=chat');
@@ -179,7 +179,7 @@ describe('ApiClient - UX Simplification', () => {
       const mockResponse = {
         user: {
           id: '1',
-          email: 'test@example.com',
+          email: 'test@testuser.local',
           name: 'Test User',
           role: 'user',
           isEmailVerified: true,
@@ -210,7 +210,7 @@ describe('ApiClient - UX Simplification', () => {
         data: { success: true, data: mockResponse }
       });
 
-      const result = await apiClient.login('test@example.com', 'password123');
+      const result = await apiClient.login('test@testuser.local', 'password123');
 
       expect(result.success).toBe(true);
       expect(result.data?.user.name).toBe('Test User');
@@ -403,7 +403,7 @@ describe('ApiClient - UX Simplification', () => {
       const mockResponse: LoginResponse = {
         user: {
           id: '1',
-          email: 'test@example.com',
+          email: 'test@testuser.local',
           role: 'user',
           isEmailVerified: true,
           onboardingState: {
@@ -434,7 +434,7 @@ describe('ApiClient - UX Simplification', () => {
         data: { success: true, data: mockResponse }
       });
 
-      const result = await apiClient.login('test@example.com', 'password123');
+      const result = await apiClient.login('test@testuser.local', 'password123');
 
       expect(result.success).toBe(true);
       expect(result.data?.redirectTo).toBe('/dashboard?tab=chat');
@@ -443,7 +443,7 @@ describe('ApiClient - UX Simplification', () => {
     test('should support new tab structure', async () => {
       const mockUser: UserProfile = {
         id: '1',
-        email: 'test@example.com',
+        email: 'test@testuser.local',
         role: 'user',
         isEmailVerified: true,
         onboardingState: {
@@ -479,7 +479,7 @@ describe('ApiClient - UX Simplification', () => {
       const mockResponse: LoginResponse = {
         user: {
           id: '1',
-          email: 'test@example.com',
+          email: 'test@testuser.local',
           role: 'user',
           isEmailVerified: true,
           onboardingState: {
@@ -510,7 +510,7 @@ describe('ApiClient - UX Simplification', () => {
         data: { success: true, data: mockResponse }
       });
 
-      const result = await apiClient.login('test@example.com', 'password123');
+      const result = await apiClient.login('test@testuser.local', 'password123');
 
       expect(result.success).toBe(true);
       expect(result.data?.redirectTo).toBe('/dashboard?tab=workflows');

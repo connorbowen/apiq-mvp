@@ -352,7 +352,7 @@ describe('API Connections Management', () => {
           name: 'oauth2-access-token',
           type: 'OAUTH2_ACCESS_TOKEN',
           encryptedData: 'encrypted-access-token',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id,
           metadata: {
             expiresAt: new Date(Date.now() + 3600000).toISOString(),

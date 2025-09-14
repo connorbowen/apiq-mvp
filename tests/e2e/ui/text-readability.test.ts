@@ -10,7 +10,7 @@ let uxHelper: UXComplianceHelper;
 test.describe('Enhanced Text Readability & Contrast', () => {
   test.beforeAll(async () => {
     testUser = await createE2EUser('USER', {
-      email: `e2e-text-readability-${generateTestId('user')}@example.com`,
+      email: `e2e-text-readability-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E Text Readability Test User'
     });

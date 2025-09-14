@@ -4,7 +4,7 @@ import { prisma } from '../../../../lib/database/client';;
 import { mockEmailService } from '../../../helpers/emailMock';
 
 describe('/api/auth/resend-verification integration', () => {
-  const testEmail = 'integration-test@example.com';
+  const testEmail = 'integration-test@testuser.local';
   const testName = 'Integration Test User';
 
   beforeEach(async () => {

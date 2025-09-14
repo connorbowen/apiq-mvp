@@ -33,7 +33,7 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
 
   test.beforeAll(async () => {
     testUser = await createE2EUser(Role.USER, {
-      email: `e2e-chat-guidance-${generateTestId('user')}@example.com`,
+      email: `e2e-chat-guidance-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E Chat Guidance Test User'
     });
@@ -276,7 +276,7 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       await page.fill('[data-testid="connection-name-input"]', 'Test Shopify Connection');
       await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.shopify.com');
       await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
-      await page.fill('[data-testid="connection-apikey-input"]', 'test-key');
+      await page.fill('[data-testid="connection-apikey-input"]', 'test-api-key-12345');
       
       const submitButton = getPrimaryActionButton(page, 'submit-connection');
       await testModalSubmitLoading(page, '[data-testid="primary-action submit-connection"]', {

@@ -129,7 +129,7 @@ describe('Database Integration Tests', () => {
 
   it('should create and cleanup test data', async () => {
     // Create a test user
-    const testEmail = `test-db-user-${Date.now()}@example.com`;
+    const testEmail = `test-db-user-${Date.now()}@testuser.local`;
     const testUser = await prisma.user.create({
       data: {
         email: testEmail,

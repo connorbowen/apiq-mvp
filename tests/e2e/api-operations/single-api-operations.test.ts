@@ -25,7 +25,7 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
 
   test.beforeAll(async () => {
     testUser = await createE2EUser(Role.USER, {
-      email: `e2e-api-ops-${generateTestId('user')}@example.com`,
+      email: `e2e-api-ops-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E API Operations Test User'
     });
@@ -171,17 +171,17 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
     }
   });
 
-  test('should display Quick Execute button in connections tab', async ({ page }) => {
+  test('should display Explore button in connections tab', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard?tab=connections`);
     // Wait for page to load
     await page.waitForTimeout(2000);
 
-    // Verify the Quick Execute button is visible for the test connection
-    await expect(page.locator(`[data-testid="quick-execute-${testData.connection.id}"]`)).toBeVisible();
-    await expect(page.locator(`[data-testid="quick-execute-${testData.connection.id}"]`)).toContainText('Try It Out');
+    // Verify the Explore button is visible for the test connection (Try It Out is now in Explore page)
+    await expect(page.locator(`[data-testid="explore-api-${testData.connection.id}"]`)).toBeVisible();
+    await expect(page.locator(`[data-testid="explore-api-${testData.connection.id}"]`)).toContainText('Explore');
   });
 
-  test('should open Quick Execute modal from connections tab', async ({ page }) => {
+  test('should navigate to Explore page for API testing', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard?tab=connections`);
     // Wait for page to load
     await page.waitForTimeout(2000);
@@ -189,18 +189,19 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
     // Wait for the connection to be visible
     await expect(page.locator(`[data-testid="connection-card"]`)).toBeVisible();
     
-    // Check if the Quick Execute button exists
-    const quickExecuteButton = page.locator(`[data-testid="quick-execute-${testData.connection.id}"]`);
-    await expect(quickExecuteButton).toBeVisible();
+    // Check if the Explore button exists
+    const exploreButton = page.locator(`[data-testid="explore-api-${testData.connection.id}"]`);
+    await expect(exploreButton).toBeVisible();
     
-    // Click the Quick Execute button
-    await quickExecuteButton.click();
+    // Click the Explore button to navigate to API Explorer
+    await exploreButton.click();
 
-    // Wait a bit for the modal to appear
+    // Wait for navigation to complete
     await page.waitForTimeout(1000);
 
-    // Verify the modal opens
-    await expect(page.locator('[data-testid="quick-execute-modal"]')).toBeVisible();
+    // Verify we're on the API Explorer page
+    await expect(page).toHaveURL(/\/connections\/[^\/]+$/);
+    await expect(page.locator('h1:has-text("API Explorer")')).toBeVisible();
     
     // Check if there are endpoints available (execute button) or no endpoints message
     const executeButton = page.locator('[data-testid="primary-action execute-api-btn"]');
@@ -215,18 +216,18 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
     }
   });
 
-  test('should execute API call from Quick Execute modal', async ({ page }) => {
+  test('should execute API call from Explore page', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard?tab=connections`);
     // Wait for page to load
     await page.waitForTimeout(2000);
 
-    // Open Quick Execute modal
-    await page.locator(`[data-testid="quick-execute-${testData.connection.id}"]`).click();
-    await expect(page.locator('[data-testid="quick-execute-modal"]')).toBeVisible();
+    // Navigate to Explore page for API testing
+    await page.locator(`[data-testid="explore-api-${testData.connection.id}"]`).click();
+    await expect(page).toHaveURL(/\/connections\/[^\/]+$/);
 
-    // Check if there are endpoints available
+    // Check if there are endpoints available in the API Explorer
     const executeButton = page.locator('[data-testid="primary-action execute-api-btn"]');
-    const noEndpointsMessage = page.locator('[data-testid="quick-execute-modal"] .text-sm.text-gray-500').first();
+    const noEndpointsMessage = page.locator('text=No endpoints available');
     
     if (await executeButton.isVisible()) {
       // Fill in parameters if available
@@ -250,19 +251,17 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
     }
   });
 
-  test('should close Quick Execute modal', async ({ page }) => {
+  test('should navigate back from API Explorer', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard?tab=connections`);
     // Wait for page to load
     await page.waitForTimeout(2000);
 
-    // Open Quick Execute modal
-    await page.locator(`[data-testid="quick-execute-${testData.connection.id}"]`).click();
-    await expect(page.locator('[data-testid="quick-execute-modal"]')).toBeVisible();
+    // Navigate to API Explorer
+    await page.locator(`[data-testid="explore-api-${testData.connection.id}"]`).click();
+    await expect(page).toHaveURL(/\/connections\/[^\/]+$/);
 
-    // Close the modal using the Cancel button instead of the X button
-    await page.locator('[data-testid="quick-execute-modal"] button:has-text("Cancel")').click();
-
-    // Verify modal is closed
-    await expect(page.locator('[data-testid="quick-execute-modal"]')).not.toBeVisible();
+    // Navigate back to connections tab
+    await page.goBack();
+    await expect(page).toHaveURL(/dashboard.*tab=connections/);
   });
 });

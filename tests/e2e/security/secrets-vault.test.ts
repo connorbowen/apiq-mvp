@@ -78,7 +78,7 @@ test.describe('Secrets Vault E2E Tests', () => {
   test.beforeAll(async () => {
     // Create a real test user and get JWT
     testUser = await createTestUser(
-      `e2e-secrets-${generateTestId('user')}@example.com`,
+      `e2e-secrets-${generateTestId('user')}@testuser.local`,
       'e2eTestPass123',
       'ADMIN',
       'E2E Secrets Vault Test User'
@@ -1252,7 +1252,7 @@ test.describe('Secrets Vault E2E Tests', () => {
 // TODO: Add deterministic test data (P0)
 // - Create predictable test data with unique identifiers
 // - Use timestamps or UUIDs to avoid conflicts
-// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@example.com` });
+// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@testuser.local` });
 // - Ensure test data is isolated and doesn't interfere with other tests
 
 // TODO: Ensure test independence (P0)

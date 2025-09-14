@@ -33,7 +33,7 @@ describe('User Registration Integration Tests', () => {
   describe('POST /api/auth/register', () => {
     it('should register a new user successfully', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-register-${generateTestId()}@example.com`;
+      const testEmail = `test-register-${generateTestId()}@testuser.local`;
       const testName = `Test User ${generateTestId()}`;
       const testPassword = 'testpass123';
 
@@ -92,7 +92,7 @@ describe('User Registration Integration Tests', () => {
 
     it('should reject registration with weak password', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-weak-password-${generateTestId()}@example.com`;
+      const testEmail = `test-weak-password-${generateTestId()}@testuser.local`;
       const testName = `Test User ${generateTestId()}`;
       
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
@@ -114,7 +114,7 @@ describe('User Registration Integration Tests', () => {
 
     it('should reject registration with missing fields', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-missing-fields-${generateTestId()}@example.com`;
+      const testEmail = `test-missing-fields-${generateTestId()}@testuser.local`;
       
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
@@ -166,7 +166,7 @@ describe('User Registration Integration Tests', () => {
 
     it('should reject names with invalid characters', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-invalid-name-${generateTestId()}@example.com`;
+      const testEmail = `test-invalid-name-${generateTestId()}@testuser.local`;
       
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
@@ -188,7 +188,7 @@ describe('User Registration Integration Tests', () => {
 
     it('should accept names with valid characters', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-valid-name-${generateTestId()}@example.com`;
+      const testEmail = `test-valid-name-${generateTestId()}@testuser.local`;
       
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
@@ -209,7 +209,7 @@ describe('User Registration Integration Tests', () => {
 
     it('should reject names that are too short', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-short-name-${generateTestId()}@example.com`;
+      const testEmail = `test-short-name-${generateTestId()}@testuser.local`;
       
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
@@ -231,7 +231,7 @@ describe('User Registration Integration Tests', () => {
 
     it('should reject names that are too long', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-long-name-${generateTestId()}@example.com`;
+      const testEmail = `test-long-name-${generateTestId()}@testuser.local`;
       
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
@@ -253,7 +253,7 @@ describe('User Registration Integration Tests', () => {
 
     it('should reject names with special characters', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-special-chars-${generateTestId()}@example.com`;
+      const testEmail = `test-special-chars-${generateTestId()}@testuser.local`;
       
       const invalidNames = [
         'John@Doe',
@@ -295,7 +295,7 @@ describe('User Registration Integration Tests', () => {
 
     it('should accept names with allowed special characters', async () => {
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-allowed-chars-${generateTestId()}@example.com`;
+      const testEmail = `test-allowed-chars-${generateTestId()}@testuser.local`;
       
       const validNames = [
         'John Doe',
@@ -333,7 +333,7 @@ describe('User Registration Integration Tests', () => {
       
       // First register a user to get a verification token
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-verify-${generateTestId()}@example.com`;
+      const testEmail = `test-verify-${generateTestId()}@testuser.local`;
       const testName = `Test User ${generateTestId()}`;
       
       const { req: registerReq, res: registerRes } = createMocks<NextApiRequest, NextApiResponse>({
@@ -397,7 +397,7 @@ describe('User Registration Integration Tests', () => {
       const verifyHandler = require('../../../pages/api/auth/verify').default;
       
       // Create an expired verification token
-      const testEmail = `test-expired-${generateTestId()}@example.com`;
+      const testEmail = `test-expired-${generateTestId()}@testuser.local`;
       const expiredToken = await prisma.verificationToken.create({
         data: {
           email: testEmail,
@@ -450,7 +450,7 @@ describe('User Registration Integration Tests', () => {
       
       // First register a user
       const registerHandler = require('../../../pages/api/auth/register').default;
-      const testEmail = `test-resend-${generateTestId()}@example.com`;
+      const testEmail = `test-resend-${generateTestId()}@testuser.local`;
       const testName = `Test User ${generateTestId()}`;
       
       const { req: registerReq, res: registerRes } = createMocks<NextApiRequest, NextApiResponse>({
@@ -486,7 +486,7 @@ describe('User Registration Integration Tests', () => {
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',
         body: {
-          email: 'nonexistent@example.com'
+          email: 'nonexistent@testuser.local'
         }
       });
 

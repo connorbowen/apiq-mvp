@@ -68,7 +68,7 @@ describe('VerifyPage', () => {
         refreshToken: 'mock-refresh-token',
         user: {
           id: 'user-123',
-          email: 'test@example.com',
+          email: 'test@testuser.local',
           name: 'Test User',
           role: 'USER'
         }

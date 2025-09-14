@@ -21,7 +21,7 @@ describe('RBAC Integration: Endpoint Deletion', () => {
       where: {
         OR: [
           { email: { contains: 'test-' } },
-          { email: { contains: '@example.com' } }
+          { email: { contains: '@testuser.local' } }
         ]
       }
     });

@@ -250,7 +250,7 @@ test.describe('Message Banner', () => {
       name: 'Test Connection for Workflow',
       description: 'Connection for testing workflow generation',
       baseUrl: 'https://httpbin.org/get',
-      apiKey: 'test-key-123'
+      apiKey: 'test-api-key-12345-123'
     });
     
     // Navigate back to chat tab

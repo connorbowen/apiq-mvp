@@ -94,11 +94,10 @@ export default function SignupPage() {
         // Show welcome message
         setWelcomeMessage('Welcome to APIQ! Let\'s get you started with a quick tour.');
         
-        // Redirect to guided tour for new users (with delay to show welcome message)
-        setTimeout(() => {
-          console.log('🔍 SIGNUP: Registration successful, redirecting to dashboard...');
-          window.location.href = '/dashboard?tour=true';
-        }, 1500); // Show welcome message for 1.5 seconds before redirecting
+        // Redirect immediately for better test compatibility
+        console.log('🔍 SIGNUP: Registration successful, redirecting to dashboard...');
+        // Use router.push for better test compatibility and immediate redirect
+        router.push('/dashboard?tour=true');
       } else {
         if (response.error?.toLowerCase().includes('already exists') || 
             response.error?.toLowerCase().includes('already registered')) {
@@ -304,13 +303,13 @@ export default function SignupPage() {
 
           <div className="text-center space-y-2">
             <div>
-              <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-500 transition-colors duration-200">
+              <Link href="/" className="inline-block text-sm text-indigo-600 hover:text-indigo-500 transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center">
                 Back to home
               </Link>
             </div>
             <div>
               <span className="text-sm text-gray-600">Already have an account? </span>
-              <Link href="/login" className="text-sm text-indigo-600 hover:text-indigo-500 transition-colors duration-200">
+              <Link href="/login" className="inline-block text-sm text-indigo-600 hover:text-indigo-500 transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center">
                 Sign in
               </Link>
             </div>

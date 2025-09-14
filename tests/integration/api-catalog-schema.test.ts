@@ -47,7 +47,7 @@ describe('API Catalog Schema Integration Tests', () => {
   beforeAll(async () => {
     // Create test user
     testUser = await createTestUser({
-      email: `catalog-schema-${generateTestId('user')}@example.com`,
+      email: `catalog-schema-${generateTestId('user')}@testuser.local`,
       password: 'testPass123',
       name: 'API Catalog Schema Test User'
     });
@@ -356,7 +356,7 @@ describe('API Catalog Schema Integration Tests', () => {
           name: 'Test Connection',
           baseUrl: catalog.baseUrl,
           authType: 'API_KEY',
-          authConfig: { apiKey: 'test-key' }
+          authConfig: { apiKey: 'test-api-key-12345' }
         }
       });
 

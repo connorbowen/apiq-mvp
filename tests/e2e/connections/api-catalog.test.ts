@@ -51,7 +51,7 @@ test.describe('API Catalog Architecture E2E Tests', () => {
   test.beforeAll(async () => {
     // Create a real test user using new helper
     testUser = await createE2EUser('ADMIN', {
-      email: `e2e-catalog-${generateTestId('user')}@example.com`,
+      email: `e2e-catalog-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E API Catalog Test User'
     });

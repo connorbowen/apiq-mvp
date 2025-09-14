@@ -24,7 +24,7 @@ describe('Authentication Integration Tests', () => {
     const testData = await createCommonTestData();
     // Create an admin user for testing
     const adminUser = await createTestUser(
-      `admin-${generateTestId()}@example.com`,
+      `admin-${generateTestId()}@testuser.local`,
       'adminpass123',
       Role.ADMIN,
       'Test Admin'
@@ -54,7 +54,7 @@ describe('Authentication Integration Tests', () => {
     it('should reject invalid credentials with clear UX-compliant error messaging', async () => {
       const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
-          email: `invalid-${generateTestId()}@example.com`,
+          email: `invalid-${generateTestId()}@testuser.local`,
           password: 'wrongpassword'
         }
       });
@@ -71,7 +71,7 @@ describe('Authentication Integration Tests', () => {
     it('should reject missing credentials', async () => {
       const { req, res } = createUnauthenticatedRequest('POST', {
         body: {
-          email: `testadmin-${generateTestId()}@example.com`
+          email: `testadmin-${generateTestId()}@testuser.local`
           // missing password
         }
       });

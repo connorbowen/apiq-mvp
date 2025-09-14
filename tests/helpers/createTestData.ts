@@ -25,10 +25,10 @@ export interface CreateTestUserOptions {
  */
 export async function createTestUser(options: CreateTestUserOptions = {}): Promise<TestUser> {
   const timestamp = Date.now();
-  const defaultEmail = `test-user-${timestamp}@example.com`;
+  const defaultEmail = `testuser-${timestamp}@testuser.local`;
   
   const testUser: TestUser = {
-    id: `test-user-${timestamp}`,
+    id: `testuser-${timestamp}`,
     email: options.email || defaultEmail,
     firstName: options.firstName || 'Test',
     lastName: options.lastName || 'User',

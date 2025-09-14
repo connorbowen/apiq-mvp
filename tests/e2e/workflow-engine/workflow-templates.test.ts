@@ -12,7 +12,7 @@ test.describe('Workflow Templates & Libraries E2E Tests - P1 High Priority', () 
   test.beforeAll(async () => {
     // Create a real test user and get JWT
     testUser = await createTestUser(
-      `e2e-templates-${generateTestId('user')}@example.com`,
+      `e2e-templates-${generateTestId('user')}@testuser.local`,
       'e2eTestPass123',
       'ADMIN',
       'E2E Templates Test User'
@@ -582,7 +582,7 @@ test.describe('Workflow Templates & Libraries E2E Tests - P1 High Priority', () 
 // TODO: Add deterministic test data (P0)
 // - Create predictable test data with unique identifiers
 // - Use timestamps or UUIDs to avoid conflicts
-// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@example.com` });
+// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@testuser.local` });
 // - Ensure test data is isolated and doesn't interfere with other tests
 
 // TODO: Ensure test independence (P0)

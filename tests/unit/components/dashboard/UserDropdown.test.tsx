@@ -13,7 +13,7 @@ jest.mock('next/navigation', () => ({
 
 const mockUser = {
   id: 'user-1',
-  email: 'test@example.com',
+  email: 'test@testuser.local',
   name: 'Test User',
   role: 'USER',
   firstName: 'Test',
@@ -22,7 +22,7 @@ const mockUser = {
 
 const mockAdminUser = {
   id: 'admin-1',
-  email: 'admin@example.com',
+  email: 'admin@testuser.local',
   name: 'Admin User',
   role: 'ADMIN',
   firstName: 'Admin',
@@ -101,7 +101,7 @@ describe('UserDropdown', () => {
 
       fireEvent.click(screen.getByTestId('user-dropdown-toggle'));
 
-      expect(screen.getByText('test@example.com')).toBeInTheDocument();
+      expect(screen.getByText('test@testuser.local')).toBeInTheDocument();
       expect(screen.getByText('user')).toBeInTheDocument(); // role lowercase
     });
 

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { apiClient } from '../lib/api/client';
+import { ParameterExtractionService } from '../lib/services/parameterExtractionService';
+import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFormatter';
 
 interface Endpoint {
   id: string;
@@ -43,14 +45,17 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
   const [requestBody, setRequestBody] = useState<string>('');
   const [customHeaders, setCustomHeaders] = useState<Record<string, string>>({});
   const [result, setResult] = useState<ExecutionResult | null>(null);
+  const [formattedResponse, setFormattedResponse] = useState<FormattedResponse | null>(null);
   const [error, setError] = useState<string>('');
 
-  // Initialize parameters from endpoint schema
+  // Initialize parameters from enhanced endpoint schema
   const initializeParameters = () => {
     const initialParams: Record<string, any> = {};
     if (endpoint.parameters) {
-      endpoint.parameters.forEach(param => {
-        if (param.in === 'query' || param.in === 'path') {
+      // Use enhanced parameters if available, otherwise fall back to raw parameters
+      const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
+      enhancedEndpoint.parameters.forEach(param => {
+        if (param.location === 'query' || param.location === 'path') {
           initialParams[param.name] = param.type === 'boolean' ? false : 
                                     param.type === 'number' ? 0 : '';
         }
@@ -119,6 +124,21 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
 
       if (response.success && response.data) {
         setResult(response.data);
+        
+        // Format the response for human-friendly display
+        if (response.data.responseData !== undefined) {
+          const apiResponse = {
+            method: endpoint.method,
+            url: endpoint.path,
+            statusCode: response.data.statusCode || 200,
+            responseData: response.data.responseData,
+            responseHeaders: response.data.responseHeaders || {},
+            executionTime: response.data.executionTime || 0,
+            error: response.data.error
+          };
+          const formatted = ResponseFormatter.formatApiResponse(apiResponse);
+          setFormattedResponse(formatted);
+        }
       } else {
         setError(response.error || 'Failed to execute operation');
       }
@@ -174,47 +194,62 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
             <div data-testid="parameter-form">
               <h4 className="text-sm font-medium text-gray-900 mb-3">Parameters</h4>
               <div className="space-y-3">
-                {endpoint.parameters.map((param, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <label className="flex-1 text-sm text-gray-700">
-                      {param.name}
-                      {param.required && <span className="text-red-500 ml-1">*</span>}
-                      <span className="text-gray-500 ml-2">({param.type})</span>
-                    </label>
-                    <div className="flex-1">
-                      {param.type === 'boolean' ? (
-                        <select
-                          value={parameters[param.name] || ''}
-                          onChange={(e) => handleParameterChange(param.name, e.target.value === 'true')}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                          data-testid={`parameter-${param.name}`}
-                        >
-                          <option value="">Select...</option>
-                          <option value="true">true</option>
-                          <option value="false">false</option>
-                        </select>
-                      ) : param.type === 'number' ? (
-                        <input
-                          type="number"
-                          value={parameters[param.name] || ''}
-                          onChange={(e) => handleParameterChange(param.name, e.target.value ? Number(e.target.value) : '')}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                          data-testid={`parameter-${param.name}`}
-                          placeholder={param.description}
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={parameters[param.name] || ''}
-                          onChange={(e) => handleParameterChange(param.name, e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                          data-testid={`parameter-${param.name}`}
-                          placeholder={param.description}
-                        />
-                      )}
+                {(() => {
+                  const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
+                  return enhancedEndpoint.parameters.map((param, index) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <label className="flex-1 text-sm text-gray-700">
+                        {param.name}
+                        {param.required && <span className="text-red-500 ml-1">*</span>}
+                        <span className="text-gray-500 ml-2">({param.type})</span>
+                      </label>
+                      <div className="flex-1">
+                        {param.type === 'boolean' ? (
+                          <select
+                            value={parameters[param.name] || ''}
+                            onChange={(e) => handleParameterChange(param.name, e.target.value === 'true')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            data-testid={`parameter-${param.name}`}
+                          >
+                            <option value="">Select...</option>
+                            <option value="true">true</option>
+                            <option value="false">false</option>
+                          </select>
+                        ) : param.type === 'number' ? (
+                          <input
+                            type="number"
+                            value={parameters[param.name] || ''}
+                            onChange={(e) => handleParameterChange(param.name, e.target.value ? Number(e.target.value) : '')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            data-testid={`parameter-${param.name}`}
+                            placeholder={param.description || `Enter ${param.name}`}
+                            min={param.validation?.min}
+                            max={param.validation?.max}
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            value={parameters[param.name] || ''}
+                            onChange={(e) => handleParameterChange(param.name, e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                            data-testid={`parameter-${param.name}`}
+                            placeholder={param.description || `Enter ${param.name}`}
+                            pattern={param.validation?.pattern}
+                          />
+                        )}
+                        {/* Show natural language mappings and examples */}
+                        <div className="mt-1 text-xs text-gray-500">
+                          {param.naturalLanguageMappings && param.naturalLanguageMappings.length > 0 && (
+                            <div>Also known as: {param.naturalLanguageMappings.join(', ')}</div>
+                          )}
+                          {param.examples && param.examples.length > 0 && (
+                            <div>Examples: {param.examples.join(', ')}</div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           )}
@@ -290,6 +325,39 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
           {/* Result Display */}
           {result && (
             <div className="space-y-3" data-testid="execution-result">
+              {/* Human-friendly summary */}
+              {formattedResponse && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className={`text-sm font-medium mb-2 ${
+                    formattedResponse.status === 'success' ? 'text-green-800' :
+                    formattedResponse.status === 'error' ? 'text-red-800' :
+                    'text-yellow-800'
+                  }`}>
+                    {formattedResponse.summary}
+                  </div>
+                  <div className="text-xs text-gray-600 mb-2">
+                    {formattedResponse.details}
+                  </div>
+                  <div className="text-sm text-gray-800 bg-white p-2 rounded border">
+                    {formattedResponse.data.formatted}
+                  </div>
+                  
+                  {/* Suggestions */}
+                  {formattedResponse.suggestions && formattedResponse.suggestions.length > 0 && (
+                    <div className="mt-2">
+                      <div className="text-xs font-medium text-gray-700 mb-1">💡 Suggestions</div>
+                      <div className="space-y-1">
+                        {formattedResponse.suggestions.map((suggestion, index) => (
+                          <div key={index} className="text-xs text-blue-600 bg-blue-50 p-2 rounded border">
+                            {suggestion}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Success Indicator */}
               {result.status === 'COMPLETED' && (
                 <div data-testid="execution-success" className="p-3 bg-green-50 border border-green-200 rounded-md">

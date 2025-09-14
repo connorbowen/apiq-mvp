@@ -288,7 +288,7 @@ test.describe('Landing Page Authentication Flows', () => {
 
   test.describe('Complete Authentication Journeys', () => {
     test('should complete full registration journey from landing page', async ({ page }) => {
-      const testEmail = `e2e-landing-reg-${generateTestId('user')}@example.com`;
+      const testEmail = `e2e-landing-reg-${generateTestId('user')}@testuser.local`;
       
       // Start from landing page
       await page.goto(BASE_URL);
@@ -347,7 +347,7 @@ test.describe('Landing Page Authentication Flows', () => {
       await page.goto(`${BASE_URL}/login`);
       
       // Try to login with invalid credentials
-      await page.getByLabel('Email address').fill('invalid@example.com');
+      await page.getByLabel('Email address').fill('invalid@testuser.local');
       await page.getByLabel('Password').fill('wrongpassword');
       
       // Submit login

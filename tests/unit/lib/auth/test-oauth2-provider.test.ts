@@ -40,7 +40,7 @@ describe('Test OAuth2 Provider', () => {
       state: 'test-state'
     };
 
-    const url = oauth2Service.generateAuthorizationUrl('test-user-id', 'test-connection-id', 'test', config);
+    const url = oauth2Service.generateAuthorizationUrl('testuser-id', 'test-connection-id', 'test', config);
     
     expect(url).toContain('http://localhost:3000/api/test-oauth2/authorize');
     expect(url).toContain('response_type=code');

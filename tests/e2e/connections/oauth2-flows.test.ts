@@ -20,7 +20,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
   test.beforeAll(async () => {
     // Create a real test user and get JWT (ADMIN role to access audit tab)
     testUser = await createE2EUser(Role.ADMIN, {
-      email: `e2e-oauth2-${generateTestId('user')}@example.com`,
+      email: `e2e-oauth2-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E OAuth2 Test User'
     });
@@ -759,7 +759,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Create a non-admin test user
       const nonAdminUser = await createE2EUser(Role.USER, {
-        email: `e2e-nonadmin-${generateTestId('user')}@example.com`,
+        email: `e2e-nonadmin-${generateTestId('user')}@testuser.local`,
         password: 'e2eTestPass123',
         name: 'E2E Non-Admin Test User'
       });
@@ -1561,7 +1561,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
 // TODO: Add deterministic test data (P0)
 // - Create predictable test data with unique identifiers
 // - Use timestamps or UUIDs to avoid conflicts
-// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@example.com` });
+// - Example: const testUser = await createTestUser({ email: `e2e-test-${Date.now()}@testuser.local` });
 // - Ensure test data is isolated and doesn't interfere with other tests
 
 // TODO: Ensure test independence (P0)

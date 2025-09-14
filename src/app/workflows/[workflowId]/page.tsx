@@ -25,6 +25,11 @@ export default function WorkflowDetailPage() {
   const [error, setError] = useState('');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const params = useParams();
   const router = useRouter();
   const workflowId = params?.workflowId as string;
@@ -35,7 +40,10 @@ export default function WorkflowDetailPage() {
       const response = await apiClient.getWorkflow(workflowId);
       
       if (response.success && response.data) {
-        setWorkflow(response.data.workflow);
+        const workflowData = response.data.workflow;
+        setWorkflow(workflowData);
+        setEditName(workflowData.name);
+        setEditDescription(workflowData.description || '');
       } else {
         setError(response.error || 'Failed to load workflow');
       }
@@ -74,6 +82,69 @@ export default function WorkflowDetailPage() {
       setError('Failed to execute workflow');
       setIsExecuting(false);
     }
+  };
+
+  const handleEditName = () => {
+    setIsEditingName(true);
+  };
+
+  const handleEditDescription = () => {
+    setIsEditingDescription(true);
+  };
+
+  const handleSaveName = async () => {
+    if (!editName.trim()) {
+      setError('Workflow name is required');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await apiClient.updateWorkflow(workflowId, {
+        name: editName.trim()
+      });
+      
+      if (response.success) {
+        setWorkflow(prev => prev ? { ...prev, name: editName.trim() } : null);
+        setIsEditingName(false);
+        setError('');
+      } else {
+        throw new Error(response.error || 'Failed to update workflow name');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update workflow name');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveDescription = async () => {
+    setIsSaving(true);
+    try {
+      const response = await apiClient.updateWorkflow(workflowId, {
+        description: editDescription.trim()
+      });
+      
+      if (response.success) {
+        setWorkflow(prev => prev ? { ...prev, description: editDescription.trim() } : null);
+        setIsEditingDescription(false);
+        setError('');
+      } else {
+        throw new Error(response.error || 'Failed to update workflow description');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update workflow description');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingName(false);
+    setIsEditingDescription(false);
+    setEditName(workflow?.name || '');
+    setEditDescription(workflow?.description || '');
+    setError('');
   };
 
   if (isLoading) {
@@ -177,7 +248,44 @@ export default function WorkflowDetailPage() {
                   </ol>
                 </nav>
                 <div className="mt-2 flex items-center justify-between">
-                  <h1 className="text-3xl font-bold text-gray-900">{workflow.name}</h1>
+                  <div className="flex-1">
+                    {isEditingName ? (
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="text-3xl font-bold text-gray-900 bg-transparent border-b-2 border-indigo-500 focus:outline-none focus:border-indigo-700"
+                          data-testid="workflow-name-input"
+                        />
+                        <button
+                          onClick={handleSaveName}
+                          disabled={isSaving}
+                          data-testid="save-changes-btn"
+                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
+                        >
+                          {isSaving ? 'Saving...' : 'Save'}
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <h1 className="text-3xl font-bold text-gray-900">{workflow.name}</h1>
+                        <button
+                          onClick={handleEditName}
+                          data-testid="edit-workflow-btn"
+                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex space-x-3">
                     <button
                       onClick={executeWorkflow}
@@ -196,6 +304,7 @@ export default function WorkflowDetailPage() {
                     </button>
                     <Link
                       href={`/workflows/${workflowId}/edit`}
+                      data-testid="edit-workflow-btn"
                       className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
                       Edit
@@ -230,7 +339,44 @@ export default function WorkflowDetailPage() {
                 <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                   <dt className="text-sm font-medium text-gray-500">Description</dt>
                   <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {workflow.description || 'No description provided'}
+                    {isEditingDescription ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                          rows={3}
+                          data-testid="description-input"
+                        />
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={handleSaveDescription}
+                            disabled={isSaving}
+                            data-testid="save-description-btn"
+                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
+                          >
+                            {isSaving ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start justify-between">
+                        <span>{workflow.description || 'No description provided'}</span>
+                        <button
+                          onClick={handleEditDescription}
+                          data-testid="edit-description-btn"
+                          className="ml-2 inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
                   </dd>
                 </div>
                 <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -252,6 +398,48 @@ export default function WorkflowDetailPage() {
                   </dd>
                 </div>
               </dl>
+            </div>
+          </div>
+
+          {/* Workflow Steps */}
+          <div className="mt-8">
+            <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+              <div className="px-4 py-5 sm:px-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">Workflow Steps</h3>
+                    <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                      Configure the steps that make up your workflow.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => router.push(`/workflows/${workflowId}/edit`)}
+                    data-testid="edit-steps-btn"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Edit Steps
+                  </button>
+                </div>
+              </div>
+              <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <div className="text-center py-8">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No steps configured</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Add steps to your workflow to get started.
+                  </p>
+                  <div className="mt-6">
+                    <button
+                      onClick={() => router.push(`/workflows/${workflowId}/edit`)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      Add Steps
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

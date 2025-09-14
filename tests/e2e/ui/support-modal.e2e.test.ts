@@ -6,7 +6,7 @@ test.describe('Support Modal', () => {
   test.beforeEach(async ({ page }) => {
     // Log in as a test user (replace with your login helper if needed)
     await page.goto('/login');
-    await page.fill('input[type="email"]', 'profile-test@example.com');
+    await page.fill('input[type="email"]', 'profile-test@testuser.local');
     await page.fill('input[type="password"]', 'testpassword123');
     await page.click('button[type="submit"]');
     await page.waitForURL('/dashboard');

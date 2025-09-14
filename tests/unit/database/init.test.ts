@@ -164,7 +164,7 @@ describe('DatabaseInitializer', () => {
     });
 
     it('should use environment variables for admin credentials', async () => {
-      process.env.DEFAULT_ADMIN_EMAIL = 'custom@example.com';
+      process.env.DEFAULT_ADMIN_EMAIL = 'custom@testuser.local';
       process.env.DEFAULT_ADMIN_PASSWORD = 'custompass';
 
       (testDatabaseConnection as jest.Mock).mockResolvedValue(true);
@@ -173,7 +173,7 @@ describe('DatabaseInitializer', () => {
       (hashPassword as jest.Mock).mockResolvedValue('hashed-password');
       (prisma.user.create as jest.Mock).mockResolvedValue({
         id: 'admin-user-id',
-        email: 'custom@example.com'
+        email: 'custom@testuser.local'
       });
       (prisma.auditLog.create as jest.Mock).mockResolvedValue({});
 
@@ -181,7 +181,7 @@ describe('DatabaseInitializer', () => {
 
       expect(result).toBe(true);
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { email: 'custom@example.com' }
+        where: { email: 'custom@testuser.local' }
       });
       expect(hashPassword).toHaveBeenCalledWith('custompass');
     });

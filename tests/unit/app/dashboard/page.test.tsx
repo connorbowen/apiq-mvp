@@ -103,7 +103,7 @@ const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
 describe('DashboardPage', () => {
   const mockUser = {
     id: '1',
-    email: 'test@example.com',
+    email: 'test@testuser.local',
     name: 'Test User',
     role: 'user' as const,
     isActive: true,
@@ -113,7 +113,7 @@ describe('DashboardPage', () => {
 
   const mockAdminUser = {
     id: '2',
-    email: 'admin@example.com',
+    email: 'admin@testuser.local',
     name: 'Admin User',
     role: 'admin' as const,
     isActive: true,

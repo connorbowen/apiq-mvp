@@ -115,12 +115,12 @@ describe('RBAC (Role-Based Access Control)', () => {
   });
 
   describe('getUserContext', () => {
-    const mockUserId = 'test-user-id';
+    const mockUserId = 'testuser-id';
 
     it('should return user context for active user', async () => {
       const mockUser = {
         id: mockUserId,
-        email: 'test@example.com',
+        email: 'test@testuser.local',
         role: Role.ADMIN,
         isActive: true
       };
@@ -132,7 +132,7 @@ describe('RBAC (Role-Based Access Control)', () => {
       expect(result).toEqual({
         userId: mockUserId,
         role: Role.ADMIN,
-        email: 'test@example.com'
+        email: 'test@testuser.local'
       });
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
@@ -149,7 +149,7 @@ describe('RBAC (Role-Based Access Control)', () => {
     it('should return null for inactive user', async () => {
       const mockUser = {
         id: mockUserId,
-        email: 'test@example.com',
+        email: 'test@testuser.local',
         role: Role.USER,
         isActive: false
       };

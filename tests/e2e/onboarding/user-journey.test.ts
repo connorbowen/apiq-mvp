@@ -33,11 +33,11 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
   test.beforeAll(async () => {
     // Create test users for different onboarding stages
     newUser = await createE2EUser(Role.USER, {
-      email: `onboarding-new-${generateTestId()}@example.com`,
+      email: `onboarding-new-${generateTestId()}@testuser.local`,
       onboardingStage: 'NEW_USER',
     });
     existingUser = await createE2EUser(Role.USER, {
-      email: `onboarding-completed-${generateTestId()}@example.com`,
+      email: `onboarding-completed-${generateTestId()}@testuser.local`,
       onboardingStage: 'COMPLETED',
     });
   });
@@ -47,7 +47,7 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
     await page.goto('/signup');
     
     // Fill registration form with fresh email for each test
-    const testEmail = `onboarding-test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@example.com`;
+    const testEmail = `onboarding-test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@testuser.local`;
     await page.getByLabel('Email address').fill(testEmail);
     await page.locator('#password').fill('testpass123');
     await page.locator('#confirmPassword').fill('testpass123');

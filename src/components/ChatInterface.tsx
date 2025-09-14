@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { apiClient } from '../lib/api/client';
+import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFormatter';
 
 interface Message {
   id: string;
@@ -13,6 +14,19 @@ interface Message {
   explanation?: string;
   isExecuted?: boolean;
   executionResult?: any;
+  // Direct API call properties
+  intent?: 'api_call' | 'workflow_creation' | 'general_chat';
+  apiCallResult?: {
+    method: string;
+    url: string;
+    statusCode: number;
+    responseData: any;
+    responseHeaders: Record<string, string>;
+    executionTime: number;
+    error?: string;
+  };
+  formattedResponse?: FormattedResponse;
+  suggestedAction?: string;
 }
 
 interface ChatInterfaceProps {
@@ -65,10 +79,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     
     if (!inputMessage.trim() || isLoading) return;
 
+    const messageText = inputMessage.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputMessage,
+      content: messageText,
       timestamp: new Date()
     };
 
@@ -78,7 +93,47 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     setError('');
 
     try {
-      console.log('🔍 ChatInterface: About to call generateWorkflow with:', inputMessage);
+      // Check if this looks like a workflow creation request
+      // Be more specific about workflow keywords to avoid false positives
+      const workflowKeywords = ['workflow', 'automate', 'when', 'if', 'then', 'send', 'notify', 'email', 'slack', 'trello', 'github', 'jira', 'onboarding', 'template', 'process', 'step', 'sequence'];
+      const isWorkflowRequest = workflowKeywords.some(keyword => 
+        messageText.toLowerCase().includes(keyword)
+      ) && !messageText.toLowerCase().includes('pet') && !messageText.toLowerCase().includes('api');
+      
+      
+      if (isWorkflowRequest) {
+        // Skip direct API call for workflow creation requests
+      } else {
+        // First try direct API call execution for API-related requests
+        const directApiResponse = await apiClient.executeDirectApiCall(messageText, getPreviousApiResults());
+        
+        if (directApiResponse.success && directApiResponse.data) {
+          const { intent, apiCallResult, explanation, suggestedAction } = directApiResponse.data;
+          
+          // Only handle actual API calls, not workflow creation
+          if (intent === 'api_call' && apiCallResult) {
+            // Format the API response for human-friendly display
+            const formattedResponse = apiCallResult ? ResponseFormatter.formatApiResponse(apiCallResult) : undefined;
+            
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              type: 'assistant',
+              content: explanation,
+              timestamp: new Date(),
+              intent,
+              apiCallResult,
+              formattedResponse,
+              suggestedAction
+            };
+
+            setMessages(prev => [...prev, assistantMessage]);
+            return;
+          }
+        }
+      }
+
+      // Proceed with workflow generation
+      console.log('🔍 ChatInterface: Proceeding with workflow generation for:', messageText);
       const response = await apiClient.generateWorkflow(inputMessage);
       console.log('🔍 ChatInterface: generateWorkflow response:', response);
       
@@ -99,7 +154,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             isSaved: false  // Ensure the workflow is marked as not saved initially
           },
           steps: response.data.steps,
-          explanation: response.data.explanation
+          explanation: response.data.explanation,
+          intent: 'workflow_creation'
         };
         
         console.log('🔍 Created assistant message:', {
@@ -123,7 +179,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: `I'm sorry, I couldn't create that workflow. ${errorMessage}`,
+        content: `I'm sorry, I couldn't process that request. ${errorMessage}`,
         timestamp: new Date()
       };
       
@@ -132,6 +188,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       setIsLoading(false);
     }
   }, [inputMessage, isLoading, onWorkflowGenerated]);
+
+  // Helper function to get previous API call results for context
+  const getPreviousApiResults = useCallback(() => {
+    return messages
+      .filter(msg => msg.type === 'assistant' && msg.apiCallResult)
+      .map(msg => msg.apiCallResult)
+      .slice(-5); // Keep last 5 API call results for context
+  }, [messages]);
 
   const handleSaveWorkflow = useCallback(async (messageId: string) => {
     const message = messages.find(m => m.id === messageId);
@@ -458,6 +522,128 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                   )}
                 </div>
               )}
+
+              {/* Direct API call result */}
+              {message.apiCallResult && (
+                <div className="mt-3 p-3 bg-white rounded border border-gray-200" data-testid="api-call-result">
+                  <div className="text-xs font-medium text-gray-900 mb-2">
+                    🔗 API Call Result
+                  </div>
+                  
+                  {/* Human-friendly summary */}
+                  {message.formattedResponse && (
+                    <div className="mb-3">
+                      <div className={`text-sm font-medium mb-2 ${
+                        message.formattedResponse.status === 'success' ? 'text-green-800' :
+                        message.formattedResponse.status === 'error' ? 'text-red-800' :
+                        'text-yellow-800'
+                      }`}>
+                        {message.formattedResponse.summary}
+                      </div>
+                      <div className="text-xs text-gray-600 mb-2">
+                        {message.formattedResponse.details}
+                      </div>
+                      <div className="text-sm text-gray-800 bg-gray-50 p-2 rounded border">
+                        {message.formattedResponse.data.formatted}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* API call details */}
+                  <div className="mb-3 space-y-1">
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">Method:</span> 
+                      <span className="ml-1 px-1 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-mono" data-testid="api-call-method">
+                        {message.apiCallResult.method}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">URL:</span> 
+                      <span className="ml-1 font-mono text-xs" data-testid="api-call-url">
+                        {message.apiCallResult.url}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">Status:</span> 
+                      <span className={`ml-1 px-1 py-0.5 rounded text-xs font-mono ${
+                        message.apiCallResult.statusCode >= 200 && message.apiCallResult.statusCode < 300
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`} data-testid="response-status">
+                        {message.apiCallResult.statusCode}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">Duration:</span> 
+                      <span className="ml-1" data-testid="api-call-duration">
+                        {message.apiCallResult.executionTime}ms
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Suggestions */}
+                  {message.formattedResponse?.suggestions && message.formattedResponse.suggestions.length > 0 && (
+                    <div className="mb-3">
+                      <div className="text-xs font-medium text-gray-700 mb-1">💡 Suggestions</div>
+                      <div className="space-y-1">
+                        {message.formattedResponse.suggestions.map((suggestion, index) => (
+                          <div key={index} className="text-xs text-blue-600 bg-blue-50 p-2 rounded border">
+                            {suggestion}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Raw response data (collapsible) */}
+                  <details className="mb-3">
+                    <summary className="text-xs font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+                      📋 Raw Response Data
+                    </summary>
+                    <div className="mt-2">
+                      {/* Response headers */}
+                      {message.apiCallResult.responseHeaders && Object.keys(message.apiCallResult.responseHeaders).length > 0 && (
+                        <div className="mb-3">
+                          <div className="text-xs font-medium text-gray-700 mb-1">Response Headers</div>
+                          <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded border max-h-20 overflow-y-auto" data-testid="response-headers">
+                            {Object.entries(message.apiCallResult.responseHeaders).map(([key, value]) => (
+                              <div key={key} className="font-mono">
+                                {key}: {value}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Response body */}
+                      <div className="mb-3">
+                        <div className="text-xs font-medium text-gray-700 mb-1">Response Body</div>
+                        <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded border max-h-40 overflow-y-auto" data-testid="response-body">
+                          {message.apiCallResult.error ? (
+                            <div className="text-red-600" data-testid="api-call-error">
+                              <div className="font-medium" data-testid="error-message">Error: {message.apiCallResult.error}</div>
+                            </div>
+                          ) : (
+                            <pre className="whitespace-pre-wrap font-mono">
+                              {typeof message.apiCallResult.responseData === 'string' 
+                                ? message.apiCallResult.responseData
+                                : JSON.stringify(message.apiCallResult.responseData, null, 2)
+                              }
+                            </pre>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+
+                  {/* Suggested action */}
+                  {message.suggestedAction && (
+                    <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded border">
+                      💡 {message.suggestedAction}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -467,7 +653,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             <div className="bg-gray-100 text-gray-900 max-w-xs lg:max-w-md px-4 py-2 rounded-lg">
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                <span className="text-sm">Creating your workflow...</span>
+                <span className="text-sm">Processing your request...</span>
               </div>
             </div>
           </div>

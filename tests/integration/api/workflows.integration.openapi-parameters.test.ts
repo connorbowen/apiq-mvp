@@ -24,7 +24,7 @@ describe('Integration: OpenAPI Parameter Handling in Workflow Generation', () =>
       // Create a test user
       const user = await prisma.user.create({
         data: {
-          email: `test-openapi-params-${Date.now()}@example.com`,
+          email: `test-openapi-params-${Date.now()}@testuser.local`,
           name: 'Test OpenAPI Params User',
           password: 'testpass123',
           role: 'ADMIN',

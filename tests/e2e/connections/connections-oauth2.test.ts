@@ -6,7 +6,7 @@ import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUti
 import { closeAllModals, resetRateLimits, getPrimaryActionButton, completeTestTeardown, setupE2E } from '../../helpers/e2eHelpers';
 import { createE2EUser } from '../../helpers/authHelpers';
 import { validateUXCompliance } from '../../helpers/uiHelpers';
-import { testConnectionCreation, testConnectionCreationWithValidation, testOAuth2ConnectionCreation } from '../../helpers/dataHelpers';
+import { testConnectionCreation, testConnectionCreationWithValidation, testOAuth2ConnectionCreation, submitFormRobustly } from '../../helpers/dataHelpers';
 import { testModalSuccessMessage } from '../../helpers/modalHelpers';
 import { waitForMessage } from '../../helpers/waitHelpers';
 import { Role } from '../../../src/generated/prisma';
@@ -24,7 +24,7 @@ const trackConnection = (connectionId: string) => {
 test.describe('OAuth2 Connection Management E2E Tests', () => {
   test.beforeAll(async () => {
     testUser = await createE2EUser(Role.ADMIN, {
-      email: `e2e-conn-oauth2-${generateTestId('user')}@example.com`,
+      email: `e2e-conn-oauth2-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E OAuth2 Connections Test User'
     });
@@ -357,69 +357,236 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
       await page.fill('[data-testid="connection-name-input"]', 'OAuth2 Connection to Edit - Updated');
       await page.fill('[data-testid="connection-description-input"]', 'OAuth2 connection to be edited - Updated');
       
-      // Submit the edit using the same approach as the CRUD test
+      // Debug: Check what the form fields contain before submission
+      const nameValue = await page.inputValue('[data-testid="connection-name-input"]');
+      const descValue = await page.inputValue('[data-testid="connection-description-input"]');
+      console.log('🔍 Form values before submission:', { nameValue, descValue });
+      
+      // Submit the edit by clicking the update button
       console.log('🔍 About to click update button...');
       
-      // Try using Playwright's form submission method first
-      try {
-        const form = page.locator('form');
-        await form.submit();
-        console.log('✅ Form submitted using Playwright');
-      } catch (error) {
-        console.log('❌ Playwright form submission failed:', error);
-        
-        // Fallback: Make the API call directly using the actual connection ID
-        console.log('🔍 Making API call directly...');
-        console.log('🔍 Using connection ID from tracking:', connectionId);
-        
-        // Make the PUT request using page.request
-        const updateResponse = await page.request.put(`/api/connections/${connectionId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${jwt}`
-          },
-          data: {
-            name: 'OAuth2 Connection to Edit - Updated',
-            description: 'OAuth2 connection to be edited - Updated',
-            baseUrl: 'https://api.example.com',
-            authType: 'OAUTH2'
-          }
-        });
-        
-        const updateData = await updateResponse.json();
-        console.log('🔍 Direct API call response:', updateData);
-        
-        if (updateResponse.ok() && updateData.success) {
-          console.log('✅ Connection updated successfully via direct API call');
-          
-          // Close the edit modal and refresh the page to see the updated connection
-          console.log('🔍 Closing edit modal...');
-          await page.keyboard.press('Escape');
-          await page.waitForTimeout(1000);
-          
-          // Refresh the connections list
-          console.log('🔍 Refreshing page to see updated connection...');
-          await page.reload({ waitUntil: 'domcontentloaded' });
-          await page.waitForTimeout(2000);
-          
-          // Navigate back to connections tab
-          await page.goto('/dashboard?tab=connections');
-          await page.waitForTimeout(2000);
+      // Add debugging to see if the form submission is working
+      await page.evaluate(() => {
+        const form = document.querySelector('form[role="form"]');
+        if (form) {
+          console.log('🔍 Form found:', form);
+          console.log('🔍 Form action:', form.action);
+          console.log('🔍 Form method:', form.method);
         } else {
-          console.log('❌ Direct API call failed:', updateData);
+          console.log('❌ No form found');
         }
+      });
+      
+      // Find and click the update button with robust clicking
+      const updateButton = page.locator('[data-testid="primary-action update-connection-btn"]');
+      await updateButton.waitFor({ state: 'visible', timeout: 5000 });
+      
+      // Monitor all network requests and console logs
+      const requests: any[] = [];
+      page.on('request', request => {
+        if (request.url().includes('/api/connections')) {
+          console.log('🔍 Network request:', request.method(), request.url());
+          requests.push({
+            method: request.method(),
+            url: request.url(),
+            postData: request.postData()
+          });
+        }
+      });
+      
+      // Monitor console logs to see if any JavaScript events are triggered
+      page.on('console', msg => {
+        if (msg.text().includes('🔍')) {
+          console.log('🔍 Browser console:', msg.text());
+        }
+      });
+      
+      // Monitor JavaScript errors
+      page.on('pageerror', error => {
+        console.log('🔍 JavaScript error:', error.message);
+      });
+      
+      // Monitor unhandled promise rejections
+      page.on('unhandledRejection', error => {
+        console.log('🔍 Unhandled promise rejection:', error);
+      });
+      
+      // Debug the button state and form validity before clicking
+      const buttonInfo = await updateButton.evaluate((btn) => ({
+        disabled: btn.disabled,
+        type: btn.type,
+        innerText: btn.innerText,
+        clientWidth: btn.clientWidth,
+        clientHeight: btn.clientHeight,
+        offsetParent: !!btn.offsetParent,
+        style: btn.style.cssText,
+        computedStyle: window.getComputedStyle(btn).display
+      }));
+      console.log('🔍 Button state before click:', buttonInfo);
+      
+      // Check form validity and required fields
+      const formInfo = await page.evaluate(() => {
+        const form = document.querySelector('form[role="form"]');
+        if (!form) return { error: 'Form not found' };
+        
+        const requiredInputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+        const invalidInputs = form.querySelectorAll(':invalid');
+        
+        return {
+          formValid: form.checkValidity(),
+          requiredInputsCount: requiredInputs.length,
+          invalidInputsCount: invalidInputs.length,
+          invalidInputs: Array.from(invalidInputs).map(input => ({
+            name: input.name,
+            id: input.id,
+            testId: input.getAttribute('data-testid'),
+            value: input.value,
+            validity: input.validity ? {
+              valueMissing: input.validity.valueMissing,
+              typeMismatch: input.validity.typeMismatch,
+              valid: input.validity.valid
+            } : null
+          }))
+        };
+      });
+      console.log('🔍 Form validity before submit:', formInfo);
+      
+      // Use form submission instead of button clicks to avoid onClick handler issues
+      console.log('🔍 Using form submission to avoid onClick handler override issues...');
+      
+      // First, let's investigate what's overriding the onClick handler
+      const buttonAnalysis = await page.evaluate(() => {
+        const button = document.querySelector('[data-testid="primary-action update-connection-btn"]') as HTMLButtonElement;
+        if (!button) return { error: 'Button not found' };
+        
+        // Check for event listeners
+        const listeners = [];
+        const originalAddEventListener = button.addEventListener;
+        const originalRemoveEventListener = button.removeEventListener;
+        
+        // Check if there are any global event listeners that might interfere
+        const globalListeners = [];
+        const originalDocumentAddEventListener = document.addEventListener;
+        const originalWindowAddEventListener = window.addEventListener;
+        
+        return {
+          button: {
+            tagName: button.tagName,
+            type: button.type,
+            disabled: button.disabled,
+            onclick: button.onclick,
+            onclickString: button.onclick ? button.onclick.toString() : 'null',
+            attributes: Array.from(button.attributes).map(attr => `${attr.name}="${attr.value}"`),
+            parentElement: button.parentElement?.tagName,
+            form: button.form?.tagName,
+            style: button.style.cssText,
+            computedStyle: window.getComputedStyle(button).display,
+            zIndex: window.getComputedStyle(button).zIndex,
+            position: window.getComputedStyle(button).position
+          },
+          form: {
+            found: !!button.form,
+            action: button.form?.action,
+            method: button.form?.method,
+            onSubmit: button.form?.onsubmit ? button.form.onsubmit.toString() : 'null'
+          },
+          reactFiber: (() => {
+            const reactKey = Object.keys(button).find(key => key.startsWith('__reactInternalInstance') || key.startsWith('_reactInternalFiber'));
+            if (reactKey) {
+              const fiber = (button as any)[reactKey];
+              return {
+                key: reactKey,
+                props: fiber?.memoizedProps,
+                stateNode: fiber?.stateNode
+              };
+            }
+            return null;
+          })(),
+          eventListeners: {
+            hasOnClick: !!button.onclick,
+            hasAddEventListener: typeof button.addEventListener === 'function',
+            hasRemoveEventListener: typeof button.removeEventListener === 'function'
+          }
+        };
+      });
+      
+      console.log('🔍 Button analysis:', JSON.stringify(buttonAnalysis, null, 2));
+      
+      // Use robust form submission helper
+      const submissionSuccessful = await submitFormRobustly(
+        page,
+        'form[role="form"]',
+        '[data-testid="primary-action update-connection-btn"]'
+      );
+      
+      if (!submissionSuccessful) {
+        throw new Error('All form submission strategies failed');
       }
       
-      // Wait a moment to see if any requests are made
+      // Wait a moment to see what network requests are made
+      await page.waitForTimeout(2000);
+      console.log('🔍 All network requests made:', requests);
+      
+      // Wait for the update to complete
+      try {
+        // Wait for either success message or API response
+        const updateResult = await Promise.race([
+          page.waitForSelector('[data-testid="success-message"]', { timeout: 10000 }).then(() => 'success-message'),
+          page.waitForResponse(response => 
+            response.url().includes('/api/connections') && response.request().method() === 'PUT'
+          ).then(() => 'api-response')
+        ]);
+        console.log('✅ Update completed successfully via:', updateResult);
+        
+        // If we got a success message, check what it says
+        if (updateResult === 'success-message') {
+          const successMessage = await page.textContent('[data-testid="success-message"]');
+          console.log('🔍 Success message content:', successMessage);
+        }
+        
+        // If we got an API response, check if it was successful
+        if (updateResult === 'api-response') {
+          const response = await page.waitForResponse(response => 
+            response.url().includes('/api/connections') && response.request().method() === 'PUT'
+          );
+          const responseData = await response.json();
+          console.log('🔍 Update API response:', response.status, responseData);
+          
+          // Also log the request body to see what was sent
+          const requestBody = response.request().postData();
+          console.log('🔍 Update API request body:', requestBody);
+        }
+      } catch (error) {
+        console.log('❌ Update completion timeout:', error);
+        // Don't throw error immediately, let's see if the update actually worked
+        console.log('⚠️ Continuing despite timeout to check if update actually worked');
+      }
+      
+      // Close the edit modal
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(1000);
+      
+      // Refresh the page to see the updated connection
+      console.log('🔍 Refreshing page to see updated connection...');
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(2000);
+      
+      // Navigate back to connections tab
+      await page.goto('/dashboard?tab=connections');
       await page.waitForTimeout(2000);
       
       // Check if the updated connection name appears in the connection list
       const updatedConnectionExists = await page.evaluate(() => {
         const connectionCards = document.querySelectorAll('[data-testid="connection-card"]');
+        console.log('🔍 Found connection cards:', connectionCards.length);
+        
         for (const card of connectionCards) {
           const nameElement = card.querySelector('[data-testid="connection-name"]');
-          if (nameElement && nameElement.textContent?.includes('OAuth2 Connection to Edit - Updated')) {
-            return true;
+          if (nameElement) {
+            console.log('🔍 Connection name found:', nameElement.textContent);
+            if (nameElement.textContent?.includes('OAuth2 Connection to Edit - Updated')) {
+              return true;
+            }
           }
         }
         return false;
@@ -431,6 +598,31 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
         console.log('✅ Connection was successfully updated!');
       } else {
         console.log('❌ Updated connection not found in UI');
+        // Let's also check what connection names are actually visible
+        const visibleConnections = await page.evaluate(() => {
+          const connectionCards = document.querySelectorAll('[data-testid="connection-card"]');
+          const names = [];
+          for (const card of connectionCards) {
+            const nameElement = card.querySelector('[data-testid="connection-name"]');
+            if (nameElement) {
+              names.push(nameElement.textContent);
+            }
+          }
+          return names;
+        });
+        console.log('🔍 Visible connection names:', visibleConnections);
+        
+        // Let's also check if the connection name was actually updated in the database
+        // by looking for any connection that contains "Updated" in the name
+        const hasUpdatedConnection = visibleConnections.some(name => name.includes('Updated'));
+        console.log('🔍 Has any connection with "Updated" in name:', hasUpdatedConnection);
+        
+        if (hasUpdatedConnection) {
+          console.log('✅ Connection was updated, but with different name than expected');
+        } else {
+          console.log('❌ No connection was updated - the update did not work');
+        }
+        
         throw new Error('Connection was not updated in the UI');
       }
     });
@@ -490,34 +682,25 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
         throw new Error('Connection card not found after multiple attempts');
       }
       
-      // Find and click delete button using multiple approaches
-      console.log('🔍 Attempting to click delete button...');
+      // Click Edit button to open the edit modal where delete is now located
+      console.log('🔍 Clicking Edit button to open edit modal...');
       
-      // First try: Use Playwright locator with force
       try {
-        const deleteButton = page.locator('[data-testid="delete-connection-btn"]').first();
-        await deleteButton.click({ force: true, timeout: 5000 });
-        console.log('✅ Delete button clicked using Playwright force');
-      } catch (error) {
-        console.log('❌ Playwright force click failed:', error);
+        const editButton = page.locator('[data-testid="edit-connection-btn"]').first();
+        await editButton.click({ force: true, timeout: 5000 });
+        console.log('✅ Edit button clicked successfully');
         
-        // Second try: JavaScript click
-        try {
-          await page.evaluate(() => {
-            const deleteButton = document.querySelector('[data-testid="delete-connection-btn"]');
-            if (deleteButton) {
-              console.log('🔍 Triggering JavaScript click on delete button');
-              (deleteButton as HTMLButtonElement).click();
-              console.log('🔍 Delete button click completed');
-            } else {
-              console.log('❌ Delete button not found for JavaScript click');
-            }
-          });
-          console.log('✅ Delete button clicked using JavaScript');
-        } catch (jsError) {
-          console.log('❌ JavaScript click failed:', jsError);
-          throw new Error('All delete button click methods failed');
-        }
+        // Wait for edit modal to open
+        await page.waitForSelector('[data-testid="edit-connection-modal"]', { timeout: 5000 });
+        console.log('✅ Edit modal opened');
+        
+        // Now click the delete button inside the modal
+        const deleteButton = page.locator('[data-testid="delete-connection-btn"]');
+        await deleteButton.click({ force: true, timeout: 5000 });
+        console.log('✅ Delete button clicked in edit modal');
+      } catch (error) {
+        console.log('❌ Edit/Delete flow failed:', error);
+        throw new Error('Failed to delete connection via edit modal');
       }
       
       // Wait a moment for any potential confirmation dialog or immediate deletion
@@ -530,7 +713,42 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
         
         // Confirm deletion using JavaScript click to bypass z-index issues
         await page.evaluate(() => {
-          const confirmButton = document.querySelector('[data-testid="confirm-delete"], button:has-text("Delete"), button:has-text("Confirm")');
+          // Try multiple selectors for the confirm button
+          const selectors = [
+            '[data-testid="confirm-delete"]',
+            'button[data-testid*="confirm"]',
+            'button:contains("Delete")',
+            'button:contains("Confirm")',
+            'button:contains("OK")',
+            'button:contains("Yes")'
+          ];
+          
+          let confirmButton = null;
+          for (const selector of selectors) {
+            try {
+              confirmButton = document.querySelector(selector);
+              if (confirmButton) break;
+            } catch (e) {
+              // Skip invalid selectors
+              continue;
+            }
+          }
+          
+          // If no specific button found, look for any button in the dialog
+          if (!confirmButton) {
+            const dialog = document.querySelector('[role="dialog"]');
+            if (dialog) {
+              const buttons = dialog.querySelectorAll('button');
+              for (const button of buttons) {
+                const text = button.textContent?.toLowerCase() || '';
+                if (text.includes('delete') || text.includes('confirm') || text.includes('ok') || text.includes('yes')) {
+                  confirmButton = button;
+                  break;
+                }
+              }
+            }
+          }
+          
           if (confirmButton) {
             console.log('🔍 Triggering JavaScript click on confirm delete button');
             (confirmButton as HTMLButtonElement).click();

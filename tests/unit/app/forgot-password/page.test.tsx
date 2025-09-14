@@ -102,7 +102,7 @@ describe('ForgotPasswordPage', () => {
     const emailInput = screen.getByLabelText('Email address');
     const form = screen.getByRole('form');
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.submit(form);
 
     // Verify loading state is active during API call
@@ -127,7 +127,7 @@ describe('ForgotPasswordPage', () => {
     const emailInput = screen.getByLabelText('Email address');
     const form = screen.getByRole('form');
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.submit(form);
 
     // For security reasons, the page always redirects to success page
@@ -146,7 +146,7 @@ describe('ForgotPasswordPage', () => {
     const emailInput = screen.getByLabelText('Email address');
     const form = screen.getByRole('form');
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.submit(form);
 
     await waitFor(() => {
@@ -163,7 +163,7 @@ describe('ForgotPasswordPage', () => {
     const emailInput = screen.getByLabelText('Email address');
     const form = screen.getByRole('form');
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'test@testuser.local' } });
     fireEvent.submit(form);
 
     expect(screen.getByRole('button', { name: 'Sending...' })).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe('ForgotPasswordPage', () => {
     apiClient.requestPasswordReset.mockResolvedValue({ success: true });
 
     const validEmails = [
-      'test@example.com',
+      'test@testuser.local',
       'user.name@domain.co.uk',
       'user+tag@example.org',
       '123@numbers.com'
@@ -183,7 +183,7 @@ describe('ForgotPasswordPage', () => {
 
     const invalidEmails = [
       'invalid-email',
-      '@example.com',
+      '@testuser.local',
       'test@',
       'test.example.com',
       'test@.com'

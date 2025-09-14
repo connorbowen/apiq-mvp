@@ -36,7 +36,7 @@ describe('Profile API Integration Tests', () => {
     const hashedPassword = await bcrypt.hash('testpassword123', 12);
     mockUser = await prisma.user.create({
       data: {
-        email: 'profile-test@example.com',
+        email: 'profile-test@testuser.local',
         name: 'Profile Test User',
         password: hashedPassword,
         firstName: 'Profile',

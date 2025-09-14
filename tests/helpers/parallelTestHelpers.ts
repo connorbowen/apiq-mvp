@@ -19,7 +19,7 @@ export const generateTestId = (): string => {
  * Create a unique test user for parallel execution
  */
 export const createParallelTestUser = async (testId: string, role: string = 'USER') => {
-  const email = `e2e-parallel-${testId}@example.com`;
+  const email = `e2e-parallel-${testId}@testuser.local`;
   const password = 'e2eTestPass123';
   const name = `E2E Parallel Test User ${testId}`;
   
@@ -47,7 +47,7 @@ export const createParallelTestUser = async (testId: string, role: string = 'USE
  */
 export const cleanupParallelTestUser = async (testId: string) => {
   try {
-    const email = `e2e-parallel-${testId}@example.com`;
+    const email = `e2e-parallel-${testId}@testuser.local`;
     
     // Find the user
     const user = await prisma.user.findUnique({

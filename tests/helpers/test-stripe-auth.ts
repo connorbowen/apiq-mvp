@@ -22,7 +22,7 @@ if (!STRIPE_TEST_SECRET_KEY) {
 }
 
 // Test user credentials (from your test setup)
-const TEST_USER_EMAIL = 'stripe-test@example.com';
+const TEST_USER_EMAIL = 'stripe-test@testuser.local';
 const TEST_USER_PASSWORD = 'testpass123';
 
 // Ensure STRIPE_TEST_SECRET_KEY is treated as string after the check
@@ -356,7 +356,7 @@ class StripeAuthTester {
 
       // Test 2: Try to access credentials with wrong user
       const wrongUserResponse = await axios.post(`${BASE_URL}/api/auth/login`, {
-        email: 'wrong-user@example.com',
+        email: 'wrong-user@testuser.local',
         password: 'wrongpass'
       });
 

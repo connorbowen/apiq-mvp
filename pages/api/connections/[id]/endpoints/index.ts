@@ -51,7 +51,20 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       }
 
       // Get endpoints for the connection with optional filtering
+      console.log('🔍 [API] Calling getEndpointsForConnection with:', { connectionId, filters });
       const endpoints = await getEndpointsForConnection(connectionId, filters);
+      console.log('🔍 [API] getEndpointsForConnection returned:', { 
+        endpointCount: endpoints.length, 
+        hasRequestSchemas: endpoints.filter(e => e.requestSchema).length,
+        endpoints: endpoints.map(e => ({ 
+          id: e.id, 
+          path: e.path, 
+          method: e.method, 
+          hasRequestSchema: !!e.requestSchema,
+          hasParameters: !!e.parameters,
+          hasResponses: !!e.responses
+        }))
+      });
 
       logInfo('Retrieved endpoints for connection', {
         connectionId,

@@ -55,8 +55,9 @@ async function handleChatRequest(req: NextApiRequest, res: NextApiResponse, user
     });
 
     try {
-      // Create OpenAI service instance
-      const openaiService = await OpenAIService.create(userId);
+      // Create OpenAI service instance with system-wide API key
+      // This is the primary method since we provide OpenAI for all customers
+      const openaiService = OpenAIService.createFromEnv();
       
       // Generate workflow using OpenAI
       const workflowResponse = await openaiService.generateWorkflow({

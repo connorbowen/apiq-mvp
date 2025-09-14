@@ -2,6 +2,7 @@ import { prisma } from '../../../lib/database/client';
 import { logError, logInfo } from '../../utils/logger';
 import { ParsedOpenApiSpec } from './parser';
 import { SchemaDerefCache } from '../openapi/derefSchema';
+import { ParameterExtractionService } from '../services/parameterExtractionService';
 
 export interface ExtractedEndpoint {
   apiConnectionId: string;
@@ -61,13 +62,16 @@ export const extractAndStoreEndpoints = async (
             }
           }
 
+          // Store raw OpenAPI parameters for schema extraction
+          // Enhanced parameters can be generated on-the-fly when needed
+          
           extractedEndpoints.push({
             apiConnectionId,
             path,
             method: method.toUpperCase(),
             summary: op.summary,
             description: op.description,
-            parameters: op.parameters || [],
+            parameters: op.parameters || [], // Store raw OpenAPI parameters
             requestBody: op.requestBody,
             responses: op.responses,
             successSchema: responseSchema // for legacy, but also store as responseSchema below
@@ -148,6 +152,8 @@ export const getEndpointsForConnection = async (
   }
 ) => {
   try {
+    logInfo('🔍 [DEBUG] getEndpointsForConnection called', { apiConnectionId, filters });
+
     const whereClause: any = {
       apiConnectionId,
       isActive: true
@@ -187,6 +193,12 @@ export const getEndpointsForConnection = async (
     let fullSpec: any;
     try {
       fullSpec = JSON.parse(connection.rawSpec);
+      logInfo('🔍 [DEBUG] Parsed raw spec successfully', { 
+        apiConnectionId, 
+        specKeys: Object.keys(fullSpec),
+        hasPaths: !!fullSpec.paths,
+        pathCount: fullSpec.paths ? Object.keys(fullSpec.paths).length : 0
+      });
     } catch (error: any) {
       logError('Failed to parse raw OpenAPI spec', error, { apiConnectionId });
       throw new Error('Invalid OpenAPI specification format');
@@ -200,11 +212,27 @@ export const getEndpointsForConnection = async (
       ]
     });
 
+    console.log('🔍 [DEBUG] Found endpoints in database', { 
+      apiConnectionId, 
+      endpointCount: endpoints.length,
+      endpoints: endpoints.map(e => ({ id: e.id, path: e.path, method: e.method, hasRequestBody: !!e.requestBody, hasParameters: !!e.parameters }))
+    });
+
     // Create a cache for dereferencing schemas within this request
     const derefCache = new SchemaDerefCache();
 
     // Transform the endpoints to include schema data in the format expected by the frontend
     const transformedEndpoints = await Promise.all(endpoints.map(async endpoint => {
+      console.log('🔍 [DEBUG] Processing endpoint', { 
+        endpointId: endpoint.id, 
+        path: endpoint.path, 
+        method: endpoint.method,
+        hasRequestBody: !!endpoint.requestBody,
+        hasParameters: !!endpoint.parameters,
+        requestBodyType: typeof endpoint.requestBody,
+        parametersType: typeof endpoint.parameters
+      });
+
       const transformed: any = {
         id: endpoint.id,
         path: endpoint.path,
@@ -219,18 +247,42 @@ export const getEndpointsForConnection = async (
       let rawReqSchema: any = null;
       if (endpoint.requestBody) {
         const requestBody = endpoint.requestBody as any;
+        console.log('🔍 [DEBUG] Processing requestBody', { 
+          endpointId: endpoint.id, 
+          requestBody: JSON.stringify(requestBody, null, 2)
+        });
         if (requestBody.content) {
           const contentType = Object.keys(requestBody.content)[0];
           rawReqSchema = contentType ? requestBody.content[contentType]?.schema : null;
+        console.log('🔍 [DEBUG] Found requestBody content', { 
+          endpointId: endpoint.id, 
+          contentType, 
+          hasSchema: !!rawReqSchema,
+          schema: rawReqSchema ? JSON.stringify(rawReqSchema, null, 2) : null
+        });
         }
       } else if (endpoint.parameters) {
         // OpenAPI 2.0: Look for body parameter
         const parameters = endpoint.parameters as any[];
+        console.log('🔍 [DEBUG] Processing parameters', { 
+          endpointId: endpoint.id, 
+          parameters: JSON.stringify(parameters, null, 2)
+        });
         const bodyParam = parameters.find(param => param.in === 'body');
         rawReqSchema = bodyParam?.schema || null;
+        console.log('🔍 [DEBUG] Found body parameter', { 
+          endpointId: endpoint.id, 
+          hasBodyParam: !!bodyParam,
+          hasSchema: !!rawReqSchema,
+          schema: rawReqSchema ? JSON.stringify(rawReqSchema, null, 2) : null
+        });
       }
 
       if (rawReqSchema) {
+        console.log('🔍 [DEBUG] Attempting to dereference request schema', { 
+          endpointId: endpoint.id, 
+          rawSchema: JSON.stringify(rawReqSchema, null, 2)
+        });
         try {
           // Create a complete spec object that includes the schema and the full spec context
           const specWithSchema = {
@@ -239,6 +291,10 @@ export const getEndpointsForConnection = async (
           };
           const dereferenced = await derefCache.derefOnce(specWithSchema);
           transformed.requestSchema = dereferenced.schema;
+          console.log('🔍 [DEBUG] Successfully dereferenced request schema', { 
+            endpointId: endpoint.id, 
+            dereferencedSchema: JSON.stringify(transformed.requestSchema, null, 2)
+          });
         } catch (error: any) {
           logError('Failed to dereference request schema', error, { 
             endpointId: endpoint.id, 
@@ -247,7 +303,17 @@ export const getEndpointsForConnection = async (
           });
           // Fall back to raw schema if dereferencing fails
           transformed.requestSchema = rawReqSchema;
+          logInfo('🔍 [DEBUG] Using raw schema as fallback', { 
+            endpointId: endpoint.id, 
+            fallbackSchema: JSON.stringify(transformed.requestSchema, null, 2)
+          });
         }
+      } else {
+        logInfo('🔍 [DEBUG] No request schema found', { 
+          endpointId: endpoint.id, 
+          path: endpoint.path, 
+          method: endpoint.method
+        });
       }
 
       // Extract and dereference response schema from responses
@@ -289,8 +355,22 @@ export const getEndpointsForConnection = async (
         }
       }
 
+      logInfo('🔍 [DEBUG] Final transformed endpoint', { 
+        endpointId: endpoint.id, 
+        hasRequestSchema: !!transformed.requestSchema,
+        hasResponseSchema: !!transformed.responseSchema,
+        requestSchema: transformed.requestSchema ? JSON.stringify(transformed.requestSchema, null, 2) : null
+      });
+
       return transformed;
     }));
+
+    logInfo('🔍 [DEBUG] Returning transformed endpoints', { 
+      apiConnectionId, 
+      endpointCount: transformedEndpoints.length,
+      endpointsWithRequestSchema: transformedEndpoints.filter(e => e.requestSchema).length,
+      endpointsWithResponseSchema: transformedEndpoints.filter(e => e.responseSchema).length
+    });
 
     return transformedEndpoints;
   } catch (error: any) {

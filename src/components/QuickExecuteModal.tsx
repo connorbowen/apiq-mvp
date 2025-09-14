@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { apiClient } from '../lib/api/client';
+import { ParameterExtractionService } from '../lib/services/parameterExtractionService';
+import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFormatter';
 
 interface Endpoint {
   id: string;
@@ -53,6 +55,7 @@ export default function QuickExecuteModal({
   const [parameters, setParameters] = useState<Record<string, any>>({});
   const [requestBody, setRequestBody] = useState<string>('');
   const [result, setResult] = useState<ExecutionResult | null>(null);
+  const [formattedResponse, setFormattedResponse] = useState<FormattedResponse | null>(null);
   const [error, setError] = useState<string>('');
 
   // Initialize parameters when modal opens
@@ -60,8 +63,10 @@ export default function QuickExecuteModal({
     if (isOpen) {
       const initialParams: Record<string, any> = {};
       if (endpoint?.parameters) {
-        endpoint.parameters.forEach(param => {
-          if (param.in === 'query' || param.in === 'path') {
+        // Use enhanced parameters if available
+        const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
+        enhancedEndpoint.parameters.forEach(param => {
+          if (param.location === 'query' || param.location === 'path') {
             initialParams[param.name] = param.type === 'boolean' ? false : 
                                       param.type === 'number' ? 0 : '';
           }
@@ -117,6 +122,21 @@ export default function QuickExecuteModal({
 
       if (response.success && response.data) {
         setResult(response.data);
+        
+        // Format the response for human-friendly display
+        if (response.data.responseData !== undefined && endpoint) {
+          const apiResponse = {
+            method: endpoint.method,
+            url: endpoint.path,
+            statusCode: response.data.statusCode || 200,
+            responseData: response.data.responseData,
+            responseHeaders: response.data.responseHeaders || {},
+            executionTime: response.data.executionTime || 0,
+            error: response.data.error
+          };
+          const formatted = ResponseFormatter.formatApiResponse(apiResponse);
+          setFormattedResponse(formatted);
+        }
       } else {
         setError(response.error || 'Failed to execute operation');
       }
@@ -303,6 +323,39 @@ export default function QuickExecuteModal({
           {/* Result Display */}
           {result && (
             <div className="space-y-4" data-testid="execution-result">
+              {/* Human-friendly summary */}
+              {formattedResponse && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className={`text-sm font-medium mb-2 ${
+                    formattedResponse.status === 'success' ? 'text-green-800' :
+                    formattedResponse.status === 'error' ? 'text-red-800' :
+                    'text-yellow-800'
+                  }`}>
+                    {formattedResponse.summary}
+                  </div>
+                  <div className="text-xs text-gray-600 mb-2">
+                    {formattedResponse.details}
+                  </div>
+                  <div className="text-sm text-gray-800 bg-white p-2 rounded border">
+                    {formattedResponse.data.formatted}
+                  </div>
+                  
+                  {/* Suggestions */}
+                  {formattedResponse.suggestions && formattedResponse.suggestions.length > 0 && (
+                    <div className="mt-2">
+                      <div className="text-xs font-medium text-gray-700 mb-1">💡 Suggestions</div>
+                      <div className="space-y-1">
+                        {formattedResponse.suggestions.map((suggestion, index) => (
+                          <div key={index} className="text-xs text-blue-600 bg-blue-50 p-2 rounded border">
+                            {suggestion}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Success Indicator */}
               {result.status === 'COMPLETED' && (
                 <div data-testid="execution-success" className="p-3 bg-green-50 border border-green-200 rounded-md">

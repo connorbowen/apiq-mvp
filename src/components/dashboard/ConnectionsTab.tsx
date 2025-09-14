@@ -246,7 +246,10 @@ function ConnectionsTab({
   };
 
   const handleEditClick = (connection: ApiConnection) => {
+    console.log('🔍 Edit button clicked for connection:', connection.id, connection.name);
+    console.log('🔍 Setting editingConnection to:', connection);
     setEditingConnection(connection);
+    console.log('🔍 editingConnection state should now be set');
   };
 
   const handleQuickExecute = async (connection: ApiConnection) => {
@@ -257,7 +260,7 @@ function ConnectionsTab({
       console.log('📡 Endpoints response:', endpointsResponse);
       let firstEndpoint = null;
       
-      if (endpointsResponse.success && endpointsResponse.data?.endpoints?.length > 0) {
+      if (endpointsResponse.success && endpointsResponse.data?.endpoints?.length && endpointsResponse.data.endpoints.length > 0) {
         firstEndpoint = endpointsResponse.data.endpoints[0];
         console.log('✅ Found endpoint:', firstEndpoint);
       } else {
@@ -585,231 +588,20 @@ function ConnectionsTab({
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
+                      {/* Primary Actions - Simplified to 2 buttons */}
                       <button
                         data-testid={`explore-api-${connection.id}`}
                         onClick={() => window.location.href = `/connections/${connection.id}`}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
                       >
                         Explore
                       </button>
                       <button
-                        data-testid={`quick-execute-${connection.id}`}
-                        onClick={() => handleQuickExecute(connection)}
-                        className="text-green-600 hover:text-green-900 text-sm font-medium"
-                      >
-                        Try It Out
-                      </button>
-                      <button
-                        data-testid={`connection-details-${connection.id}`}
-                        onClick={() => window.location.href = `/connections/${connection.id}`}
-                        className="text-gray-600 hover:text-gray-900 text-sm font-medium"
-                      >
-                        Details
-                      </button>
-                      {connection.authType === 'OAUTH2' && (
-                        <>
-                          <button
-                            data-testid="authorize-oauth2-btn"
-                            onClick={async () => {
-                              try {
-                                setIsLoading(true);
-                                console.log('🔍 OAuth2 Authorization Debug - Starting flow');
-                                
-                                // Get OAuth2 configuration from connection
-                                const authConfig = (connection as any).authConfig || {};
-                                const provider = authConfig.provider || 'test';
-                                const clientId = authConfig.clientId || `test-client-${Date.now()}`;
-                                const clientSecret = authConfig.clientSecret || `test-secret-${Date.now()}`;
-                                const redirectUri = authConfig.redirectUri || 'http://localhost:3000/api/connections/oauth2/callback';
-                                const scope = authConfig.scope || 'read write';
-                                
-                                console.log('🔍 OAuth2 Authorization Debug - Config:', {
-                                  connectionId: connection.id,
-                                  provider,
-                                  clientId: clientId ? '***' : undefined,
-                                  redirectUri,
-                                  scope
-                                });
-                                
-                                // Use the API client to initiate OAuth2 flow (handles authentication)
-                                const { apiClient } = await import('../../lib/api/client');
-                                console.log('🔍 OAuth2 Authorization Debug - About to call initiateOAuth2Flow');
-                                
-                                let authUrl: string | undefined;
-                                try {
-                                  console.log('🔍 OAuth2 Authorization Debug - About to call initiateOAuth2Flow');
-                                  
-                                  // Add timeout to prevent hanging
-                                  const timeoutPromise = new Promise<never>((_, reject) => {
-                                    setTimeout(() => reject(new Error('initiateOAuth2Flow timeout after 10s')), 10000);
-                                  });
-                                  
-                                  const authUrlPromise = apiClient.initiateOAuth2Flow(
-                                    connection.id,
-                                    provider,
-                                    clientId,
-                                    clientSecret,
-                                    redirectUri,
-                                    scope
-                                  );
-                                  
-                                  authUrl = await Promise.race([authUrlPromise, timeoutPromise]);
-                                  console.log('🔍 OAuth2 Authorization Debug - Got auth URL:', authUrl);
-                                  console.log('🔍 OAuth2 Authorization Debug - authUrl type:', typeof authUrl);
-                                  console.log('🔍 OAuth2 Authorization Debug - authUrl length:', authUrl?.length);
-                                  
-                                } catch (err) {
-                                  console.error('❌ OAuth2 Authorization Debug - Error in initiateOAuth2Flow:', err);
-                                  console.error('❌ OAuth2 Authorization Debug - Error message:', err instanceof Error ? err.message : String(err));
-                                  console.error('❌ OAuth2 Authorization Debug - Error stack:', err instanceof Error ? err.stack : 'No stack trace');
-                                  authUrl = undefined;
-                                }
-                                
-                                // Fallback for test provider if API client fails
-                                if (!authUrl && provider === 'test') {
-                                  console.log('🔧 OAuth2 Authorization Debug - Using fallback URL for test provider');
-                                  
-                                  // Create proper state like the backend does
-                                  const state = btoa(JSON.stringify({
-                                    userId: user?.id,
-                                    apiConnectionId: connection.id,
-                                    provider: 'test',
-                                    timestamp: Date.now(),
-                                    nonce: Math.random().toString(36).substring(2)
-                                  }));
-                                  
-                                  authUrl = `/api/test-oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}`;
-                                }
-                                
-                                console.log('🔍 OAuth2 Authorization Debug - Final authUrl:', authUrl);
-                                console.log('🔍 OAuth2 Authorization Debug - Navigating to:', authUrl || '/dashboard?tab=connections');
-                                
-                                // Navigate to the OAuth2 provider
-                                window.location.href = authUrl || '/dashboard?tab=connections';
-                              } catch (error) {
-                                console.error('❌ OAuth2 Authorization Error (outer catch):', error);
-                                onConnectionError('Failed to initiate OAuth2 authorization');
-                                setIsLoading(false);
-                              }
-                            }}
-                            className="text-green-600 hover:text-green-900 text-sm font-medium disabled:opacity-50"
-                            disabled={isLoading}
-                          >
-                            {isLoading ? 'Authorizing...' : 'Authorize'}
-                          </button>
-                          <button
-                            data-testid="refresh-token-btn"
-                            onClick={async () => {
-                              try {
-                                setIsLoading(true);
-                                // Get OAuth2 configuration from connection
-                                const authConfig = (connection as any).authConfig || {};
-                                const provider = authConfig.provider || 'test';
-                                
-                                // Call the OAuth2 refresh token endpoint
-                                const response = await fetch(`/api/connections/oauth2/refresh`, {
-                                  method: 'POST',
-                                  credentials: 'include',
-                                  headers: {
-                                    'Content-Type': 'application/json'
-                                  },
-                                  body: JSON.stringify({
-                                    apiConnectionId: connection.id,
-                                    provider
-                                  })
-                                });
-                                
-                                if (response.ok) {
-                                  onConnectionCreated(); // Refresh the list
-                                } else {
-                                  throw new Error('Failed to refresh token');
-                                }
-                              } catch (error) {
-                                onConnectionError('Failed to refresh token');
-                              } finally {
-                                setIsLoading(false);
-                              }
-                            }}
-                            className="text-blue-600 hover:text-blue-900 text-sm font-medium disabled:opacity-50"
-                            disabled={isLoading}
-                          >
-                            {isLoading ? 'Refreshing...' : 'Refresh'}
-                          </button>
-                        </>
-                      )}
-                      <button
-                        data-testid="primary-action test-connection-btn"
-                        onClick={async () => {
-                          try {
-                            setIsLoading(true);
-                            const start = Date.now();
-                            
-                            // Call the actual test connection API
-                            const response = await fetch(`/api/connections/${connection.id}/test`, {
-                              method: 'POST',
-                              credentials: 'include',
-                              headers: {
-                                'Content-Type': 'application/json'
-                              }
-                            });
-                            
-                            const responseTime = Date.now() - start;
-                            setResponseTimes(prev => ({ ...prev, [connection.id]: responseTime }));
-                            
-                            if (response.ok) {
-                              const result = await response.json();
-                              setTestResults(prev => ({
-                                ...prev,
-                                [connection.id]: { 
-                                  success: true, 
-                                  message: result.data?.message || 'Connection validation completed successfully' 
-                                }
-                              }));
-                              onConnectionTested(); // Set global success message
-                            } else {
-                              const errorData = await response.json();
-                              setTestResults(prev => ({
-                                ...prev,
-                                [connection.id]: { 
-                                  success: false, 
-                                  message: errorData.error || 'Connection validation failed' 
-                                }
-                              }));
-                              onConnectionError(errorData.error || 'Connection validation failed');
-                            }
-                          } catch (error) {
-                            console.error('Connection test error:', error);
-                            setTestResults(prev => ({
-                              ...prev,
-                              [connection.id]: { 
-                                success: false, 
-                                message: 'Connection validation failed' 
-                              }
-                            }));
-                            onConnectionError('Connection validation failed');
-                          } finally {
-                            setIsLoading(false);
-                          }
-                        }}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium disabled:opacity-50"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? 'Testing...' : 'Test'}
-                      </button>
-                      <button
                         data-testid="edit-connection-btn"
                         onClick={() => handleEditClick(connection)}
-                        className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
                       >
                         Edit
-                      </button>
-                      <button
-                        data-testid="delete-connection-btn"
-                        onClick={() => handleDeleteClick(connection.id, connection.name)}
-                        className="text-red-600 hover:text-red-900 text-sm font-medium"
-                        disabled={isLoading}
-                      >
-                        Delete
                       </button>
                     </div>
                   </div>

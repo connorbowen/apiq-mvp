@@ -120,12 +120,12 @@ export async function safeCleanupTestData(): Promise<void> {
 export function getTestFixtures() {
   return {
     users: {
-      testUser1: { id: 'test-user-1-id', email: 'test-user-1@example.com', name: 'Test User 1' },
-      testUser2: { id: 'test-user-2-id', email: 'test-user-2@example.com', name: 'Test User 2' },
+      testUser1: { id: 'testuser-1-id', email: 'testuser-1@testuser.local', name: 'Test User 1' },
+      testUser2: { id: 'testuser-2-id', email: 'testuser-2@testuser.local', name: 'Test User 2' },
     },
     apiConnections: {
-      githubConnection: { id: 'test-github-connection-id', userId: 'test-user-1-id', provider: 'github' },
-      slackConnection: { id: 'test-slack-connection-id', userId: 'test-user-1-id', provider: 'slack' },
+      githubConnection: { id: 'test-github-connection-id', userId: 'testuser-1-id', provider: 'github' },
+      slackConnection: { id: 'test-slack-connection-id', userId: 'testuser-1-id', provider: 'slack' },
     },
   };
 } 

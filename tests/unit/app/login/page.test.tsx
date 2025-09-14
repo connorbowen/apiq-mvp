@@ -45,9 +45,9 @@ describe('LoginPage', () => {
     render(<LoginPage />);
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
-    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'user@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    expect(emailInput).toHaveValue('user@example.com');
+    expect(emailInput).toHaveValue('user@testuser.local');
     expect(passwordInput).toHaveValue('password123');
   });
 
@@ -65,7 +65,7 @@ describe('LoginPage', () => {
       success: true,
       data: {
         user: {
-          email: 'user@example.com',
+          email: 'user@testuser.local',
           onboardingStage: 'NEW_USER'
         }
       }
@@ -78,14 +78,14 @@ describe('LoginPage', () => {
     const submitButton = screen.getByRole('button', { name: /sign in/i });
 
     // Fill form
-    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'user@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
     // Submit form
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(apiClient.login).toHaveBeenCalledWith('user@example.com', 'password123');
+      expect(apiClient.login).toHaveBeenCalledWith('user@testuser.local', 'password123');
     });
 
     await waitFor(() => {
@@ -99,7 +99,7 @@ describe('LoginPage', () => {
       success: true,
       data: {
         user: {
-          email: 'user@example.com',
+          email: 'user@testuser.local',
           onboardingStage: 'COMPLETED'
         }
       }
@@ -112,14 +112,14 @@ describe('LoginPage', () => {
     const submitButton = screen.getByRole('button', { name: /sign in/i });
 
     // Fill form
-    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'user@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
     // Submit form
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(apiClient.login).toHaveBeenCalledWith('user@example.com', 'password123');
+      expect(apiClient.login).toHaveBeenCalledWith('user@testuser.local', 'password123');
     });
 
     await waitFor(() => {
@@ -141,7 +141,7 @@ describe('LoginPage', () => {
     const submitButton = screen.getByRole('button', { name: /sign in/i });
 
     // Fill form
-    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'user@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
 
     // Submit form
@@ -166,7 +166,7 @@ describe('LoginPage', () => {
     const submitButton = screen.getByRole('button', { name: /sign in/i });
 
     // Fill form
-    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'user@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
     // Submit form
@@ -191,7 +191,7 @@ describe('LoginPage', () => {
     const submitButton = screen.getByRole('button', { name: /sign in/i });
 
     // Fill form
-    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'user@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
     // Submit form
@@ -229,7 +229,7 @@ describe('LoginPage', () => {
     const submitButton = screen.getByRole('button', { name: /sign in/i });
 
     // Fill and submit form to trigger error
-    fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'user@testuser.local' } });
     fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
     fireEvent.click(submitButton);
 
@@ -238,11 +238,11 @@ describe('LoginPage', () => {
     });
 
     // Start typing again - error should clear
-    fireEvent.change(emailInput, { target: { value: 'newuser@example.com' } });
+    fireEvent.change(emailInput, { target: { value: 'newuser@testuser.local' } });
 
     // The error clearing logic might not work as expected in the actual component
     // Let's just verify the input value changed
-    expect(emailInput).toHaveValue('newuser@example.com');
+    expect(emailInput).toHaveValue('newuser@testuser.local');
   });
 
   it('handles OAuth2 login initiation', async () => {

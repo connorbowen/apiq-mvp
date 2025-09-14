@@ -111,6 +111,7 @@
     "test:e2e:workflow-engine:workflow-planning": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && playwright test tests/e2e/workflow-engine/workflow-planning.test.ts\" --kill-others",
     "test:e2e:performance:load-testing": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && playwright test tests/e2e/performance/load-testing.test.ts\" --kill-others",
     "test:e2e:onboarding:user-journey": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && playwright test tests/e2e/onboarding/user-journey.test.ts\" --kill-others",
+    "test:e2e:direct-api-calls-chat": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && playwright test tests/e2e/api-operations/direct-api-calls-chat.test.ts\" --kill-others",
     "test:evaluate": "node scripts/evaluate-all-tests.js",
     "test:evaluate:e2e": "node scripts/evaluate-all-tests.js e2e",
     "test:evaluate:integration": "node scripts/evaluate-all-tests.js integration",

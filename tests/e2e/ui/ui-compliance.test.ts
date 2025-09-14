@@ -14,7 +14,7 @@ let testUser: TestUser;
 test.describe('UX Simplification - UI Compliance', () => {
   test.beforeAll(async () => {
     testUser = await createE2EUser('USER', {
-      email: `e2e-ui-${generateTestId('user')}@example.com`,
+      email: `e2e-ui-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E UI Compliance Test User'
     });

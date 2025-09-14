@@ -71,7 +71,7 @@ describe('Password Reset API Integration Tests', () => {
     });
 
     it('should handle non-existent user gracefully', async () => {
-      const nonExistentEmail = `nonexistent-${generateTestId()}@example.com`;
+      const nonExistentEmail = `nonexistent-${generateTestId()}@testuser.local`;
       
       const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
         method: 'POST',

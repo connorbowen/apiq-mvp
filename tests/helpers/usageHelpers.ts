@@ -7,7 +7,7 @@
 
 import { Page, expect } from '@playwright/test';
 import { TestUser } from './testUtils';
-import { prisma } from '../../../lib/database/client';
+import { prisma } from '../../lib/database/client';
 import { generateTestId } from './testUtils';
 
 // Usage tracking test data interfaces

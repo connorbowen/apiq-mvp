@@ -12,6 +12,18 @@ export const waitForDashboard = async (page: Page, timeout: number = 10000): Pro
 };
 
 /**
+ * Safe network idle wait that handles external request failures gracefully
+ */
+export const waitForNetworkIdleSafe = async (page: Page, timeout: number = 5000): Promise<void> => {
+  try {
+    await page.waitForLoadState('networkidle', { timeout });
+  } catch (error) {
+    // If networkidle times out due to external requests, just wait a bit for page stability
+    await page.waitForTimeout(1000);
+  }
+};
+
+/**
  * Wait for URL to match pattern (common in navigation tests)
  */
 export const waitForURL = async (page: Page, urlPattern: RegExp, timeout: number = 10000): Promise<void> => {

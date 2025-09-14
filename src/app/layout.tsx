@@ -102,19 +102,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Google Analytics */}
-               <Script
-                 src="https://www.googletagmanager.com/gtag/js?id=G-BH42DH58GY"
-                 strategy="afterInteractive"
-               />
-               <Script id="google-analytics" strategy="afterInteractive">
-                 {`
-                   window.dataLayer = window.dataLayer || [];
-                   function gtag(){dataLayer.push(arguments);}
-                   gtag('js', new Date());
-                   gtag('config', 'G-BH42DH58GY');
-                 `}
-        </Script>
+        {/* Google Analytics - Only load in production, not in test environments */}
+        {process.env.NODE_ENV === 'production' && !process.env.PLAYWRIGHT_TEST && (
+          <>
+            <Script
+              src="https://www.googletagmanager.com/gtag/js?id=G-BH42DH58GY"
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-BH42DH58GY');
+              `}
+            </Script>
+          </>
+        )}
       </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}

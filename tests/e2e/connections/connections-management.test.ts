@@ -37,7 +37,7 @@ test.describe('Connections Management E2E Tests', () => {
   test.beforeAll(async () => {
     // Create a real test user and get JWT - fix the function call signature
     testUser = await createE2EUser(Role.ADMIN, {
-      email: `e2e-conn-${generateTestId('user')}@example.com`,
+      email: `e2e-conn-${generateTestId('user')}@testuser.local`,
       password: 'e2eTestPass123',
       name: 'E2E Connections Test User'
     });
@@ -85,7 +85,7 @@ test.describe('Connections Management E2E Tests', () => {
         await page.fill('[data-testid="connection-name-input"]', '<script>alert("xss")</script>');
         await page.fill('[data-testid="connection-baseurl-input"]', 'https://api.example.com');
         await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
-        await page.fill('[data-testid="connection-apikey-input"]', 'test-key');
+        await page.fill('[data-testid="connection-apikey-input"]', 'test-api-key-12345');
         await getPrimaryActionButton(page, 'submit-connection').click();
         
         // Verify input was sanitized (no script execution)
@@ -118,7 +118,7 @@ test.describe('Connections Management E2E Tests', () => {
               name: `Rate Limit Test ${i}`,
               baseUrl: 'https://api.example.com',
               authType: 'API_KEY',
-              apiKey: 'test-key'
+              apiKey: 'test-api-key-12345'
             });
             
             if (connectionId) {
@@ -165,7 +165,7 @@ test.describe('Connections Management E2E Tests', () => {
         await page.fill('[data-testid="connection-name-input"]', 'HTTP Connection Test');
         await page.fill('[data-testid="connection-baseurl-input"]', 'http://insecure-api.example.com');
         await page.selectOption('[data-testid="connection-authtype-select"]', 'API_KEY');
-        await page.fill('[data-testid="connection-apikey-input"]', 'test-key');
+        await page.fill('[data-testid="connection-apikey-input"]', 'test-api-key-12345');
         
         // Try to submit
         await getPrimaryActionButton(page, 'submit-connection').click();
@@ -207,7 +207,7 @@ test.describe('Connections Management E2E Tests', () => {
               description: connection.description,
               baseUrl: 'https://api.example.com',
               authType: 'API_KEY',
-              apiKey: 'test-key'
+              apiKey: 'test-api-key-12345'
             });
           } catch (connectionError) {
             console.log(`⚠️ Failed to create connection ${connection.name}:`, connectionError);
@@ -270,7 +270,7 @@ test.describe('Connections Management E2E Tests', () => {
             
             // Fill auth-specific fields
             if (auth.type === 'API_KEY') {
-              options.apiKey = 'test-key';
+              options.apiKey = 'test-api-key-12345';
             } else if (auth.type === 'BEARER_TOKEN') {
               options.bearerToken = 'test-token';
             } else if (auth.type === 'BASIC_AUTH') {

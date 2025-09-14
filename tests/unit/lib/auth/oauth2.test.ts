@@ -170,12 +170,12 @@ describe('OAuth2Service', () => {
 
       const mockEncryptedAccessToken = {
         encryptedData: 'encrypted-access-token',
-        keyId: 'test-key-id'
+        keyId: 'test-api-key-12345-id'
       };
 
       const mockEncryptedRefreshToken = {
         encryptedData: 'encrypted-refresh-token',
-        keyId: 'test-key-id'
+        keyId: 'test-api-key-12345-id'
       };
 
       (mockEncryptionService.encrypt as jest.Mock)
@@ -273,7 +273,7 @@ describe('OAuth2Service', () => {
           scope: 'repo user',
           provider: 'github'
         }),
-        keyId: 'test-key-id',
+        keyId: 'test-api-key-12345-id',
         isActive: true,
         expiresAt: new Date(Date.now() - 1000), // Expired
         createdAt: new Date(),
@@ -294,12 +294,12 @@ describe('OAuth2Service', () => {
 
       const mockEncryptedNewAccessToken = {
         encryptedData: 'encrypted-new-access-token',
-        keyId: 'test-key-id'
+        keyId: 'test-api-key-12345-id'
       };
 
       const mockEncryptedNewRefreshToken = {
         encryptedData: 'encrypted-new-refresh-token',
-        keyId: 'test-key-id'
+        keyId: 'test-api-key-12345-id'
       };
 
       // findUnique: first call returns expired credential
@@ -370,7 +370,7 @@ describe('OAuth2Service', () => {
           scope: 'repo user',
           provider: 'github'
         }),
-        keyId: 'test-key-id',
+        keyId: 'test-api-key-12345-id',
         isActive: true,
         expiresAt: new Date(Date.now() + 3600000), // Valid for 1 hour
         createdAt: new Date(),
@@ -397,7 +397,7 @@ describe('OAuth2Service', () => {
           scope: 'repo user',
           provider: 'github'
         }),
-        keyId: 'test-key-id',
+        keyId: 'test-api-key-12345-id',
         isActive: false,
         expiresAt: new Date(Date.now() + 3600000),
         createdAt: new Date(),
@@ -509,7 +509,7 @@ describe('Google OAuth2 Implementation', () => {
     it('should generate valid JWT token for OAuth2 user', () => {
       const userData = {
         id: 'user-123',
-        email: 'test@example.com',
+        email: 'test@testuser.local',
         name: 'Test User',
         role: 'USER' as const,
         isActive: true

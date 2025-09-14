@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
 import { requireAuth } from '../../../src/lib/auth/session';
 import { logInfo, logError } from '../../../src/utils/logger';
+import { ParameterExtractionService } from '../../../src/lib/services/parameterExtractionService';
 
 interface AuthenticatedRequest extends NextApiRequest {
   user: {
@@ -77,6 +78,60 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     const connection = endpoint.apiConnection;
     if (!connection) {
       return res.status(404).json({ success: false, error: 'API connection not found' });
+    }
+
+    // Validate parameters using enhanced parameter schemas
+    if (endpoint.parameters) {
+      const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
+      const validationErrors: string[] = [];
+      
+      // Check required parameters
+      const missingParams = enhancedEndpoint.parameters
+        .filter(param => param.required && !parameters[param.name])
+        .map(param => param.name);
+      
+      if (missingParams.length > 0) {
+        validationErrors.push(`Missing required parameters: ${missingParams.join(', ')}`);
+      }
+      
+      // Validate parameter values
+      enhancedEndpoint.parameters.forEach(param => {
+        const value = parameters[param.name];
+        if (value !== undefined && value !== null && value !== '') {
+          // Type validation
+          if (param.type === 'number' && isNaN(Number(value))) {
+            validationErrors.push(`Parameter '${param.name}' must be a number`);
+          }
+          
+          // Range validation
+          if (param.type === 'number' && param.validation) {
+            const numValue = Number(value);
+            if (param.validation.min !== undefined && numValue < param.validation.min) {
+              validationErrors.push(`Parameter '${param.name}' must be at least ${param.validation.min}`);
+            }
+            if (param.validation.max !== undefined && numValue > param.validation.max) {
+              validationErrors.push(`Parameter '${param.name}' must be at most ${param.validation.max}`);
+            }
+          }
+          
+          // Enum validation
+          if (param.validation?.enum && !param.validation.enum.includes(String(value))) {
+            validationErrors.push(`Parameter '${param.name}' must be one of: ${param.validation.enum.join(', ')}`);
+          }
+          
+          // Pattern validation
+          if (param.validation?.pattern && !new RegExp(param.validation.pattern).test(String(value))) {
+            validationErrors.push(`Parameter '${param.name}' format is invalid`);
+          }
+        }
+      });
+      
+      if (validationErrors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: `Parameter validation failed: ${validationErrors.join('; ')}`
+        });
+      }
     }
 
     // Create operation execution record

@@ -23,7 +23,7 @@ describe('Secrets API Integration Tests', () => {
     const hashedPassword = await bcrypt.hash('testPassword123', 12);
     testUser = await prisma.user.create({
       data: {
-        email: 'secrets-test@example.com',
+        email: 'secrets-test@testuser.local',
         name: 'Secrets Test User',
         password: hashedPassword,
         role: 'USER',
@@ -364,7 +364,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'connection-api-key',
           type: 'API_KEY',
           encryptedData: 'encrypted-api-key-value',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id
         }
       });
@@ -400,7 +400,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'connection-client-id',
           type: 'OAUTH2_CLIENT_ID',
           encryptedData: 'encrypted-client-id',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id
         }
       });
@@ -411,7 +411,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'connection-client-secret',
           type: 'OAUTH2_CLIENT_SECRET',
           encryptedData: 'encrypted-client-secret',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id
         }
       });
@@ -423,7 +423,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'unrelated-secret',
           type: 'API_KEY',
           encryptedData: 'encrypted-unrelated',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: null
         }
       });
@@ -461,7 +461,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'rotation-test-secret',
           type: 'API_KEY',
           encryptedData: 'encrypted-value',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id,
           metadata: { description: 'Test secret for rotation' }
         }
@@ -507,7 +507,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'oauth2-access-token',
           type: 'OAUTH2_ACCESS_TOKEN',
           encryptedData: 'encrypted-access-token',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id,
           metadata: { expiresAt: new Date(Date.now() + 3600000).toISOString() }
         }
@@ -519,7 +519,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'oauth2-refresh-token',
           type: 'OAUTH2_REFRESH_TOKEN',
           encryptedData: 'encrypted-refresh-token',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id
         }
       });
@@ -566,7 +566,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'basic-auth-username',
           type: 'BASIC_AUTH_USERNAME',
           encryptedData: 'encrypted-username',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id
         }
       });
@@ -577,7 +577,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'basic-auth-password',
           type: 'BASIC_AUTH_PASSWORD',
           encryptedData: 'encrypted-password',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id
         }
       });
@@ -639,7 +639,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'connection-to-delete-secret',
           type: 'API_KEY',
           encryptedData: 'encrypted-value',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id
         }
       });
@@ -675,7 +675,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'orphaned-secret',
           type: 'API_KEY',
           encryptedData: 'encrypted-value',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: null // Not linked to any connection
         }
       });
@@ -712,10 +712,10 @@ describe('Secrets API Integration Tests', () => {
       const usernameSecret = await prisma.secret.create({
         data: {
           userId: testUser.id,
-          name: 'partial-test-username',
+          name: 'partial-testusername',
           type: 'BASIC_AUTH_USERNAME',
           encryptedData: 'encrypted-username',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id
         }
       });
@@ -725,10 +725,10 @@ describe('Secrets API Integration Tests', () => {
         await prisma.secret.create({
           data: {
             userId: testUser.id,
-            name: 'partial-test-username', // Duplicate name - should fail
+            name: 'partial-testusername', // Duplicate name - should fail
             type: 'BASIC_AUTH_PASSWORD',
             encryptedData: 'encrypted-password',
-            keyId: 'test-key-id',
+            keyId: 'test-api-key-12345-id',
             connectionId: connection.id
           }
         });
@@ -742,7 +742,7 @@ describe('Secrets API Integration Tests', () => {
         where: { connectionId: connection.id }
       });
       expect(connectionSecrets).toHaveLength(1);
-      expect(connectionSecrets[0].name).toBe('partial-test-username');
+      expect(connectionSecrets[0].name).toBe('partial-testusername');
     });
   });
 
@@ -767,7 +767,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'github-access-token',
           type: 'OAUTH2_ACCESS_TOKEN',
           encryptedData: 'encrypted-access-token-value',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id,
           metadata: {
             provider: 'github',
@@ -783,7 +783,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'github-refresh-token',
           type: 'OAUTH2_REFRESH_TOKEN',
           encryptedData: 'encrypted-refresh-token-value',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id,
           metadata: {
             provider: 'github',
@@ -824,7 +824,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'initial-access-token',
           type: 'OAUTH2_ACCESS_TOKEN',
           encryptedData: 'encrypted-old-access-token',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id,
           metadata: {
             expiresAt: new Date(Date.now() - 1000).toISOString(), // Expired
@@ -840,7 +840,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'refreshed-access-token',
           type: 'OAUTH2_ACCESS_TOKEN',
           encryptedData: 'encrypted-new-access-token',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id,
           metadata: {
             expiresAt: new Date(Date.now() + 3600000).toISOString(), // Valid
@@ -889,7 +889,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'oauth2-client-id',
           type: 'OAUTH2_CLIENT_ID',
           encryptedData: 'encrypted-client-id-value',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id,
           metadata: {
             provider: 'github',
@@ -904,7 +904,7 @@ describe('Secrets API Integration Tests', () => {
           name: 'oauth2-client-secret',
           type: 'OAUTH2_CLIENT_SECRET',
           encryptedData: 'encrypted-client-secret-value',
-          keyId: 'test-key-id',
+          keyId: 'test-api-key-12345-id',
           connectionId: connection.id,
           metadata: {
             provider: 'github',

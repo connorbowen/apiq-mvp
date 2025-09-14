@@ -56,7 +56,7 @@ test.describe('UX Simplification - Authentication Flows', () => {
 
   test.describe('Simplified Registration Flow', () => {
     test('should complete registration in under 2 minutes', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
       
       // Use helper for registration flow with validation
       await registerUserWithValidation(page, email, testPassword, {
@@ -65,7 +65,7 @@ test.describe('UX Simplification - Authentication Flows', () => {
     });
 
     test('should show welcome message for new users', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
       
       // Use helper for registration flow with dashboard validation
       await registerUserWithValidation(page, email, testPassword, {
@@ -75,7 +75,7 @@ test.describe('UX Simplification - Authentication Flows', () => {
     });
 
     test('should allow access without email verification', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
       
       // Use helper for registration flow with full access validation
       await registerUserWithValidation(page, email, testPassword, {
@@ -86,14 +86,14 @@ test.describe('UX Simplification - Authentication Flows', () => {
     });
 
     test('should redirect directly to chat interface after signup', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
       
       // Use helper for registration flow that redirects to chat
       await registerUserToChat(page, email, testPassword);
     });
 
     test('should handle simplified validation', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
       
       // Use helper for registration flow with validation
       await registerUserWithValidation(page, email, testPassword, {
@@ -152,7 +152,7 @@ test.describe('UX Simplification - Authentication Flows', () => {
 
   test.describe('Email Verification (Optional)', () => {
     test('should provide email verification option', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
       
       // Use helper for complete email verification flow
       await registerUserAndNavigateToProfile(page, email, testPassword);
@@ -162,7 +162,7 @@ test.describe('UX Simplification - Authentication Flows', () => {
     });
 
     test('should handle email verification when completed', async ({ page }) => {
-      const verifiedEmail = `verified-${generateTestId()}@example.com`;
+      const verifiedEmail = `verified-${generateTestId()}@testuser.local`;
       
       // Register and verify email
       await page.goto('/signup');
@@ -195,14 +195,14 @@ test.describe('UX Simplification - Authentication Flows', () => {
     });
 
     test('should allow resending verification email', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
       
       // Use helper for complete email verification flow
       await testCompleteEmailVerificationFlow(page, email, testPassword);
     });
 
     test('should not show verify button if user is already verified', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
 
       // Register user
       await registerUser(page, email, testPassword);
@@ -227,7 +227,7 @@ test.describe('UX Simplification - Authentication Flows', () => {
 
   test.describe('Security and Friction Balance', () => {
     test('should maintain security while reducing friction', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
       
       // Use helper for registration flow
       await registerUser(page, email, testPassword);
@@ -264,7 +264,7 @@ test.describe('UX Simplification - Authentication Flows', () => {
   test.describe('Error Recovery and Support', () => {
     test('should provide helpful error recovery', async ({ page }) => {
       // Use helper for password reset flow
-      await testPasswordReset(page, 'test@example.com');
+      await testPasswordReset(page, 'test@testuser.local');
     });
 
     test('should handle network errors gracefully', async ({ page }) => {
@@ -317,7 +317,7 @@ test.describe('UX Simplification - Authentication Flows', () => {
     });
 
     test('should complete registration efficiently', async ({ page }) => {
-      const email = `test-${generateTestId()}@example.com`;
+      const email = `test-${generateTestId()}@testuser.local`;
       
       // Use helper for registration performance testing
       await testRegistrationPerformance(page, email, testPassword, { timeout: 20000 });
