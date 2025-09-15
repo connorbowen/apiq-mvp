@@ -45,18 +45,39 @@ export const waitForDashboard = async (page: Page): Promise<void> => {
     // Wait a bit more for the text to be rendered
     await page.waitForTimeout(1000);
     
-    // Check if the h1 contains "Dashboard" text
-    const dashboardHeading = await page.locator('h1').filter({ hasText: 'Dashboard' }).first();
-    if (!(await dashboardHeading.isVisible())) {
+    // Check if the h1 contains any valid dashboard heading text
+    const validHeadings = ['Dashboard', 'Chat', 'Workflows', 'Connections', 'Settings', 'Profile'];
+    let headingFound = false;
+    
+    for (const heading of validHeadings) {
+      const dashboardHeading = await page.locator('h1').filter({ hasText: heading }).first();
+      if (await dashboardHeading.isVisible()) {
+        headingFound = true;
+        break;
+      }
+    }
+    
+    if (!headingFound) {
       throw new Error('Dashboard heading not found');
     }
   } catch (error) {
-    // Fallback: look for any heading with "Dashboard" text
+    // Fallback: look for any heading with valid dashboard text
     console.log('🔍 E2E DEBUG: Primary dashboard selector failed, trying fallback');
     await page.waitForSelector('h1, h2, h3', { timeout: 5000 });
     await page.waitForTimeout(1000);
-    const dashboardHeading = await page.locator('h1, h2, h3').filter({ hasText: 'Dashboard' }).first();
-    if (!(await dashboardHeading.isVisible())) {
+    
+    const validHeadings = ['Dashboard', 'Chat', 'Workflows', 'Connections', 'Settings', 'Profile'];
+    let headingFound = false;
+    
+    for (const heading of validHeadings) {
+      const dashboardHeading = await page.locator('h1, h2, h3').filter({ hasText: heading }).first();
+      if (await dashboardHeading.isVisible()) {
+        headingFound = true;
+        break;
+      }
+    }
+    
+    if (!headingFound) {
       throw new Error('Dashboard heading not found');
     }
   }

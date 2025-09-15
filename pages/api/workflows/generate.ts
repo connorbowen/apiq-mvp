@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { prisma } from '../../../lib/database/client';
 import { NaturalLanguageWorkflowService } from '../../../src/lib/services/naturalLanguageWorkflowService';
+import { ConnectionGuidanceService } from '../../../src/lib/services/connectionGuidanceService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('🚀 WORKFLOW GENERATION API CALLED');
@@ -62,6 +63,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       endpoints: c.endpoints.length
     })), null, 2));
 
+    // Check if connection guidance is needed
+    let connectionGuidance;
+    try {
+      console.log('→ Calling ConnectionGuidanceService.analyzeRequest with:', {
+        userDescription,
+        connections: connections.map(conn => ({ name: conn.name, id: conn.id }))
+      });
+      
+      connectionGuidance = ConnectionGuidanceService.analyzeRequest(
+        userDescription,
+        connections.map(conn => ({ name: conn.name, id: conn.id }))
+      );
+
+      console.log('→ Connection guidance result:', {
+        requiresGuidance: connectionGuidance.requiresGuidance,
+        missingApis: connectionGuidance.missingApis?.map(api => api.displayName) || [],
+        guidanceMessage: connectionGuidance.guidanceMessage
+      });
+
+      if (connectionGuidance.requiresGuidance) {
+        console.log('→ Connection guidance needed for:', connectionGuidance.missingApis.map(api => api.displayName));
+        console.log('→ Returning connection guidance response');
+        return res.status(200).json({
+          success: true,
+          data: {
+            workflow: null,
+            steps: [],
+            explanation: connectionGuidance.guidanceMessage,
+            connectionGuidance: connectionGuidance
+          }
+        });
+      }
+    } catch (error) {
+      console.error('→ Connection guidance error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Connection guidance service error'
+      });
+    }
+
     if (connections.length === 0) {
       console.log('→ No active connections found');
       return res.status(400).json({
@@ -95,7 +136,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           path: endpoint.path,
           method: endpoint.method,
           summary: endpoint.summary || '',
-          parameters: endpoint.parameters || []
+          parameters: Array.isArray(endpoint.parameters) ? endpoint.parameters : []
         }))
       })),
       context
@@ -116,7 +157,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       data: {
         workflow: result.workflow,
         steps: result.workflow?.steps || [],
-        explanation: result.explanation
+        explanation: result.workflow?.explanation || 'Workflow generated successfully'
       }
     });
 

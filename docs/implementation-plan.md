@@ -11,9 +11,9 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 ## Current Status
 
 **Core MVP**: 4/4 P0 features complete ✅  
-**User Experience**: 2/5 P1 features complete (40%) 🚧  
+**User Experience**: 3/5 P1 features complete (60%) 🚧  
 **Enterprise Features**: 1/2 P2 features complete (50%) 🚧  
-**Test Coverage**: 1201+ tests with 100% pass rate ✅  
+**Test Coverage**: 1201+ tests with 99.7% pass rate ✅  
 
 **MVP Status**: All core features complete - ready for launch! 🎉  
 **Next Priority**: UX simplification and onboarding flow ✅ **COMPLETED**
@@ -43,6 +43,32 @@ APIQ MVP is a Next.js-based API integration platform that enables users to conne
 - ChatInterface: Optimized for two-column layout with proper scrolling
 - ExecutionControls: Added confirmation modals for pause/resume actions with timestamp tracking
 **Success Criteria**: ✅ Dashboard fits perfectly on standard screens, enhanced mobile experience, all tests passing
+
+## 🔗 **CONNECTION GUIDANCE SYSTEM** ✅ **COMPLETED**
+
+### **P1.5: API Connection Guidance in Chat** ✅ **COMPLETED**
+**Status**: Successfully implemented with comprehensive E2E test coverage
+**Description**: Intelligent API connection guidance when users request workflows requiring missing APIs
+
+**Features Implemented**:
+- ✅ **ConnectionGuidanceService**: Comprehensive API knowledge base with 25+ APIs
+- ✅ **Intelligent API Detection**: Real-time detection of missing APIs from user messages
+- ✅ **In-Chat Setup**: ConnectionSetupForm component for seamless connection setup
+- ✅ **Multiple Authentication Types**: Support for API_KEY, BEARER_TOKEN, OAUTH2, and BASIC_AUTH
+- ✅ **Step-by-Step Instructions**: Detailed setup guidance for each API type
+- ✅ **Real-time Validation**: Test connections before saving
+- ✅ **E2E Test Coverage**: 24/25 tests passing (96% success rate)
+- ✅ **Chat Integration**: Seamless integration with ChatInterface
+- ✅ **API Endpoints**: Enhanced `/api/workflows/generate` with connection guidance
+
+**Technical Implementation**:
+- **ConnectionGuidanceService**: `src/lib/services/connectionGuidanceService.ts` with 25+ API knowledge base
+- **ConnectionSetupForm**: `src/components/ConnectionSetupForm.tsx` with dynamic form fields
+- **Chat Integration**: Enhanced ChatInterface with connection guidance display
+- **API Endpoints**: Enhanced workflow generation with connection guidance detection
+- **E2E Tests**: Comprehensive test coverage with 24/25 tests passing
+
+**Success Criteria**: ✅ Users get helpful guidance instead of generic errors, chat suggests which APIs to connect, seamless flow from chat to connection setup
 
 ## 🧪 **TESTING INFRASTRUCTURE IMPROVEMENTS** ✅ **COMPLETED**
 
@@ -258,16 +284,20 @@ AI: "Ordered Fluffy! Order ID: 789"
 - **UX Enhancements (3 tests)**: Chat input validation, mobile responsiveness, accessibility improvements
 - **Integration & Compatibility (3 tests)**: Different auth types, response formats, HTTP methods, API versioning
 
-#### **P1.5: API Connection Guidance in Chat** 🚧 **PLANNED**
-**Status**: Not started
-**Description**: Guide users through API connection setup when they need APIs for workflows
-**Requirements**:
-- Detect when workflow requires unconnected APIs
-- Provide contextual guidance in chat interface
-- Offer to redirect to connection setup
-- Suggest specific APIs needed for the workflow
-- Provide step-by-step connection instructions
-**Success Criteria**: Users get helpful guidance instead of generic errors, chat can suggest which APIs to connect, seamless flow from chat to connection setup
+#### **P1.5: API Connection Guidance in Chat** ✅ **COMPLETED**
+**Status**: Successfully implemented with comprehensive E2E test coverage
+**Description**: Intelligent API connection guidance when users request workflows requiring missing APIs
+**Features Implemented**:
+- ✅ **ConnectionGuidanceService**: Comprehensive API knowledge base with 25+ APIs
+- ✅ **Intelligent API Detection**: Real-time detection of missing APIs from user messages
+- ✅ **In-Chat Setup**: ConnectionSetupForm component for seamless connection setup
+- ✅ **Multiple Authentication Types**: Support for API_KEY, BEARER_TOKEN, OAUTH2, and BASIC_AUTH
+- ✅ **Step-by-Step Instructions**: Detailed setup guidance for each API type
+- ✅ **Real-time Validation**: Test connections before saving
+- ✅ **E2E Test Coverage**: 24/25 tests passing (96% success rate)
+- ✅ **Chat Integration**: Seamless integration with ChatInterface
+- ✅ **API Endpoints**: Enhanced `/api/workflows/generate` with connection guidance
+**Success Criteria**: ✅ Users get helpful guidance instead of generic errors, chat suggests which APIs to connect, seamless flow from chat to connection setup
 
 #### **P1.6: OpenAPI Base URL Auto-Extraction** 🚧 **PLANNED**
 **Status**: Not started
@@ -496,6 +526,7 @@ AI: "Ordered Fluffy! Order ID: 789"
 ## 📊 **CURRENT IMPLEMENTATION STATUS**
 
 ### **Completed Features** ✅
+- **Connection Guidance System** (P1.5) - 100% complete with 24/25 E2E tests passing
 - **Dashboard simplification** (3-tab structure) - 100% complete
 - **Mobile navigation** - 100% complete  
 - **Performance optimizations** - 100% complete

@@ -595,7 +595,13 @@ function DashboardContent() {
                 <span className="text-xs sm:text-sm font-medium">Back</span>
               </Link>
             )}
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+              {activeTab === 'chat' ? 'Chat' : 
+               activeTab === 'workflows' ? 'Workflows' :
+               activeTab === 'connections' ? 'Connections' :
+               activeTab === 'settings' ? 'Settings' :
+               activeTab === 'profile' ? 'Profile' : 'Dashboard'}
+            </h1>
           </div>
           <div className="flex items-center justify-between sm:justify-end">
             {/* Mobile tab navigation */}

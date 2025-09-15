@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { apiClient } from '../lib/api/client';
 import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFormatter';
+import { ConnectionSetupForm } from './ConnectionSetupForm';
 
 interface Message {
   id: string;
@@ -27,6 +28,46 @@ interface Message {
   };
   formattedResponse?: FormattedResponse;
   suggestedAction?: string;
+  // Connection guidance properties
+  connectionGuidance?: {
+    requiresGuidance: boolean;
+    missingApis: Array<{
+      name: string;
+      displayName: string;
+      description: string;
+      authType: string;
+      setupInstructions: {
+        step1: string;
+        step2: string;
+        step3: string;
+        additionalNotes?: string;
+      };
+      documentationUrl?: string;
+      baseUrl?: string;
+      commonEndpoints?: string[];
+    }>;
+    suggestedConnections: Array<{
+      name: string;
+      displayName: string;
+      description: string;
+      authType: string;
+      setupInstructions: {
+        step1: string;
+        step2: string;
+        step3: string;
+        additionalNotes?: string;
+      };
+      documentationUrl?: string;
+      baseUrl?: string;
+      commonEndpoints?: string[];
+    }>;
+    guidanceMessage: string;
+    error?: string;
+    setupInstructions?: {
+      title: string;
+      steps: string[];
+    };
+  };
 }
 
 interface ChatInterfaceProps {
@@ -56,6 +97,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   const [error, setError] = useState('');
   const [savingWorkflow, setSavingWorkflow] = useState<string | null>(null);
   const [executingWorkflow, setExecutingWorkflow] = useState<string | null>(null);
+  
+  // Connection setup state
+  const [showConnectionSetup, setShowConnectionSetup] = useState(false);
+  const [connectionSetupApi, setConnectionSetupApi] = useState<any>(null);
+  const [connectionSetupMessageId, setConnectionSetupMessageId] = useState<string | null>(null);
+  const [isSavingConnection, setIsSavingConnection] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -75,9 +122,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   }, []);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    console.log('🔍 ChatInterface: handleSubmit called');
     e.preventDefault();
     
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim() || isLoading) {
+      console.log('🔍 ChatInterface: Early return - no message or loading');
+      return;
+    }
 
     const messageText = inputMessage.trim();
     const userMessage: Message = {
@@ -93,22 +144,118 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     setError('');
 
     try {
-      // Check if this looks like a workflow creation request
+      // Check for connection guidance needs first
+      const apiKeywords = ['stripe', 'sendgrid', 'mailchimp', 'slack', 'trello', 'github', 'jira', 'openai', 'api'];
+      const connectionKeywords = ['connect', 'integrate', 'setup', 'configure', 'auth'];
+      
+      console.log('🔍 Connection guidance check:', {
+        messageText: messageText.toLowerCase(),
+        apiKeywords,
+        connectionKeywords
+      });
+      
+      const mentionsApis = apiKeywords.some(api => 
+        messageText.toLowerCase().includes(api)
+      );
+      
+      const mentionsConnection = connectionKeywords.some(keyword => 
+        messageText.toLowerCase().includes(keyword)
+      );
+
+      console.log('🔍 Connection guidance result:', {
+        mentionsApis,
+        mentionsConnection,
+        shouldShowGuidance: mentionsApis || mentionsConnection
+      });
+
+      // Check if this looks like a workflow creation request FIRST
       // Be more specific about workflow keywords to avoid false positives
       const workflowKeywords = ['workflow', 'automate', 'when', 'if', 'then', 'send', 'notify', 'email', 'slack', 'trello', 'github', 'jira', 'onboarding', 'template', 'process', 'step', 'sequence'];
       const isWorkflowRequest = workflowKeywords.some(keyword => 
         messageText.toLowerCase().includes(keyword)
-      ) && !messageText.toLowerCase().includes('pet') && !messageText.toLowerCase().includes('api');
+      ) && !messageText.toLowerCase().includes('pet');
       
+      console.log('🔍 ChatInterface: Workflow detection:', {
+        messageText,
+        workflowKeywords,
+        isWorkflowRequest,
+        containsWorkflow: messageText.toLowerCase().includes('workflow'),
+        containsPet: messageText.toLowerCase().includes('pet'),
+        mentionsApis,
+        mentionsConnection
+      });
+
+      // Skip client-side connection guidance entirely for now
+      // Let the backend handle all connection guidance
+      if (false) {
+        const detectedApis = apiKeywords.filter(api => 
+          messageText.toLowerCase().includes(api)
+        );
+
+        // Create connection guidance
+        const connectionGuidance = {
+          requiresGuidance: true,
+          guidanceMessage: "Connect your APIs",
+          missingApis: detectedApis.map(api => ({
+            name: api.toLowerCase(),
+            displayName: api.charAt(0).toUpperCase() + api.slice(1),
+            description: `${api.charAt(0).toUpperCase() + api.slice(1)} integration`,
+            authType: 'api_key',
+            setupInstructions: {
+              step1: `Sign up for a ${api.charAt(0).toUpperCase() + api.slice(1)} account`,
+              step2: 'Navigate to API settings',
+              step3: 'Generate an API key'
+            },
+            baseUrl: `https://api.${api.toLowerCase()}.com`
+          })),
+          suggestedConnections: detectedApis.map(api => ({
+            name: api.toLowerCase(),
+            displayName: api.charAt(0).toUpperCase() + api.slice(1),
+            description: `${api.charAt(0).toUpperCase() + api.slice(1)} integration`,
+            authType: 'api_key',
+            setupInstructions: {
+              step1: `Sign up for a ${api.charAt(0).toUpperCase() + api.slice(1)} account`,
+              step2: 'Navigate to API settings',
+              step3: 'Generate an API key'
+            },
+            baseUrl: `https://api.${api.toLowerCase()}.com`
+          }))
+        };
+
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: `I can help you create a workflow with ${detectedApis.map(api => api.charAt(0).toUpperCase() + api.slice(1)).join(' and ')}! 
+
+To get started, you'll need to connect your APIs first. This ensures your workflow can securely access the services you want to integrate.
+
+**Connect your APIs** to continue with your workflow creation.`,
+          timestamp: new Date(),
+          intent: 'general_chat',
+          connectionGuidance
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsLoading(false);
+        return;
+      }
+
+      
+      
+      let response = null;
       
       if (isWorkflowRequest) {
-        // Skip direct API call for workflow creation requests
+        // Proceed with workflow generation for workflow creation requests
+        console.log('🔍 ChatInterface: Proceeding with workflow generation for:', messageText);
+        response = await apiClient.generateWorkflow(inputMessage);
+        console.log('🔍 ChatInterface: generateWorkflow response:', response);
       } else {
         // First try direct API call execution for API-related requests
         const directApiResponse = await apiClient.executeDirectApiCall(messageText, getPreviousApiResults());
         
         if (directApiResponse.success && directApiResponse.data) {
           const { intent, apiCallResult, explanation, suggestedAction } = directApiResponse.data;
+          const connectionGuidance = (directApiResponse.data as any).connectionGuidance;
           
           // Only handle actual API calls, not workflow creation
           if (intent === 'api_call' && apiCallResult) {
@@ -123,7 +270,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
               intent,
               apiCallResult,
               formattedResponse,
-              suggestedAction
+              suggestedAction,
+              connectionGuidance
+            };
+
+            setMessages(prev => [...prev, assistantMessage]);
+            return;
+          } else if (intent === 'general_chat' && connectionGuidance) {
+            // Handle connection guidance response
+            const assistantMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              type: 'assistant',
+              content: explanation,
+              timestamp: new Date(),
+              intent,
+              connectionGuidance
             };
 
             setMessages(prev => [...prev, assistantMessage]);
@@ -131,17 +292,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
           }
         }
       }
-
-      // Proceed with workflow generation
-      console.log('🔍 ChatInterface: Proceeding with workflow generation for:', messageText);
-      const response = await apiClient.generateWorkflow(inputMessage);
-      console.log('🔍 ChatInterface: generateWorkflow response:', response);
       
-      if (response.success && response.data) {
+      if (response && response.success && response.data) {
         console.log('🔍 Workflow generation response:', {
           workflow: response.data.workflow,
           steps: response.data.steps,
-          explanation: response.data.explanation
+          explanation: response.data.explanation,
+          connectionGuidance: (response.data as any).connectionGuidance
         });
         
         const assistantMessage: Message = {
@@ -149,13 +306,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
           type: 'assistant',
           content: response.data.explanation || 'I\'ve created a workflow for you!',
           timestamp: new Date(),
-          workflow: {
+          workflow: response.data.workflow ? {
             ...response.data.workflow,
             isSaved: false  // Ensure the workflow is marked as not saved initially
-          },
+          } : undefined,
           steps: response.data.steps,
           explanation: response.data.explanation,
-          intent: 'workflow_creation'
+          intent: 'workflow_creation',
+          connectionGuidance: (response.data as any).connectionGuidance
         };
         
         console.log('🔍 Created assistant message:', {
@@ -169,7 +327,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         if (onWorkflowGenerated && response.data.workflow && response.data.steps) {
           onWorkflowGenerated(response.data.workflow, response.data.steps);
         }
-      } else {
+      } else if (response) {
         throw new Error(response.error || 'Failed to generate workflow');
       }
     } catch (err) {
@@ -257,6 +415,78 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       setSavingWorkflow(null);
     }
   }, [messages, onWorkflowSaved]);
+
+  // Connection setup handlers
+  const handleStartConnectionSetup = useCallback((api: any, messageId: string) => {
+    setConnectionSetupApi(api);
+    setConnectionSetupMessageId(messageId);
+    setShowConnectionSetup(true);
+  }, []);
+
+  const handleCancelConnectionSetup = useCallback(() => {
+    setShowConnectionSetup(false);
+    setConnectionSetupApi(null);
+    setConnectionSetupMessageId(null);
+  }, []);
+
+  const handleSaveConnection = useCallback(async (credentials: Record<string, string>) => {
+    if (!connectionSetupApi || !connectionSetupMessageId) return;
+
+    setIsSavingConnection(true);
+    try {
+      const response = await fetch('/api/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: connectionSetupApi.name,
+          displayName: connectionSetupApi.displayName,
+          description: connectionSetupApi.description,
+          authType: connectionSetupApi.authType,
+          baseUrl: connectionSetupApi.baseUrl,
+          credentials
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to save connection');
+      }
+
+      const result = await response.json();
+      
+      // Close the setup form
+      setShowConnectionSetup(false);
+      setConnectionSetupApi(null);
+      setConnectionSetupMessageId(null);
+
+      // Add success message
+      const successMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: `✅ Successfully connected to ${connectionSetupApi.displayName}! You can now create your workflow.`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, successMsg]);
+
+      // Refresh the original message to remove connection guidance
+      setMessages(prev => prev.map(m => 
+        m.id === connectionSetupMessageId 
+          ? { 
+              ...m, 
+              connectionGuidance: m.connectionGuidance ? { 
+                ...m.connectionGuidance, 
+                requiresGuidance: false 
+              } : undefined
+            }
+          : m
+      ));
+
+    } catch (error) {
+      throw error; // Let the form handle the error display
+    } finally {
+      setIsSavingConnection(false);
+    }
+  }, [connectionSetupApi, connectionSetupMessageId]);
 
   const handleExecuteWorkflow = useCallback(async (messageId: string) => {
     const message = messages.find(m => m.id === messageId);
@@ -523,6 +753,154 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                 </div>
               )}
 
+              {/* Connection guidance */}
+              {message.connectionGuidance && message.connectionGuidance.requiresGuidance && (
+                <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200" data-testid="connection-guidance">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">
+                        {message.connectionGuidance.guidanceMessage}
+                      </h4>
+                      
+                      {/* Error state for connection guidance */}
+                      {message.connectionGuidance.error && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3" data-testid="connection-guidance-error">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0">
+                              <svg className="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <div className="ml-2">
+                              <p className="text-sm text-red-800">{message.connectionGuidance.error}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Missing APIs list */}
+                      {message.connectionGuidance.missingApis.length > 0 && (
+                        <div className="mb-3">
+                          <div className="text-xs font-medium text-blue-800 mb-2">Missing API connections:</div>
+                          <div className="space-y-2" data-testid="missing-apis-list">
+                            {message.connectionGuidance.missingApis.map((api, index) => (
+                              <div key={index} className="flex items-center space-x-2 p-2 bg-white rounded border border-blue-100" data-testid={`api-suggestion-${api.displayName}`}>
+                                <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <span className="text-blue-600 font-medium text-xs">{index + 1}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-gray-900">{api.displayName}</div>
+                                  <div className="text-xs text-gray-600">{api.description}</div>
+                                  <div className="text-xs text-blue-600 mt-1">
+                                    Auth: {api.authType} • {api.baseUrl}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Setup instructions */}
+                      {message.connectionGuidance.setupInstructions && (
+                        <div className="mb-3">
+                          <div className="text-xs font-medium text-blue-800 mb-2">
+                            {message.connectionGuidance.setupInstructions.title}:
+                          </div>
+                          <div className="space-y-1" data-testid="connection-instructions">
+                            {message.connectionGuidance.setupInstructions.steps.map((step, index) => (
+                              <div key={index} className="flex items-start space-x-2 text-xs text-gray-700" data-testid={`instruction-step-${index + 1}`}>
+                                <div className="flex-shrink-0 w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+                                  <span className="text-blue-600 font-medium text-xs">{index + 1}</span>
+                                </div>
+                                <div className="flex-1">{step}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="space-y-2">
+                        {/* Individual API setup buttons */}
+                        <div className="space-y-1">
+                          {message.connectionGuidance.missingApis.map((api, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{api.displayName}</div>
+                                <div className="text-xs text-gray-600">{api.description}</div>
+                              </div>
+                              <button
+                                onClick={() => handleStartConnectionSetup(api, message.id)}
+                                className="ml-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                                data-testid={`setup-in-chat-${api.name}`}
+                              >
+                                Set up in Chat
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Help button */}
+                        <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+                          <button
+                            onClick={() => {
+                              // Show more detailed instructions
+                              console.log('Show detailed instructions for:', message.connectionGuidance?.missingApis);
+                            }}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                          >
+                            <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Set up connections
+                          </button>
+                        </div>
+                        
+                        {/* Recovery options */}
+                        {message.connectionGuidance.error && (
+                          <div className="mt-3 pt-3 border-t border-gray-200" data-testid="recovery-options">
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() => {
+                                  // Retry connection guidance
+                                  console.log('Retrying connection guidance');
+                                }}
+                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                              >
+                                <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Try again
+                              </button>
+                              <button
+                                onClick={() => {
+                                  // Contact support
+                                  window.open('mailto:support@apiq.com?subject=Connection Guidance Error', '_blank');
+                                }}
+                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                              >
+                                <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Contact support
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Direct API call result */}
               {message.apiCallResult && (
                 <div className="mt-3 p-3 bg-white rounded border border-gray-200" data-testid="api-call-result">
@@ -692,6 +1070,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             data-testid="primary-action chat-send-btn"
             type="submit"
             disabled={!inputMessage.trim() || isLoading}
+            onClick={async (e) => {
+              console.log('🔍 ChatInterface: Send button clicked');
+              e.preventDefault();
+              e.stopPropagation();
+              await handleSubmit(e);
+            }}
             className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-200 shadow-sm hover:shadow-md min-h-[44px]"
           >
             {isLoading ? (
@@ -715,6 +1099,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         {error && (
           <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {/* Connection Setup Form Modal */}
+        {showConnectionSetup && connectionSetupApi && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="connection-setup-modal">
+            <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <ConnectionSetupForm
+                apiSuggestion={connectionSetupApi}
+                onSave={handleSaveConnection}
+                onCancel={handleCancelConnectionSetup}
+                isLoading={isSavingConnection}
+              />
+            </div>
           </div>
         )}
       </div>

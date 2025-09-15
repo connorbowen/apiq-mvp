@@ -17,9 +17,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       if (!tourState) {
-        // Create a new tour state for new users
-        tourState = await prisma.tourState.create({
-          data: {
+        // Create a new tour state for new users using upsert to handle race conditions
+        tourState = await prisma.tourState.upsert({
+          where: { userId: user.id },
+          update: {
+            currentStep: 0,
+            totalSteps: 10,
+            isActive: true,
+            completedSteps: [],
+            dismissed: false,
+            lastShown: new Date(),
+          },
+          create: {
             userId: user.id,
             currentStep: 0,
             totalSteps: 10,

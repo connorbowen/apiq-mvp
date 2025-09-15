@@ -537,7 +537,50 @@ class ApiClient {
   }
 
   // Natural language workflow generation
-  async generateWorkflow(userDescription: string): Promise<ApiResponse<{ workflow: any; steps: any[]; explanation: string }>> {
+  async generateWorkflow(userDescription: string): Promise<ApiResponse<{ 
+    workflow: any; 
+    steps: any[]; 
+    explanation: string;
+    connectionGuidance?: {
+      requiresGuidance: boolean;
+      missingApis: Array<{
+        name: string;
+        displayName: string;
+        description: string;
+        authType: string;
+        setupInstructions: {
+          step1: string;
+          step2: string;
+          step3: string;
+          additionalNotes?: string;
+        };
+        documentationUrl?: string;
+        baseUrl?: string;
+        commonEndpoints?: string[];
+      }>;
+      suggestedConnections: Array<{
+        name: string;
+        displayName: string;
+        description: string;
+        authType: string;
+        setupInstructions: {
+          step1: string;
+          step2: string;
+          step3: string;
+          additionalNotes?: string;
+        };
+        documentationUrl?: string;
+        baseUrl?: string;
+        commonEndpoints?: string[];
+      }>;
+      guidanceMessage: string;
+      redirectToConnections: boolean;
+      setupInstructions?: {
+        title: string;
+        steps: string[];
+      };
+    };
+  }>> {
     console.log('🔍 API Client: generateWorkflow called with:', userDescription);
     const result = await this.request({
       method: 'POST',
@@ -841,6 +884,45 @@ class ApiClient {
     };
     explanation: string;
     suggestedAction?: string;
+    connectionGuidance?: {
+      requiresGuidance: boolean;
+      missingApis: Array<{
+        name: string;
+        displayName: string;
+        description: string;
+        authType: string;
+        setupInstructions: {
+          step1: string;
+          step2: string;
+          step3: string;
+          additionalNotes?: string;
+        };
+        documentationUrl?: string;
+        baseUrl?: string;
+        commonEndpoints?: string[];
+      }>;
+      suggestedConnections: Array<{
+        name: string;
+        displayName: string;
+        description: string;
+        authType: string;
+        setupInstructions: {
+          step1: string;
+          step2: string;
+          step3: string;
+          additionalNotes?: string;
+        };
+        documentationUrl?: string;
+        baseUrl?: string;
+        commonEndpoints?: string[];
+      }>;
+      guidanceMessage: string;
+      redirectToConnections: boolean;
+      setupInstructions?: {
+        title: string;
+        steps: string[];
+      };
+    };
   }>> {
     return this.request({
       method: 'POST',

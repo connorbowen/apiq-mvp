@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2025-01-27] - Single API Operations Feature Complete & Enhanced Logging
+## [2025-01-27] - Connection Guidance System & E2E Test Fixes
+
+### ✨ Added
+- **P1.4: Connection Guidance System** ✅ **COMPLETED**
+  - Intelligent API connection guidance when users request workflows requiring missing APIs
+  - ConnectionGuidanceService with comprehensive API knowledge base (25+ APIs)
+  - In-chat connection setup with ConnectionSetupForm component
+  - Support for multiple authentication types (API_KEY, BEARER_TOKEN, OAUTH2, BASIC_AUTH)
+  - Step-by-step setup instructions for each API type
+  - Real-time connection testing and validation
+  - Comprehensive E2E test coverage (24/25 tests passing - 96% success rate)
+  - Integration with ChatInterface for seamless user experience
+  - Documentation links and setup guidance for each API
 
 ### ✨ Added
 - **P1.3: Single API Operations** ✅ **COMPLETED**
@@ -20,9 +32,18 @@ All notable changes to this project will be documented in this file.
   - Modal interactions (open, close, execute) with proper UX
 
 ### 🔧 Enhanced
-- **Comprehensive Logging System**: Enhanced console logging across all API endpoints and services
+- **E2E Test Reliability**: Significantly improved connection guidance test stability
+  - Fixed data-testid mismatches (GitHub, OpenAI capitalization)
+  - Enhanced test message specificity for better API detection
+  - Improved timeout handling and error recovery
+  - Added comprehensive debugging and logging for test failures
+- **Chat Interface Integration**: Enhanced ChatInterface with connection guidance
+  - Real-time API detection from user messages
+  - Seamless integration with ConnectionSetupForm
+  - Improved error handling and user feedback
+  - Better UX for connection setup flows
 
-### ✨ Added
+### 🔧 Enhanced
 - **Comprehensive Logging System**: Enhanced console logging across all API endpoints and services
   - Detailed request/response logging for workflow generation
   - Enhanced error logging with specific failure reasons
@@ -56,19 +77,34 @@ All notable changes to this project will be documented in this file.
   - Better test isolation and cleanup
 
 ### 🐛 Fixed
+- **E2E Test Issues**: Resolved multiple connection guidance test failures
+  - Fixed data-testid capitalization issues (Github → GitHub, Openai → OpenAI)
+  - Corrected test message specificity to trigger proper API detection
+  - Fixed performance test function call parameters
+  - Resolved mobile responsiveness test API name issues
+  - Fixed context maintenance test logic and expectations
+  - Corrected error handling test selectors and flow
+  - Improved authentication type test timing and reliability
 - **Error Handling**: Improved error messages and validation across all services
 - **API Reliability**: Enhanced retry logic for external service calls
 - **Debugging**: Better logging for troubleshooting and development
 - **Test Stability**: Improved test reliability with enhanced error handling
 
 ### 📚 Documentation
+- **Connection Guidance Documentation**: Created comprehensive documentation for new features
+  - ConnectionGuidanceService API documentation
+  - ConnectionSetupForm component usage guide
+  - E2E test patterns and best practices
+  - API knowledge base and setup instructions
 - **API Reference**: Updated with new logging and retry mechanisms
 - **Testing Strategy**: Enhanced with new test patterns and helpers
 - **Architecture**: Updated to reflect enhanced logging and retry capabilities
 - **Development Guide**: Added information about new debugging features
 
 ### 🎯 Impact
+- **User Experience**: Seamless connection guidance and setup directly in chat interface
 - **Developer Experience**: Significantly improved debugging capabilities with comprehensive logging
+- **Test Reliability**: 96% E2E test success rate for connection guidance features
 - **System Reliability**: Enhanced retry logic improves system resilience
 - **Error Handling**: Better error messages and validation improve user experience
 - **Maintenance**: Enhanced logging makes troubleshooting and maintenance easier

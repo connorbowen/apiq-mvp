@@ -3,6 +3,7 @@ import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session
 import { prisma } from '../../../lib/database/client';
 import { logInfo, logError } from '../../../src/utils/logger';
 import { OpenAIService } from '../../../src/services/openaiService';
+import { ConnectionGuidanceService } from '../../../src/lib/services/connectionGuidanceService';
 import { errorHandler } from '../../../src/middleware/errorHandler';
 import axios from 'axios';
 
@@ -21,6 +22,44 @@ interface DirectApiCallResponse {
     };
     explanation: string;
     suggestedAction?: string;
+    connectionGuidance?: {
+      requiresGuidance: boolean;
+      missingApis: Array<{
+        name: string;
+        displayName: string;
+        description: string;
+        authType: string;
+        setupInstructions: {
+          step1: string;
+          step2: string;
+          step3: string;
+          additionalNotes?: string;
+        };
+        documentationUrl?: string;
+        baseUrl?: string;
+        commonEndpoints?: string[];
+      }>;
+      suggestedConnections: Array<{
+        name: string;
+        displayName: string;
+        description: string;
+        authType: string;
+        setupInstructions: {
+          step1: string;
+          step2: string;
+          step3: string;
+          additionalNotes?: string;
+        };
+        documentationUrl?: string;
+        baseUrl?: string;
+        commonEndpoints?: string[];
+      }>;
+      guidanceMessage: string;
+      setupInstructions?: {
+        title: string;
+        steps: string[];
+      };
+    };
   };
   error?: string;
 }
@@ -183,6 +222,38 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
       status: c.status,
       endpointCount: c.endpoints.length
     })));
+
+    // Check if connection guidance is needed
+    console.log('API endpoint - Checking connection guidance for message:', message);
+    console.log('API endpoint - Available connections:', connections.map(conn => ({ name: conn.name, id: conn.id })));
+    
+    let connectionGuidance;
+    try {
+      connectionGuidance = ConnectionGuidanceService.analyzeRequest(
+        message,
+        connections.map(conn => ({ name: conn.name, id: conn.id }))
+      );
+    } catch (error) {
+      console.error('API endpoint - Connection guidance error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Connection guidance service error'
+      });
+    }
+
+    console.log('API endpoint - Connection guidance result:', connectionGuidance);
+
+    if (connectionGuidance.requiresGuidance) {
+      console.log('→ Connection guidance needed for:', connectionGuidance.missingApis.map(api => api.displayName));
+      return res.status(200).json({
+        success: true,
+        data: {
+          intent: 'general_chat',
+          explanation: connectionGuidance.guidanceMessage,
+          connectionGuidance: connectionGuidance
+        }
+      });
+    }
 
     if (connections.length === 0) {
       return res.status(400).json({

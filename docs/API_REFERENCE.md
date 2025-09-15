@@ -347,6 +347,90 @@ Delete a workflow.
 
 ### API Connection Management 🆕
 
+The API Connection Management system provides secure storage and management of API connections with comprehensive authentication support, enhanced logging, and intelligent connection guidance.
+
+### Connection Guidance System 🆕
+
+The Connection Guidance System automatically detects when users request workflows requiring APIs they haven't connected yet, providing intelligent guidance and in-chat setup capabilities.
+
+#### `POST /api/workflows/generate` (Enhanced with Connection Guidance)
+
+Generate a workflow from natural language description with automatic connection guidance detection.
+
+**Request Body:**
+```json
+{
+  "userDescription": "Create a workflow that sends a Slack notification when a new GitHub issue is created"
+}
+```
+
+**Response with Connection Guidance:**
+```json
+{
+  "success": true,
+  "data": {
+    "workflow": {
+      "id": "wf_123",
+      "name": "GitHub to Slack Notification",
+      "description": "Sends Slack notifications for new GitHub issues"
+    },
+    "connectionGuidance": {
+      "requiresGuidance": true,
+      "missingApis": ["Slack", "GitHub"],
+      "guidanceMessage": "To create this workflow, you'll need to connect to Slack and GitHub. I can help you set this up!",
+      "suggestedConnections": [
+        {
+          "name": "slack",
+          "displayName": "Slack",
+          "description": "Team communication and collaboration platform",
+          "authType": "OAUTH2",
+          "setupInstructions": {
+            "step1": "Go to https://api.slack.com/apps and create a new app",
+            "step2": "Add OAuth2 scopes: chat:write, channels:read, users:read",
+            "step3": "Copy your Client ID and Client Secret"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+#### `POST /api/connections/test`
+
+Test API connection credentials before saving (used by ConnectionSetupForm).
+
+**Request Body:**
+```json
+{
+  "name": "Slack API",
+  "baseUrl": "https://slack.com/api",
+  "authType": "OAUTH2",
+  "authConfig": {
+    "clientId": "your_client_id",
+    "clientSecret": "your_client_secret"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "isValid": true,
+    "message": "Connection test successful"
+  }
+}
+```
+
+**Features:**
+- **Intelligent API Detection**: Automatically identifies missing APIs from user messages
+- **Comprehensive API Knowledge Base**: 25+ APIs with detailed setup instructions
+- **Multiple Authentication Types**: Support for API_KEY, BEARER_TOKEN, OAUTH2, and BASIC_AUTH
+- **Real-time Validation**: Test connections before saving
+- **Step-by-Step Guidance**: Detailed setup instructions for each API type
+
 The API Connection Management system provides secure storage and management of API connections with comprehensive authentication support and enhanced logging.
 
 #### `GET /api/connections`

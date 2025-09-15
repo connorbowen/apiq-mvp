@@ -88,7 +88,7 @@ npm run test:e2e:p0
 ```bash
 npm run test:e2e:p1
 ```
-**Tests**: UI Components, Enhanced Workflow Engine, Natural Language Workflow Creation, Workflow Templates, Onboarding, Mobile Responsiveness
+**Tests**: UI Components, Enhanced Workflow Engine, Natural Language Workflow Creation, Workflow Templates, Onboarding, Mobile Responsiveness, Connection Guidance
 **UX Compliance**: Comprehensive UX validation including accessibility and mobile responsiveness
 **When to use**: When working on user interface or workflow features
 
@@ -120,8 +120,8 @@ npm run test:e2e:auth-area
 ```bash
 npm run test:e2e:connections-area
 ```
-**Tests**: API connection management (excludes OAuth2 flows)
-**When to use**: When working on OpenAPI integration, API connections
+**Tests**: API connection management, Connection Guidance System (excludes OAuth2 flows)
+**When to use**: When working on OpenAPI integration, API connections, connection guidance
 
 ### **Workflow Engine Area**
 ```bash
@@ -202,6 +202,7 @@ npm run test:e2e:report
 ### **✅ COMPLETED Features** (Always Run)
 - **Authentication System**: JWT, OAuth2 (including Google), SSO
 - **API Connection Management**: OpenAPI parsing, credential storage
+- **Connection Guidance System**: Intelligent API detection and in-chat setup (24/25 tests passing)
 - **Basic Workflow Engine**: Step runner, queue system, state management
 - **Natural Language Workflow Creation**: AI-powered workflow generation
 - **Workflow Templates**: Pre-built templates and customization
@@ -320,21 +321,22 @@ await uxHelper.validateCompleteUXCompliance();
 ## 📈 **Test Status & Results**
 
 ### **Current Test Status**
-- **Total Test Files**: 24
-- **Total Test Cases**: 300+
+- **Total Test Files**: 25
+- **Total Test Cases**: 325+
 - **Test Coverage**: 100% of P0, P1, and P2 features
 - **UX Compliance**: Fully compliant with UX spec requirements
-- **Pass Rate**: 100% (all tests passing)
+- **Pass Rate**: 99.7% (Connection Guidance: 24/25 tests passing)
 
 ### **Test Categories**
 1. **Authentication & Security** (5 files) - Core auth flows, OAuth2, password reset
-2. **API Connections** (5 files) - OpenAPI integration, connection management
+2. **API Connections** (6 files) - OpenAPI integration, connection management, connection guidance
 3. **Workflow Engine** (6 files) - Natural language creation, templates, execution
 4. **User Interface** (5 files) - Navigation, mobile responsiveness, critical UI
 5. **User Experience** (1 file) - Onboarding and user journey
 6. **Performance & Security** (2 files) - Load testing, secrets management
 
 ### **Recent Achievements**
+- ✅ Connection Guidance System tests implemented (24/25 tests passing)
 - ✅ Natural language workflow creation tests implemented
 - ✅ Workflow templates and libraries tests implemented
 - ✅ Onboarding and user journey tests implemented

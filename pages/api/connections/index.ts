@@ -1,641 +1,81 @@
-// TODO: [connorbowen] 2025-06-29 - This file is approaching the 200-300 line threshold (currently 242 lines).
-// Consider extracting connection creation logic into a service layer to improve maintainability.
-// Priority: Low - not urgent for current functionality.
-
-console.log('LOADED /api/connections handler');
-
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
-import { handleApiError } from '../../../src/middleware/errorHandler';
-import { logInfo, logError } from '../../../src/utils/logger';
-import { CreateApiConnectionRequest, CreateSecretRequest } from '../../../src/types';
-import { parseOpenApiSpecData, ParseError } from '../../../src/lib/api/parser';
-import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
+import { encryptData } from '../../../src/utils/encryption';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
-import { openApiService } from '../../../src/services/openApiService';
-import { ConnectionStatus } from '../../../src/generated/prisma';
-import { validateOpenApiConnection, validateOpenApiSpec } from '../../../src/lib/api/validation';
-import { rateLimiters } from '../../../src/middleware/rateLimiter';
-import { createRateLimiter } from '../../../src/middleware/rateLimiter';
-import { secretsVault } from '../../../src/lib/secrets/secretsVault';
-
-/**
- * Create secrets from connection authentication data
- */
-async function createSecretsFromConnection(
-  userId: string,
-  connectionName: string,
-  authType: string,
-  authConfig: any
-): Promise<{ secretIds: string[]; errors: string[] }> {
-  const secretIds: string[] = [];
-  const errors: string[] = [];
-
-  try {
-    const secretsToCreate: CreateSecretRequest[] = [];
-
-    // Create secrets based on auth type
-    if (authType === 'API_KEY' && authConfig?.apiKey) {
-      secretsToCreate.push({
-        name: `${connectionName}_api_key`,
-        type: 'API_KEY',
-        value: authConfig.apiKey,
-        description: `API key for ${connectionName}`,
-        enableRotation: false
-      });
-    } else if (authType === 'BEARER_TOKEN' && authConfig?.token) {
-      secretsToCreate.push({
-        name: `${connectionName}_bearer_token`,
-        type: 'BEARER_TOKEN',
-        value: authConfig.token,
-        description: `Bearer token for ${connectionName}`,
-        enableRotation: false
-      });
-    } else if (authType === 'BASIC_AUTH') {
-      if (authConfig?.username) {
-        secretsToCreate.push({
-          name: `${connectionName}_username`,
-          type: 'BASIC_AUTH_USERNAME',
-          value: authConfig.username,
-          description: `Username for ${connectionName}`,
-          enableRotation: false
-        });
-      }
-      if (authConfig?.password) {
-        secretsToCreate.push({
-          name: `${connectionName}_password`,
-          type: 'BASIC_AUTH_PASSWORD',
-          value: authConfig.password,
-          description: `Password for ${connectionName}`,
-          enableRotation: false
-        });
-      }
-    } else if (authType === 'OAUTH2') {
-      if (authConfig?.clientId) {
-        secretsToCreate.push({
-          name: `${connectionName}_client_id`,
-          type: 'OAUTH2_CLIENT_ID',
-          value: authConfig.clientId,
-          description: `OAuth2 client ID for ${connectionName}`,
-          enableRotation: false
-        });
-      }
-      if (authConfig?.clientSecret) {
-        secretsToCreate.push({
-          name: `${connectionName}_client_secret`,
-          type: 'OAUTH2_CLIENT_SECRET',
-          value: authConfig.clientSecret,
-          description: `OAuth2 client secret for ${connectionName}`,
-          enableRotation: false
-        });
-      }
-    }
-
-    // Create secrets
-    for (const secretData of secretsToCreate) {
-      try {
-        const secret = await secretsVault.storeSecret(
-          userId,
-          secretData.name,
-          { value: secretData.value, metadata: { description: secretData.description } },
-          secretData.type,
-          undefined, // expiresAt
-          undefined, // rotationConfig
-          undefined, // connectionId - will be set after connection creation
-          connectionName // connectionName for metadata
-        );
-        secretIds.push(secret.id);
-      } catch (error) {
-        errors.push(`Failed to create secret ${secretData.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-    }
-
-    return { secretIds, errors };
-  } catch (error) {
-    errors.push(`Secret creation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    return { secretIds, errors };
-  }
-}
 
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
-  console.log('🔍 Handler called with method:', req.method);
-  console.log('🚨 CONNECTIONS API HANDLER EXECUTED - METHOD:', req.method, 'URL:', req.url);
-  
-  // Apply standard rate limiting for POST requests (connection creation)
-  if (req.method === 'POST') {
-    // Use loose rate limiter for testing (100 requests per minute)
-    const standardRateLimiter = createRateLimiter({
-      windowMs: 60 * 1000, // 1 minute
-      maxRequests: 100 // Increased for testing
-    });
-    await new Promise<void>((resolve, reject) => {
-      standardRateLimiter(req, res, () => resolve());
-    });
-  }
-  
   try {
-    // Require authentication for all operations (allow regular users to create connections)
     const user = await requireAuth(req, res);
-    console.log('🔍 CONNECTIONS API - User authenticated:', user.id);
-    console.log('🔍 CONNECTIONS API - User email:', user.email);
-    console.log('🔍 CONNECTIONS API - Request body:', JSON.stringify(req.body, null, 2));
 
     if (req.method === 'GET') {
-      console.log('🔍 GET branch entered');
-      // Get all API connections for the authenticated user
+      // Get all connections for the user
       const connections = await prisma.apiConnection.findMany({
         where: { userId: user.id },
-        include: {
-          endpoints: {
-            where: { isActive: true }
-          }
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          authType: true,
+          baseUrl: true,
+          status: true,
+          connectionStatus: true,
+          ingestionStatus: true,
+          lastTested: true,
+          createdAt: true,
+          updatedAt: true,
+          authConfig: true,
+          documentationUrl: true,
         },
         orderBy: { createdAt: 'desc' }
       });
 
-      // Debug: Log userId and returned connection IDs (apiConnection)
-      console.log('🔵 GET result for', user.id, '=>', connections.map(c => c.id));
-      console.log('🔵 GET connections details:', connections.map(c => ({
-        id: c.id,
-        name: c.name,
-        userId: c.userId,
-        authType: c.authType,
-        status: c.status
-      })));
-
-      // Add computed fields to each connection
-      const connectionsWithComputedFields = connections.map(connection => ({
-        id: connection.id,
-        name: connection.name,
-        description: connection.description,
-        baseUrl: connection.baseUrl,
-        authType: connection.authType,
-        documentationUrl: connection.documentationUrl,
-        status: connection.status,
-        connectionStatus: connection.connectionStatus,
-        ingestionStatus: connection.ingestionStatus,
-        // Computed fields
-        endpointCount: connection.endpoints.length,
-        lastUsed: connection.lastTested || connection.updatedAt,
-        // Metadata fields
-        createdAt: connection.createdAt,
-        updatedAt: connection.updatedAt,
-        secretId: connection.secretId,
-        hasSecrets: !!connection.secretId
-      }));
-
-      logInfo('Retrieved API connections', { 
-        userId: user.id, 
-        count: connections.length 
-      });
-
       return res.status(200).json({
         success: true,
-        data: {
-          connections: connectionsWithComputedFields,
-          // Summary metadata
-          total: connections.length,
-          active: connections.filter(c => c.status === 'ACTIVE').length,
-          failed: connections.filter(c => c.ingestionStatus === 'FAILED').length
-        }
-      });
-
-    } else if (req.method === 'POST') {
-      console.log('🔍 POST branch entered');
-      // Create a new API connection
-      const connectionData: CreateApiConnectionRequest = req.body;
-      
-      // Debug: Log the received data
-      console.log('🔍 Connection creation request data:', {
-        name: connectionData.name,
-        authType: connectionData.authType,
-        hasAuthConfig: !!connectionData.authConfig,
-        hasSecretIds: !!connectionData.secretIds,
-        secretIdsLength: connectionData.secretIds?.length,
-        secretIds: connectionData.secretIds,
-        hasSecretReferences: !!connectionData.secretReferences
-      });
-
-      // Validate required fields
-      if (!connectionData.name || !connectionData.baseUrl || !connectionData.authType) {
-        return res.status(400).json({
-          success: false,
-          error: 'Missing required fields: name, baseUrl, authType',
-          code: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Basic XSS validation
-      const xssPattern = /<script[^>]*>.*?<\/script>|<[^>]*javascript:|<[^>]*on\w+\s*=/i;
-      if (xssPattern.test(connectionData.name) || xssPattern.test(connectionData.description || '')) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid input: potentially unsafe content detected',
-          code: 'VALIDATION_ERROR'
-        });
-      }
-
-      // HTTPS requirement validation
-      try {
-        const url = new URL(connectionData.baseUrl);
-        if (url.protocol !== 'https:') {
-          return res.status(400).json({
-            success: false,
-            error: 'Base URL must use HTTPS protocol for security',
-            code: 'VALIDATION_ERROR'
-          });
-        }
-      } catch (error) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid base URL format',
-          code: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate OpenAPI connection data
-      const connectionValidation = await validateOpenApiConnection(
-        connectionData.name,
-        connectionData.baseUrl,
-        connectionData.documentationUrl
-      );
-
-      if (!connectionValidation.isValid) {
-        return res.status(400).json({
-          success: false,
-          error: connectionValidation.error,
-          code: connectionValidation.code || 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate authType is a valid enum value
-      const validAuthTypes = ['NONE', 'API_KEY', 'BEARER_TOKEN', 'BASIC_AUTH', 'OAUTH2', 'CUSTOM'];
-      if (!validAuthTypes.includes(connectionData.authType)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid auth type. Must be one of: NONE, API_KEY, BEARER_TOKEN, BASIC_AUTH, OAUTH2, CUSTOM',
-          code: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate OAuth2-specific requirements
-      if (connectionData.authType === 'OAUTH2') {
-        console.log('🔍 OAuth2 validation - received data:', {
-          hasAuthConfig: !!connectionData.authConfig,
-          hasOAuth2Provider: !!connectionData.oauth2Provider,
-          hasSecretIds: !!connectionData.secretIds,
-          secretIdsLength: connectionData.secretIds?.length,
-          secretIds: connectionData.secretIds
-        });
-        
-        // Handle both authConfig format and direct oauth2Provider format for testing
-        let oauth2Config = connectionData.authConfig || {};
-        
-        // If oauth2Provider is provided directly (for testing), convert to authConfig format
-        if (connectionData.oauth2Provider) {
-          oauth2Config = {
-            provider: connectionData.oauth2Provider.toLowerCase(),
-            clientId: connectionData.clientId || `client-${Date.now()}`,
-            clientSecret: connectionData.clientSecret || `secret-${Date.now()}`,
-            redirectUri: connectionData.redirectUri || 'http://localhost:3000/api/oauth/callback'
-          };
-        }
-        
-        // If secrets are provided (frontend created them), skip direct validation
-        // The secrets will contain the OAuth2 credentials
-        if (connectionData.secretIds && connectionData.secretIds.length > 0) {
-          console.log('🔍 OAuth2 connection with secrets - skipping direct validation');
-          
-          // Check if we have OAuth2 secrets to determine this is a valid OAuth2 connection
-          const hasOAuth2Secrets = connectionData.secretIds.some(secretId => {
-            // We need to check the secret types, but for now, assume if secrets exist, it's valid
-            return true;
-          });
-          
-          if (hasOAuth2Secrets) {
-            // Set a minimal authConfig for the rest of the function
-            connectionData.authConfig = {
-              provider: oauth2Config.provider || 'custom',
-              // Don't validate clientId/clientSecret since they're in secrets
-            };
-            console.log('🔍 OAuth2 connection validated with secrets');
-          } else {
-            return res.status(400).json({
-              success: false,
-              error: 'OAuth2 connections must have OAuth2-related secrets',
-              code: 'VALIDATION_ERROR'
-            });
-          }
-        } else {
-          console.log('🔍 OAuth2 connection without secrets - performing direct validation');
-          // If no secrets and no authConfig and no oauth2Provider, return error
-          if (!connectionData.authConfig && !connectionData.oauth2Provider) {
-            return res.status(400).json({
-              success: false,
-              error: 'OAuth2 configuration is required for OAuth2 authentication type',
-              code: 'VALIDATION_ERROR'
-            });
-          }
-
-          const requiredFields = ['clientId', 'clientSecret'];
-          const missingFields = requiredFields.filter(field => !oauth2Config[field]);
-
-          if (missingFields.length > 0) {
-            return res.status(400).json({
-              success: false,
-              error: `Missing required OAuth2 fields: ${missingFields.join(', ')}`,
-              code: 'VALIDATION_ERROR'
-            });
-          }
-
-          // Validate OAuth2 provider if specified
-          if (oauth2Config.provider) {
-            const validProviders = ['github', 'google', 'slack', 'discord', 'test', 'custom'];
-            if (!validProviders.includes(oauth2Config.provider)) {
-              return res.status(400).json({
-                success: false,
-                error: `Invalid OAuth2 provider. Must be one of: ${validProviders.join(', ')}`,
-                code: 'VALIDATION_ERROR'
-              });
-            }
-          }
-          
-          // Update connectionData.authConfig for the rest of the function
-          connectionData.authConfig = oauth2Config;
-        }
-      }
-
-      // Check if connection with same name already exists for this user
-      const existingConnection = await prisma.apiConnection.findFirst({
-        where: {
-          userId: user.id,
-          name: connectionData.name
-        }
-      });
-
-      if (existingConnection) {
-        return res.status(409).json({
-          success: false,
-          error: 'API connection with this name already exists',
-          code: 'RESOURCE_CONFLICT'
-        });
-      }
-
-      // Create the API connection with PENDING ingestion status
-      let newConnection: any;
-      let endpointCount: number = 0;
-      let createdSecretIds: string[] = [];
-
-      try {
-        // Use a transaction to ensure atomicity
-        await prisma.$transaction(async (tx) => {
-        // Check if secrets are already provided (frontend created them)
-        if (connectionData.secretIds && connectionData.secretIds.length > 0) {
-          // Use existing secrets provided by frontend
-          createdSecretIds = connectionData.secretIds;
-          console.log('🔍 Using existing secrets provided by frontend:', createdSecretIds);
-        } else {
-          // Create secrets from auth data if provided
-          const hasAuthData = (connectionData.authConfig && Object.keys(connectionData.authConfig).length > 0) ||
-                             connectionData.apiKey ||
-                             connectionData.token ||
-                             connectionData.username ||
-                             connectionData.password ||
-                             connectionData.clientId ||
-                             connectionData.clientSecret;
-          
-          if (hasAuthData) {
-            // Prepare auth config by combining authConfig with direct fields
-            const combinedAuthConfig = {
-              ...connectionData.authConfig,
-              apiKey: connectionData.apiKey || connectionData.authConfig?.apiKey,
-              token: connectionData.token || connectionData.authConfig?.token,
-              username: connectionData.username || connectionData.authConfig?.username,
-              password: connectionData.password || connectionData.authConfig?.password,
-              clientId: connectionData.clientId || connectionData.authConfig?.clientId,
-              clientSecret: connectionData.clientSecret || connectionData.authConfig?.clientSecret
-            };
-            
-            const { secretIds, errors } = await createSecretsFromConnection(
-              user.id,
-              connectionData.name,
-              connectionData.authType,
-              combinedAuthConfig
-            );
-            
-            if (errors.length > 0) {
-              logError('Secret creation errors during connection creation', new Error(errors.join('; ')), {
-                userId: user.id,
-                connectionName: connectionData.name,
-                errors
-              });
-            }
-            
-            createdSecretIds = secretIds;
-          }
-        }
-
-          // Determine initial connection status based on auth type
-          const initialConnectionStatus = connectionData.authType === 'OAUTH2' 
-            ? ConnectionStatus.disconnected 
-            : ConnectionStatus.connected;
-
-          // Create the API connection with secret reference
-          newConnection = await tx.apiConnection.create({
-            data: {
-              userId: user.id,
-              name: connectionData.name,
-              description: connectionData.description,
-              baseUrl: connectionData.baseUrl,
-              authType: connectionData.authType,
-              authConfig: connectionData.authConfig || {},
-              documentationUrl: connectionData.documentationUrl,
-              status: 'ACTIVE',
-              connectionStatus: initialConnectionStatus,
-              ingestionStatus: 'PENDING',
-              secretId: createdSecretIds.length > 0 ? createdSecretIds[0] : null
-            }
-          });
-
-          // Link existing secrets to the connection if they were provided by frontend
-          if (connectionData.secretIds && connectionData.secretIds.length > 0) {
-            for (const secretId of connectionData.secretIds) {
-              await tx.secret.update({
-                where: { id: secretId },
-                data: {
-                  connectionId: newConnection.id
-                }
-              });
-            }
-          } else if (createdSecretIds.length > 0) {
-            // Link secrets created during connection creation to the connection
-            for (const secretId of createdSecretIds) {
-              await tx.secret.update({
-                where: { id: secretId },
-                data: {
-                  connectionId: newConnection.id
-                }
-              });
-            }
-          }
-
-          // Debug: Log after persisting the apiConnection
-          console.log('🟢 POST persisted', {
-            userId: user.id,
-            connId: newConnection.id,
-            name: newConnection.name,
-          });
-
-          logInfo('Created API connection', { 
-            connectionId: newConnection.id,
-            userId: user.id,
-            name: newConnection.name
-          });
-
-          // If documentation URL is provided, parse OpenAPI spec and extract endpoints
-          if (connectionData.documentationUrl) {
-            try {
-              // Use the new OpenAPI service with caching
-              const fetchResult = await openApiService.fetchSpec(connectionData.documentationUrl);
-              
-              if (!fetchResult.success) {
-                throw new Error(fetchResult.error || 'Failed to fetch OpenAPI spec');
-              }
-
-              // Validate the OpenAPI specification
-              const specValidation = validateOpenApiSpec(fetchResult.spec);
-              if (!specValidation.isValid) {
-                throw new Error(`Invalid OpenAPI specification: ${specValidation.error}`);
-              }
-
-              // Parse the OpenAPI specification using the fetched spec data
-              const parsedSpec = await parseOpenApiSpecData(fetchResult.spec, connectionData.documentationUrl);
-              
-              // Validate that parsedSpec has the required properties
-              if (!parsedSpec || !parsedSpec.rawSpec || !parsedSpec.specHash) {
-                throw new Error('Invalid parsed specification - missing required properties');
-              }
-              
-              // Update connection with parsed spec data within the same transaction
-              await tx.apiConnection.update({
-                where: { id: newConnection.id },
-                data: {
-                  rawSpec: parsedSpec.rawSpec,
-                  specHash: parsedSpec.specHash,
-                  ingestionStatus: 'SUCCEEDED'
-                }
-              });
-
-              // Extract and store endpoints
-              const endpoints = await extractAndStoreEndpoints(newConnection.id, parsedSpec, tx);
-              endpointCount = Array.isArray(endpoints) ? endpoints.length : 0;
-
-              logInfo('Successfully processed OpenAPI spec and extracted endpoints', {
-                connectionId: newConnection.id,
-                endpointCount: Object.keys(parsedSpec.spec.paths).length,
-                cached: fetchResult.cached,
-                duration: fetchResult.duration
-              });
-
-            } catch (error: any) {
-              // Log the error
-              logError('Failed to process OpenAPI spec', error, { 
-                connectionId: newConnection.id,
-                documentationUrl: connectionData.documentationUrl
-              });
-
-              // Rollback the transaction by throwing the error
-              // This will prevent the connection from being created if OpenAPI validation fails
-              throw error;
-            }
-          }
-        });
-
-        // Get the final connection state
-        const finalConnection = await prisma.apiConnection.findUnique({
-          where: { id: newConnection.id }
-        });
-
-        console.log('🟢 CONNECTION CREATED SUCCESSFULLY:', {
-          userId: user.id,
-          connectionId: finalConnection?.id,
-          connectionName: finalConnection?.name,
-          authType: finalConnection?.authType,
-          status: finalConnection?.status,
-          connectionStatus: finalConnection?.connectionStatus
-        });
-
-        return res.status(201).json({
-          success: true,
-          data: {
-            connection: {
-              id: finalConnection?.id,
-              userId: finalConnection?.userId,
-              name: finalConnection?.name,
-              description: finalConnection?.description,
-              baseUrl: finalConnection?.baseUrl,
-              authType: finalConnection?.authType,
-              authConfig: finalConnection?.authConfig,
-              documentationUrl: finalConnection?.documentationUrl,
-              status: finalConnection?.status,
-              ingestionStatus: finalConnection?.ingestionStatus,
-              rawSpec: finalConnection?.rawSpec,
-              specHash: finalConnection?.specHash,
-              lastTested: finalConnection?.lastTested,
-              createdAt: finalConnection?.createdAt,
-              updatedAt: finalConnection?.updatedAt,
-              endpointCount,
-              lastUsed: finalConnection?.updatedAt,
-              secretId: finalConnection?.secretId,
-              createdSecretIds
-            }
-          },
-          message: 'API connection created successfully'
-        });
-
-      } catch (error: any) {
-        // Log the error
-        logError('API connection creation failed', error, { 
-          name: connectionData.name, 
-          userId: user.id,
-          documentationUrl: connectionData.documentationUrl 
-        });
-
-        // Return appropriate error response based on the error type
-        if (error.message?.includes('Invalid OpenAPI specification')) {
-          return res.status(400).json({
-            success: false,
-            error: error.message,
-            code: 'INVALID_OPENAPI_SPEC'
-          });
-        }
-
-        if (error.message?.includes('Failed to fetch OpenAPI spec')) {
-          return res.status(400).json({
-            success: false,
-            error: error.message,
-            code: 'OPENAPI_FETCH_FAILED'
-          });
-        }
-
-        // For other errors, return a generic error
-        return res.status(500).json({
-          success: false,
-          error: 'Failed to create API connection',
-          code: 'CONNECTION_CREATION_FAILED',
-          details: error.message || 'Unknown error occurred'
-        });
-      }
-
-    } else {
-      return res.status(405).json({
-        success: false,
-        error: 'Method not allowed',
-        code: 'METHOD_NOT_ALLOWED'
+        data: { connections }
       });
     }
 
+    if (req.method === 'POST') {
+      const { name, description, authType, baseUrl, authConfig } = req.body;
+
+      if (!name || !authType) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Create connection
+      const connection = await prisma.apiConnection.create({
+        data: {
+          name,
+          description: description || '',
+          authType,
+          baseUrl: baseUrl || '',
+          authConfig: authConfig || {},
+          userId: user.id,
+        }
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: {
+          id: connection.id,
+          name: connection.name,
+          description: connection.description,
+          authType: connection.authType,
+          baseUrl: connection.baseUrl,
+          status: connection.status,
+          createdAt: connection.createdAt
+        }
+      });
+    }
+
+    // Method not allowed
+    return res.status(405).json({ error: 'Method not allowed' });
+
   } catch (error) {
-    return handleApiError(error, req, res);
+    console.error('Error creating connection:', error);
+    return res.status(500).json({ 
+      error: 'Failed to create connection',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 } 
