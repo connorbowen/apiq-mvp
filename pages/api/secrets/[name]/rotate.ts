@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth } from '../../../../src/lib/auth/session';
-import { SecretsVault } from '../../../../src/lib/secrets/secretsVault';
+import { secretsVault } from '../../../../src/lib/secrets/secretsVault';
 import { prisma } from '../../../../lib/database/client';
 import { logError, logInfo } from '../../../../src/utils/logger';
 
-const secretsVault = new SecretsVault(prisma);
+// Use the singleton secrets vault instance
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {

@@ -1,4 +1,4 @@
-import winston from 'winston';
+import * as winston from 'winston';
 
 /**
  * Structured logging utility using Winston
@@ -30,8 +30,8 @@ const logger = winston.createLogger({
         winston.format.simple()
       )
     }),
-    // File transport for production logs
-    ...(process.env.NODE_ENV === 'production' ? [
+    // File transport for production logs (only in Node.js environment)
+    ...(typeof window === 'undefined' && process.env.NODE_ENV === 'production' ? [
       new winston.transports.File({
         filename: 'logs/error.log',
         level: 'error',

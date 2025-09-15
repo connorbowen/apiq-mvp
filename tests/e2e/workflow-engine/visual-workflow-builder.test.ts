@@ -1,19 +1,26 @@
 import { test, expect } from '@playwright/test';
 import { 
-  waitForElement, 
-  waitForNetworkIdle, 
   getPrimaryActionButton,
-  validateUXCompliance,
-  testXSSPrevention,
-  testDataExposure,
-  testFormAccessibility
+  setupE2E
 } from '../../helpers/e2eHelpers';
 import { 
-  createTestUser, 
+  waitForNetworkIdle
+} from '../../helpers/waitHelpers';
+import { 
+  waitForElement,
+  validateUXCompliance
+} from '../../helpers/uiHelpers';
+import { testFormAccessibility } from '../../helpers/accessibilityHelpers';
+import { 
+  testXSSPrevention,
+  testDataExposure
+} from '../../helpers/securityHelpers';
+import { 
   cleanupTestUser, 
-  loginAsTestUser,
   TestUser 
-} from '../../helpers/authHelpers';
+} from '../../helpers/testUtils';
+import { createE2EUser } from '../../helpers/authHelpers';
+import { Role } from '../../../src/generated/prisma';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -22,7 +29,11 @@ test.describe('Visual Workflow Builder E2E Tests', () => {
 
   test.beforeAll(async () => {
     // Create a real test user
-    testUser = await createTestUser();
+    testUser = await createE2EUser(Role.USER, {
+      email: `workflow-test-${Date.now()}@testuser.local`,
+      password: 'testpass123',
+      name: 'Workflow Test User'
+    });
   });
 
   test.afterAll(async () => {
@@ -31,8 +42,8 @@ test.describe('Visual Workflow Builder E2E Tests', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await loginAsTestUser(page, testUser);
+    // Setup E2E environment
+    await setupE2E(page, testUser, { tab: 'workflows' });
   });
 
   test.describe('Visual Workflow Builder Access', () => {
@@ -248,3 +259,4 @@ test.describe('Visual Workflow Builder E2E Tests', () => {
     });
   });
 });
+

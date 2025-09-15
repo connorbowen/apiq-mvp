@@ -13,12 +13,13 @@
 import { test, expect } from '@playwright/test';
 import { TestUser, generateTestId } from '../../helpers/testUtils';
 import { createE2EUser, registerUser, registerUserWithValidation, registerUserToChat, registerUserAndNavigateToProfile, testEmailVerificationStatus, testCompleteEmailVerificationFlow, handleEmailVerification, testEmailVerificationResend, updateUserEmailVerification, logoutUser, testPasswordReset, testInvalidLogin } from '../../helpers/authHelpers';
-import { Role } from '../../../src/generated/prisma';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton, navigateToSettings, navigateToProfile, navigateWithKeyboard, setupGlobalErrorListeners, setupTracing, stopTracing, clearAuthState, waitForServerReady } from '../../helpers/e2eHelpers';
+import { Role } from '../../../src/generated/prisma';
 import { waitForDashboard, closeGuidedTourIfPresent, fillSignupForm, submitSignupForm } from '../../helpers/uiHelpers';
 import { testPageLoadTime, testAuthenticationPerformance, testRegistrationPerformance } from '../../helpers/performanceHelpers';
 import { testFormAccessibility, testFormValidation, testFormKeyboardNavigation } from '../../helpers/accessibilityHelpers';
 import { safeCleanupTestData } from '../../helpers/testIsolation';
+import { testTabNavigation } from '../../helpers/dataHelpers';
 
 // Setup global error listeners and tracing for all tests
 test.beforeEach(async ({ page }, testInfo) => {
@@ -130,21 +131,50 @@ test.describe('UX Simplification - Authentication Flows', () => {
       // Login user using E2E helper
       await setupE2E(page, testUser, { tab: 'chat' });
       
-      // Navigate to different tab
-      await page.getByTestId('tab-workflows').click();
-      await expect(page).toHaveURL(/.*tab=workflows/);
+      // Debug: Check the desktop tabs container visibility
+      const desktopTabsContainer = page.locator('.hidden.lg\\:block');
+      const isContainerVisible = await desktopTabsContainer.isVisible();
+      console.log(`🔍 DEBUG: Desktop tabs container visible: ${isContainerVisible}`);
       
-      // Test that the preference is maintained during the session
-      // (This tests the core functionality without the complexity of logout/login)
-      await expect(page.getByTestId('workflows-management')).toBeVisible();
+      // Debug: Check computed styles of the container
+      const containerStyles = await desktopTabsContainer.evaluate(el => {
+        const computed = window.getComputedStyle(el);
+        return {
+          display: computed.display,
+          visibility: computed.visibility,
+          opacity: computed.opacity,
+          height: computed.height,
+          width: computed.width,
+          className: el.className
+        };
+      });
+      console.log(`🔍 DEBUG: Container styles:`, containerStyles);
       
-      // Navigate back to chat tab
-      await page.getByTestId('tab-chat').click();
-      await expect(page).toHaveURL(/.*tab=chat/);
-      await expect(page.getByTestId('chat-interface')).toBeVisible();
+      // Debug: Check if the issue is with the CSS selector
+      const allHiddenElements = await page.locator('.hidden').count();
+      const allLgBlockElements = await page.locator('.lg\\:block').count();
+      console.log(`🔍 DEBUG: Found ${allHiddenElements} .hidden elements, ${allLgBlockElements} .lg:block elements`);
       
-      // Verify we can navigate back to workflows (preference maintained)
-      await page.getByTestId('tab-workflows').click();
+      // Debug: Check the actual HTML structure
+      const containerHTML = await desktopTabsContainer.innerHTML();
+      console.log(`🔍 DEBUG: Container HTML:`, containerHTML.substring(0, 200));
+      
+      // Debug: Check if the tab elements are in the DOM but hidden
+      const workflowsTab = page.getByTestId('tab-workflows');
+      const isTabInDOM = await workflowsTab.count() > 0;
+      const isTabVisible = await workflowsTab.isVisible();
+      console.log(`🔍 DEBUG: Tab in DOM: ${isTabInDOM}, Tab visible: ${isTabVisible}`);
+      
+      // Debug: Check parent element visibility
+      const parentElement = workflowsTab.locator('..');
+      const isParentVisible = await parentElement.isVisible();
+      console.log(`🔍 DEBUG: Parent element visible: ${isParentVisible}`);
+      
+      // Use the existing tab navigation helper from dataHelpers.ts
+      // This handles viewport detection and uses appropriate navigation method automatically
+      await testTabNavigation(page, ['workflows', 'chat', 'workflows']);
+      
+      // Verify final state - should be on workflows tab
       await expect(page).toHaveURL(/.*tab=workflows/);
       await expect(page.getByTestId('workflows-management')).toBeVisible();
     });
@@ -216,8 +246,12 @@ test.describe('UX Simplification - Authentication Flows', () => {
       // Debug: Check if the user is actually verified in the database
       console.log(`🔍 E2E DEBUG: Updated user ${email} to verified status`);
 
-      // Use setupE2E to login properly (this handles authentication correctly)
-      const verifiedUser = { email, password: testPassword };
+      // Create a proper TestUser object and use setupE2E to login
+      const verifiedUser = await createE2EUser(Role.USER, {
+        email,
+        password: testPassword,
+        name: 'Verified Test User'
+      });
       await setupE2E(page, verifiedUser, { tab: 'profile' });
 
       // Test email verification status (should be verified)

@@ -367,7 +367,7 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
       
       // Add debugging to see if the form submission is working
       await page.evaluate(() => {
-        const form = document.querySelector('form[role="form"]');
+        const form = document.querySelector('form[role="form"]') as HTMLFormElement;
         if (form) {
           console.log('🔍 Form found:', form);
           console.log('🔍 Form action:', form.action);
@@ -406,19 +406,14 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
         console.log('🔍 JavaScript error:', error.message);
       });
       
-      // Monitor unhandled promise rejections
-      page.on('unhandledRejection', error => {
-        console.log('🔍 Unhandled promise rejection:', error);
-      });
-      
       // Debug the button state and form validity before clicking
       const buttonInfo = await updateButton.evaluate((btn) => ({
-        disabled: btn.disabled,
-        type: btn.type,
-        innerText: btn.innerText,
+        disabled: (btn as HTMLButtonElement).disabled,
+        type: (btn as HTMLButtonElement).type,
+        innerText: (btn as HTMLElement).innerText,
         clientWidth: btn.clientWidth,
         clientHeight: btn.clientHeight,
-        offsetParent: !!btn.offsetParent,
+        offsetParent: (btn as HTMLElement).offsetParent !== null,
         style: btn.style.cssText,
         computedStyle: window.getComputedStyle(btn).display
       }));
@@ -426,7 +421,7 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
       
       // Check form validity and required fields
       const formInfo = await page.evaluate(() => {
-        const form = document.querySelector('form[role="form"]');
+        const form = document.querySelector('form[role="form"]') as HTMLFormElement;
         if (!form) return { error: 'Form not found' };
         
         const requiredInputs = form.querySelectorAll('input[required], select[required], textarea[required]');
@@ -437,14 +432,14 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
           requiredInputsCount: requiredInputs.length,
           invalidInputsCount: invalidInputs.length,
           invalidInputs: Array.from(invalidInputs).map(input => ({
-            name: input.name,
-            id: input.id,
+            name: (input as HTMLInputElement).name,
+            id: (input as HTMLInputElement).id,
             testId: input.getAttribute('data-testid'),
-            value: input.value,
-            validity: input.validity ? {
-              valueMissing: input.validity.valueMissing,
-              typeMismatch: input.validity.typeMismatch,
-              valid: input.validity.valid
+            value: (input as HTMLInputElement).value,
+            validity: (input as HTMLInputElement).validity ? {
+              valueMissing: (input as HTMLInputElement).validity.valueMissing,
+              typeMismatch: (input as HTMLInputElement).validity.typeMismatch,
+              valid: (input as HTMLInputElement).validity.valid
             } : null
           }))
         };
@@ -584,7 +579,7 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
           const nameElement = card.querySelector('[data-testid="connection-name"]');
           if (nameElement) {
             console.log('🔍 Connection name found:', nameElement.textContent);
-            if (nameElement.textContent?.includes('OAuth2 Connection to Edit - Updated')) {
+            if (nameElement.textContent && nameElement.textContent.includes('OAuth2 Connection to Edit - Updated')) {
               return true;
             }
           }
@@ -601,10 +596,10 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
         // Let's also check what connection names are actually visible
         const visibleConnections = await page.evaluate(() => {
           const connectionCards = document.querySelectorAll('[data-testid="connection-card"]');
-          const names = [];
+          const names: string[] = [];
           for (const card of connectionCards) {
             const nameElement = card.querySelector('[data-testid="connection-name"]');
-            if (nameElement) {
+            if (nameElement && nameElement.textContent) {
               names.push(nameElement.textContent);
             }
           }
@@ -614,7 +609,7 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
         
         // Let's also check if the connection name was actually updated in the database
         // by looking for any connection that contains "Updated" in the name
-        const hasUpdatedConnection = visibleConnections.some(name => name.includes('Updated'));
+        const hasUpdatedConnection = visibleConnections.some(name => name && name.includes('Updated'));
         console.log('🔍 Has any connection with "Updated" in name:', hasUpdatedConnection);
         
         if (hasUpdatedConnection) {
@@ -723,10 +718,10 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
             'button:contains("Yes")'
           ];
           
-          let confirmButton = null;
+          let confirmButton: HTMLButtonElement | null = null;
           for (const selector of selectors) {
             try {
-              confirmButton = document.querySelector(selector);
+              confirmButton = document.querySelector(selector) as HTMLButtonElement;
               if (confirmButton) break;
             } catch (e) {
               // Skip invalid selectors
@@ -742,7 +737,7 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
               for (const button of buttons) {
                 const text = button.textContent?.toLowerCase() || '';
                 if (text.includes('delete') || text.includes('confirm') || text.includes('ok') || text.includes('yes')) {
-                  confirmButton = button;
+                  confirmButton = button as HTMLButtonElement;
                   break;
                 }
               }

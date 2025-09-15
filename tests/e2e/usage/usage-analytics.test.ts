@@ -68,10 +68,15 @@ test.describe('P1.5: Usage Analytics E2E Tests', () => {
       await waitForElement(page, '[data-testid="analytics-dashboard"]', { timeout: 10000 });
       
       // Test page load performance
-      await testPageLoadTime(page, 3000);
+      await testPageLoadTime(page, '/dashboard?tab=analytics', { threshold: 3000 });
       
       // Validate UX compliance
-      await validateUXCompliance(page);
+      await validateUXCompliance(page, {
+        title: 'APIQ',
+        headings: 'Analytics Dashboard',
+        validateForm: true,
+        validateAccessibility: true
+      });
       
       // Verify main analytics components
       await expect(page.locator('[data-testid="analytics-dashboard"]')).toBeVisible();
@@ -500,11 +505,11 @@ test.describe('P1.5: Usage Analytics E2E Tests', () => {
       await waitForElement(page, '[data-testid="analytics-dashboard"]', { timeout: 10000 });
       
       // Test page load time
-      await testPageLoadTime(page, 3000);
+      await testPageLoadTime(page, '/dashboard?tab=analytics', { threshold: 3000 });
       
       // Test API performance
-      await testAPIPerformance(page, '/api/analytics/usage-trends', 1000);
-      await testAPIPerformance(page, '/api/analytics/cost-breakdown', 1000);
+      await testAPIPerformance(page, '/api/analytics/usage-trends', { threshold: 1000 });
+      await testAPIPerformance(page, '/api/analytics/cost-breakdown', { threshold: 1000 });
     });
 
     test('should handle analytics API errors gracefully', async ({ page }) => {

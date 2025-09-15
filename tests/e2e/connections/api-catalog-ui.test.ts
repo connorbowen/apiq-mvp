@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { TestUser, generateTestId } from '../../helpers/testUtils';
-import { createE2EUser, cleanupTestUser } from '../../helpers/authHelpers';
+import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUtils';
+import { createE2EUser } from '../../helpers/authHelpers';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton } from '../../helpers/e2eHelpers';
-import { waitForDashboard, validateUXCompliance } from '../../helpers/uiHelpers';
+import { waitForDashboard, validateUXCompliance, waitForElement } from '../../helpers/uiHelpers';
 import { createTestData, cleanupTestData } from '../../helpers/dataHelpers';
-import { waitForElement, waitForModal } from '../../helpers/waitHelpers';
+import { waitForModal } from '../../helpers/waitHelpers';
 import { testPageLoadTime, testAPIPerformance } from '../../helpers/performanceHelpers';
 import { testXSSPrevention, testDataExposure } from '../../helpers/securityHelpers';
 import { testModalSubmitLoading, testModalSuccessMessage, testModalErrorHandling } from '../../helpers/modalHelpers';
@@ -56,7 +56,7 @@ test.describe('API Catalog UI Components E2E Tests', () => {
       name: 'E2E API Catalog UI Test User'
     });
     jwt = testUser.accessToken;
-    uxHelper = new UXComplianceHelper();
+    // uxHelper will be initialized in beforeEach with page context
   });
 
   test.afterAll(async ({ request }) => {
@@ -83,12 +83,13 @@ test.describe('API Catalog UI Components E2E Tests', () => {
     }
 
     // Clean up test user
-    await cleanupTestUser(testUser.id);
+    await cleanupTestUser(testUser);
   });
 
   test.beforeEach(async ({ page }) => {
     await setupE2E(page, testUser, { tab: 'connections' });
-    await resetRateLimits();
+    await resetRateLimits(page);
+    uxHelper = new UXComplianceHelper(page);
   });
 
   test.afterEach(async ({ page }) => {
@@ -709,7 +710,7 @@ test.describe('API Catalog UI Components E2E Tests', () => {
       await page.goto(`${BASE_URL}/dashboard?tab=connections`);
       
       // Test page load time
-      await testPageLoadTime(page, 3000); // 3 second budget
+      await testPageLoadTime(page, '/dashboard?tab=connections', { threshold: 3000 }); // 3 second budget
       
       // Navigate to API catalog
       const browseApisButton = page.locator('[data-testid="primary-action browse-apis-btn"]');
@@ -737,7 +738,12 @@ test.describe('API Catalog UI Components E2E Tests', () => {
         await waitForElement(page, '[data-testid="api-catalog-section"]');
         
         // Validate UX compliance
-        await validateUXCompliance(page, uxHelper);
+        await validateUXCompliance(page, {
+          title: 'APIQ',
+          headings: 'API Catalog',
+          validateForm: true,
+          validateAccessibility: true
+        });
         
         // Verify primary action buttons follow UX patterns
         const primaryActionButtons = page.locator('[data-testid^="primary-action"]');

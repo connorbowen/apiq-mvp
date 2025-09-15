@@ -317,11 +317,11 @@ describe('MessageBanner', () => {
         />
       );
 
-      expect(liveRegion.textContent).toBe('Screen reader message');
+      expect(liveRegion?.textContent).toBe('Screen reader message');
 
       // Clean up
       setTimeout(() => {
-        expect(liveRegion.textContent).toBe('');
+        expect(liveRegion?.textContent).toBe('');
       }, 1000);
     });
   });

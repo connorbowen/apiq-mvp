@@ -34,11 +34,9 @@ test.describe('UX Simplification - Onboarding User Journey', () => {
     // Create test users for different onboarding stages
     newUser = await createE2EUser(Role.USER, {
       email: `onboarding-new-${generateTestId()}@testuser.local`,
-      onboardingStage: 'NEW_USER',
     });
     existingUser = await createE2EUser(Role.USER, {
       email: `onboarding-completed-${generateTestId()}@testuser.local`,
-      onboardingStage: 'COMPLETED',
     });
   });
 

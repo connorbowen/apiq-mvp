@@ -2,16 +2,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { logError, handleError } from '../utils/logger';
 import { ApplicationError } from '../lib/errors';
 
-// Extend NextApiRequest to include session
-interface AuthenticatedRequest extends NextApiRequest {
-  session?: {
-    user?: {
-      id: string;
-      email: string;
-      role: string;
-    };
-  };
-}
+import { AuthenticatedRequest as SessionAuthenticatedRequest } from '../lib/auth/session';
+
+// Use the same AuthenticatedRequest from session
+type AuthenticatedRequest = SessionAuthenticatedRequest;
 
 /**
  * Common error types

@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
+import * as bcrypt from 'bcryptjs';
 import { Role } from '../../generated/prisma';
 import { ApplicationError, unauthenticated, forbidden } from '../errors';
 import { prisma } from '../../../lib/database/client';
@@ -55,7 +55,7 @@ export const generateToken = (user: AuthenticatedUser, type: 'access' | 'refresh
 
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: type === 'access' ? JWT_EXPIRES_IN : REFRESH_TOKEN_EXPIRES_IN
-  });
+  } as jwt.SignOptions);
 };
 
 /**

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { generateTestId } from '../../helpers/testUtils';
 import { prisma } from '../../../lib/database/client';
-import { INVALID_TOKEN_PREFIX, TEST_TOKEN_PREFIX } from '../../../src/app/reset-password/page';
+import { INVALID_TOKEN_PREFIX, TEST_TOKEN_PREFIX } from '../../../src/lib/constants/testTokens';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton, setupGlobalErrorListeners, setupTracing, stopTracing, clearAuthState, waitForServerReady } from '../../helpers/e2eHelpers';
 import { createE2EUser } from '../../helpers/authHelpers';
 import { waitForDashboard, closeGuidedTourIfPresent, waitForElement } from '../../helpers/uiHelpers';
@@ -86,6 +86,7 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
     await expect(page).toHaveURL(/.*forgot-password/);
   });
 
+
   test.describe('Real Email Password Reset Flow', () => {
     test('should complete full password reset flow with real email', async ({ page }) => {
       test.setTimeout(30000); // 30 seconds for complex password reset flow
@@ -128,8 +129,8 @@ test.describe('Password Reset E2E Tests - Complete Flow', () => {
       
       await page.goto(`${BASE_URL}/reset-password?token=${invalidToken}`);
       
-      // Should show error for invalid token
-      await expect(page.locator('.bg-red-50')).toContainText(/invalid|missing/i);
+      // Should show error for invalid token - use the correct selector
+      await expect(page.locator('[data-testid="validation-errors"]')).toContainText(/invalid|missing/i);
       
       // Should provide link to request new reset
       await expect(page.locator('a[href="/forgot-password"]')).toContainText('Request a new password reset');
@@ -378,7 +379,12 @@ test.describe('Password Reset E2E Tests - UX Compliance', () => {
     test('should handle password reset with invalid token and UX compliance', async ({ page }) => {
       const invalidToken = `${INVALID_TOKEN_PREFIX}-${generateTestId()}`;
       await page.goto(`${BASE_URL}/reset-password?token=${invalidToken}`);
-      await expect(page.getByTestId('validation-errors').filter({ hasText: 'Missing or invalid reset token.' })).toBeVisible();
+      
+      // Wait for token validation to complete and error to appear
+      await expect(page.getByTestId('validation-errors')).toBeVisible();
+      await expect(page.getByTestId('validation-errors')).toContainText('Missing or invalid reset token.');
+      
+      // Form elements should be disabled when there's an error
       await expect(page.getByTestId('password-input')).toBeDisabled();
       await expect(page.getByTestId('confirm-password-input')).toBeDisabled();
       await expect(getPrimaryActionButton(page, 'reset-password')).toBeDisabled();

@@ -210,7 +210,7 @@ export class NaturalLanguageWorkflowService {
       }
 
       // Parse the final result
-      const functionCall = openaiResponse.choices[0]?.message?.function_call;
+      const functionCall = openaiResponse?.choices[0]?.message?.function_call;
       if (!functionCall || functionCall.name !== 'create_workflow') {
         console.error('→ Invalid OpenAI function call:', functionCall);
         return {

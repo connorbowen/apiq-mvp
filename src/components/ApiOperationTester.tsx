@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../lib/api/client';
 import { ParameterExtractionService } from '../lib/services/parameterExtractionService';
 import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFormatter';
@@ -47,15 +47,40 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [formattedResponse, setFormattedResponse] = useState<FormattedResponse | null>(null);
   const [error, setError] = useState<string>('');
+  const [enhancedParameters, setEnhancedParameters] = useState<any[]>([]);
+
+  // Initialize enhanced parameters on mount
+  useEffect(() => {
+    const initializeEnhanced = async () => {
+      if (endpoint.parameters && endpoint.parameters.length > 0) {
+        try {
+          const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint);
+          setEnhancedParameters(enhancedEndpoint.parameters);
+        } catch (error) {
+          console.error('Failed to initialize enhanced parameters:', error);
+          // Fallback to raw parameters
+          setEnhancedParameters(endpoint.parameters || []);
+        }
+      }
+    };
+    initializeEnhanced();
+  }, [endpoint]);
 
   // Initialize parameters from enhanced endpoint schema
-  const initializeParameters = () => {
+  const initializeParameters = async () => {
     const initialParams: Record<string, any> = {};
-    if (endpoint.parameters) {
-      // Use enhanced parameters if available, otherwise fall back to raw parameters
-      const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
-      enhancedEndpoint.parameters.forEach(param => {
+    if (enhancedParameters.length > 0) {
+      // Use already loaded enhanced parameters
+      enhancedParameters.forEach((param: any) => {
         if (param.location === 'query' || param.location === 'path') {
+          initialParams[param.name] = param.type === 'boolean' ? false : 
+                                    param.type === 'number' ? 0 : '';
+        }
+      });
+    } else if (endpoint.parameters) {
+      // Fallback to raw parameters if enhanced not available yet
+      endpoint.parameters.forEach((param: any) => {
+        if (param.in === 'query' || param.in === 'path') {
           initialParams[param.name] = param.type === 'boolean' ? false : 
                                     param.type === 'number' ? 0 : '';
         }
@@ -194,62 +219,59 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
             <div data-testid="parameter-form">
               <h4 className="text-sm font-medium text-gray-900 mb-3">Parameters</h4>
               <div className="space-y-3">
-                {(() => {
-                  const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
-                  return enhancedEndpoint.parameters.map((param, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <label className="flex-1 text-sm text-gray-700">
-                        {param.name}
-                        {param.required && <span className="text-red-500 ml-1">*</span>}
-                        <span className="text-gray-500 ml-2">({param.type})</span>
-                      </label>
-                      <div className="flex-1">
-                        {param.type === 'boolean' ? (
-                          <select
-                            value={parameters[param.name] || ''}
-                            onChange={(e) => handleParameterChange(param.name, e.target.value === 'true')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                            data-testid={`parameter-${param.name}`}
-                          >
-                            <option value="">Select...</option>
-                            <option value="true">true</option>
-                            <option value="false">false</option>
-                          </select>
-                        ) : param.type === 'number' ? (
-                          <input
-                            type="number"
-                            value={parameters[param.name] || ''}
-                            onChange={(e) => handleParameterChange(param.name, e.target.value ? Number(e.target.value) : '')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                            data-testid={`parameter-${param.name}`}
-                            placeholder={param.description || `Enter ${param.name}`}
-                            min={param.validation?.min}
-                            max={param.validation?.max}
-                          />
-                        ) : (
-                          <input
-                            type="text"
-                            value={parameters[param.name] || ''}
-                            onChange={(e) => handleParameterChange(param.name, e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                            data-testid={`parameter-${param.name}`}
-                            placeholder={param.description || `Enter ${param.name}`}
-                            pattern={param.validation?.pattern}
-                          />
+                {enhancedParameters.map((param: any, index: number) => (
+                  <div key={index} className="flex items-center space-x-3">
+                    <label className="flex-1 text-sm text-gray-700">
+                      {param.name}
+                      {param.required && <span className="text-red-500 ml-1">*</span>}
+                      <span className="text-gray-500 ml-2">({param.type})</span>
+                    </label>
+                    <div className="flex-1">
+                      {param.type === 'boolean' ? (
+                        <select
+                          value={parameters[param.name] || ''}
+                          onChange={(e) => handleParameterChange(param.name, e.target.value === 'true')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                          data-testid={`parameter-${param.name}`}
+                        >
+                          <option value="">Select...</option>
+                          <option value="true">true</option>
+                          <option value="false">false</option>
+                        </select>
+                      ) : param.type === 'number' ? (
+                        <input
+                          type="number"
+                          value={parameters[param.name] || ''}
+                          onChange={(e) => handleParameterChange(param.name, e.target.value ? Number(e.target.value) : '')}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                          data-testid={`parameter-${param.name}`}
+                          placeholder={param.description || `Enter ${param.name}`}
+                          min={param.validation?.min}
+                          max={param.validation?.max}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={parameters[param.name] || ''}
+                          onChange={(e) => handleParameterChange(param.name, e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                          data-testid={`parameter-${param.name}`}
+                          placeholder={param.description || `Enter ${param.name}`}
+                          pattern={param.validation?.pattern}
+                        />
+                      )}
+                      {/* Show natural language mappings and examples */}
+                      <div className="mt-1 text-xs text-gray-500">
+                        {param.naturalLanguageMappings && param.naturalLanguageMappings.length > 0 && (
+                          <div>Also known as: {param.naturalLanguageMappings.join(', ')}</div>
                         )}
-                        {/* Show natural language mappings and examples */}
-                        <div className="mt-1 text-xs text-gray-500">
-                          {param.naturalLanguageMappings && param.naturalLanguageMappings.length > 0 && (
-                            <div>Also known as: {param.naturalLanguageMappings.join(', ')}</div>
-                          )}
-                          {param.examples && param.examples.length > 0 && (
-                            <div>Examples: {param.examples.join(', ')}</div>
-                          )}
-                        </div>
+                        {param.examples && param.examples.length > 0 && (
+                          <div>Examples: {param.examples.join(', ')}</div>
+                        )}
                       </div>
                     </div>
-                  ));
-                })()}
+                  </div>
+                ))}
               </div>
             </div>
           )}

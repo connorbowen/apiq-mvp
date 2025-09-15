@@ -60,23 +60,37 @@ export default function QuickExecuteModal({
 
   // Initialize parameters when modal opens
   useEffect(() => {
-    if (isOpen) {
-      const initialParams: Record<string, any> = {};
-      if (endpoint?.parameters) {
-        // Use enhanced parameters if available
-        const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
-        enhancedEndpoint.parameters.forEach(param => {
-          if (param.location === 'query' || param.location === 'path') {
-            initialParams[param.name] = param.type === 'boolean' ? false : 
-                                      param.type === 'number' ? 0 : '';
+    const initializeParams = async () => {
+      if (isOpen) {
+        const initialParams: Record<string, any> = {};
+        if (endpoint?.parameters) {
+          try {
+            // Use enhanced parameters if available
+            const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint);
+            enhancedEndpoint.parameters.forEach((param: any) => {
+              if (param.location === 'query' || param.location === 'path') {
+                initialParams[param.name] = param.type === 'boolean' ? false : 
+                                          param.type === 'number' ? 0 : '';
+              }
+            });
+          } catch (error) {
+            console.error('Failed to enhance endpoint parameters:', error);
+            // Fallback to raw parameters
+            endpoint.parameters.forEach((param: any) => {
+              if (param.in === 'query' || param.in === 'path') {
+                initialParams[param.name] = param.type === 'boolean' ? false : 
+                                          param.type === 'number' ? 0 : '';
+              }
+            });
           }
-        });
+        }
+        setParameters(initialParams);
+        setRequestBody('');
+        setResult(null);
+        setError('');
       }
-      setParameters(initialParams);
-      setRequestBody('');
-      setResult(null);
-      setError('');
-    }
+    };
+    initializeParams();
   }, [isOpen, endpoint]);
 
   const handleParameterChange = (paramName: string, value: any) => {

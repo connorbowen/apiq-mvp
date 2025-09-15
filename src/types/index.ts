@@ -307,6 +307,41 @@ export interface EnvironmentConfig {
   ENCRYPTION_KEY: string;
 }
 
+// Auth Configuration Types
+export interface ApiKeyAuthConfig {
+  apiKey: string;
+  headerName?: string;
+}
+
+export interface BearerTokenAuthConfig {
+  bearerToken: string;
+}
+
+export interface BasicAuthConfig {
+  username: string;
+  password: string;
+}
+
+export interface OAuth2AuthConfig {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+  scope?: string;
+  authorizationUrl?: string;
+  tokenUrl?: string;
+}
+
+export interface CustomAuthConfig {
+  [key: string]: any;
+}
+
+export type AuthConfig = 
+  | ApiKeyAuthConfig 
+  | BearerTokenAuthConfig 
+  | BasicAuthConfig 
+  | OAuth2AuthConfig 
+  | CustomAuthConfig;
+
 // Utility Types
 export type LogLevel = 'INFO' | 'WARNING' | 'ERROR' | 'DEBUG';
 export type AuthType = 'NONE' | 'API_KEY' | 'BEARER_TOKEN' | 'BASIC_AUTH' | 'OAUTH2' | 'CUSTOM';

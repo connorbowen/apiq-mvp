@@ -265,7 +265,7 @@ export default function EditConnectionModal({
         preventDefault: () => {},
         currentTarget: null,
         target: null
-      } as React.FormEvent;
+      } as unknown as React.FormEvent<Element>;
       handleSubmit(syntheticEvent);
     };
     
@@ -560,7 +560,7 @@ export default function EditConnectionModal({
                         });
                         
                         if (response.ok) {
-                          onSuccess('OAuth2 token refreshed successfully');
+                          onSuccess();
                         } else {
                           throw new Error('Failed to refresh token');
                         }
@@ -589,7 +589,7 @@ export default function EditConnectionModal({
                       })
                       .then(response => {
                         if (response.ok) {
-                          onSuccess('Connection deleted successfully');
+                          onSuccess();
                           onClose();
                         } else {
                           throw new Error('Failed to delete connection');

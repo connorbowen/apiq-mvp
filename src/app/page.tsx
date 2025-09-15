@@ -202,7 +202,7 @@ export default function Home() {
               <div className="p-6 space-y-4">
                 <div className="flex justify-end">
                   <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-indigo-600 text-white">
-                    <div className="text-sm">"Create a workflow that syncs new orders from Shopify to our inventory system"</div>
+                    <div className="text-sm">&ldquo;Create a workflow that syncs new orders from Shopify to our inventory system&rdquo;</div>
                   </div>
                 </div>
                 <div className="flex justify-start">
@@ -304,7 +304,7 @@ export default function Home() {
                 <h3 className="text-lg font-semibold text-gray-900">2. Describe What You Want</h3>
               </div>
               <p className="text-sm text-gray-700">
-                Tell APIQ what you want to accomplish in plain English. "Sync orders from Shopify to our inventory system" is all you need to say.
+                Tell APIQ what you want to accomplish in plain English. &ldquo;Sync orders from Shopify to our inventory system&rdquo; is all you need to say.
               </p>
             </div>
 
@@ -484,7 +484,7 @@ export default function Home() {
               <div className="bg-white rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Is my data secure?</h3>
                 <p className="text-gray-600">
-                  Yes, APIQ uses enterprise-grade encryption for all API keys and sensitive data. We're SOC 2 compliant and never store your actual data - only the configuration needed to orchestrate your APIs.
+                  Yes, APIQ uses enterprise-grade encryption for all API keys and sensitive data. We&apos;re SOC 2 compliant and never store your actual data - only the configuration needed to orchestrate your APIs.
                 </p>
               </div>
             </div>

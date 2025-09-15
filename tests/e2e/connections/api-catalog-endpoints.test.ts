@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { TestUser, generateTestId } from '../../helpers/testUtils';
-import { createE2EUser, cleanupTestUser } from '../../helpers/authHelpers';
+import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUtils';
+import { createE2EUser } from '../../helpers/authHelpers';
 import { setupE2E, resetRateLimits } from '../../helpers/e2eHelpers';
 import { testAPIPerformance } from '../../helpers/performanceHelpers';
 import { testXSSPrevention, testDataExposure } from '../../helpers/securityHelpers';
@@ -46,16 +46,16 @@ test.describe('API Catalog Endpoints E2E Tests', () => {
     }
 
     // Clean up test user
-    await cleanupTestUser(testUser.id);
+    await cleanupTestUser(testUser);
   });
 
   test.beforeEach(async ({ page }) => {
     await setupE2E(page, testUser);
-    await resetRateLimits();
+    await resetRateLimits(page);
   });
 
   test.describe('GET /api/catalog', () => {
-    test('should return list of available APIs in catalog', async ({ request }) => {
+    test('should return list of available APIs in catalog', async ({ request, page }) => {
       const response = await request.get(`${BASE_URL}/api/catalog`, {
         headers: { 'Authorization': `Bearer ${jwt}` }
       });
@@ -68,7 +68,7 @@ test.describe('API Catalog Endpoints E2E Tests', () => {
       expect(Array.isArray(data.data)).toBe(true);
       
       // Verify API performance
-      await testAPIPerformance(response, 1000); // 1 second budget
+      await testAPIPerformance(page, '/api/catalog', { threshold: 1000 }); // 1 second budget
     });
 
     test('should support pagination for large catalogs', async ({ request }) => {
@@ -569,7 +569,7 @@ test.describe('API Catalog Endpoints E2E Tests', () => {
 
     test('should handle rate limiting for catalog endpoints', async ({ request }) => {
       // Make multiple requests to test rate limiting
-      const requests = [];
+      const requests: Promise<any>[] = [];
       for (let i = 0; i < 20; i++) {
         requests.push(
           request.get(`${BASE_URL}/api/catalog`, {

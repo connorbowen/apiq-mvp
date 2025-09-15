@@ -108,7 +108,7 @@ export default function WaitlistSignup() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">You're on the list!</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">You&apos;re on the list!</h3>
           <p className="text-gray-600 mb-6">{submitMessage}</p>
           <button
             onClick={() => setSubmitStatus('idle')}
@@ -254,7 +254,7 @@ export default function WaitlistSignup() {
           </button>
 
           <p className="text-xs text-gray-500 text-center">
-            We respect your privacy. We'll only use your email to send you updates about APIQ.
+            We respect your privacy. We&apos;ll only use your email to send you updates about APIQ.
           </p>
         </form>
       )}

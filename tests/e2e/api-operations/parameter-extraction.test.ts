@@ -62,8 +62,7 @@ test.describe('P1.3.2: Parameter Extraction E2E Tests', () => {
         connection: {
           name: `Petstore API ${testId}`,
           baseUrl: 'https://petstore3.swagger.io/api/v3',
-          authType: 'NONE',
-          documentationUrl: 'https://petstore3.swagger.io/api/v3/openapi.json'
+          authType: 'NONE'
         }
       });
 

@@ -36,8 +36,7 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
       connection: {
         name: 'Test Petstore API',
         baseUrl: 'https://petstore3.swagger.io/api/v3',
-        authType: 'NONE',
-        description: 'Test API for single operations'
+        authType: 'NONE'
       }
     });
   });

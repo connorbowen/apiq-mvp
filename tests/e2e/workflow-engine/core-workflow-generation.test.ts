@@ -110,8 +110,10 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       }
     });
     
-    // Create API connection for workflow generation
-    await createTestApiConnection(testUser.id);
+    // Create API connections that match the workflow requirements
+    await createTestApiConnection(testUser.id, 'github');
+    await createTestApiConnection(testUser.id, 'slack');
+    await createTestApiConnection(testUser.id, 'trello');
   });
 
   test.afterAll(async () => {

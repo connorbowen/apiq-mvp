@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { apiClient } from '../../../lib/api/client';
 
 interface SecretPageProps {
   params: {
@@ -12,25 +12,23 @@ interface SecretPageProps {
 
 export default function SecretPage({ params }: SecretPageProps) {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check authentication status
-    if (status === 'loading') {
-      return; // Still loading
-    }
-
-    if (status === 'unauthenticated' || !session) {
-      // Redirect to login with proper message
-      router.push('/login?reason=auth');
-      return;
-    }
-
-    // User is authenticated, try to fetch the secret
-    const fetchSecret = async () => {
+    const checkAuthAndFetchSecret = async () => {
       try {
+        // Check authentication first
+        const authResponse = await apiClient.getCurrentUser();
+        if (!authResponse.success || !authResponse.data?.user) {
+          router.push('/login?reason=auth');
+          return;
+        }
+
+        setUser(authResponse.data.user);
+
+        // User is authenticated, try to fetch the secret
         const response = await fetch(`/api/secrets/${params.id}`);
         
         if (response.status === 401) {
@@ -56,11 +54,11 @@ export default function SecretPage({ params }: SecretPageProps) {
       }
     };
 
-    fetchSecret();
-  }, [status, session, router, params.id]);
+    checkAuthAndFetchSecret();
+  }, [router, params.id]);
 
   // Show loading state
-  if (status === 'loading' || isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

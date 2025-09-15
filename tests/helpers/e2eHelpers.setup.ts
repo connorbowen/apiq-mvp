@@ -224,8 +224,34 @@ export const loginAndNavigate = async (
 const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promise<void> => {
   // Use the robust waitForDashboard function instead of waiting for specific elements
   const { waitForDashboard } = await import('./uiHelpers');
-  await waitForDashboard(page);
-  console.log('🔍 E2E DEBUG: Dashboard loaded successfully');
+  
+  try {
+    await waitForDashboard(page);
+    console.log('🔍 E2E DEBUG: Dashboard loaded successfully');
+  } catch (error) {
+    console.log('🔍 E2E DEBUG: Dashboard wait failed, checking authentication status...');
+    
+    // Check if we're redirected to login (authentication failed)
+    const currentUrl = page.url();
+    if (currentUrl.includes('/login')) {
+      throw new Error('Authentication failed - redirected to login page');
+    }
+    
+    // Check for any error messages on the page
+    const errorElements = await page.locator('[data-testid*="error"], .text-red-600, .text-red-500').count();
+    if (errorElements > 0) {
+      const errorText = await page.locator('[data-testid*="error"], .text-red-600, .text-red-500').first().textContent();
+      throw new Error(`Page error detected: ${errorText}`);
+    }
+    
+    // If we get here, the dashboard might be loading but elements aren't ready
+    console.log('🔍 E2E DEBUG: Dashboard elements not ready, waiting longer...');
+    await page.waitForTimeout(3000);
+    
+    // Try one more time with a longer timeout
+    await waitForDashboard(page);
+    console.log('🔍 E2E DEBUG: Dashboard loaded on retry');
+  }
   
   if (options.tab) {
     // Handle special cases for tabs that are not in main navigation

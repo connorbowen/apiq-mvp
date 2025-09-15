@@ -206,7 +206,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       
       // Check the edit button state before clicking
       const buttonState = await page.evaluate(() => {
-        const editButton = document.querySelector('[data-testid="edit-connection-btn"]');
+        const editButton = document.querySelector('[data-testid="edit-connection-btn"]') as HTMLElement;
         if (editButton) {
           return {
             found: true,
@@ -218,7 +218,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
             parentElement: editButton.parentElement?.tagName,
             parentTestId: editButton.parentElement?.getAttribute('data-testid'),
             className: editButton.className,
-            style: (editButton as HTMLElement).style.cssText
+            style: editButton.style.cssText
           };
         }
         return { found: false };
@@ -290,7 +290,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       // Check if the editingConnection state was actually set
       const editingState = await page.evaluate(() => {
         // Look for any elements that might indicate the editing state
-        const editModal = document.querySelector('[role="dialog"][aria-labelledby="edit-connection-modal-title"]');
+        const editModal = document.querySelector('[role="dialog"][aria-labelledby="edit-connection-modal-title"]') as HTMLElement;
         const editingConnection = document.querySelector('[data-editing-connection]');
         
         return {
@@ -299,7 +299,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
           editingConnectionAttribute: editingConnection ? editingConnection.getAttribute('data-editing-connection') : null,
           allDialogs: Array.from(document.querySelectorAll('[role="dialog"]')).map(dialog => ({
             ariaLabelledBy: dialog.getAttribute('aria-labelledby'),
-            visible: dialog.offsetParent !== null,
+            visible: (dialog as HTMLElement).offsetParent !== null,
             className: dialog.className
           }))
         };
@@ -329,8 +329,8 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       
       // Check what modal is actually open
       const modalInfo = await page.evaluate(() => {
-        const createModal = document.querySelector('[role="dialog"][aria-labelledby="add-connection-modal-title"]');
-        const editModal = document.querySelector('[role="dialog"][aria-labelledby="edit-connection-modal-title"]');
+        const createModal = document.querySelector('[role="dialog"][aria-labelledby="add-connection-modal-title"]') as HTMLElement;
+        const editModal = document.querySelector('[role="dialog"][aria-labelledby="edit-connection-modal-title"]') as HTMLElement;
         
         return {
           createModalOpen: !!createModal && createModal.offsetParent !== null,
@@ -339,9 +339,9 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
           editModalTitle: editModal ? editModal.querySelector('h2')?.textContent : null,
           editModalExists: !!editModal,
           editModalOffsetParent: editModal ? editModal.offsetParent : null,
-          editModalDisplay: editModal ? (editModal as HTMLElement).style.display : null,
-          editModalVisibility: editModal ? (editModal as HTMLElement).style.visibility : null,
-          editModalZIndex: editModal ? (editModal as HTMLElement).style.zIndex : null,
+          editModalDisplay: editModal ? editModal.style.display : null,
+          editModalVisibility: editModal ? editModal.style.visibility : null,
+          editModalZIndex: editModal ? editModal.style.zIndex : null,
           editModalClassName: editModal ? editModal.className : null
         };
       });
@@ -380,14 +380,14 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
         
         // Check if the modal is now visible
         const modalInfoAfterForce = await page.evaluate(() => {
-          const editModal = document.querySelector('[role="dialog"][aria-labelledby="edit-connection-modal-title"]');
+          const editModal = document.querySelector('[role="dialog"][aria-labelledby="edit-connection-modal-title"]') as HTMLElement;
           return {
             editModalExists: !!editModal,
             editModalVisible: editModal ? editModal.offsetParent !== null : false,
-            editModalDisplay: editModal ? (editModal as HTMLElement).style.display : null,
-            editModalVisibility: editModal ? (editModal as HTMLElement).style.visibility : null,
-            editModalOpacity: editModal ? (editModal as HTMLElement).style.opacity : null,
-            editModalZIndex: editModal ? (editModal as HTMLElement).style.zIndex : null
+            editModalDisplay: editModal ? editModal.style.display : null,
+            editModalVisibility: editModal ? editModal.style.visibility : null,
+            editModalOpacity: editModal ? editModal.style.opacity : null,
+            editModalZIndex: editModal ? editModal.style.zIndex : null
           };
         });
         
@@ -468,7 +468,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       
       // Get button details for debugging
       const buttonDetails = await page.evaluate(() => {
-        const button = document.querySelector('[data-testid="primary-action update-connection-btn"]');
+        const button = document.querySelector('[data-testid="primary-action update-connection-btn"]') as HTMLElement;
         if (button) {
           return {
             found: true,
@@ -620,7 +620,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
             response.url().includes('/api/connections') && response.request().method() === 'PUT'
           ),
           page.waitForFunction(() => {
-            const modal = document.querySelector('[role="dialog"][aria-labelledby="edit-connection-modal-title"]');
+            const modal = document.querySelector('[role="dialog"][aria-labelledby="edit-connection-modal-title"]') as HTMLElement;
             return !modal || modal.style.display === 'none';
           }, { timeout: 5000 })
         ]);
@@ -652,9 +652,9 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       // Check what's happening after form submission
       console.log('🔍 Checking modal state after form submission...');
       const modalStateAfterSubmit = await page.evaluate(() => {
-        const createModal = document.querySelector('[data-testid="create-connection-modal"]');
-        const editModal = document.querySelector('[data-testid="edit-connection-modal"]');
-        const successMessage = document.querySelector('[data-testid="success-message"]');
+        const createModal = document.querySelector('[data-testid="create-connection-modal"]') as HTMLElement;
+        const editModal = document.querySelector('[data-testid="edit-connection-modal"]') as HTMLElement;
+        const successMessage = document.querySelector('[data-testid="success-message"]') as HTMLElement;
         
         return {
           createModalOpen: createModal && createModal.offsetParent !== null,
@@ -674,7 +674,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
         return Array.from(messages).map(msg => ({
           testid: msg.getAttribute('data-testid'),
           text: msg.textContent,
-          visible: msg.offsetParent !== null,
+          visible: (msg as HTMLElement).offsetParent !== null,
           className: msg.className
         }));
       });

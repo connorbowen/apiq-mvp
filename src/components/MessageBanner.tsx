@@ -36,11 +36,6 @@ export default function MessageBanner({
   autoClose = true, 
   autoCloseDelay 
 }: MessageBannerProps) {
-  // Don't render if no message
-  if (!message) {
-    return null;
-  }
-
   // Default timeouts based on message type
   const getDefaultTimeout = () => {
     switch (type) {
@@ -55,16 +50,18 @@ export default function MessageBanner({
   const timeout = autoCloseDelay ?? getDefaultTimeout();
 
   React.useEffect(() => {
-    if (autoClose && onClose) {
+    if (autoClose && onClose && message) {
       const timer = setTimeout(() => {
         onClose();
       }, timeout);
       
       return () => clearTimeout(timer);
     }
-  }, [autoClose, onClose, timeout]);
+  }, [autoClose, onClose, timeout, message]);
 
   React.useEffect(() => {
+    if (!message) return;
+    
     // Announce to screen readers
     const liveRegion = document.getElementById('aria-live-announcements');
     if (liveRegion) {
@@ -74,6 +71,11 @@ export default function MessageBanner({
       }, 1000);
     }
   }, [message]);
+
+  // Don't render if no message
+  if (!message) {
+    return null;
+  }
 
   // Get styling based on message type
   const getMessageStyles = () => {

@@ -1,15 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
-import { requireAuth } from '../../../src/lib/auth/session';
+import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { logInfo, logError } from '../../../src/utils/logger';
-
-interface AuthenticatedRequest extends NextApiRequest {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-  };
-}
 
 interface OperationExecutionResponse {
   success: boolean;
@@ -47,8 +39,9 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
+  let user: any;
   try {
-    const user = await requireAuth(req, res);
+    user = await requireAuth(req, res);
     const executionId = req.query.id as string;
 
     if (!executionId) {
@@ -88,18 +81,18 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       id: execution.id,
       operationId: execution.operationId,
       status: execution.status,
-      requestData: execution.requestData,
-      responseData: execution.responseData,
-      responseHeaders: execution.responseHeaders,
-      statusCode: execution.statusCode,
-      executionTime: execution.executionTime,
-      error: execution.error,
+      requestData: execution.requestData as any,
+      responseData: execution.responseData as any,
+      responseHeaders: execution.responseHeaders as Record<string, string> | undefined,
+      statusCode: execution.statusCode ?? undefined,
+      executionTime: execution.executionTime ?? undefined,
+      error: execution.error ?? undefined,
       startedAt: execution.startedAt.toISOString(),
       completedAt: execution.completedAt?.toISOString(),
       endpoint: execution.operation?.endpoint ? {
         path: execution.operation.endpoint.path,
         method: execution.operation.endpoint.method,
-        summary: execution.operation.endpoint.summary
+        summary: execution.operation.endpoint.summary ?? undefined
       } : undefined,
       connection: execution.operation?.endpoint?.apiConnection ? {
         name: execution.operation.endpoint.apiConnection.name,
@@ -119,7 +112,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     });
 
   } catch (error) {
-    logError('Failed to retrieve operation execution', error, { 
+    logError('Failed to retrieve operation execution', error as Error, { 
       userId: user?.id,
       executionId: req.query.id 
     });

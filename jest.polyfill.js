@@ -57,4 +57,35 @@ if (typeof global.fetch === 'undefined') {
 // Polyfill structuredClone for Node.js environment
 if (typeof global.structuredClone === 'undefined') {
   global.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
+}
+
+// Polyfill Request and Response for OpenAI
+if (typeof global.Request === 'undefined') {
+  global.Request = class Request {
+    constructor(input, init = {}) {
+      this.url = input;
+      this.method = init.method || 'GET';
+      this.headers = new Map(Object.entries(init.headers || {}));
+      this.body = init.body;
+    }
+  };
+}
+
+if (typeof global.Response === 'undefined') {
+  global.Response = class Response {
+    constructor(body, init = {}) {
+      this.body = body;
+      this.status = init.status || 200;
+      this.statusText = init.statusText || 'OK';
+      this.headers = new Map(Object.entries(init.headers || {}));
+    }
+    
+    async json() {
+      return JSON.parse(this.body);
+    }
+    
+    async text() {
+      return this.body;
+    }
+  };
 } 

@@ -5,11 +5,15 @@
  * or direct API calls that require APIs they haven't connected yet.
  * 
  * Features:
- * - Detects missing APIs from natural language requests
+ * - Uses AI to detect missing APIs from natural language requests
  * - Provides specific connection instructions for different API types
  * - Suggests alternative APIs when possible
  * - Generates step-by-step setup guidance
+ * - Falls back to rules-based detection if AI fails
  */
+
+import { AIApiDetectionService, ApiDetectionResult } from './aiApiDetectionService';
+import { OpenAIService } from '../../services/openaiService';
 
 export interface ApiSuggestion {
   name: string;
@@ -299,23 +303,86 @@ export class ConnectionGuidanceService {
 
   /**
    * Analyze a user request and determine if connection guidance is needed
+   * Uses AI for intelligent API detection with fallback to rules-based detection
    */
-  static analyzeRequest(
+  static async analyzeRequest(
+    userMessage: string, 
+    availableConnections: Array<{ name: string; id: string }>
+  ): Promise<ConnectionGuidance> {
+    console.log('🔍 ConnectionGuidanceService - Analyzing request with AI:', { userMessage, availableConnections });
+    
+    try {
+      // Try AI-powered detection first
+      const openaiService = OpenAIService.createFromEnv();
+      const aiDetectionService = new AIApiDetectionService(openaiService);
+      
+      const aiResult = await aiDetectionService.analyzeApiRequirements(userMessage, availableConnections);
+      
+      if (!aiResult.requiresGuidance) {
+        console.log('🔍 ConnectionGuidanceService - AI: No guidance needed');
+        return {
+          requiresGuidance: false,
+          missingApis: [],
+          suggestedConnections: [],
+          guidanceMessage: ''
+        };
+      }
+
+      // Convert AI result to ApiSuggestion format
+      const apiSuggestions = aiResult.missingApis.map(api => {
+        const knowledgeBaseEntry = this.API_KNOWLEDGE_BASE[api.name.toLowerCase()];
+        return {
+          name: api.name,
+          displayName: api.displayName,
+          description: knowledgeBaseEntry?.description || api.context,
+          authType: knowledgeBaseEntry?.authType || 'API_KEY',
+          setupInstructions: knowledgeBaseEntry?.setupInstructions || {
+            step1: `Set up ${api.displayName} integration`,
+            step2: 'Configure authentication',
+            step3: 'Test the connection'
+          },
+          documentationUrl: knowledgeBaseEntry?.documentationUrl,
+          baseUrl: knowledgeBaseEntry?.baseUrl,
+          commonEndpoints: knowledgeBaseEntry?.commonEndpoints
+        };
+      });
+
+      console.log('🔍 ConnectionGuidanceService - AI result:', {
+        requiredApis: aiResult.requiredApis.length,
+        missingApis: aiResult.missingApis.length,
+        guidanceMessage: aiResult.guidanceMessage
+      });
+
+      return {
+        requiresGuidance: true,
+        missingApis: apiSuggestions,
+        suggestedConnections: apiSuggestions,
+        guidanceMessage: aiResult.guidanceMessage,
+        setupInstructions: this.generateSetupInstructions(apiSuggestions)
+      };
+
+    } catch (error) {
+      console.error('🔍 ConnectionGuidanceService - AI detection failed, falling back to rules:', error);
+      
+      // Fallback to rules-based detection
+      return this.fallbackRulesDetection(userMessage, availableConnections);
+    }
+  }
+
+  /**
+   * Fallback to rules-based detection if AI fails
+   */
+  private static fallbackRulesDetection(
     userMessage: string, 
     availableConnections: Array<{ name: string; id: string }>
   ): ConnectionGuidance {
     const message = userMessage.toLowerCase();
     
-    console.log('🔍 ConnectionGuidanceService - Analyzing request:', { message, availableConnections });
+    console.log('🔍 ConnectionGuidanceService - Using fallback rules detection');
     
     // Extract mentioned APIs from the message
     const mentionedApis = this.extractMentionedApis(message);
     console.log('🔍 ConnectionGuidanceService - Mentioned APIs:', mentionedApis);
-    
-    // Debug: Check if github is detected
-    if (message.includes('github')) {
-      console.log('🔍 ConnectionGuidanceService - GitHub detected in message:', message);
-    }
     
     // Check which APIs are missing
     const missingApis = mentionedApis.filter(api => 
@@ -357,7 +424,7 @@ export class ConnectionGuidanceService {
       setupInstructions
     };
 
-    console.log('🔍 ConnectionGuidanceService - Final result:', result);
+    console.log('🔍 ConnectionGuidanceService - Fallback result:', result);
 
     return result;
   }

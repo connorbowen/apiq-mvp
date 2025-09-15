@@ -220,6 +220,33 @@ function DashboardContent() {
     try {
       console.log('👤 Dashboard: Loading user data...');
       const userResponse = await apiClient.getCurrentUser();
+      
+      // Check if the API response indicates authentication failure
+      if (userResponse && !userResponse.success) {
+        console.log('👤 Dashboard: API returned error response:', userResponse.error);
+        
+        // Check if this is an authentication error based on the error message
+        const isAuthError = userResponse.error && (
+          userResponse.error.includes('401') || 
+          userResponse.error.includes('403') ||
+          userResponse.error.includes('unauthorized') ||
+          userResponse.error.includes('authentication') ||
+          userResponse.error.includes('Please log in')
+        );
+        
+        if (isAuthError) {
+          console.log('👤 Dashboard: Authentication error detected in response, redirecting to login');
+          // Clear any existing cookies and redirect to login
+          try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+          } catch (logoutError) {
+            console.warn('Failed to clear cookies via API:', logoutError);
+          }
+          router.push('/login');
+          return;
+        }
+      }
+      
       if (userResponse.success && userResponse.data) {
         const userData = userResponse.data.user;
         console.log('👤 Dashboard: User data loaded from API:', {
@@ -261,16 +288,32 @@ function DashboardContent() {
         return;
       }
     } catch (error: unknown) {
-      console.log('👤 Dashboard: API call failed, but continuing with minimal user data:', error);
-      // Don't redirect to login immediately - the user might still be authenticated
-      // but the API call failed due to network issues or other problems
+      console.log('👤 Dashboard: API call failed:', error);
+      
+      // Check if this is an authentication error (401/403)
+      const isAuthError = error && typeof error === 'object' && 'status' in error && 
+        (error.status === 401 || error.status === 403);
+      
+      if (isAuthError) {
+        console.log('👤 Dashboard: Authentication error detected, redirecting to login');
+        // Clear any existing cookies and redirect to login
+        try {
+          await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (logoutError) {
+          console.warn('Failed to clear cookies via API:', logoutError);
+        }
+        router.push('/login');
+        return;
+      }
+      
+      // For other errors, continue with minimal functionality
+      console.log('👤 Dashboard: Non-auth error, continuing with minimal user data');
     }
     
-    // If API call fails, try to continue with minimal functionality
-    // The user might still be authenticated via cookies
+    // If API call fails for non-auth reasons, try to continue with minimal functionality
     console.log('👤 Dashboard: Continuing with minimal user data');
     setIsLoading(false);
-  }, [syncWithUserData]);
+  }, [syncWithUserData, router]);
 
   const loadConnections = useCallback(async (retryCount = 0) => {
     try {

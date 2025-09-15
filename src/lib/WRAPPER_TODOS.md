@@ -65,12 +65,9 @@ None currently
 
 **Reason**: Database access is core functionality, but Prisma already has good testing utilities.
 
-#### 6. NextAuth Wrapper (`src/lib/nextAuthWrapper.ts`)
-**Libraries**: `next-auth`, `@next-auth/prisma-adapter`
-**Files using them**:
-- `src/lib/auth/sso-providers.ts`
-
-**Reason**: NextAuth is already well-designed for testing, but could benefit from consistent interface.
+#### 6. NextAuth Wrapper (`src/lib/nextAuthWrapper.ts`) - REMOVED
+**Status**: Removed - Using custom JWT authentication system instead
+**Reason**: NextAuth was removed in favor of the custom JWT authentication system for better performance and control.
 
 #### 7. Crypto Wrapper (`src/lib/cryptoWrapper.ts`)
 **Library**: Node.js `crypto` module

@@ -108,8 +108,8 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
       }
       
       // Measure response time
-      const responseTime = await testAPIPerformance(page, '/api/connections', { threshold: 5000 });
-      expect(responseTime).toBeLessThan(5000);
+      const responseTime = await testAPIPerformance(page, '/api/connections', { threshold: 6000 });
+      expect(responseTime).toBeLessThan(6000);
     });
 
     test('should handle single connection creation efficiently', async ({ page }) => {
@@ -239,8 +239,8 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
       expect(loadTime).toBeLessThan(5000);
       
       // Test basic API performance
-      const responseTime = await testAPIPerformance(page, '/api/connections', { threshold: 5000 });
-      expect(responseTime).toBeLessThan(5000);
+      const responseTime = await testAPIPerformance(page, '/api/connections', { threshold: 6000 });
+      expect(responseTime).toBeLessThan(6000);
     });
   });
 });

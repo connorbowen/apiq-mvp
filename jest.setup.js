@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom'
+import 'openai/shims/node'
 
 // Polyfill for setImmediate
 global.setImmediate = global.setImmediate || ((fn, ...args) => setTimeout(fn, 0, ...args))

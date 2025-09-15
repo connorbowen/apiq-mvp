@@ -1177,9 +1177,9 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
 
       // Test chat interface accessibility (no email/password fields in chat)
       await testFormAccessibility(page, {
-        emailLabel: null,
-        passwordLabel: null,
-        submitButton: null
+        emailLabel: undefined,
+        passwordLabel: undefined,
+        submitButton: undefined
       });
 
       // Test keyboard navigation by clicking on chat input and using keyboard

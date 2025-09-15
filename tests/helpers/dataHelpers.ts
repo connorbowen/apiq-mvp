@@ -486,7 +486,7 @@ export const testConnectionCreation = async (
     await page.waitForResponse(r => r.url().includes('/api/connections') && r.request().method() === 'POST', { timeout: 10000 });
     console.log('✅ API request and response completed successfully');
   } catch (error) {
-    console.log('❌ API request/response failed:', error.message);
+    console.log('❌ API request/response failed:', (error as Error).message);
     console.log('📊 Request made:', requestMade);
     console.log('📊 Response received:', responseReceived);
     
@@ -672,7 +672,7 @@ export const testApiKeyConnectionCreation = async (
     
     console.log('✅ API request and response completed successfully');
   } catch (error) {
-    console.log('❌ API request/response failed:', error.message);
+    console.log('❌ API request/response failed:', (error as Error).message);
     console.log('📊 Request made:', requestMade);
     console.log('📊 Response received:', responseReceived);
     throw error;
@@ -847,7 +847,7 @@ export const testBearerTokenConnectionCreation = async (
     
     console.log('✅ API request and response completed successfully');
   } catch (error) {
-    console.log('❌ API request/response failed:', error.message);
+    console.log('❌ API request/response failed:', (error as Error).message);
     console.log('📊 Request made:', requestMade);
     console.log('📊 Response received:', responseReceived);
     throw error;
@@ -1026,7 +1026,7 @@ export const testBasicAuthConnectionCreation = async (
     
     console.log('✅ API request and response completed successfully');
   } catch (error) {
-    console.log('❌ API request/response failed:', error.message);
+    console.log('❌ API request/response failed:', (error as Error).message);
     console.log('📊 Request made:', requestMade);
     console.log('📊 Response received:', responseReceived);
     throw error;
@@ -1216,7 +1216,7 @@ export const testOAuth2ConnectionCreation = async (
     
     console.log('✅ API request and response completed successfully');
   } catch (error) {
-    console.log('❌ API request/response failed:', error.message);
+    console.log('❌ API request/response failed:', (error as Error).message);
     console.log('📊 Request made:', requestMade);
     console.log('📊 Response received:', responseReceived);
     throw error;

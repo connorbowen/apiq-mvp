@@ -68,10 +68,15 @@ test.describe('P1.5: Billing Integration E2E Tests', () => {
       await waitForElement(page, '[data-testid="billing-dashboard"]', { timeout: 10000 });
       
       // Test page load performance
-      await testPageLoadTime(page, 3000);
+      await testPageLoadTime(page, '/dashboard?tab=billing', { threshold: 3000 });
       
       // Validate UX compliance
-      await validateUXCompliance(page);
+      await validateUXCompliance(page, {
+        title: 'APIQ',
+        headings: 'Billing Dashboard',
+        validateForm: true,
+        validateAccessibility: true
+      });
       
       // Verify plan information is displayed
       await expect(page.locator('[data-testid="current-plan-card"]')).toBeVisible();
@@ -343,7 +348,11 @@ test.describe('P1.5: Billing Integration E2E Tests', () => {
         await expect(page.locator('[data-testid="card-form"]')).toBeVisible();
         
         // Test form accessibility
-        await testFormAccessibility(page, '[data-testid="card-form"]');
+        await testFormAccessibility(page, {
+          emailLabel: 'Email',
+          passwordLabel: 'Password',
+          submitButton: 'Update Payment Method'
+        });
       }
     });
 
@@ -489,11 +498,11 @@ test.describe('P1.5: Billing Integration E2E Tests', () => {
       await waitForElement(page, '[data-testid="billing-dashboard"]', { timeout: 10000 });
       
       // Test page load time
-      await testPageLoadTime(page, 3000);
+      await testPageLoadTime(page, '/dashboard?tab=billing', { threshold: 3000 });
       
       // Test API performance
-      await testAPIPerformance(page, '/api/billing/current-plan', 1000);
-      await testAPIPerformance(page, '/api/billing/usage-summary', 1000);
+      await testAPIPerformance(page, '/api/billing/current-plan', { threshold: 1000 });
+      await testAPIPerformance(page, '/api/billing/usage-summary', { threshold: 1000 });
     });
 
     test('should handle billing API errors gracefully', async ({ page }) => {

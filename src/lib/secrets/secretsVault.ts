@@ -1,4 +1,4 @@
-import CryptoJS from 'crypto-js';
+import * as CryptoJS from 'crypto-js';
 import { prisma } from '../../../lib/database/client';
 import { PrismaClient } from '../../../src/generated/prisma';
 import { logError, logInfo } from '../../utils/logger';

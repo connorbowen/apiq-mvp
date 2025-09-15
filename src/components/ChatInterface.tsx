@@ -144,192 +144,40 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     setError('');
 
     try {
-      // Check for connection guidance needs first
-      const apiKeywords = ['stripe', 'sendgrid', 'mailchimp', 'slack', 'trello', 'github', 'jira', 'openai', 'api'];
-      const connectionKeywords = ['connect', 'integrate', 'setup', 'configure', 'auth'];
+      // Let AI orchestrator handle everything
+      console.log('🤖 ChatInterface: Sending message to AI orchestrator');
+      const response = await apiClient.processMessage(inputMessage);
+      console.log('🤖 ChatInterface: AI orchestrator response:', response);
       
-      console.log('🔍 Connection guidance check:', {
-        messageText: messageText.toLowerCase(),
-        apiKeywords,
-        connectionKeywords
-      });
-      
-      const mentionsApis = apiKeywords.some(api => 
-        messageText.toLowerCase().includes(api)
-      );
-      
-      const mentionsConnection = connectionKeywords.some(keyword => 
-        messageText.toLowerCase().includes(keyword)
-      );
-
-      console.log('🔍 Connection guidance result:', {
-        mentionsApis,
-        mentionsConnection,
-        shouldShowGuidance: mentionsApis || mentionsConnection
-      });
-
-      // Check if this looks like a workflow creation request FIRST
-      // Be more specific about workflow keywords to avoid false positives
-      const workflowKeywords = ['workflow', 'automate', 'when', 'if', 'then', 'send', 'notify', 'email', 'slack', 'trello', 'github', 'jira', 'onboarding', 'template', 'process', 'step', 'sequence'];
-      const isWorkflowRequest = workflowKeywords.some(keyword => 
-        messageText.toLowerCase().includes(keyword)
-      ) && !messageText.toLowerCase().includes('pet');
-      
-      console.log('🔍 ChatInterface: Workflow detection:', {
-        messageText,
-        workflowKeywords,
-        isWorkflowRequest,
-        containsWorkflow: messageText.toLowerCase().includes('workflow'),
-        containsPet: messageText.toLowerCase().includes('pet'),
-        mentionsApis,
-        mentionsConnection
-      });
-
-      // Skip client-side connection guidance entirely for now
-      // Let the backend handle all connection guidance
-      if (false) {
-        const detectedApis = apiKeywords.filter(api => 
-          messageText.toLowerCase().includes(api)
-        );
-
-        // Create connection guidance
-        const connectionGuidance = {
-          requiresGuidance: true,
-          guidanceMessage: "Connect your APIs",
-          missingApis: detectedApis.map(api => ({
-            name: api.toLowerCase(),
-            displayName: api.charAt(0).toUpperCase() + api.slice(1),
-            description: `${api.charAt(0).toUpperCase() + api.slice(1)} integration`,
-            authType: 'api_key',
-            setupInstructions: {
-              step1: `Sign up for a ${api.charAt(0).toUpperCase() + api.slice(1)} account`,
-              step2: 'Navigate to API settings',
-              step3: 'Generate an API key'
-            },
-            baseUrl: `https://api.${api.toLowerCase()}.com`
-          })),
-          suggestedConnections: detectedApis.map(api => ({
-            name: api.toLowerCase(),
-            displayName: api.charAt(0).toUpperCase() + api.slice(1),
-            description: `${api.charAt(0).toUpperCase() + api.slice(1)} integration`,
-            authType: 'api_key',
-            setupInstructions: {
-              step1: `Sign up for a ${api.charAt(0).toUpperCase() + api.slice(1)} account`,
-              step2: 'Navigate to API settings',
-              step3: 'Generate an API key'
-            },
-            baseUrl: `https://api.${api.toLowerCase()}.com`
-          }))
-        };
-
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: 'assistant',
-          content: `I can help you create a workflow with ${detectedApis.map(api => api.charAt(0).toUpperCase() + api.slice(1)).join(' and ')}! 
-
-To get started, you'll need to connect your APIs first. This ensures your workflow can securely access the services you want to integrate.
-
-**Connect your APIs** to continue with your workflow creation.`,
-          timestamp: new Date(),
-          intent: 'general_chat',
-          connectionGuidance
-        };
-
-        setMessages(prev => [...prev, assistantMessage]);
-        setIsLoading(false);
-        return;
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Failed to process message');
       }
 
-      
-      
-      let response = null;
-      
-      if (isWorkflowRequest) {
-        // Proceed with workflow generation for workflow creation requests
-        console.log('🔍 ChatInterface: Proceeding with workflow generation for:', messageText);
-        response = await apiClient.generateWorkflow(inputMessage);
-        console.log('🔍 ChatInterface: generateWorkflow response:', response);
-      } else {
-        // First try direct API call execution for API-related requests
-        const directApiResponse = await apiClient.executeDirectApiCall(messageText, getPreviousApiResults());
-        
-        if (directApiResponse.success && directApiResponse.data) {
-          const { intent, apiCallResult, explanation, suggestedAction } = directApiResponse.data;
-          const connectionGuidance = (directApiResponse.data as any).connectionGuidance;
-          
-          // Only handle actual API calls, not workflow creation
-          if (intent === 'api_call' && apiCallResult) {
-            // Format the API response for human-friendly display
-            const formattedResponse = apiCallResult ? ResponseFormatter.formatApiResponse(apiCallResult) : undefined;
-            
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              type: 'assistant',
-              content: explanation,
-              timestamp: new Date(),
-              intent,
-              apiCallResult,
-              formattedResponse,
-              suggestedAction,
-              connectionGuidance
-            };
+      // Create assistant message based on AI response
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: response.data.content,
+        timestamp: new Date(),
+        intent: response.data.type === 'workflow' ? 'workflow_creation' : 
+                response.data.type === 'direct_api_call' ? 'api_call' : 'general_chat',
+        workflow: response.data.workflow ? {
+          ...response.data.workflow,
+          isSaved: false
+        } : undefined,
+        steps: response.data.steps,
+        apiCallResult: response.data.apiCallResult,
+        connectionGuidance: response.data.connectionGuidance,
+        suggestedAction: response.data.suggestedAction
+      };
 
-            setMessages(prev => [...prev, assistantMessage]);
-            return;
-          } else if (intent === 'general_chat' && connectionGuidance) {
-            // Handle connection guidance response
-            const assistantMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              type: 'assistant',
-              content: explanation,
-              timestamp: new Date(),
-              intent,
-              connectionGuidance
-            };
+      setMessages(prev => [...prev, assistantMessage]);
 
-            setMessages(prev => [...prev, assistantMessage]);
-            return;
-          }
-        }
+      // Call the callback if provided
+      if (onWorkflowGenerated && response.data.workflow && response.data.steps) {
+        onWorkflowGenerated(response.data.workflow, response.data.steps);
       }
-      
-      if (response && response.success && response.data) {
-        console.log('🔍 Workflow generation response:', {
-          workflow: response.data.workflow,
-          steps: response.data.steps,
-          explanation: response.data.explanation,
-          connectionGuidance: (response.data as any).connectionGuidance
-        });
-        
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          type: 'assistant',
-          content: response.data.explanation || 'I\'ve created a workflow for you!',
-          timestamp: new Date(),
-          workflow: response.data.workflow ? {
-            ...response.data.workflow,
-            isSaved: false  // Ensure the workflow is marked as not saved initially
-          } : undefined,
-          steps: response.data.steps,
-          explanation: response.data.explanation,
-          intent: 'workflow_creation',
-          connectionGuidance: (response.data as any).connectionGuidance
-        };
-        
-        console.log('🔍 Created assistant message:', {
-          workflow: assistantMessage.workflow,
-          steps: assistantMessage.steps
-        });
 
-        setMessages(prev => [...prev, assistantMessage]);
-
-        // Call the callback if provided
-        if (onWorkflowGenerated && response.data.workflow && response.data.steps) {
-          onWorkflowGenerated(response.data.workflow, response.data.steps);
-        }
-      } else if (response) {
-        throw new Error(response.error || 'Failed to generate workflow');
-      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
@@ -347,13 +195,6 @@ To get started, you'll need to connect your APIs first. This ensures your workfl
     }
   }, [inputMessage, isLoading, onWorkflowGenerated]);
 
-  // Helper function to get previous API call results for context
-  const getPreviousApiResults = useCallback(() => {
-    return messages
-      .filter(msg => msg.type === 'assistant' && msg.apiCallResult)
-      .map(msg => msg.apiCallResult)
-      .slice(-5); // Keep last 5 API call results for context
-  }, [messages]);
 
   const handleSaveWorkflow = useCallback(async (messageId: string) => {
     const message = messages.find(m => m.id === messageId);

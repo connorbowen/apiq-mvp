@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { SecretsVault } from '../../../src/lib/secrets/secretsVault';
+import { secretsVault } from '../../../src/lib/secrets/secretsVault';
 import { prisma } from '../../../lib/database/client';
 import { logAuditEvent, logError, logInfo } from '../../../src/utils/logger';
 
@@ -31,8 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     logInfo('Starting master key rotation via admin API');
     
-    // Initialize secrets vault
-    const secretsVault = new SecretsVault(prisma);
+    // Use the singleton secrets vault instance
     
     // Check vault health before rotation
     const healthBefore = await secretsVault.getHealthStatus();

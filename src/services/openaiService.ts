@@ -74,7 +74,7 @@ export class OpenAIService {
         parametersCount: request.parameters ? Object.keys(request.parameters).length : 0
       });
 
-      const systemPrompt = this.buildSystemPrompt(request.apiConnections);
+      const systemPrompt = await this.buildSystemPrompt(request.apiConnections);
       const userPrompt = this.buildUserPrompt(request.description, request.parameters);
 
       const response = await this.client.chat.completions.create({
@@ -312,23 +312,30 @@ export class OpenAIService {
   /**
    * Build system prompt for workflow generation
    */
-  private buildSystemPrompt(apiConnections: ApiConnection[]): string {
-    const connectionsInfo = apiConnections.map(conn => {
-      const endpointsInfo = conn.endpoints.map((endpoint: any) => {
-        // Use enhanced endpoint for better parameter understanding
-        const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
-        const paramInfo = enhancedEndpoint.parameters.length > 0 
-          ? `\n  Parameters: ${enhancedEndpoint.parameters.map(p => 
-              `${p.name} (${p.naturalLanguageMappings?.join(', ') || p.name})${p.required ? ' *' : ''}`
-            ).join(', ')}`
-          : '';
-        
-        return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}${paramInfo}`;
-      }).join('\n');
+  private async buildSystemPrompt(apiConnections: any[]): Promise<string> {
+    const connectionsInfo = await Promise.all(apiConnections.map(async conn => {
+      const endpointsInfo = await Promise.all((conn.endpoints || []).map(async (endpoint: any) => {
+        try {
+          // Use enhanced endpoint for better parameter understanding
+          const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint);
+          const paramInfo = enhancedEndpoint.parameters.length > 0 
+            ? `\n  Parameters: ${enhancedEndpoint.parameters.map((p: any) => 
+                `${p.name} (${p.naturalLanguageMappings?.join(', ') || p.name})${p.required ? ' *' : ''}`
+              ).join(', ')}`
+            : '';
+          
+          return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}${paramInfo}`;
+        } catch (error) {
+          console.error('Failed to enhance endpoint:', error);
+          return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}`;
+        }
+      }));
 
       return `**${conn.name}** (ID: ${conn.id}, Base URL: ${conn.baseUrl})
 ${endpointsInfo}`;
-    }).join('\n\n');
+    }));
+
+    const connectionsText = connectionsInfo.join('\n\n');
 
     return `You are a helpful AI assistant that creates workflows to connect and orchestrate APIs. Your goal is to make complex API integrations simple and accessible through natural language.
 
@@ -340,7 +347,7 @@ Key Principles:
 5. Suggest improvements or alternatives when appropriate
 
 Available API Connections:
-${connectionsInfo}
+${connectionsText}
 
 When creating workflows:
 1. Analyze the user's request to understand their intent
@@ -427,6 +434,11 @@ Please execute the appropriate API call and return the result.`;
         requestBody?: any;
         headers?: Record<string, string>;
         connectionId: string;
+        statusCode?: number;
+        responseData?: any;
+        responseHeaders?: Record<string, string>;
+        executionTime?: number;
+        error?: string;
       };
       explanation: string;
       suggestedAction?: string;
@@ -440,7 +452,7 @@ Please execute the appropriate API call and return the result.`;
         hasContext: request.context.length > 0
       });
 
-      const systemPrompt = this.buildDirectApiCallSystemPrompt(request.availableConnections);
+      const systemPrompt = await this.buildDirectApiCallSystemPrompt(request.availableConnections);
       const userPrompt = this.buildDirectApiCallUserPrompt(request.message, request.context);
 
       const response = await this.client.chat.completions.create({
@@ -565,28 +577,35 @@ Please execute the appropriate API call and return the result.`;
   /**
    * Build system prompt for direct API call execution
    */
-  private buildDirectApiCallSystemPrompt(connections: any[]): string {
-    const connectionsInfo = connections.map(conn => {
-      const endpointsInfo = conn.endpoints.map((endpoint: any) => {
-        // Use enhanced endpoint if available, otherwise fall back to basic info
-        const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
-        const paramInfo = enhancedEndpoint.parameters.length > 0 
-          ? `\n  Parameters: ${enhancedEndpoint.parameters.map(p => 
-              `${p.name} (${p.naturalLanguageMappings?.join(', ') || p.name})${p.required ? ' *' : ''}`
-            ).join(', ')}`
-          : '';
-        
-        return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}${paramInfo}`;
-      }).join('\n');
+  private async buildDirectApiCallSystemPrompt(connections: any[]): Promise<string> {
+    const connectionsInfo = await Promise.all(connections.map(async conn => {
+      const endpointsInfo = await Promise.all(conn.endpoints.map(async (endpoint: any) => {
+        try {
+          // Use enhanced endpoint if available, otherwise fall back to basic info
+          const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint);
+          const paramInfo = enhancedEndpoint.parameters.length > 0 
+            ? `\n  Parameters: ${enhancedEndpoint.parameters.map((p: any) => 
+                `${p.name} (${p.naturalLanguageMappings?.join(', ') || p.name})${p.required ? ' *' : ''}`
+              ).join(', ')}`
+            : '';
+          
+          return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}${paramInfo}`;
+        } catch (error) {
+          console.error('Failed to enhance endpoint:', error);
+          return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}`;
+        }
+      }));
 
       return `**${conn.name}** (ID: ${conn.id}, Base URL: ${conn.baseUrl})
 ${endpointsInfo}`;
-    }).join('\n\n');
+    }));
+
+    const connectionsText = connectionsInfo.join('\n\n');
 
     return `You are a friendly AI assistant that helps users execute API calls through natural language. Be conversational, encouraging, and helpful.
 
 Available API Connections:
-${connectionsInfo}
+${connectionsText}
 
 Your task is to:
 1. Analyze the user's message to determine their intent

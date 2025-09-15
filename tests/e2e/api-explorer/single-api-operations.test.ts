@@ -44,8 +44,7 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
       connection: {
         name: 'Test Petstore API',
         baseUrl: 'https://petstore3.swagger.io/api/v3',
-        authType: 'NONE',
-        description: 'Test API for single operations'
+        authType: 'NONE'
       }
     });
   });
@@ -376,7 +375,7 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
       await waitForDashboard(page);
 
       // Test page load performance
-      await testPageLoadTime(page, 3000);
+      await testPageLoadTime(page, '/dashboard?tab=connections', { threshold: 3000 });
 
       // Test API execution performance
       const firstTryButton = page.locator('[data-testid="try-it-out-btn"]').first();
@@ -385,7 +384,7 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
       await waitForElement(page, '[data-testid="parameter-form"]', { timeout: 10000 });
       
       const executeButton = getPrimaryActionButton(page, 'execute-api-btn');
-      await testAPIPerformance(page, executeButton, 5000);
+      await testAPIPerformance(page, '/api/operations/execute', { threshold: 5000 });
     });
   });
 
@@ -395,9 +394,11 @@ test.describe('P1.3: Single API Operations E2E Tests', () => {
       await waitForDashboard(page);
 
       // Test keyboard navigation
-      await testPrimaryActionPatterns(page, {
-        primaryActions: ['try-it-out-btn', 'execute-api-btn']
-      });
+      const tryItOutVisible = await testPrimaryActionPatterns(page, 'try-it-out-btn');
+      const executeApiVisible = await testPrimaryActionPatterns(page, 'execute-api-btn');
+      
+      expect(tryItOutVisible).toBe(true);
+      expect(executeApiVisible).toBe(true);
 
       // Navigate using keyboard
       await page.keyboard.press('Tab');

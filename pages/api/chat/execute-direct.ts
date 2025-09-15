@@ -4,6 +4,7 @@ import { prisma } from '../../../lib/database/client';
 import { logInfo, logError } from '../../../src/utils/logger';
 import { OpenAIService } from '../../../src/services/openaiService';
 import { ConnectionGuidanceService } from '../../../src/lib/services/connectionGuidanceService';
+import { EnhancedErrorHandler } from '../../../src/lib/services/enhancedErrorHandler';
 import { errorHandler } from '../../../src/middleware/errorHandler';
 import axios from 'axios';
 
@@ -180,6 +181,13 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
 
 async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApiCallResponse>) {
   console.log('🚀 EXECUTE DIRECT API HANDLER CALLED 🚀');
+  
+  // Declare variables at function scope
+  let message: string = '';
+  let context: any;
+  let openaiService: OpenAIService | undefined;
+  let enhancedErrorHandler: EnhancedErrorHandler | undefined;
+  
   try {
     console.log('=== API endpoint - Starting execute-direct handler ===');
     console.log('Request method:', req.method);
@@ -189,7 +197,9 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-    const { message, context } = req.body;
+    const body = req.body;
+    message = body.message;
+    context = body.context;
     if (!message) {
       return res.status(400).json({ success: false, error: 'Message is required' });
     }
@@ -229,7 +239,7 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
     
     let connectionGuidance;
     try {
-      connectionGuidance = ConnectionGuidanceService.analyzeRequest(
+      connectionGuidance = await ConnectionGuidanceService.analyzeRequest(
         message,
         connections.map(conn => ({ name: conn.name, id: conn.id }))
       );
@@ -264,12 +274,12 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
 
     // Create OpenAI service instance
     console.log('API endpoint - Creating OpenAI service');
-    let openaiService;
     let useFallback = false;
     try {
       // Use system-wide OpenAI API key directly from environment variables
       // This is the primary method since we provide OpenAI for all customers
       openaiService = OpenAIService.createFromEnv();
+      enhancedErrorHandler = new EnhancedErrorHandler(openaiService);
       console.log('API endpoint - OpenAI service created successfully with system API key');
     } catch (error) {
       console.log('API endpoint - OpenAI service creation failed, using fallback logic');
@@ -364,7 +374,8 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
             headers: {},
             connectionId: connection.id,
             explanation: `I'll help you ${method} data from ${connection.name}`,
-            suggestedAction: 'You can now use this data to create workflows or perform other operations'
+            suggestedAction: 'You can now use this data to create workflows or perform other operations',
+            apiCallResult: undefined as any
           }
         };
         
@@ -412,6 +423,12 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
     } else {
       // Normal OpenAI flow
       console.log('API endpoint - Using OpenAI service for intent detection');
+      if (!openaiService) {
+        return res.status(500).json({
+          success: false,
+          error: 'OpenAI service not available'
+        });
+      }
       const result = await openaiService.executeDirectApiCall({
         message,
         availableConnections: connections,
@@ -450,6 +467,10 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
             result.data.apiCallResult = {
               method: apiResult.data.method,
               url: apiResult.data.url,
+              parameters: apiCallResult.parameters || {},
+              requestBody: apiCallResult.requestBody,
+              headers: apiCallResult.headers || {},
+              connectionId: apiCallResult.connectionId,
               statusCode: apiResult.data.statusCode,
               responseData: apiResult.data.responseData,
               responseHeaders: apiResult.data.responseHeaders,
@@ -461,6 +482,10 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
             result.data.apiCallResult = { 
               method: apiCallResult.method,
               url: apiCallResult.url,
+              parameters: apiCallResult.parameters || {},
+              requestBody: apiCallResult.requestBody,
+              headers: apiCallResult.headers || {},
+              connectionId: apiCallResult.connectionId,
               statusCode: 500,
               responseData: null,
               responseHeaders: {},
@@ -474,6 +499,10 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
           result.data.apiCallResult = { 
             method: apiCallResult.method,
             url: apiCallResult.url,
+            parameters: apiCallResult.parameters || {},
+            requestBody: apiCallResult.requestBody,
+            headers: apiCallResult.headers || {},
+            connectionId: apiCallResult.connectionId,
             statusCode: 500,
             responseData: null,
             responseHeaders: {},
@@ -494,6 +523,25 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
     console.error('Error details:', error);
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     logError('Direct API call failed', error as Error, { userId: req.user?.id });
+    
+    // Use enhanced error handling if available
+    if (enhancedErrorHandler) {
+      try {
+        const enhancedError = await enhancedErrorHandler.handleApiError(
+          error as Error,
+          {
+            endpoint: 'unknown',
+            method: 'unknown',
+            userMessage: message || 'Unknown error'
+          }
+        );
+        
+        return res.status(500).json(enhancedError);
+      } catch (enhanceError) {
+        console.error('Enhanced error handling failed:', enhanceError);
+      }
+    }
+    
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }

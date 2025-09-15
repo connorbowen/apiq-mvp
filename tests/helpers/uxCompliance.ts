@@ -238,9 +238,13 @@ export class UXComplianceHelper {
         const errorElement = this.page.locator(selector);
         if (await errorElement.count() > 0) {
           await expect(errorElement.first()).toBeVisible();
-          await expect(errorElement.first()).toContainText(expectedError);
-          errorFound = true;
-          break;
+          
+          // Get the text content and check if it matches the expected error
+          const text = await errorElement.first().textContent();
+          if (text && (typeof expectedError === 'string' ? text.includes(expectedError) : expectedError.test(text))) {
+            errorFound = true;
+            break;
+          }
         }
       } catch (e) {
         // Continue to next selector

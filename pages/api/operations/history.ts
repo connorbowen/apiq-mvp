@@ -1,15 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
-import { requireAuth } from '../../../src/lib/auth/session';
+import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { logInfo, logError } from '../../../src/utils/logger';
-
-interface AuthenticatedRequest extends NextApiRequest {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-  };
-}
 
 interface OperationHistoryResponse {
   success: boolean;
@@ -52,8 +44,9 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
+  let user: any;
   try {
-    const user = await requireAuth(req, res);
+    user = await requireAuth(req, res);
     const page = parseInt(req.query.page as string) || 1;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100); // Max 100 per page
     const endpointId = req.query.endpointId as string;
@@ -108,15 +101,15 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       id: execution.id,
       operationId: execution.operationId,
       status: execution.status,
-      statusCode: execution.statusCode,
-      executionTime: execution.executionTime,
-      error: execution.error,
+      statusCode: execution.statusCode ?? undefined,
+      executionTime: execution.executionTime ?? undefined,
+      error: execution.error ?? undefined,
       startedAt: execution.startedAt.toISOString(),
       completedAt: execution.completedAt?.toISOString(),
       endpoint: execution.operation?.endpoint ? {
         path: execution.operation.endpoint.path,
         method: execution.operation.endpoint.method,
-        summary: execution.operation.endpoint.summary
+        summary: execution.operation.endpoint.summary ?? undefined
       } : undefined,
       connection: execution.operation?.endpoint?.apiConnection ? {
         name: execution.operation.endpoint.apiConnection.name,
@@ -148,7 +141,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     });
 
   } catch (error) {
-    logError('Failed to retrieve operation history', error, { userId: user?.id });
+    logError('Failed to retrieve operation history', error as Error, { userId: user?.id });
     return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 

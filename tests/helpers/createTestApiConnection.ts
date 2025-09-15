@@ -8,9 +8,11 @@ import petstoreOpenApi from '../fixtures/petstore-openapi.json';
  * @param provider - The API provider (e.g., 'github', 'slack')
  * @returns The created API connection
  */
-export async function createTestApiConnection(userId: string) {
+export async function createTestApiConnection(userId: string, provider?: string) {
   // Use a unique name for test connections (avoid "Test API" pattern that triggers cleanup)
-  const name = `E2E Connection for Testing (${Date.now()})`;
+  const name = provider 
+    ? `${provider.charAt(0).toUpperCase() + provider.slice(1)} E2E Connection (${Date.now()})`
+    : `E2E Connection for Testing (${Date.now()})`;
   
   // Create the API connection
   const connection = await prisma.apiConnection.create({

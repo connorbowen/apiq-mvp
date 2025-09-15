@@ -254,6 +254,9 @@ test.describe('Registration & Verification E2E Tests - Best-in-Class UX', () => 
     await signupButton2.waitFor({ state: 'visible' });
     await signupButton2.click();
     
+    // Wait for the API call to complete and error message to appear
+    await page.waitForTimeout(2000);
+    
     // Should show error message about existing user
     await uxHelper.validateErrorContainer(/already exists|already registered/i);
 

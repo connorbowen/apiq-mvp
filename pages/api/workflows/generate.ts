@@ -3,6 +3,8 @@ import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session
 import { prisma } from '../../../lib/database/client';
 import { NaturalLanguageWorkflowService } from '../../../src/lib/services/naturalLanguageWorkflowService';
 import { ConnectionGuidanceService } from '../../../src/lib/services/connectionGuidanceService';
+import { EnhancedErrorHandler } from '../../../src/lib/services/enhancedErrorHandler';
+import { OpenAIService } from '../../../src/services/openaiService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('🚀 WORKFLOW GENERATION API CALLED');
@@ -13,6 +15,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
+
+  // Declare variables at function scope
+  let userDescription: string;
+  let context: any;
 
   try {
     console.log('=== API ENDPOINT DEBUG ===');
@@ -28,7 +34,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     console.log('→ Authenticated user ID:', userId);
 
-    const { userDescription, context } = req.body;
+    const body = req.body;
+    userDescription = body.userDescription;
+    context = body.context;
 
     if (!userDescription || typeof userDescription !== 'string') {
       console.log('→ Validation failed: userDescription missing or invalid');
@@ -71,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         connections: connections.map(conn => ({ name: conn.name, id: conn.id }))
       });
       
-      connectionGuidance = ConnectionGuidanceService.analyzeRequest(
+      connectionGuidance = await ConnectionGuidanceService.analyzeRequest(
         userDescription,
         connections.map(conn => ({ name: conn.name, id: conn.id }))
       );
@@ -163,6 +171,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   } catch (error) {
     console.log('🚀 ERROR IN API:', error);
+    
+    // Use enhanced error handling if possible
+    try {
+      const openaiService = OpenAIService.createFromEnv();
+      const enhancedErrorHandler = new EnhancedErrorHandler(openaiService);
+      
+      const enhancedError = await enhancedErrorHandler.handleWorkflowError(
+        error as Error,
+        {
+          workflowId: 'unknown'
+        }
+      );
+      
+      return res.status(500).json(enhancedError);
+    } catch (enhanceError) {
+      console.error('Enhanced error handling failed:', enhanceError);
+    }
+    
     return res.status(500).json({
       success: false,
       error: 'Internal server error'

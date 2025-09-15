@@ -153,7 +153,7 @@ export const testAPIPerformance = async (
   apiEndpoint: string,
   options: PerformanceOptions = {}
 ): Promise<number> => {
-  const { timeout = 5000 } = options;
+  const { timeout = 5000, threshold = 5000 } = options;
   
   const startTime = Date.now();
   
@@ -161,7 +161,7 @@ export const testAPIPerformance = async (
   const responseTime = Date.now() - startTime;
   
   expect(response.status()).toBe(200);
-  expect(responseTime).toBeLessThan(timeout);
+  expect(responseTime).toBeLessThan(threshold);
   
   return responseTime;
 }; 

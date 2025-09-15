@@ -1,16 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
-import { requireAuth } from '../../../src/lib/auth/session';
+import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { logInfo, logError } from '../../../src/utils/logger';
 import { ParameterExtractionService } from '../../../src/lib/services/parameterExtractionService';
-
-interface AuthenticatedRequest extends NextApiRequest {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-  };
-}
 
 interface ExecuteOperationRequest {
   endpointId: string;
@@ -42,8 +34,9 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
+  let user: any;
   try {
-    const user = await requireAuth(req, res);
+    user = await requireAuth(req, res);
     const { endpointId, parameters = {}, requestBody, headers = {} }: ExecuteOperationRequest = req.body;
 
     if (!endpointId) {
@@ -82,20 +75,20 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
 
     // Validate parameters using enhanced parameter schemas
     if (endpoint.parameters) {
-      const enhancedEndpoint = ParameterExtractionService.enhanceEndpoint(endpoint);
+      const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint);
       const validationErrors: string[] = [];
       
       // Check required parameters
-      const missingParams = enhancedEndpoint.parameters
-        .filter(param => param.required && !parameters[param.name])
-        .map(param => param.name);
+      const missingParams = (await enhancedEndpoint).parameters
+        .filter((param: any) => param.required && !parameters[param.name])
+        .map((param: any) => param.name);
       
       if (missingParams.length > 0) {
         validationErrors.push(`Missing required parameters: ${missingParams.join(', ')}`);
       }
       
       // Validate parameter values
-      enhancedEndpoint.parameters.forEach(param => {
+      (await enhancedEndpoint).parameters.forEach((param: any) => {
         const value = parameters[param.name];
         if (value !== undefined && value !== null && value !== '') {
           // Type validation
@@ -174,20 +167,26 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       };
 
       // Add authentication headers
-      if (connection.authType === 'API_KEY' && connection.authConfig?.apiKey) {
+      if (connection.authType === 'API_KEY' && connection.authConfig) {
         const authConfig = connection.authConfig as any;
-        if (authConfig.headerName) {
-          requestHeaders[authConfig.headerName] = authConfig.apiKey;
-        } else {
-          requestHeaders['X-API-Key'] = authConfig.apiKey;
+        if (authConfig.apiKey) {
+          if (authConfig.headerName) {
+            requestHeaders[authConfig.headerName] = authConfig.apiKey;
+          } else {
+            requestHeaders['X-API-Key'] = authConfig.apiKey;
+          }
         }
-      } else if (connection.authType === 'BEARER_TOKEN' && connection.authConfig?.bearerToken) {
+      } else if (connection.authType === 'BEARER_TOKEN' && connection.authConfig) {
         const authConfig = connection.authConfig as any;
-        requestHeaders['Authorization'] = `Bearer ${authConfig.bearerToken}`;
-      } else if (connection.authType === 'BASIC_AUTH' && connection.authConfig?.username && connection.authConfig?.password) {
+        if (authConfig.bearerToken) {
+          requestHeaders['Authorization'] = `Bearer ${authConfig.bearerToken}`;
+        }
+      } else if (connection.authType === 'BASIC_AUTH' && connection.authConfig) {
         const authConfig = connection.authConfig as any;
-        const credentials = Buffer.from(`${authConfig.username}:${authConfig.password}`).toString('base64');
-        requestHeaders['Authorization'] = `Basic ${credentials}`;
+        if (authConfig.username && authConfig.password) {
+          const credentials = Buffer.from(`${authConfig.username}:${authConfig.password}`).toString('base64');
+          requestHeaders['Authorization'] = `Basic ${credentials}`;
+        }
       }
 
       // Prepare request options
@@ -273,7 +272,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         }
       });
 
-      logError('API operation execution failed', error, {
+      logError('API operation execution failed', error as Error, {
         userId: user.id,
         endpointId,
         executionId: execution.id,
@@ -292,7 +291,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     }
 
   } catch (error) {
-    logError('Failed to execute API operation', error, { userId: user?.id });
+    logError('Failed to execute API operation', error as Error, { userId: user?.id });
     return res.status(500).json({ 
       success: false, 
       error: 'Internal server error' 

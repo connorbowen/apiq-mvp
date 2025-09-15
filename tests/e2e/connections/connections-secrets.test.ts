@@ -65,7 +65,7 @@ test.describe('Connections Secrets-First Integration E2E Tests', () => {
   test.describe('Automatic Secret Creation', () => {
     test('should create connection with automatic secret creation', async ({ page, request }) => {
       // Create connection with automatic secret creation using robust approach
-      let connectionId: string | null = null;
+      let connectionId: string | undefined = undefined;
       
       try {
         connectionId = await testConnectionCreation(page, {
@@ -139,7 +139,7 @@ test.describe('Connections Secrets-First Integration E2E Tests', () => {
   test.describe('Secrets Management', () => {
     test('should manage secrets for existing connection', async ({ page, request }) => {
       // First create a connection using robust approach
-      let connectionId: string | null = null;
+      let connectionId: string | undefined = undefined;
       
       try {
         connectionId = await testConnectionCreation(page, {
@@ -249,7 +249,7 @@ test.describe('Connections Secrets-First Integration E2E Tests', () => {
   test.describe('Secrets Security', () => {
     test('should not expose secret values in UI', async ({ page }) => {
       // Create a connection with sensitive data using robust approach
-      let connectionId: string | null = null;
+      let connectionId: string | undefined = undefined;
       
       try {
         connectionId = await testConnectionCreation(page, {

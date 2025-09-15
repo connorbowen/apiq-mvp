@@ -849,7 +849,7 @@ test.describe('OpenAPI/Swagger 3.0 Integration E2E Tests', () => {
       const endpointData = await page.evaluate(() => {
         // Get all endpoint items and check if any have request schema
         const endpointItems = document.querySelectorAll('[data-testid="endpoint-item"]');
-        const endpointsWithSchema = [];
+        const endpointsWithSchema: Array<{ method: string | null | undefined; path: string | undefined; hasRequestSchema: boolean }> = [];
         
         for (let i = 0; i < endpointItems.length; i++) {
           const item = endpointItems[i];

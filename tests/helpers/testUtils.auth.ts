@@ -71,7 +71,11 @@ export const createTestUser = async (
       password: testPassword
     }
   });
-  req.env = {};
+  // Ensure we use the same JWT secret as the test environment
+  req.env = {
+    JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret-key-for-e2e-testing-only-never-use-in-production',
+    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '2h'
+  };
   
   await loginHandler(req as any, res as any);
   
@@ -167,7 +171,11 @@ export const createTestUserWithTour = async (
       password: testPassword
     }
   });
-  req.env = {};
+  // Ensure we use the same JWT secret as the test environment
+  req.env = {
+    JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret-key-for-e2e-testing-only-never-use-in-production',
+    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '2h'
+  };
   
   await loginHandler(req as any, res as any);
   
@@ -208,22 +216,24 @@ export const setAuthCookies = async (page: any, user: TestUser) => {
     {
       name: 'accessToken',
       value: user.accessToken,
-      url: 'http://localhost:3000',
-      httpOnly: false, // false for E2E tests so JavaScript can access
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true, // true to match server expectations
       secure: false, // false for localhost testing
       sameSite: 'Lax'
     },
     {
       name: 'refreshToken',
       value: user.refreshToken,
-      url: 'http://localhost:3000',
-      httpOnly: false, // false for E2E tests so JavaScript can access
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true, // true to match server expectations
       secure: false, // false for localhost testing
       sameSite: 'Lax'
     }
   ];
   
-  console.log('🔍 E2E DEBUG: Setting cookies:', cookieData.map(c => ({ name: c.name, url: c.url })));
+  console.log('🔍 E2E DEBUG: Setting cookies:', cookieData.map(c => ({ name: c.name, domain: c.domain, path: c.path })));
   
   await page.context().addCookies(cookieData);
   
@@ -232,7 +242,7 @@ export const setAuthCookies = async (page: any, user: TestUser) => {
   
   // Debug: Verify cookies were set
   const cookies = await page.context().cookies();
-  console.log('🔍 E2E DEBUG: Cookies set:', cookies.map(c => ({ name: c.name, value: c.value?.substring(0, 20) + '...' })));
+  console.log('🔍 E2E DEBUG: Cookies set:', cookies.map((c: any) => ({ name: c.name, value: c.value?.substring(0, 20) + '...' })));
 };
 
 /**
@@ -253,9 +263,26 @@ export const authenticateE2EPage = async (page: any, user: TestUser) => {
   // Wait for dashboard to load
   await page.waitForLoadState('domcontentloaded', { timeout: 30000 });
   
+  // Wait a bit more for authentication to be processed
+  await page.waitForTimeout(2000);
+  
   // Check current URL
   const currentUrl = page.url();
   console.log('🔍 E2E DEBUG: Current URL after navigation:', currentUrl);
+  
+  // Test authentication by calling the /api/auth/me endpoint
+  try {
+    const authResponse = await page.request.get('/api/auth/me');
+    console.log('🔍 E2E DEBUG: Auth check response status:', authResponse.status());
+    if (authResponse.status() === 200) {
+      const authData = await authResponse.json();
+      console.log('🔍 E2E DEBUG: Auth check successful:', authData.success);
+    } else {
+      console.log('🔍 E2E DEBUG: Auth check failed with status:', authResponse.status());
+    }
+  } catch (error) {
+    console.log('🔍 E2E DEBUG: Auth check request failed:', error);
+  }
   
   // If we're redirected to login, the cookies aren't working
   if (currentUrl.includes('/login')) {
@@ -268,7 +295,7 @@ export const authenticateE2EPage = async (page: any, user: TestUser) => {
   
   // Capture console logs to see any JavaScript errors
   const consoleLogs: string[] = [];
-  page.on('console', msg => {
+  page.on('console', (msg: any) => {
     consoleLogs.push(`[${msg.type()}] ${msg.text()}`);
   });
   
@@ -285,17 +312,63 @@ export const authenticateE2EPage = async (page: any, user: TestUser) => {
   // Wait for either dashboard elements or guided tour to be visible
   // The guided tour overlay will appear for new users and cover the dashboard
   try {
+    console.log('🔍 E2E DEBUG: Waiting for dashboard elements...');
+    
+    // First, wait for the page to be fully loaded
+    await page.waitForLoadState('networkidle', { timeout: 10000 });
+    console.log('🔍 E2E DEBUG: Page network idle');
+    
+    // Wait a bit more for React to render
+    await page.waitForTimeout(2000);
+    console.log('🔍 E2E DEBUG: Waited for React rendering');
+    
+    // Check what's currently on the page
+    const currentUrl = page.url();
+    console.log('🔍 E2E DEBUG: Current URL before selector check:', currentUrl);
+    
+    // If we're on login page, authentication failed
+    if (currentUrl.includes('/login')) {
+      console.log('🔍 E2E DEBUG: Still on login page - authentication failed');
+      throw new Error('Authentication failed - redirected to login page');
+    }
+    
+    // Debug: Check what elements are actually present on the page
+    const allTestIds = await page.locator('[data-testid]').all();
+    const testIdValues = await Promise.all(allTestIds.map(async (el: any) => await el.getAttribute('data-testid')));
+    console.log('🔍 E2E DEBUG: Found test IDs on page:', testIdValues.filter(Boolean));
+    
+    // Check for loading state
+    const isLoading = await page.locator('text=Loading dashboard').isVisible().catch(() => false);
+    console.log('🔍 E2E DEBUG: Is loading state visible:', isLoading);
+    
+    // Check for authentication error
+    const authError = await page.locator('text=Authentication Error').isVisible().catch(() => false);
+    console.log('🔍 E2E DEBUG: Is authentication error visible:', authError);
+    
+    // Check for any h1 elements
+    const h1Elements = await page.locator('h1').all();
+    console.log('🔍 E2E DEBUG: H1 elements found:', h1Elements.length);
+    for (const h1 of h1Elements) {
+      const text = await h1.textContent();
+      console.log('🔍 E2E DEBUG: H1 text:', text);
+    }
+    
+    // Try to find dashboard elements with a longer timeout
     await Promise.race([
-      page.waitForSelector('[data-testid="tab-chat"]', { timeout: 15000 }),
-      page.waitForSelector('[data-testid="guided-tour-tooltip"]', { timeout: 15000 }),
-      page.waitForSelector('[data-testid="guided-tour-overlay"]', { timeout: 15000 }),
-      page.waitForSelector('h1:has-text("Dashboard")', { timeout: 15000 })
+      page.waitForSelector('[data-testid="tab-chat"]', { timeout: 20000 }),
+      page.waitForSelector('[data-testid="tab-connections"]', { timeout: 20000 }),
+      page.waitForSelector('[data-testid="tab-workflows"]', { timeout: 20000 }),
+      page.waitForSelector('[data-testid="guided-tour-tooltip"]', { timeout: 20000 }),
+      page.waitForSelector('[data-testid="guided-tour-overlay"]', { timeout: 20000 }),
+      page.waitForSelector('h1:has-text("Dashboard")', { timeout: 20000 }),
+      page.waitForSelector('h1:has-text("Chat")', { timeout: 20000 })
     ]);
     console.log('🔍 E2E DEBUG: Dashboard or guided tour loaded');
   } catch (error) {
     // If neither dashboard elements nor tour appear, check what's on the page
     const pageContent = await page.content();
     console.log('🔍 E2E DEBUG: Page content preview:', pageContent.substring(0, 1000));
+    console.log('🔍 E2E DEBUG: Current URL:', page.url());
     throw new Error('Neither dashboard elements nor guided tour appeared');
   }
   

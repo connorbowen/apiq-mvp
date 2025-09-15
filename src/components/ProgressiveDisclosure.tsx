@@ -44,7 +44,7 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
     if (state.stage === 'completed') return true;
     
     // If showIfCompleted is true, only show if onboarding is completed
-    if (showIfCompleted) return state.stage === 'completed';
+    if (showIfCompleted) return (state.stage as string) === 'completed';
     
     // Check if feature is available based on onboarding stage
     return isFeatureAvailable(feature);

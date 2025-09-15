@@ -176,7 +176,7 @@ test.describe('Queue & Concurrency E2E Tests', () => {
       await page.click(`[data-testid="execute-workflow-${workflow.data.id}"]`);
       
       // Should show queued or running status
-      await expect(page.locator('[data-testid="execution-status"]')).toMatch(/QUEUED|RUNNING/);
+      await expect(page.locator('[data-testid="execution-status"]')).toContainText(/QUEUED|RUNNING/);
       
       // Click cancel button
       await page.click('[data-testid="cancel-execution-btn"]');
@@ -213,7 +213,7 @@ test.describe('Queue & Concurrency E2E Tests', () => {
       }
       
       // Create multiple workflows with long-running steps
-      const workflows = [];
+      const workflows: Array<{ id: string; [key: string]: any }> = [];
       for (let i = 0; i < 5; i++) {
         const workflowResponse = await page.request.post('/api/workflows', {
           data: {
@@ -534,7 +534,7 @@ test.describe('Queue & Concurrency E2E Tests', () => {
       await page.click(`[data-testid="execute-workflow-${highPriorityWorkflow.data.id}"]`);
       
       // High priority should start running (if concurrency allows)
-      await expect(page.locator(`[data-testid="execution-status-${highPriorityWorkflow.data.id}"]`)).toMatch(/RUNNING|QUEUED/);
+      await expect(page.locator(`[data-testid="execution-status-${highPriorityWorkflow.data.id}"]`)).toContainText(/RUNNING|QUEUED/);
       
       // Wait for both to complete
       await expect(page.locator(`[data-testid="execution-status-${lowPriorityWorkflow.data.id}"]`)).toContainText('COMPLETED', { timeout: 15000 });

@@ -56,7 +56,7 @@ test.describe('Connections Management E2E Tests', () => {
     }
     
     // Clean up test user
-    await cleanupTestUser(testUser.id);
+    await cleanupTestUser(testUser);
   });
 
   test.beforeEach(async ({ page }) => {

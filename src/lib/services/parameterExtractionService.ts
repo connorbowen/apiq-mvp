@@ -9,7 +9,12 @@
  * - Direct API calls (chat)
  * - Workflow generation
  * - API Explorer
+ * 
+ * Now uses AI for intelligent parameter extraction with fallback to rules-based patterns
  */
+
+import { AIParameterExtractionService, AIParameterExtractionResult } from './aiParameterExtractionService';
+import { OpenAIService } from '../../services/openaiService';
 
 // Simple logger for browser compatibility
 const logInfo = (message: string, meta?: any) => {
@@ -56,7 +61,11 @@ export class ParameterExtractionService {
   /**
    * Extract and enhance parameters from OpenAPI operation
    */
-  static extractParameterSchemas(operation: any): ParameterSchema[] {
+  static async extractParameterSchemas(
+    operation: any, 
+    openaiService?: any,
+    endpointContext?: string
+  ): Promise<ParameterSchema[]> {
     const schemas: ParameterSchema[] = [];
     
     if (!operation.parameters) {
@@ -80,6 +89,13 @@ export class ParameterExtractionService {
         paramType = param.type;
       }
 
+      // Generate natural language mappings using AI if available
+      const naturalLanguageMappings = await this.generateNaturalLanguageMappings(
+        param, 
+        openaiService, 
+        endpointContext
+      );
+
       const schema: ParameterSchema = {
         name: param.name,
         type: this.mapOpenApiTypeToParameterType(paramType),
@@ -87,7 +103,7 @@ export class ParameterExtractionService {
         description: param.description,
         location: param.in,
         examples: this.extractExamples(param),
-        naturalLanguageMappings: this.generateNaturalLanguageMappings(param),
+        naturalLanguageMappings,
         validation: this.extractValidationRules(param)
       };
 
@@ -98,9 +114,42 @@ export class ParameterExtractionService {
   }
 
   /**
-   * Generate natural language mappings for a parameter
+   * Generate natural language mappings for a parameter using AI
    */
-  private static generateNaturalLanguageMappings(param: any): string[] {
+  private static async generateNaturalLanguageMappings(
+    param: any, 
+    openaiService?: any,
+    endpointContext?: string
+  ): Promise<string[]> {
+    // If no OpenAI service provided, use basic patterns
+    if (!openaiService) {
+      return this.generateBasicMappings(param);
+    }
+
+    try {
+      const aiExtractionService = new AIParameterExtractionService(openaiService);
+      
+      const mappings = await aiExtractionService.generateParameterMappings(
+        param,
+        endpointContext || '',
+        ''
+      );
+
+      return mappings;
+
+    } catch (error) {
+      logError('AI parameter mapping generation failed, using basic patterns', error as Error, {
+        paramName: param.name
+      });
+      
+      return this.generateBasicMappings(param);
+    }
+  }
+
+  /**
+   * Generate basic natural language mappings as fallback
+   */
+  private static generateBasicMappings(param: any): string[] {
     const mappings: string[] = [];
     const name = param.name.toLowerCase();
     const description = (param.description || '').toLowerCase();
@@ -134,7 +183,7 @@ export class ParameterExtractionService {
     // Add the parameter name itself
     mappings.push(name);
 
-    return [...new Set(mappings)]; // Remove duplicates
+    return Array.from(new Set(mappings)); // Remove duplicates
   }
 
   /**
@@ -197,6 +246,45 @@ export class ParameterExtractionService {
    * Extract parameters from natural language using AI
    */
   static async extractParametersFromNaturalLanguage(
+    message: string,
+    endpoint: EnhancedEndpoint,
+    openaiService: any,
+    context: Record<string, any> = {}
+  ): Promise<Record<string, any>> {
+    try {
+      // Use AI-powered parameter extraction
+      const aiExtractionService = new AIParameterExtractionService(openaiService);
+      
+      const aiResult = await aiExtractionService.extractParametersFromNaturalLanguage(
+        message,
+        endpoint,
+        context
+      );
+
+      logInfo('AI parameter extraction completed', {
+        message: message.substring(0, 100),
+        endpointId: endpoint.id,
+        extractedCount: Object.keys(aiResult.parameters).length,
+        confidence: aiResult.confidence
+      });
+
+      return aiResult.parameters;
+
+    } catch (error) {
+      logError('AI parameter extraction failed, falling back to rules', error as Error, {
+        message,
+        endpointId: endpoint.id
+      });
+      
+      // Fallback to original rules-based extraction
+      return this.fallbackRulesExtraction(message, endpoint, openaiService);
+    }
+  }
+
+  /**
+   * Fallback to rules-based parameter extraction if AI fails
+   */
+  private static async fallbackRulesExtraction(
     message: string,
     endpoint: EnhancedEndpoint,
     openaiService: any
@@ -275,8 +363,12 @@ Return only a JSON object in this format:
   /**
    * Enhance endpoint with parameter intelligence
    */
-  static enhanceEndpoint(endpoint: any): EnhancedEndpoint {
-    const enhancedParams = this.extractParameterSchemas(endpoint);
+  static async enhanceEndpoint(
+    endpoint: any, 
+    openaiService?: any,
+    endpointContext?: string
+  ): Promise<EnhancedEndpoint> {
+    const enhancedParams = await this.extractParameterSchemas(endpoint, openaiService, endpointContext);
     
     return {
       ...endpoint,

@@ -406,9 +406,11 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       await waitForChatResponse(page);
 
       // Test keyboard navigation for setup buttons
-      await testPrimaryActionPatterns(page, {
-        primaryActions: ['setup-in-chat-slack', 'setup-in-chat-github']
-      });
+      const slackButtonVisible = await testPrimaryActionPatterns(page, 'setup-in-chat-slack');
+      const githubButtonVisible = await testPrimaryActionPatterns(page, 'setup-in-chat-github');
+      
+      expect(slackButtonVisible).toBe(true);
+      expect(githubButtonVisible).toBe(true);
 
       // Navigate using keyboard
       await page.keyboard.press('Tab');

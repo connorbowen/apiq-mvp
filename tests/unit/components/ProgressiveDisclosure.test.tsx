@@ -30,6 +30,8 @@ describe('ProgressiveDisclosure', () => {
       nextTourStep: jest.fn(),
       previousTourStep: jest.fn(),
       skipTour: jest.fn(),
+      syncWithUserData: jest.fn(),
+      syncWithTourState: jest.fn(),
     });
   });
 

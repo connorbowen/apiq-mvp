@@ -53,7 +53,7 @@ export interface UserProfile {
   id: string;
   email: string;
   name?: string;
-  role: 'user' | 'admin';
+  role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
   isActive: boolean;
   // Onboarding fields
   onboardingStage?: string;
@@ -588,7 +588,7 @@ class ApiClient {
       data: { userDescription },
     });
     console.log('🔍 API Client: generateWorkflow response:', result);
-    return result;
+    return result as any;
   }
 
   async getWorkflow(id: string): Promise<ApiResponse<{ workflow: any }>> {
@@ -596,6 +596,42 @@ class ApiClient {
       method: 'GET',
       url: `/api/workflows/${id}`,
     });
+  }
+
+  async classifyMessage(message: string): Promise<ApiResponse<{
+    type: 'workflow' | 'direct_api_call' | 'general_chat';
+    confidence: number;
+    reasoning: string;
+    suggestedActions: string[];
+    requiresApiConnections: boolean;
+  }>> {
+    console.log('🔍 API Client: classifyMessage called with:', message);
+    const result = await this.request({
+      method: 'POST',
+      url: '/api/chat/classify',
+      data: { message },
+    });
+    console.log('🔍 API Client: classifyMessage response:', result);
+    return result as any;
+  }
+
+  async processMessage(message: string): Promise<ApiResponse<{
+    type: 'workflow' | 'direct_api_call' | 'connection_guidance' | 'general_chat';
+    content: string;
+    workflow?: any;
+    steps?: any[];
+    apiCallResult?: any;
+    connectionGuidance?: any;
+    suggestedAction?: string;
+  }>> {
+    console.log('🔍 API Client: processMessage called with:', message);
+    const result = await this.request({
+      method: 'POST',
+      url: '/api/chat/process',
+      data: { message },
+    });
+    console.log('🔍 API Client: processMessage response:', result);
+    return result as any;
   }
 
   // OAuth2 management
