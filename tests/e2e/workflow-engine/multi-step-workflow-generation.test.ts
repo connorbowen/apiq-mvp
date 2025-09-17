@@ -8,7 +8,7 @@ import { testPrimaryActionPatterns, testFormAccessibility, testKeyboardNavigatio
 import { testModalSubmitLoading, testModalSuccessMessage, testModalErrorHandling } from '../../helpers/modalHelpers';
 import { waitForNetworkIdle } from '../../helpers/waitHelpers';
 import { createTestData, cleanupTestData } from '../../helpers/dataHelpers';
-import { createTestApiConnection, cleanupTestApiConnections } from '../../helpers/createTestApiConnection';
+import { createTestApiConnection, createTestWorkflowConnections, cleanupTestApiConnections } from '../../helpers/createTestApiConnection';
 import { testXSSPrevention, testDataExposure, testCSRFProtection, testAuthenticationFlow } from '../../helpers/securityHelpers';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
@@ -111,24 +111,27 @@ test.describe('Multi-Step Workflow Generation E2E Tests - P0.1.1 Critical MVP Bl
   test.beforeAll(async () => {
     testUser = await createE2EUser();
     
-    // Create test API connection with endpoints for workflow generation
-    const testConnection = await createTestApiConnection(testUser.id);
+    // Create test API connections with names that match AI detection expectations
+    const testConnections = await createTestWorkflowConnections(testUser.id);
     
-    // Wait a bit to ensure the connection is fully committed
+    // Wait a bit to ensure the connections are fully committed
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Verify the connection was created successfully
+    // Verify the connections were created successfully
     const { prisma } = require('../../../lib/database/client');
-    const dbConnection = await prisma.apiConnection.findUnique({
-      where: { id: testConnection.id },
+    const dbConnections = await prisma.apiConnection.findMany({
+      where: { userId: testUser.id },
       include: { endpoints: true }
     });
     
-    console.log('🔍 Test setup - API connection created:', {
-      id: dbConnection?.id,
-      name: dbConnection?.name,
-      status: dbConnection?.status,
-      endpointCount: dbConnection?.endpoints?.length || 0
+    console.log('🔍 Test setup - API connections created:', {
+      connectionCount: dbConnections.length,
+      connections: dbConnections.map(conn => ({
+        id: conn.id,
+        name: conn.name,
+        status: conn.status,
+        endpointCount: conn.endpoints?.length || 0
+      }))
     });
     
     // Create test data using dataHelpers
@@ -140,8 +143,8 @@ test.describe('Multi-Step Workflow Generation E2E Tests - P0.1.1 Critical MVP Bl
       }
     });
     
-    // Add the connection to test data for cleanup
-    testData.connection = testConnection;
+    // Add the connections to test data for cleanup
+    testData.connections = testConnections;
   });
 
   test.afterAll(async () => {

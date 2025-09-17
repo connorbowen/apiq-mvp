@@ -72,9 +72,115 @@ Error responses:
 
 ## API Endpoints
 
-### Natural Language Workflow Generation 🆕
+### AI Orchestrator 🆕
 
-The Natural Language Workflow Generation API allows users to create complex multi-step workflows by describing them in plain English. The system uses OpenAI GPT-4 to understand user intent and generate executable workflows with 2-5 steps for complex automation scenarios.
+The AI Orchestrator is the central hub for all AI-powered interactions in APIQ. It intelligently routes user messages to the appropriate services based on AI classification, providing a unified chat interface for workflow generation, connection guidance, and general assistance.
+
+#### `POST /api/chat/process`
+
+Main AI orchestrator endpoint that processes user messages and routes them to appropriate services.
+
+**Request Body:**
+```json
+{
+  "message": "Create a workflow to send Slack notifications when GitHub issues are created"
+}
+```
+
+**Response Types:**
+
+**Workflow Generation Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "type": "workflow",
+    "content": "I've created a workflow for you!",
+    "workflow": {
+      "id": "workflow-id",
+      "name": "GitHub to Slack Notification",
+      "description": "Automatically send Slack notifications for new GitHub issues",
+      "steps": [
+        {
+          "id": "1",
+          "name": "Monitor GitHub Issues",
+          "type": "webhook",
+          "order": 1,
+          "description": "Watch for new GitHub issues"
+        },
+        {
+          "id": "2", 
+          "name": "Send Slack Notification",
+          "type": "api_call",
+          "apiConnectionId": "slack-connection-id",
+          "order": 2,
+          "description": "Send notification to Slack channel"
+        }
+      ]
+    }
+  }
+}
+```
+
+**Performance Optimizations:**
+- **Context-Aware Endpoint Filtering**: Intelligently selects only relevant API endpoints based on user request
+- **Token Usage Reduction**: Reduces OpenAI token usage by 83% (17,355 → 2,995 tokens)
+- **Pattern Matching**: Supports smart filtering for GitHub, Slack, QuickBooks, ShipStation, and other APIs
+- **Error Prevention**: Prevents "maximum context length exceeded" errors from OpenAI
+
+**Connection Guidance Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "type": "connection_guidance",
+    "content": "To create this workflow, you'll need to connect to Discord. I can help you set this up!",
+    "connectionGuidance": {
+      "requiredApis": 2,
+      "missingApis": 1,
+      "guidanceMessage": "You need to connect to Discord to complete this workflow"
+    }
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Failed to process message",
+  "code": "AI_ORCHESTRATOR_ERROR",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+#### `POST /api/chat/classify`
+
+Classify user messages to determine intent and routing.
+
+**Request Body:**
+```json
+{
+  "message": "How do I connect to Slack?"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "type": "connection_guidance",
+    "confidence": 0.95,
+    "reasoning": "User asking about connection setup",
+    "suggestedActions": ["Show connection setup", "Provide guidance"]
+  }
+}
+```
+
+### Legacy Workflow Generation (Deprecated)
+
+> **Note**: The `/api/workflows/generate` endpoint is deprecated. Use `/api/chat/process` instead for all workflow generation needs.
 
 #### `POST /api/workflows/generate`
 
@@ -920,6 +1026,69 @@ Get detailed information about a specific audit log entry.
 }
 ```
 
+### Performance Monitoring 🆕
+
+#### `GET /api/performance/metrics`
+
+Get real-time performance metrics and monitoring data (admin only).
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "performance": {
+      "totalRequests": 1250,
+      "averageResponseTime": 3200,
+      "successRate": 96.5,
+      "errorRate": 3.5,
+      "cacheHitRate": 45.2,
+      "retryRate": 8.1,
+      "tokenUsage": {
+        "average": 1850,
+        "max": 3200,
+        "total": 2312500
+      },
+      "breakdown": {
+        "classification": 450,
+        "connectionAnalysis": 320,
+        "workflowGeneration": 2100,
+        "total": 2870
+      }
+    },
+    "cache": {
+      "size": 45,
+      "hitRate": 45.2,
+      "missRate": 54.8,
+      "memoryUsage": "12.5MB"
+    },
+    "trends": {
+      "responseTimeTrend": "improving",
+      "successRateTrend": "stable",
+      "cacheHitRateTrend": "improving",
+      "recommendations": [
+        "Consider increasing cache TTL for frequently requested workflows",
+        "Response times are within acceptable range",
+        "Cache hit rate is improving with recent optimizations"
+      ]
+    }
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Admin access required"
+}
+```
+
 ### System
 
 #### `GET /api/health`
@@ -946,7 +1115,7 @@ Get system health status.
       "status": "healthy",
       "details": {
         "configured": true,
-        "model": "gpt-4-turbo-preview"
+        "model": "gpt-4o-mini"
       }
     },
     "encryption": {

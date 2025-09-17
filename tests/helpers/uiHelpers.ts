@@ -554,22 +554,57 @@ export const testKeyboardNavigation = async (page: Page, startTab: string, targe
  * Send a chat message
  */
 export const sendChatMessage = async (page: Page, message: string): Promise<void> => {
+  console.log('🔍 sendChatMessage: Starting to send message:', message);
   const chatInput = page.getByTestId('chat-input');
   
   // Wait for chat input to be enabled before trying to fill it
+  console.log('🔍 sendChatMessage: Waiting for chat input to be visible...');
   await chatInput.waitFor({ state: 'visible', timeout: 10000 });
   await expect(chatInput).toBeEnabled({ timeout: 10000 });
   
-  await chatInput.fill(message);
-  await page.getByTestId('primary-action chat-send-btn').click();
+  console.log('🔍 sendChatMessage: Filling chat input with message...');
+  // Clear the input first, then type to trigger React onChange events
+  await chatInput.clear();
+  await chatInput.type(message);
+  
+  // Wait a moment for React state to update
+  await page.waitForTimeout(100);
+  
+  // Check if the send button is now enabled
+  const sendButton = page.getByTestId('primary-action chat-send-btn');
+  const isEnabled = await sendButton.isEnabled();
+  console.log('🔍 sendChatMessage: Send button enabled after typing:', isEnabled);
+  
+  if (!isEnabled) {
+    console.log('🔍 sendChatMessage: Send button still disabled, trying alternative approach...');
+    // Try triggering the input event manually
+    await chatInput.evaluate((el, value) => {
+      const input = el as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }, message);
+    
+    // Wait for React to process the event
+    await page.waitForTimeout(100);
+    
+    const isEnabledAfterEvent = await sendButton.isEnabled();
+    console.log('🔍 sendChatMessage: Send button enabled after manual event:', isEnabledAfterEvent);
+  }
+  
+  console.log('🔍 sendChatMessage: Clicking send button...');
+  await sendButton.click();
+  
+  console.log('🔍 sendChatMessage: Message sent successfully');
 };
 
 /**
  * Wait for chat response (loading, success, or error)
  */
 export const waitForChatResponse = async (page: Page, timeout: number = 15000): Promise<void> => {
+  // Wait for either an assistant message (bg-gray-100 text-gray-900) or an API call result
   await page.waitForSelector(
-    '[data-testid="chat-interface"] .bg-gray-100, [data-testid="chat-interface"] .text-red-600, [data-testid="chat-interface"] .animate-spin', 
+    'div[class*="bg-gray-100"][class*="text-gray-900"], [data-testid="api-call-result"], .animate-spin', 
     { timeout }
   );
 };
@@ -578,11 +613,12 @@ export const waitForChatResponse = async (page: Page, timeout: number = 15000): 
  * Validate chat response is received
  */
 export const validateChatResponse = async (page: Page): Promise<boolean> => {
-  const hasResponse = await page.locator('[data-testid="chat-interface"] .bg-gray-100').count() > 0;
-  const hasError = await page.locator('[data-testid="chat-interface"] .text-red-600').count() > 0;
-  const hasLoading = await page.locator('[data-testid="chat-interface"] .animate-spin').count() > 0;
+  const hasResponse = await page.locator('div[class*="bg-gray-100"][class*="text-gray-900"]').count() > 0;
+  const hasApiResult = await page.locator('[data-testid="api-call-result"]').count() > 0;
+  const hasError = await page.locator('.text-red-600').count() > 0;
+  const hasLoading = await page.locator('.animate-spin').count() > 0;
   
-  return hasResponse || hasError || hasLoading;
+  return hasResponse || hasApiResult || hasError || hasLoading;
 };
 
 /**

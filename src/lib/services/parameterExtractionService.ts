@@ -37,6 +37,7 @@ export interface ParameterSchema {
   location: 'query' | 'path' | 'header' | 'body';
   examples?: string[];
   naturalLanguageMappings?: string[];
+  defaultValue?: any;
   validation?: {
     min?: number;
     max?: number;

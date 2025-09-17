@@ -241,7 +241,16 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
     try {
       connectionGuidance = await ConnectionGuidanceService.analyzeRequest(
         message,
-        connections.map(conn => ({ name: conn.name, id: conn.id }))
+        connections.map(conn => ({ 
+          name: conn.name, 
+          id: conn.id,
+          baseUrl: conn.baseUrl,
+          endpoints: conn.endpoints.map(endpoint => ({
+            path: endpoint.path,
+            method: endpoint.method,
+            summary: endpoint.summary || ''
+          }))
+        }))
       );
     } catch (error) {
       console.error('API endpoint - Connection guidance error:', error);
@@ -253,17 +262,17 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
 
     console.log('API endpoint - Connection guidance result:', connectionGuidance);
 
-    if (connectionGuidance.requiresGuidance) {
-      console.log('→ Connection guidance needed for:', connectionGuidance.missingApis.map(api => api.displayName));
-      return res.status(200).json({
-        success: true,
-        data: {
-          intent: 'general_chat',
-          explanation: connectionGuidance.guidanceMessage,
-          connectionGuidance: connectionGuidance
-        }
-      });
-    }
+      if (connectionGuidance.requiresGuidance) {
+        console.log('→ Connection guidance needed for:', connectionGuidance.missingApis.map(api => api.displayName));
+        return res.status(200).json({
+          success: true,
+          data: {
+            intent: 'general_chat',
+            explanation: connectionGuidance.guidanceMessage,
+            connectionGuidance: connectionGuidance
+          }
+        });
+      }
 
     if (connections.length === 0) {
       return res.status(400).json({
@@ -303,8 +312,8 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
         
         // Determine the appropriate endpoint and method based on the message
         let method = 'GET';
-        let url = '/pet';
-        let parameters = {};
+        let url = '/pet/findByStatus'; // Default to findByStatus for GET requests
+        let parameters = { status: 'available' }; // Default to available pets
         let requestBody = {};
         
         if (message.toLowerCase().includes('create') || message.toLowerCase().includes('add')) {
@@ -341,7 +350,7 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
         } else if (message.toLowerCase().includes('delete')) {
           method = 'DELETE';
           url = '/pet/123'; // Default pet ID
-        } else if (message.toLowerCase().includes('status')) {
+        } else if (message.toLowerCase().includes('status') || message.toLowerCase().includes('available') || message.toLowerCase().includes('sold') || message.toLowerCase().includes('pending')) {
           method = 'GET';
           url = '/pet/findByStatus';
           // Extract status from message
@@ -351,6 +360,9 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<DirectApi
             parameters = { status: 'sold' };
           } else if (message.toLowerCase().includes('pending')) {
             parameters = { status: 'pending' };
+          } else {
+            // Default to available if no specific status mentioned
+            parameters = { status: 'available' };
           }
         } else if (message.toLowerCase().includes('id')) {
           method = 'GET';

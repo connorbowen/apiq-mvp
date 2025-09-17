@@ -99,6 +99,10 @@ This checklist ensures a successful production deployment of the APIQ MVP platfo
 - [ ] **Error Tracking**: Error tracking service configured (e.g., Sentry)
 - [ ] **Log Aggregation**: Centralized logging configured
 - [ ] **Performance Monitoring**: Performance metrics collection enabled
+  - [ ] **API Performance Metrics**: `/api/performance/metrics` endpoint configured
+  - [ ] **Cache Monitoring**: AICacheService metrics collection enabled
+  - [ ] **Parallel Processing Monitoring**: ParallelAIService metrics tracking
+  - [ ] **Token Usage Monitoring**: OpenAI token usage and cost tracking
 - [ ] **Uptime Monitoring**: Uptime monitoring configured
 - [ ] **Alerting**: Production alerting rules configured
 

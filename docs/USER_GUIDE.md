@@ -11,11 +11,12 @@ APIQ is a powerful, AI-driven platform that helps you orchestrate complex workfl
 3. [Connecting APIs](#connecting-apis)
 4. [Exploring APIs](#exploring-apis)
 5. [Creating Workflows](#creating-workflows)
-6. [Executing Workflows](#executing-workflows)
-7. [Managing Workflows](#managing-workflows)
-8. [Viewing Audit Logs](#viewing-audit-logs)
-9. [Troubleshooting](#troubleshooting)
-10. [Best Practices](#best-practices)
+6. [Direct API Calls](#direct-api-calls)
+7. [Executing Workflows](#executing-workflows)
+8. [Managing Workflows](#managing-workflows)
+9. [Viewing Audit Logs](#viewing-audit-logs)
+10. [Troubleshooting](#troubleshooting)
+11. [Best Practices](#best-practices)
 
 ## Getting Started
 
@@ -297,22 +298,46 @@ The API Explorer helps you understand what each connected API can do:
 
 ## Creating Workflows
 
-### Natural Language Workflows
+### AI-Powered Chat Interface
 
-The easiest way to create workflows is using natural language! Simply describe what you want to happen in plain English, and our AI will create multi-step workflows for you automatically.
+The easiest way to create workflows is using our AI-powered chat interface! Simply describe what you want to happen in plain English, and our AI orchestrator will intelligently route your request to the right service and create multi-step workflows for you automatically.
 
-**Access**: Navigate to `/workflows/create` or use the Chat tab in the dashboard.
+**Access**: Use the Chat tab in the dashboard or navigate to `/workflows/create`.
 
-#### How It Works:
-1. **Start a Conversation** - Click "New Workflow" or "Chat"
-2. **Describe Your Workflow** - Tell us what you want to happen, for example:
+#### How the AI Orchestrator Works:
+
+Our AI orchestrator intelligently understands your intent and routes your message to the appropriate service:
+
+1. **Message Classification** - AI analyzes your message to understand what you want:
+   - **Workflow Creation** - "Create a workflow to send Slack notifications"
+   - **Connection Help** - "How do I connect to Discord?"
+   - **Direct API Call** - "Send a test message to Slack"
+   - **General Questions** - "What can APIQ do?"
+
+2. **Smart Service Routing** - Based on classification, routes to:
+   - **Workflow Generation Service** - Creates multi-step workflows
+   - **Connection Guidance Service** - Helps with API setup
+   - **Direct API Service** - Executes immediate actions
+   - **General Chat Service** - Answers questions
+
+3. **Real-Time Processing** - All services use real AI and real APIs (no mocking)
+
+#### How to Use the Chat Interface:
+
+1. **Start a Conversation** - Click the Chat tab or "New Workflow"
+2. **Describe What You Want** - Tell us in plain English, for example:
    - "When a new GitHub issue is created, send a Slack notification and create a Trello card"
-   - "When a customer places an order, create an invoice, send a confirmation email, and update inventory"
-   - "When a new email arrives in Gmail, create a task in Todoist and add it to our project management system"
-   - "Every Monday at 9 AM, check our Google Analytics, generate a report, and send it to our team Slack channel"
-3. **Review & Confirm** - We'll generate a multi-step workflow and show you exactly what each step will do
-4. **Customize if Needed** - Modify any steps, add conditions, or adjust data mapping before saving
-5. **Save & Activate** - Your workflow is ready to run!
+   - "How do I connect to Discord for my workflow?"
+   - "Create a workflow to automate customer onboarding"
+   - "Send a test message to our Slack channel"
+3. **AI Processing** - Our AI orchestrator will:
+   - Classify your request
+   - Route to the appropriate service
+   - Process with real AI services
+   - Return the appropriate response
+4. **Review & Confirm** - For workflows, we'll show you exactly what each step will do
+5. **Customize if Needed** - Modify any steps, add conditions, or adjust data mapping
+6. **Save & Activate** - Your workflow is ready to run!
 
 #### Multi-Step Workflow Examples:
 
@@ -346,6 +371,38 @@ generate a report, and send it to our team Slack channel"
 - Step 1: Fetch analytics data from Google Analytics
 - Step 2: Transform and format the data into a report
 - Step 3: Send formatted report to Slack channel
+
+#### AI Response Types:
+
+The AI orchestrator can provide different types of responses based on your request:
+
+**1. Workflow Generation Response**
+When you ask for workflow creation, you'll get:
+- A complete multi-step workflow with detailed steps
+- Data mapping between steps
+- Connection requirements and guidance
+- Workflow validation and suggestions
+
+**2. Connection Guidance Response**
+When you need help with API connections, you'll get:
+- Specific guidance on which APIs to connect
+- Step-by-step connection instructions
+- Missing API requirements for your workflow
+- Alternative API suggestions
+
+**3. Direct API Call Response**
+When you want to execute an immediate action, you'll get:
+- Direct API execution results
+- Success/failure status
+- Response data and logs
+- Error handling and retry suggestions
+
+**4. General Chat Response**
+When you have questions, you'll get:
+- Helpful answers about APIQ features
+- Best practices and tips
+- Troubleshooting guidance
+- Feature explanations
 
 #### Advanced Features:
 - **Multi-Step Generation** - Automatically breaks complex requests into 2-5 logical steps
@@ -402,6 +459,97 @@ Use pre-built templates to get started quickly:
 - Save your workflows as templates
 - Share templates with your team
 - Create organization-wide standards
+
+## Direct API Calls 🆕
+
+APIQ now supports direct API execution without creating workflows, making it perfect for quick API testing and one-off operations.
+
+### What are Direct API Calls?
+
+Direct API calls allow you to execute API endpoints immediately through the chat interface, without the need to create and save a workflow. This is ideal for:
+- Quick API testing and exploration
+- One-time data retrieval
+- Immediate API responses
+- Testing API connections
+
+### How to Use Direct API Calls
+
+#### 1. **Natural Language Requests**
+Simply ask APIQ to execute an API call in natural language:
+
+**Examples:**
+- "Get all GitHub issues for my repository"
+- "Send a Slack message to #general channel"
+- "Create a new Trello card in my project board"
+- "Fetch customer data from Stripe"
+
+#### 2. **AI-Powered Parameter Extraction**
+APIQ automatically:
+- Identifies the correct API endpoint
+- Extracts required parameters from your request
+- Handles authentication using your stored credentials
+- Executes the API call with proper error handling
+
+#### 3. **Real-Time Execution**
+- **Instant Processing**: API calls execute immediately
+- **Live Results**: See responses in real-time
+- **Error Handling**: Clear error messages if something goes wrong
+- **Context Awareness**: AI remembers previous API calls for better parameter extraction
+
+### Supported API Types
+
+#### **Communication APIs**
+- **Slack**: Send messages, create channels, manage users
+- **Microsoft Teams**: Post messages, create teams, manage members
+- **Discord**: Send messages, manage channels, handle webhooks
+
+#### **Development APIs**
+- **GitHub**: Manage issues, pull requests, repositories
+- **GitLab**: Handle issues, merge requests, projects
+- **Bitbucket**: Manage repositories, pull requests, issues
+
+#### **Business APIs**
+- **QuickBooks**: Handle invoices, customers, payments
+- **Stripe**: Manage charges, customers, subscriptions
+- **Shopify**: Handle orders, products, customers
+
+#### **Shipping & Logistics**
+- **ShipStation**: Create labels, manage shipments
+- **FedEx**: Track packages, create shipments
+- **UPS**: Handle tracking and shipping
+
+### Example Direct API Call Flow
+
+1. **User Request**: "Get all open GitHub issues for my repository"
+2. **AI Analysis**: Identifies GitHub API and required parameters
+3. **Parameter Extraction**: Extracts repository name, status filter
+4. **API Execution**: Calls GitHub API with your stored credentials
+5. **Response Display**: Shows formatted results with issue details
+
+### Benefits of Direct API Calls
+
+- **Speed**: No workflow creation needed
+- **Simplicity**: Natural language interface
+- **Flexibility**: Works with any connected API
+- **Learning**: See how APIs work before creating workflows
+- **Testing**: Verify API connections and parameters quickly
+
+### Best Practices
+
+#### **Clear Requests**
+- Be specific about what you want to do
+- Include relevant details (repository names, channel names, etc.)
+- Mention the API if you have multiple similar connections
+
+#### **Parameter Context**
+- APIQ remembers previous API calls in your conversation
+- Reference previous results: "Now create a Trello card for that issue"
+- Build on previous requests for complex operations
+
+#### **Error Handling**
+- If an API call fails, APIQ will explain what went wrong
+- Check your API connection status if calls consistently fail
+- Verify you have the necessary permissions for the API
 
 ## Managing Secrets 🆕
 

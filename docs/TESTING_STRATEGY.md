@@ -13,10 +13,17 @@ This document outlines the comprehensive testing strategy for the UX simplificat
 ## 🎯 **Testing Philosophy**
 
 ### **Principles**
+- **No Mocking Policy:** No mocking in production code - all services use real implementations
 - **No Mock Data in E2E:** Real data for realistic testing scenarios
+- **Real AI Services:** All AI orchestrator tests use real OpenAI API calls
 - **Primary Action Patterns:** Consistent `data-testid="primary-action {action}-btn"` patterns
 - **Accessibility First:** WCAG 2.1 AA compliance for all components
 - **Performance Testing:** Load testing and optimization validation
+  - **Performance Monitoring:** Real-time metrics tracking with `PerformanceMonitor`
+  - **Cache Testing:** Validate intelligent caching with `AICacheService`
+  - **Parallel Processing:** Test concurrent AI operations with `ParallelAIService`
+  - **Token Optimization:** Verify context-aware endpoint filtering (83% reduction)
+  - **Response Time Testing:** Ensure 60-70% faster workflow generation
 - **Security Testing:** Authentication flows and data protection
 - **Hybrid Testing Strategy:** E2E tests for user journeys, unit tests for form logic
 
@@ -84,6 +91,186 @@ describe('DashboardPage', () => {
       // Test implementation
     });
   });
+});
+```
+
+## 🤖 **AI Orchestrator Testing**
+
+### **Testing Philosophy**
+- **Real AI Services:** All tests use real OpenAI API calls, no mocking
+- **Production-Ready:** Tests must work in production environment
+- **Real Data:** Use real user data and real API connections
+- **End-to-End:** Test complete AI orchestrator flow from user input to response
+
+### **AI Orchestrator Test Categories**
+
+#### **1. Message Classification Testing**
+```typescript
+// tests/e2e/ai-orchestrator/classification.test.ts
+test('should classify workflow requests correctly', async ({ page }) => {
+  await loginAsTestUser(page);
+  
+  // Test workflow classification
+  await page.fill('[data-testid="chat-input"]', 'Create a workflow to send Slack notifications');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  
+  // Verify workflow generation response
+  await page.waitForSelector('[data-testid="workflow-generated"]');
+  const response = await page.textContent('[data-testid="ai-response"]');
+  expect(response).toContain('workflow');
+});
+
+test('should classify connection guidance requests', async ({ page }) => {
+  await loginAsTestUser(page);
+  
+  // Test connection guidance classification
+  await page.fill('[data-testid="chat-input"]', 'How do I connect to Discord?');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  
+  // Verify connection guidance response
+  await page.waitForSelector('[data-testid="connection-guidance"]');
+  const response = await page.textContent('[data-testid="ai-response"]');
+  expect(response).toContain('connect');
+});
+```
+
+#### **2. Workflow Generation Testing**
+```typescript
+// tests/e2e/ai-orchestrator/workflow-generation.test.ts
+test('should generate multi-step workflows via AI orchestrator', async ({ page }) => {
+  await loginAsTestUser(page);
+  await createTestApiConnections(page); // Real API connections
+  
+  // Test complex workflow generation
+  await page.fill('[data-testid="chat-input"]', 'When a GitHub issue is created, send Slack notification and create Trello card');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  
+  // Verify workflow was generated
+  await page.waitForSelector('[data-testid="workflow-generated"]');
+  
+  // Verify workflow has multiple steps
+  const steps = await page.locator('[data-testid="workflow-step"]').count();
+  expect(steps).toBeGreaterThan(1);
+  
+  // Verify workflow uses real connection IDs
+  const workflowData = await page.evaluate(() => {
+    return JSON.parse(document.querySelector('[data-testid="workflow-data"]').textContent);
+  });
+  expect(workflowData.steps[0].apiConnectionId).toMatch(/^cm[a-z0-9]+$/);
+});
+```
+
+#### **3. Connection Guidance Testing**
+```typescript
+// tests/e2e/ai-orchestrator/connection-guidance.test.ts
+test('should provide connection guidance for missing APIs', async ({ page }) => {
+  await loginAsTestUser(page);
+  // Only create GitHub connection, not Discord
+  
+  // Test connection guidance
+  await page.fill('[data-testid="chat-input"]', 'Create a workflow using GitHub and Discord');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  
+  // Verify connection guidance response
+  await page.waitForSelector('[data-testid="connection-guidance"]');
+  const response = await page.textContent('[data-testid="ai-response"]');
+  expect(response).toContain('Discord');
+  expect(response).toContain('connect');
+});
+```
+
+#### **4. Error Handling Testing**
+```typescript
+// tests/e2e/ai-orchestrator/error-handling.test.ts
+test('should handle AI service errors gracefully', async ({ page }) => {
+  await loginAsTestUser(page);
+  
+  // Mock AI service failure
+  await page.route('**/api/chat/process', route => {
+    route.fulfill({ 
+      status: 500, 
+      body: JSON.stringify({
+        success: false,
+        error: 'AI service temporarily unavailable'
+      })
+    });
+  });
+  
+  await page.fill('[data-testid="chat-input"]', 'Create a workflow');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  
+  // Verify error handling
+  await page.waitForSelector('[data-testid="error-message"]');
+  const error = await page.textContent('[data-testid="error-message"]');
+  expect(error).toContain('temporarily unavailable');
+});
+```
+
+### **AI Orchestrator Test Environment**
+
+#### **Environment Setup**
+```bash
+# .env.test - Use real OpenAI API key for testing
+OPENAI_API_KEY=sk-real-test-key-here
+NODE_ENV=test
+DATABASE_URL=postgresql://test:test@localhost:5432/apiq_test
+```
+
+#### **Test Data Requirements**
+- **Real Users:** Create real test users with real authentication
+- **Real API Connections:** Create real API connections for testing
+- **Real AI Responses:** Use real OpenAI API calls for all tests
+- **Real Database:** Use real PostgreSQL database for all operations
+
+#### **Performance Considerations**
+- **AI API Rate Limits:** Respect OpenAI rate limits in tests
+- **Test Timeout:** Allow sufficient time for AI processing (30+ seconds)
+- **Parallel Testing:** Limit concurrent AI API calls to avoid rate limits
+- **Test Isolation:** Each test should be independent and clean up after itself
+
+### **AI Orchestrator Test Patterns**
+
+#### **Real Service Testing Pattern**
+```typescript
+// ✅ GOOD: Real AI service testing
+test('should process message with real AI', async () => {
+  const result = await HybridMessageClassificationService.classifyMessage(
+    'Create a workflow',
+    'user-id'
+  );
+  
+  expect(result.type).toBe('workflow');
+  expect(result.confidence).toBeGreaterThan(0.8);
+});
+
+// ❌ BAD: Mocked AI service testing
+test('should process message with mock', async () => {
+  jest.mock('HybridMessageClassificationService');
+  const mockClassify = jest.fn().mockResolvedValue({ type: 'workflow' });
+  
+  const result = await mockClassify('Create a workflow');
+  expect(result.type).toBe('workflow');
+});
+```
+
+#### **E2E AI Testing Pattern**
+```typescript
+// ✅ GOOD: E2E AI orchestrator testing
+test('should generate workflow end-to-end', async ({ page }) => {
+  // 1. Setup real environment
+  await loginAsTestUser(page);
+  await createTestApiConnections(page);
+  
+  // 2. Send real message to AI orchestrator
+  await page.fill('[data-testid="chat-input"]', 'Create a Slack workflow');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  
+  // 3. Wait for real AI response
+  await page.waitForSelector('[data-testid="workflow-generated"]');
+  
+  // 4. Verify real workflow was created
+  const workflow = await page.textContent('[data-testid="workflow-name"]');
+  expect(workflow).toContain('Slack');
 });
 ```
 

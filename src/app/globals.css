@@ -382,34 +382,133 @@ a:focus,
 
 /* Dashboard space optimization for better content density */
 .dashboard-content {
-  /* Remove restrictive height constraints, let flexbox handle it */
+  /* Flexible height that adapts to content and viewport */
   height: auto;
   min-height: 0;
+  flex: 1;
 }
 
 .tab-content {
-  /* Remove restrictive height constraints, let flexbox handle it */
+  /* Flexible height that adapts to content and viewport */
   height: auto;
   min-height: 0;
+  flex: 1;
 }
 
 .chat-interface {
-  /* Remove restrictive height constraints, let flexbox handle it */
-  height: auto;
+  /* Flexible height that adapts to content and viewport */
+  height: 100%;
   min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .workflows-list,
 .connections-list {
-  /* Remove restrictive height constraints, let flexbox handle it */
+  /* Flexible height that adapts to content and viewport */
   height: auto;
   min-height: 0;
+  flex: 1;
 }
 
 /* Full-width immersive layout */
 .dashboard-main {
   width: 100%;
   max-width: none;
+}
+
+/* Responsive layout system that adapts to screen changes */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  /* Use CSS custom properties for dynamic height calculation */
+  --header-height: 80px;
+  --viewport-height: 100vh;
+  --available-height: calc(var(--viewport-height, 100vh) - var(--header-height));
+  /* JavaScript will update these values dynamically */
+  --vh: 1vh;
+  --vw: 1vw;
+  /* Smooth transitions for responsive changes */
+  transition: all 0.2s ease-in-out;
+}
+
+.dashboard-header {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: var(--header-height);
+}
+
+.dashboard-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  /* Dynamic height that adapts to viewport changes */
+  min-height: var(--available-height);
+}
+
+/* Ensure proper viewport adaptation with dynamic calculations */
+@media (min-width: 1024px) {
+  .dashboard-main-content {
+    min-height: var(--available-height);
+  }
+}
+
+@media (max-width: 1023px) {
+  .dashboard-main-content {
+    min-height: var(--available-height);
+    padding-bottom: 80px; /* Account for mobile navigation */
+  }
+  
+  /* Ensure mobile navigation doesn't overlap content */
+  .dashboard-container {
+    padding-bottom: 80px;
+  }
+}
+
+/* Dynamic viewport height handling for mobile browsers */
+@supports (height: 100dvh) {
+  .dashboard-container {
+    --viewport-height: 100dvh;
+  }
+}
+
+/* Fallback for browsers that don't support dvh */
+@supports not (height: 100dvh) {
+  .dashboard-container {
+    --viewport-height: 100vh;
+  }
+}
+
+/* JavaScript-enhanced responsive layout - merged with main definition */
+
+/* Ensure smooth transitions when viewport changes */
+.dashboard-main-content {
+  transition: min-height 0.2s ease-in-out;
+}
+
+/* Fallback for when JavaScript is disabled */
+.no-js .dashboard-container {
+  --viewport-height: 100vh;
+  --available-height: calc(100vh - 80px);
+}
+
+/* Enhanced mobile viewport handling */
+@media (max-width: 768px) {
+  .dashboard-container {
+    /* Use the JavaScript-calculated viewport height for mobile */
+    min-height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  .dashboard-main-content {
+    min-height: calc(calc(var(--vh, 1vh) * 100) - 80px);
+  }
 }
 
 /* Background patterns to eliminate blank space */
@@ -530,4 +629,42 @@ a:focus,
 
 .overflow-container::-webkit-scrollbar-thumb:hover {
   background: #a0aec0;
+}
+
+/* Additional responsive utilities */
+@media (max-width: 480px) {
+  /* Extra small mobile devices */
+  .px-3 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  .py-2 {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+  
+  /* Smaller text on very small screens */
+  .text-sm {
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 896px) and (orientation: landscape) {
+  .dashboard-background {
+    background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 40%, #f8fafc 100%);
+    background-size: 150% 150%;
+  }
+  
+  /* Reduce vertical spacing in landscape */
+  .py-6 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  .space-y-6 > * + * {
+    margin-top: 1rem;
+  }
 }

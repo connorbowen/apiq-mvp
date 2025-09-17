@@ -91,6 +91,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   onWorkflowGenerated,
   onWorkflowSaved,
 }) => {
+  console.log('🔍 ChatInterface: Component mounting/rendering');
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -129,6 +130,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       console.log('🔍 ChatInterface: Early return - no message or loading');
       return;
     }
+    
+    console.log('🔍 ChatInterface: Processing message:', inputMessage);
 
     const messageText = inputMessage.trim();
     const userMessage: Message = {
@@ -144,10 +147,24 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     setError('');
 
     try {
+      // Build context from previous messages
+      const context = messages.map(msg => ({
+        type: msg.type,
+        content: msg.content,
+        timestamp: msg.timestamp,
+        intent: msg.intent,
+        apiCallResult: msg.apiCallResult,
+        workflow: msg.workflow,
+        steps: msg.steps
+      }));
+
       // Let AI orchestrator handle everything
       console.log('🤖 ChatInterface: Sending message to AI orchestrator');
-      const response = await apiClient.processMessage(inputMessage);
+      console.log('🤖 ChatInterface: Message being sent:', inputMessage);
+      console.log('🤖 ChatInterface: Context being sent:', context);
+      const response = await apiClient.processMessage(inputMessage, context);
       console.log('🤖 ChatInterface: AI orchestrator response:', response);
+      console.log('🤖 ChatInterface: Response data:', JSON.stringify(response.data, null, 2));
       
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Failed to process message');
@@ -170,6 +187,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         connectionGuidance: response.data.connectionGuidance,
         suggestedAction: response.data.suggestedAction
       };
+
+      // Create formatted response for API call results
+      if (response.data.apiCallResult) {
+        const formatted = ResponseFormatter.formatApiResponse(response.data.apiCallResult);
+        assistantMessage.formattedResponse = formatted;
+      }
 
       setMessages(prev => [...prev, assistantMessage]);
 
@@ -432,7 +455,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   return (
     <div data-testid="chat-interface" className="flex flex-col h-full bg-white rounded-lg shadow-sm border border-gray-200 min-h-0 chat-interface">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 min-h-0">
         {messages.length === 0 && (
           <div className="space-y-6">
             {/* Hero Section - Fixed height */}
@@ -485,7 +508,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+              className={`max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-3 sm:px-4 py-2 rounded-lg ${
                 message.type === 'user'
                   ? 'bg-indigo-600 text-white'
                   : 'bg-gray-100 text-gray-900'
@@ -838,7 +861,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                       <div className="mb-3">
                         <div className="text-xs font-medium text-gray-700 mb-1">Response Body</div>
                         <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded border max-h-40 overflow-y-auto" data-testid="response-body">
-                          {message.apiCallResult.error ? (
+                          {message.apiCallResult.statusCode >= 400 && message.apiCallResult.error ? (
                             <div className="text-red-600" data-testid="api-call-error">
                               <div className="font-medium" data-testid="error-message">Error: {message.apiCallResult.error}</div>
                             </div>
@@ -869,7 +892,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 text-gray-900 max-w-xs lg:max-w-md px-4 py-2 rounded-lg">
+            <div className="bg-gray-100 text-gray-900 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-3 sm:px-4 py-2 rounded-lg">
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
                 <span className="text-sm">Processing your request...</span>
@@ -882,8 +905,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       </div>
 
       {/* Input */}
-      <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50">
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+      <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50">
+        <form onSubmit={(e) => {
+          console.log('🔍 ChatInterface: Form onSubmit triggered');
+          handleSubmit(e);
+        }} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <div className="flex-1 relative">
             <input
               ref={inputRef}
@@ -893,7 +919,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Describe what you want to automate..."
               disabled={isLoading}
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 text-sm sm:text-base"
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 text-sm sm:text-base min-h-[44px]"
             />
             {inputMessage && (
               <button
@@ -911,13 +937,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             data-testid="primary-action chat-send-btn"
             type="submit"
             disabled={!inputMessage.trim() || isLoading}
-            onClick={async (e) => {
+            onClick={() => {
               console.log('🔍 ChatInterface: Send button clicked');
-              e.preventDefault();
-              e.stopPropagation();
-              await handleSubmit(e);
             }}
-            className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-200 shadow-sm hover:shadow-md min-h-[44px]"
+            className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-200 shadow-sm hover:shadow-md min-h-[44px] w-full sm:w-auto"
           >
             {isLoading ? (
               <>

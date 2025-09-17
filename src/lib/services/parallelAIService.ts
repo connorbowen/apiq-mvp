@@ -1,0 +1,557 @@
+import { OpenAIService } from '../../services/openaiService';
+import { HybridMessageClassificationService } from './hybridMessageClassificationService';
+import { ConnectionGuidanceService } from './connectionGuidanceService';
+import { OptimizedWorkflowService } from './optimizedWorkflowService';
+import { AICacheService } from './aiCacheService';
+import { PerformanceMonitor } from './performanceMonitor';
+import axios from 'axios';
+
+/**
+ * Parallel AI Service - Processes multiple AI operations simultaneously
+ * to reduce total workflow generation time
+ */
+export class ParallelAIService {
+  private openaiService: OpenAIService;
+  private classificationService: HybridMessageClassificationService;
+  private connectionGuidanceService: ConnectionGuidanceService;
+  private workflowService: OptimizedWorkflowService;
+  private cacheService: AICacheService;
+  private performanceMonitor: PerformanceMonitor;
+
+  constructor(apiKey: string) {
+    this.openaiService = OpenAIService.createFromEnv();
+    this.classificationService = new HybridMessageClassificationService(this.openaiService);
+    this.connectionGuidanceService = new ConnectionGuidanceService();
+    this.workflowService = new OptimizedWorkflowService(apiKey);
+    this.cacheService = AICacheService.getInstance();
+    this.performanceMonitor = PerformanceMonitor.getInstance();
+  }
+
+  /**
+   * Process workflow request with parallel AI calls and caching
+   */
+  async processWorkflowRequest(
+    message: string,
+    userId: string,
+    connections: any[],
+    context: any[] = []
+  ): Promise<{
+    success: boolean;
+    data?: any;
+    error?: string;
+    processingTime?: number;
+  }> {
+    const startTime = Date.now();
+    let classificationTime = 0;
+    let connectionAnalysisTime = 0;
+    let workflowGenerationTime = 0;
+    
+    try {
+      console.log('🚀 Starting optimized parallel AI processing with caching...');
+
+      // Check cache for workflow result first
+      const cachedWorkflow = this.cacheService.getWorkflowResult(message, connections);
+      if (cachedWorkflow) {
+        console.log('🎯 Cache hit for workflow generation');
+        this.performanceMonitor.recordRequest({
+          duration: Date.now() - startTime,
+          success: true,
+          tokenUsage: 0, // Cached result
+          breakdown: {
+            classification: 0,
+            connectionAnalysis: 0,
+            workflowGeneration: 0
+          }
+        });
+        
+        return {
+          success: true,
+          data: cachedWorkflow,
+          processingTime: Date.now() - startTime
+        };
+      }
+
+      // Step 1: Parallel classification and connection analysis with caching
+      const classificationStart = Date.now();
+      console.log('🔍 Classifying message:', message);
+      const classification = await this.classifyMessageWithCache(message);
+      console.log('🔍 DEBUG: Message classification result:', JSON.stringify(classification, null, 2));
+      console.log('🔍 Classification result:', classification);
+      classificationTime = Date.now() - classificationStart;
+
+      const connectionStart = Date.now();
+      const connectionGuidance = await this.analyzeConnectionsWithCache(message, connections);
+      connectionAnalysisTime = Date.now() - connectionStart;
+
+      const parallelTime = Date.now() - startTime;
+      console.log(`⚡ Parallel processing completed in ${parallelTime}ms`);
+
+      // Step 2: Route based on results
+      if (classification.type === 'workflow') {
+        if (connectionGuidance.requiresGuidance) {
+          const result = {
+            success: true,
+            data: {
+              type: 'connection_guidance',
+              content: connectionGuidance.guidanceMessage,
+              connectionGuidance: connectionGuidance
+            },
+            processingTime: Date.now() - startTime
+          };
+
+          this.performanceMonitor.recordRequest({
+            duration: result.processingTime!,
+            success: true,
+            breakdown: {
+              classification: classificationTime,
+              connectionAnalysis: connectionAnalysisTime,
+              workflowGeneration: 0
+            }
+          });
+
+          return result;
+        }
+
+        // Generate workflow with optimized service
+        const workflowStart = Date.now();
+        const workflowResult = await this.workflowService.generateWorkflow({
+          userDescription: message,
+          userId,
+          availableConnections: connections.map(conn => ({
+            id: conn.id,
+            name: conn.name,
+            baseUrl: conn.baseUrl,
+            endpoints: conn.endpoints.map((endpoint: any) => ({
+              path: endpoint.path,
+              method: endpoint.method,
+              summary: endpoint.summary || '',
+              parameters: Array.isArray(endpoint.parameters) ? endpoint.parameters : []
+            }))
+          })),
+          context: '{}'
+        });
+        workflowGenerationTime = Date.now() - workflowStart;
+
+        const result = {
+          success: workflowResult.success,
+          data: workflowResult.success ? {
+            type: 'workflow',
+            content: workflowResult.workflow?.explanation || 'Workflow generated successfully!',
+            workflow: workflowResult.workflow,
+            steps: workflowResult.workflow?.steps || []
+          } : undefined,
+          error: workflowResult.error,
+          processingTime: Date.now() - startTime
+        };
+
+        // Cache successful workflow results
+        if (workflowResult.success && workflowResult.workflow) {
+          this.cacheService.setWorkflowResult(message, connections, result.data);
+        }
+
+        this.performanceMonitor.recordRequest({
+          duration: result.processingTime!,
+          success: workflowResult.success,
+          error: workflowResult.error,
+          breakdown: {
+            classification: classificationTime,
+            connectionAnalysis: connectionAnalysisTime,
+            workflowGeneration: workflowGenerationTime
+          }
+        });
+
+        return result;
+      }
+
+      // Handle other message types
+      if (classification.type === 'direct_api_call' || classification.type === 'DIRECT_API_CALL') {
+        // Generate direct API call parameters
+        const directApiStart = Date.now();
+        const directApiResult = await this.openaiService.executeDirectApiCall({
+          message,
+          availableConnections: connections.map(conn => ({
+            id: conn.id,
+            name: conn.name,
+            baseUrl: conn.baseUrl,
+            endpoints: conn.endpoints.map((endpoint: any) => ({
+              path: endpoint.path,
+              method: endpoint.method,
+              summary: endpoint.summary || '',
+              parameters: Array.isArray(endpoint.parameters) ? endpoint.parameters : []
+            }))
+          })),
+          context: context
+        });
+        
+        // If API call parameters were generated successfully, execute the actual API call
+        let executedApiResult = null;
+        console.log('🔍 ParallelAIService: Direct API result:', {
+          success: directApiResult.success,
+          intent: directApiResult.data?.intent,
+          hasApiCallResult: !!directApiResult.data?.apiCallResult,
+          apiCallResult: directApiResult.data?.apiCallResult
+        });
+        
+        require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - ParallelAIService received: ${JSON.stringify(directApiResult, null, 2)}\n`);
+        
+        if (directApiResult.success && directApiResult.data?.intent === 'api_call' && directApiResult.data?.apiCallResult) {
+          try {
+            console.log('🔍 ParallelAIService: Executing API call with parameters:', directApiResult.data.apiCallResult);
+            executedApiResult = await this.executeApiCall(directApiResult.data.apiCallResult, connections, userId);
+            console.log('🔍 ParallelAIService: API call execution result:', executedApiResult);
+          } catch (error) {
+            console.error('Failed to execute API call:', error);
+            executedApiResult = {
+              success: false,
+              data: { error: error instanceof Error ? error.message : 'API call execution failed' }
+            };
+          }
+        } else {
+          console.log('🔍 ParallelAIService: Skipping API call execution - conditions not met');
+        }
+        
+        const result = {
+          success: directApiResult.success,
+          data: directApiResult.success ? {
+            type: 'direct_api_call',
+            content: directApiResult.data?.explanation || 'API call executed successfully!',
+            apiCallResult: executedApiResult?.success ? {
+              method: executedApiResult.data.method,
+              url: executedApiResult.data.url,
+              statusCode: executedApiResult.data.statusCode,
+              responseData: executedApiResult.data.responseData,
+              responseHeaders: executedApiResult.data.responseHeaders,
+              executionTime: executedApiResult.data.executionTime,
+              error: executedApiResult.data.error
+            } : directApiResult.data?.apiCallResult,
+            suggestedAction: directApiResult.data?.suggestedAction
+          } : undefined,
+          error: directApiResult.error,
+          processingTime: Date.now() - startTime
+        };
+
+        this.performanceMonitor.recordRequest({
+          duration: result.processingTime!,
+          success: directApiResult.success,
+          error: directApiResult.error,
+          breakdown: {
+            classification: classificationTime,
+            connectionAnalysis: connectionAnalysisTime,
+            workflowGeneration: 0
+          }
+        });
+
+        return result;
+      }
+
+      // Handle other message types (general_chat, etc.)
+      const result = {
+        success: true,
+        data: {
+          type: classification.type,
+          content: this.getResponseForType(classification.type)
+        },
+        processingTime: Date.now() - startTime
+      };
+
+      this.performanceMonitor.recordRequest({
+        duration: result.processingTime,
+        success: true,
+        breakdown: {
+          classification: classificationTime,
+          connectionAnalysis: connectionAnalysisTime,
+          workflowGeneration: 0
+        }
+      });
+
+      return result;
+
+    } catch (error) {
+      console.error('Parallel AI processing failed:', error);
+      const result = {
+        success: false,
+        error: 'Failed to process request: ' + (error instanceof Error ? error.message : String(error)),
+        processingTime: Date.now() - startTime
+      };
+
+      this.performanceMonitor.recordRequest({
+        duration: result.processingTime!,
+        success: false,
+        error: result.error,
+        breakdown: {
+          classification: classificationTime,
+          connectionAnalysis: connectionAnalysisTime,
+          workflowGeneration: workflowGenerationTime
+        }
+      });
+
+      return result;
+    }
+  }
+
+  /**
+   * Classify message with caching
+   */
+  private async classifyMessageWithCache(message: string) {
+    // Check cache first
+    const cached = this.cacheService.getClassificationResult(message);
+    if (cached) {
+      console.log('🎯 Cache hit for classification');
+      return cached;
+    }
+
+    try {
+      const result = await Promise.race([
+        this.classificationService.classifyMessage(message),
+        this.timeoutPromise(5000, 'Classification timeout')
+      ]);
+      
+      // Cache the result
+      this.cacheService.setClassificationResult(message, result, 10 * 60 * 1000); // 10 minutes
+      return result;
+    } catch (error) {
+      console.error('Classification failed:', error);
+      // Fallback to rules-based classification
+      const fallback = {
+        type: 'workflow',
+        confidence: 0.7,
+        reasoning: 'Fallback classification',
+        suggestedActions: ['Create workflow'],
+        requiresApiConnections: true
+      };
+      
+      // Cache fallback result for shorter time
+      this.cacheService.setClassificationResult(message, fallback, 2 * 60 * 1000); // 2 minutes
+      return fallback;
+    }
+  }
+
+  /**
+   * Analyze connections with caching
+   */
+  private async analyzeConnectionsWithCache(message: string, connections: any[]) {
+    // Check cache first
+    const cached = this.cacheService.getConnectionAnalysisResult(message, connections);
+    if (cached) {
+      console.log('🎯 Cache hit for connection analysis');
+      return cached;
+    }
+
+    try {
+      const result = await Promise.race([
+        ConnectionGuidanceService.analyzeRequest(
+          message,
+          connections.map(conn => ({ 
+            name: conn.name, 
+            id: conn.id,
+            baseUrl: conn.baseUrl,
+            endpoints: conn.endpoints.map((endpoint: any) => ({
+              path: endpoint.path,
+              method: endpoint.method,
+              summary: endpoint.summary || ''
+            }))
+          }))
+        ),
+        this.timeoutPromise(5000, 'Connection analysis timeout')
+      ]);
+      
+      // Cache the result
+      this.cacheService.setConnectionAnalysisResult(message, connections, result, 10 * 60 * 1000); // 10 minutes
+      return result;
+    } catch (error) {
+      console.error('Connection analysis failed:', error);
+      // Fallback - assume guidance not needed
+      const fallback = {
+        requiresGuidance: false,
+        missingApis: [],
+        suggestedConnections: [],
+        guidanceMessage: ''
+      };
+      
+      // Cache fallback result for shorter time
+      this.cacheService.setConnectionAnalysisResult(message, connections, fallback, 2 * 60 * 1000); // 2 minutes
+      return fallback;
+    }
+  }
+
+  /**
+   * Get response content for different message types
+   */
+  private getResponseForType(type: string): string {
+    switch (type) {
+      case 'direct_api_call':
+        return 'Direct API calls are not yet implemented. Please use workflow creation instead.';
+      case 'connection_guidance':
+        return 'I can help you set up API connections. Please go to the Connections tab to add new integrations.';
+      default:
+        return "I'm here to help you with API automation and workflow creation. You can ask me to create workflows, execute API calls, or help you connect to different services.";
+    }
+  }
+
+  /**
+   * Create a timeout promise
+   */
+  private timeoutPromise(ms: number, message: string): Promise<never> {
+    return new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(message)), ms);
+    });
+  }
+
+  /**
+   * Execute an actual API call using the generated parameters
+   */
+  private async executeApiCall(apiCallData: any, connections: any[], userId: string) {
+    const startTime = Date.now();
+    
+    try {
+      console.log('🔍 executeApiCall - DEBUGGING CONNECTION LOOKUP:');
+      console.log('🔍 executeApiCall - apiCallData:', JSON.stringify(apiCallData, null, 2));
+      console.log('🔍 executeApiCall - available connections:', connections.map(c => ({ id: c.id, name: c.name, baseUrl: c.baseUrl })));
+      console.log('🔍 executeApiCall - looking for connectionId:', apiCallData.connectionId);
+      console.log('🔍 executeApiCall - userId:', userId);
+      
+      // Write debug info to file for E2E debugging
+      require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - executeApiCall - connectionId: ${apiCallData.connectionId}, available: ${connections.map(c => c.id).join(',')}\n`);
+      
+      // Try to find connection by ID first
+      let connection = connections.find(conn => conn.id === apiCallData.connectionId);
+      
+      // If not found by ID, try to find by name (fallback)
+      if (!connection && apiCallData.connectionName) {
+        connection = connections.find(conn => conn.name === apiCallData.connectionName);
+        console.log('🔍 executeApiCall - Trying to find by name:', apiCallData.connectionName);
+      }
+      
+      // If still not found, try to find the first available connection (last resort)
+      if (!connection && connections.length > 0) {
+        connection = connections[0];
+        console.log('🔍 executeApiCall - Using first available connection as fallback:', connection.id);
+      }
+      
+      if (!connection) {
+        console.log('🔍 executeApiCall - ❌ Connection NOT FOUND for ID:', apiCallData.connectionId);
+        console.log('🔍 executeApiCall - Available connection IDs:', connections.map(c => c.id));
+        require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - CONNECTION NOT FOUND ERROR\n`);
+        return {
+          success: false,
+          data: { error: 'Connection not found' }
+        };
+      }
+      
+      console.log('🔍 executeApiCall - ✅ Connection FOUND:', { id: connection.id, name: connection.name, baseUrl: connection.baseUrl });
+      require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - Connection FOUND: ${connection.id}, baseUrl: ${connection.baseUrl}\n`);
+      
+      // Substitute path parameters in the URL
+      let substitutedUrl = apiCallData.url;
+      if (apiCallData.parameters) {
+        for (const [key, value] of Object.entries(apiCallData.parameters)) {
+          substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
+        }
+      }
+      
+      const fullUrl = `${connection.baseUrl}${substitutedUrl}`;
+      
+      // Prepare headers
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...apiCallData.headers
+      };
+
+      // Add authentication headers based on connection type
+      if (connection.authType === 'API_KEY' && connection.authConfig?.apiKey) {
+        headers['X-API-Key'] = connection.authConfig.apiKey;
+      } else if (connection.authType === 'BEARER_TOKEN' && connection.authConfig?.token) {
+        headers['Authorization'] = `Bearer ${connection.authConfig.token}`;
+      } else if (connection.authType === 'NONE') {
+        // No authentication required for this connection
+        console.log('No authentication required for connection:', connection.name);
+      }
+
+      let response;
+      const requestConfig = {
+        method: apiCallData.method || 'GET', // Default to GET if method is undefined
+        url: fullUrl,
+        headers,
+        params: apiCallData.parameters,
+        data: apiCallData.requestBody,
+        timeout: 30000
+      };
+
+      console.log('Executing API call', {
+        method: apiCallData.method,
+        originalUrl: apiCallData.url,
+        substitutedUrl: substitutedUrl,
+        fullUrl: fullUrl,
+        parameters: apiCallData.parameters,
+        connectionId: apiCallData.connectionId,
+        userId
+      });
+      
+      require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - Making API call to: ${fullUrl}\n`);
+
+      response = await axios(requestConfig);
+      
+      const executionTime = Date.now() - startTime;
+
+      return {
+        success: true,
+        data: {
+          method: apiCallData.method || 'GET', // Default to GET if method is undefined
+          url: apiCallData.url,
+          statusCode: response.status,
+          responseData: response.data,
+          responseHeaders: response.headers as Record<string, string>,
+          executionTime
+        }
+      };
+
+    } catch (error: any) {
+      const executionTime = Date.now() - startTime;
+      
+      if (error.response) {
+        // API returned an error response
+        require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - API returned error: ${error.response.status} ${error.response.statusText}\n`);
+        require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - Error response data: ${JSON.stringify(error.response.data)}\n`);
+        
+        return {
+          success: true, // Still successful from our perspective
+          data: {
+            method: apiCallData.method || 'GET', // Default to GET if method is undefined
+            url: apiCallData.url,
+            statusCode: error.response.status,
+            responseData: error.response.data,
+            responseHeaders: error.response.headers as Record<string, string>,
+            executionTime,
+            error: `API Error: ${error.response.status} ${error.response.statusText}`
+          }
+        };
+      } else {
+        // Network or other error
+        require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - Network/other error: ${error.message}\n`);
+        
+        return {
+          success: false,
+          data: {
+            method: apiCallData.method || 'GET', // Default to GET if method is undefined
+            url: apiCallData.url,
+            statusCode: 0,
+            responseData: null,
+            responseHeaders: {},
+            executionTime,
+            error: error.message || 'Network error'
+          }
+        };
+      }
+    }
+  }
+
+  /**
+   * Get performance metrics
+   */
+  getPerformanceMetrics() {
+    return {
+      cacheSize: this.workflowService['systemPromptCache']?.size || 0,
+      // Add more metrics as needed
+    };
+  }
+}

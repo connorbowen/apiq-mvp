@@ -14,6 +14,8 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { OnboardingProvider, useOnboarding } from '../../contexts/OnboardingContext';
 import { useGuidedTour, GuidedTour } from '../../components/GuidedTour';
 import { UserProvider } from '../../contexts/UserContext';
+import ResponsiveLayoutHandler from '../../components/ResponsiveLayoutHandler';
+import ResponsiveDebugger from '../../components/ResponsiveDebugger';
 
 // Import components directly for better test reliability
 import WorkflowsTab from '../../components/dashboard/WorkflowsTab';
@@ -618,10 +620,12 @@ function DashboardContent() {
   }
 
   return (
-    <>
+    <div className="dashboard-container">
+      <ResponsiveLayoutHandler />
+      <ResponsiveDebugger />
       <SupportModal open={showSupportModal} onClose={() => setShowSupportModal(false)} user={user ? { email: user.email, name: user.name || user.email } : { email: '', name: '' }} />
       
-      <header role="banner" className="bg-white shadow relative z-50">
+      <header role="banner" className="dashboard-header bg-white shadow relative z-50">
       <div className="w-full py-3 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="flex items-center space-x-3 sm:space-x-4">
@@ -674,8 +678,8 @@ function DashboardContent() {
       </div>
       </header>
 
-      <main role="main" className="flex flex-col dashboard-background dashboard-pattern" style={{ height: 'calc(100vh - 80px)' }}>
-        <section id="main-content" className="flex-1 flex flex-col w-full px-4 sm:px-6 lg:px-8 py-2 pb-6 min-h-0 relative z-0 overflow-y-auto">
+      <main role="main" className="dashboard-main-content dashboard-background dashboard-pattern">
+        <section id="main-content" className="flex-1 flex flex-col w-full px-3 sm:px-4 md:px-6 lg:px-8 py-2 pb-6 min-h-0 relative z-0 overflow-y-auto">
       {/* Message Banner - only render when there's a message */}
       {(successMessage || errorMessage) && (
         <MessageBanner
@@ -901,9 +905,6 @@ function DashboardContent() {
       onTabChange={(tab: string) => handleTabChange(tab as TabType)}
     />
     
-    {/* Bottom padding for mobile navigation */}
-    <div className="h-20 md:hidden" />
-    
     {/* Guided Tour */}
     <GuidedTour
       steps={fullTourSteps}
@@ -923,7 +924,7 @@ function DashboardContent() {
     />
     
       </main>
-    </>
+    </div>
   );
 }
 

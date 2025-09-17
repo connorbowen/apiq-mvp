@@ -36,7 +36,7 @@ export const testFormAccessibility = async (
   const {
     emailLabel,
     passwordLabel,
-    submitButton = 'primary-action signin-btn'
+    submitButton
   } = formSelectors;
   
   // Check for proper form structure

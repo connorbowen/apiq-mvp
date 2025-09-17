@@ -238,8 +238,8 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
     test('should generate unique function names for similar operations', async ({ page }) => {
       await testWorkflowGeneration(
         page,
-        'Send a message to Slack and also send a notification to Discord',
-        /Slack|Discord|message|notification|workflow/i
+        'Send a message to Slack and also create a card in Trello',
+        /Slack|Trello|message|card|workflow/i
       );
     });
   });
@@ -311,8 +311,8 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       await page.goto(`${BASE_URL}/workflows/create`);
       await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 30000 });
       
-      // Mock OpenAI API failure (following user rules for external failures)
-      await page.route('**/api/workflows/generate', route => {
+      // Mock AI orchestrator failure (following user rules for external failures)
+      await page.route('**/api/chat/process', route => {
         route.fulfill({ 
           status: 500, 
           body: JSON.stringify({
@@ -344,8 +344,8 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       await page.goto(`${BASE_URL}/workflows/create`);
       await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 30000 });
       
-      // Mock API failure to simulate common issues
-      await page.route('**/api/workflows/generate', route => {
+      // Mock AI orchestrator failure to simulate common issues
+      await page.route('**/api/chat/process', route => {
         route.fulfill({ 
           status: 400, 
           body: JSON.stringify({

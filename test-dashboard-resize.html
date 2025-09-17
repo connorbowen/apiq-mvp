@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>Dashboard Resize Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .test-header {
+            background: #3b82f6;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .test-content {
+            padding: 20px;
+        }
+        
+        .viewport-info {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+        
+        .dashboard-simulation {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .dashboard-header {
+            background: #f9fafb;
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: bold;
+        }
+        
+        .dashboard-main {
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 25%, #f3e8ff 50%, #e0e7ff 75%, #f8fafc 100%);
+            min-height: 300px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .resize-handles {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .resize-btn {
+            padding: 5px 10px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .resize-btn:hover {
+            background: #2563eb;
+        }
+        
+        .status-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #10b981;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .instructions {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #92400e;
+        }
+        
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>Dashboard Resize Test</h1>
+            <p>Testing dashboard responsiveness to screen size changes</p>
+        </div>
+        
+        <div class="test-content">
+            <div class="instructions">
+                <h3>Test Instructions:</h3>
+                <ol>
+                    <li>Use the resize buttons below to simulate different screen sizes</li>
+                    <li>Try resizing your browser window manually</li>
+                    <li>Check if the dashboard adapts smoothly to size changes</li>
+                    <li>Test on mobile devices by opening developer tools and toggling device simulation</li>
+                </ol>
+            </div>
+            
+            <div class="viewport-info">
+                <strong>Current Viewport:</strong> <span id="viewport-size"></span><br>
+                <strong>Dashboard Height:</strong> <span id="dashboard-height"></span><br>
+                <strong>Available Height:</strong> <span id="available-height"></span><br>
+                <strong>Resize Events:</strong> <span id="resize-count">0</span>
+            </div>
+            
+            <div class="dashboard-simulation">
+                <div class="dashboard-header">
+                    APIQ Dashboard Header (80px height)
+                </div>
+                <div class="dashboard-main" id="dashboard-main">
+                    <div class="status-indicator" id="status-indicator">
+                        RESPONSIVE
+                    </div>
+                    <div class="resize-handles">
+                        <button class="resize-btn" onclick="resizeTo(320, 568)">Mobile</button>
+                        <button class="resize-btn" onclick="resizeTo(768, 1024)">Tablet</button>
+                        <button class="resize-btn" onclick="resizeTo(1024, 768)">Desktop</button>
+                        <button class="resize-btn" onclick="resizeTo(1920, 1080)">Large</button>
+                    </div>
+                    <h3>Dashboard Content Area</h3>
+                    <p>This simulates the main dashboard content that should adapt to viewport changes.</p>
+                    <p>The height should adjust dynamically when you resize the window or use the buttons above.</p>
+                    <div style="height: 200px; background: rgba(59, 130, 246, 0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; margin: 20px 0;">
+                        <p>Content Area - Should fill available space</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let resizeCount = 0;
+        
+        function updateViewportInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const dashboardMain = document.getElementById('dashboard-main');
+            const dashboardHeight = dashboardMain.offsetHeight;
+            const availableHeight = height - 80; // Subtract header height
+            
+            document.getElementById('viewport-size').textContent = `${width} x ${height}`;
+            document.getElementById('dashboard-height').textContent = `${dashboardHeight}px`;
+            document.getElementById('available-height').textContent = `${availableHeight}px`;
+            document.getElementById('resize-count').textContent = resizeCount;
+            
+            // Update status indicator
+            const statusIndicator = document.getElementById('status-indicator');
+            if (dashboardHeight >= availableHeight * 0.8) {
+                statusIndicator.textContent = 'RESPONSIVE';
+                statusIndicator.style.background = '#10b981';
+            } else {
+                statusIndicator.textContent = 'NOT RESPONSIVE';
+                statusIndicator.style.background = '#ef4444';
+            }
+        }
+        
+        function resizeTo(width, height) {
+            // This is a simulation - in real testing, you'd resize the browser
+            const dashboardMain = document.getElementById('dashboard-main');
+            const newHeight = Math.max(300, height - 80);
+            dashboardMain.style.minHeight = `${newHeight}px`;
+            
+            // Simulate viewport change
+            window.dispatchEvent(new Event('resize'));
+        }
+        
+        function handleResize() {
+            resizeCount++;
+            updateViewportInfo();
+        }
+        
+        // Initialize
+        updateViewportInfo();
+        
+        // Add event listeners
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(handleResize, 100);
+        });
+        
+        // Simulate the responsive layout handler
+        function updateResponsiveLayout() {
+            const vh = window.innerHeight * 0.01;
+            const vw = window.innerWidth * 0.01;
+            
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            document.documentElement.style.setProperty('--vw', `${vw}px`);
+            document.documentElement.style.setProperty('--viewport-height', `${window.innerHeight}px`);
+            document.documentElement.style.setProperty('--viewport-width', `${window.innerWidth}px`);
+            
+            const dashboardContainer = document.querySelector('.dashboard-simulation');
+            if (dashboardContainer) {
+                const headerHeight = 80;
+                const availableHeight = window.innerHeight - headerHeight;
+                dashboardContainer.style.setProperty('--available-height', `${availableHeight}px`);
+            }
+        }
+        
+        // Update responsive layout on resize
+        window.addEventListener('resize', updateResponsiveLayout);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(updateResponsiveLayout, 100);
+        });
+        
+        // Initial setup
+        updateResponsiveLayout();
+    </script>
+</body>
+</html>
+

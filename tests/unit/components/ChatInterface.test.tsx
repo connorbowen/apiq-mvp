@@ -12,19 +12,24 @@ if (!global.fetch) {
 }
 
 // Mock the apiClient
-const mockGenerateWorkflow = jest.fn();
+const mockProcessMessage = jest.fn();
 jest.mock('../../../src/lib/api/client', () => ({
   apiClient: {
-    generateWorkflow: mockGenerateWorkflow
+    processMessage: mockProcessMessage
   }
 }));
 
 describe('ChatInterface Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (mockGenerateWorkflow as any).mockResolvedValue({
+    (mockProcessMessage as any).mockResolvedValue({
       success: true,
-      workflow: { id: 'test-workflow-id', steps: [] }
+      data: {
+        type: 'workflow',
+        content: 'I\'ve created a workflow for you!',
+        workflow: { id: 'test-workflow-id', name: 'Test Workflow', description: 'A test workflow' },
+        steps: []
+      }
     });
   });
 
@@ -56,7 +61,7 @@ describe('ChatInterface Component', () => {
     fireEvent.change(input, { target: { value: 'Test user input' } });
     fireEvent.click(submitButton!);
     await waitFor(() => {
-      expect(mockGenerateWorkflow).toHaveBeenCalledWith('Test user input');
+      expect(mockProcessMessage).toHaveBeenCalledWith('Test user input');
     });
   });
 
@@ -68,13 +73,21 @@ describe('ChatInterface Component', () => {
     const submitButton = getSubmitButton();
     fireEvent.click(submitButton!);
     await waitFor(() => {
-      expect(mockGenerateWorkflow).toHaveBeenCalledWith(expect.stringContaining('customer'));
+      expect(mockProcessMessage).toHaveBeenCalledWith(expect.stringContaining('customer'));
     });
   });
 
   it('shows loading state during submission', async () => {
-    (mockGenerateWorkflow as any).mockImplementation(() => 
-      new Promise(resolve => setTimeout(() => resolve({ success: true, workflow: { id: 'test' } }), 100))
+    (mockProcessMessage as any).mockImplementation(() => 
+      new Promise(resolve => setTimeout(() => resolve({ 
+        success: true, 
+        data: {
+          type: 'workflow',
+          content: 'I\'ve created a workflow for you!',
+          workflow: { id: 'test', name: 'Test Workflow', description: 'A test workflow' },
+          steps: []
+        }
+      }), 100))
     );
     const ChatInterface = require('../../../src/components/ChatInterface').default;
     render(<ChatInterface />);
@@ -82,9 +95,9 @@ describe('ChatInterface Component', () => {
     const submitButton = getSubmitButton();
     fireEvent.change(input, { target: { value: 'Test input' } });
     fireEvent.click(submitButton!);
-    expect(screen.getByText(/creating your workflow/i)).toBeInTheDocument();
+    expect(screen.getByText(/processing your request/i)).toBeInTheDocument();
     await waitFor(() => {
-      expect(mockGenerateWorkflow).toHaveBeenCalled();
+      expect(mockProcessMessage).toHaveBeenCalled();
     });
   });
 }); 

@@ -103,8 +103,8 @@ JWT_EXPIRES_IN=24h
 
 # OpenAI Configuration
 OPENAI_API_KEY=your-openai-api-key-here
-OPENAI_MODEL=gpt-4
-OPENAI_MAX_TOKENS=4000
+OPENAI_MODEL=gpt-4o-mini  # Optimized for performance and cost
+OPENAI_MAX_TOKENS=1500    # Reduced for better performance
 OPENAI_TEMPERATURE=0.1
 
 # Security Configuration

@@ -1,0 +1,15 @@
+
+> apiq-mvp@1.0.0 dev
+> ./scripts/smart-dev.sh
+
+🚀 Smart dev script starting...
+🔍 Found processes on port 3000...
+✅ Found Next.js server already running (PID 74729)
+   Command: next-server (v14.2.32) 
+🎉 Using existing Next.js dev server!
+   Server is available at: http://localhost:3000
+   Press Ctrl+C to stop the server
+📝 Server logs will appear below:
+   (If you don't see logs, the server might be running in another terminal)
+
+Press Ctrl+C to exit this script (server will continue running)

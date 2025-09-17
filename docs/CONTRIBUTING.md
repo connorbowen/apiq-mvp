@@ -45,6 +45,10 @@ We welcome various types of contributions:
 - **Documentation**: Improve guides, tutorials, and API docs
 - **Testing**: Add tests and improve test coverage
 - **Performance**: Optimize code and improve efficiency
+  - Use `ParallelAIService` for concurrent AI operations
+  - Implement intelligent caching with `AICacheService`
+  - Monitor performance with `PerformanceMonitor`
+  - Follow context-aware filtering patterns
 - **Security**: Identify and fix security issues
 - **UI/UX**: Improve user interface and experience
 
@@ -421,6 +425,92 @@ export const createUser = async (userData: CreateUserInput) => {
 };
 ```
 
+### AI Orchestrator Development Guidelines
+
+**No Mocking Policy**: When working with the AI orchestrator, always use real implementations:
+
+```typescript
+// ✅ GOOD: Real AI service implementation
+export class HybridMessageClassificationService {
+  static async classifyMessage(message: string, userId: string) {
+    const openai = OpenAIService.createFromEnv();
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: message }],
+      // ... real AI processing
+    });
+    return response.choices[0].message;
+  }
+}
+
+// ❌ BAD: Mocked AI service
+export class MockMessageClassificationService {
+  static async classifyMessage() {
+    return { type: 'workflow', confidence: 0.9 }; // Mock data
+  }
+}
+```
+
+**AI Orchestrator Architecture**:
+- **Message Classification**: Use real OpenAI API calls for intent detection
+- **Service Routing**: Route to appropriate services based on AI classification
+- **Workflow Generation**: Use real AI services for workflow creation
+- **Connection Guidance**: Use real AI analysis for connection help
+- **Response Formatting**: Use real AI services for response generation
+
+**Testing AI Orchestrator**:
+```typescript
+// ✅ GOOD: E2E AI orchestrator testing
+test('should generate workflow end-to-end', async ({ page }) => {
+  // 1. Setup real environment
+  await loginAsTestUser(page);
+  await createTestApiConnections(page);
+  
+  // 2. Send real message to AI orchestrator
+  await page.fill('[data-testid="chat-input"]', 'Create a Slack workflow');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  
+  // 3. Wait for real AI response
+  await page.waitForSelector('[data-testid="workflow-generated"]');
+  
+  // 4. Verify real workflow was created
+  const workflow = await page.textContent('[data-testid="workflow-name"]');
+  expect(workflow).toContain('Slack');
+});
+```
+
+**Environment Configuration**:
+```bash
+# .env.test - Use real OpenAI API key for testing
+OPENAI_API_KEY=sk-real-test-key-here
+NODE_ENV=test
+
+# .env - Use real OpenAI API key for development
+OPENAI_API_KEY=sk-real-dev-key-here
+NODE_ENV=development
+```
+
+**Error Handling**:
+```typescript
+// Handle AI service errors gracefully
+try {
+  const result = await AI_SERVICE.processMessage(message);
+  return res.status(200).json({ success: true, data: result });
+} catch (error) {
+  if (error.code === 'RATE_LIMIT_EXCEEDED') {
+    return res.status(429).json({ 
+      success: false, 
+      error: 'AI service rate limit exceeded. Please try again later.' 
+    });
+  }
+  
+  return res.status(500).json({ 
+    success: false, 
+    error: 'Failed to process message. Please try again.' 
+  });
+}
+```
+
 ## Git Workflow
 
 ### Branch Naming Convention
@@ -521,6 +611,22 @@ test(encryption): add performance benchmarks
    - Fill out the PR template
 
 ## Testing Guidelines
+
+### No Mocking Policy
+
+**Critical**: APIQ follows a strict no-mocking policy for all production code. This means:
+
+- **No Mock Data**: No mock data in database or authentication operations
+- **No Mock Services**: All AI services use real implementations (OpenAI, etc.)
+- **No Mock APIs**: All API calls use real endpoints and real responses
+- **Real Testing**: All tests use real database connections, real authentication flows, and real AI services
+- **Production-Ready Code**: All code must work in production without any mocking
+
+**AI Orchestrator Testing**: The AI orchestrator uses real AI services for:
+- Message classification with real OpenAI API calls
+- Workflow generation with real AI processing
+- Connection guidance with real AI analysis
+- Response formatting with real AI services
 
 ### Test Structure
 

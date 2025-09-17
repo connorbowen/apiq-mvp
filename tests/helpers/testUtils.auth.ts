@@ -72,12 +72,28 @@ export const createTestUser = async (
     }
   });
   // Ensure we use the same JWT secret as the test environment
-  req.env = {
-    JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret-key-for-e2e-testing-only-never-use-in-production',
-    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '2h'
-  };
+  // Set the process environment variable to ensure consistency
+  const originalJwtSecret = process.env.JWT_SECRET;
+  const originalJwtExpiresIn = process.env.JWT_EXPIRES_IN;
   
-  await loginHandler(req as any, res as any);
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-for-e2e-testing-only-never-use-in-production';
+  process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
+  
+  try {
+    await loginHandler(req as any, res as any);
+  } finally {
+    // Restore original environment variables
+    if (originalJwtSecret !== undefined) {
+      process.env.JWT_SECRET = originalJwtSecret;
+    } else {
+      delete process.env.JWT_SECRET;
+    }
+    if (originalJwtExpiresIn !== undefined) {
+      process.env.JWT_EXPIRES_IN = originalJwtExpiresIn;
+    } else {
+      delete process.env.JWT_EXPIRES_IN;
+    }
+  }
   
   const loginData = JSON.parse(res._getData());
   
@@ -172,12 +188,28 @@ export const createTestUserWithTour = async (
     }
   });
   // Ensure we use the same JWT secret as the test environment
-  req.env = {
-    JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret-key-for-e2e-testing-only-never-use-in-production',
-    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '2h'
-  };
+  // Set the process environment variable to ensure consistency
+  const originalJwtSecret = process.env.JWT_SECRET;
+  const originalJwtExpiresIn = process.env.JWT_EXPIRES_IN;
   
-  await loginHandler(req as any, res as any);
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-key-for-e2e-testing-only-never-use-in-production';
+  process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
+  
+  try {
+    await loginHandler(req as any, res as any);
+  } finally {
+    // Restore original environment variables
+    if (originalJwtSecret !== undefined) {
+      process.env.JWT_SECRET = originalJwtSecret;
+    } else {
+      delete process.env.JWT_SECRET;
+    }
+    if (originalJwtExpiresIn !== undefined) {
+      process.env.JWT_EXPIRES_IN = originalJwtExpiresIn;
+    } else {
+      delete process.env.JWT_EXPIRES_IN;
+    }
+  }
   
   const loginData = JSON.parse(res._getData());
   

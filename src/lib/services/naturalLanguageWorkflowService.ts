@@ -103,8 +103,8 @@ export class NaturalLanguageWorkflowService {
         };
       }
 
-      // Convert connections to OpenAI function definitions
-      const functions = this.convertConnectionsToFunctions(connectionsWithEndpoints);
+      // Convert connections to OpenAI function definitions with context filtering
+      const functions = this.convertConnectionsToFunctions(connectionsWithEndpoints, request.userDescription);
       
       if (functions.length === 0) {
         return {
@@ -297,9 +297,9 @@ export class NaturalLanguageWorkflowService {
   }
 
   /**
-   * Convert API connections to OpenAI function definitions
+   * Convert API connections to OpenAI function definitions with context-aware filtering
    */
-  private convertConnectionsToFunctions(connections: WorkflowGenerationRequest['availableConnections']) {
+  private convertConnectionsToFunctions(connections: WorkflowGenerationRequest['availableConnections'], userDescription?: string) {
     const functions = [];
 
     // Add the create_workflow function that can orchestrate multiple API calls
@@ -328,7 +328,7 @@ export class NaturalLanguageWorkflowService {
                 type: { type: 'string', enum: ['api_call', 'data_transform', 'condition', 'webhook'], description: 'Step type' },
                 apiConnectionId: { 
                   type: 'string', 
-                  description: 'API connection ID - MUST be exactly one of these valid IDs: ' + connections.map(conn => conn.id).join(', ') + '. NEVER use any other ID. This field is REQUIRED and MUST match one of the provided IDs exactly.',
+                  description: 'API connection ID - MUST be exactly one of these valid IDs: ' + connections.map(conn => conn.id).join(', ') + '. NEVER use any other ID. This field is REQUIRED and MUST match one of the provided IDs exactly. VALID OPTIONS: ' + connections.map(conn => conn.id).join(', '),
                   enum: connections.map(conn => conn.id),
                   pattern: '^(' + connections.map(conn => conn.id).join('|') + ')$',
                   examples: connections.map(conn => conn.id)
@@ -349,58 +349,187 @@ export class NaturalLanguageWorkflowService {
       }
     });
 
-    // Add individual API endpoint functions for reference
-    for (const connection of connections) {
-      for (const endpoint of connection.endpoints) {
-        // Generate a user-friendly function name using the connection name and action
-        const connectionName = connection.name.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const action = endpoint.summary.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/\s+/g, '_');
-        
-        // Create a brief, action-oriented function name
-        const functionName = `${connectionName}_${action}`;
-        
-        // Ensure the function name is under 64 characters
-        const finalFunctionName = functionName.length > 64 ? functionName.substring(0, 64) : functionName;
-        
-        // Defensive: ensure endpoint.parameters is always an array
-        let safeParameters = Array.isArray(endpoint.parameters) ? endpoint.parameters : [];
-        if (!Array.isArray(endpoint.parameters)) {
-          console.warn(`convertConnectionsToFunctions: endpoint.parameters for ${endpoint.method} ${endpoint.path} is not an array (got: ${typeof endpoint.parameters}). Using empty array.`);
-        }
-        functions.push({
-          name: finalFunctionName,
-          description: `${endpoint.summary} using ${connection.name} (Connection ID: ${connection.id})`,
-          parameters: {
-            type: 'object',
-            properties: {
-              connectionId: {
-                type: 'string',
-                description: 'The ID of the API connection',
-                const: connection.id
-              },
-              endpoint: {
-                type: 'string',
-                description: 'The API endpoint path',
-                const: endpoint.path
-              },
-              method: {
-                type: 'string',
-                description: 'The HTTP method',
-                const: endpoint.method
-              },
-              parameters: {
-                type: 'object',
-                description: 'Parameters to pass to the API call',
-                properties: this.convertOpenAPIParametersToJSONSchema(safeParameters)
-              }
-            },
-            required: ['connectionId', 'endpoint', 'method']
-          }
-        });
+    // Filter endpoints based on user context to avoid token limits
+    const relevantEndpoints = this.filterRelevantEndpoints(connections, userDescription);
+    
+    console.log(`🔍 Context filtering: ${this.getTotalEndpoints(connections)} total endpoints → ${relevantEndpoints.length} relevant endpoints`);
+
+    // Add individual API endpoint functions for reference (only relevant ones)
+    for (const { connection, endpoint } of relevantEndpoints) {
+      // Generate a user-friendly function name using the connection name and action
+      const connectionName = connection.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const action = endpoint.summary.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '_').replace(/\s+/g, '_');
+      
+      // Create a brief, action-oriented function name
+      const functionName = `${connectionName}_${action}`;
+      
+      // Ensure the function name is under 64 characters
+      const finalFunctionName = functionName.length > 64 ? functionName.substring(0, 64) : functionName;
+      
+      // Defensive: ensure endpoint.parameters is always an array
+      let safeParameters = Array.isArray(endpoint.parameters) ? endpoint.parameters : [];
+      if (!Array.isArray(endpoint.parameters)) {
+        console.warn(`convertConnectionsToFunctions: endpoint.parameters for ${endpoint.method} ${endpoint.path} is not an array (got: ${typeof endpoint.parameters}). Using empty array.`);
       }
+      functions.push({
+        name: finalFunctionName,
+        description: `${endpoint.summary} using ${connection.name} (Connection ID: ${connection.id})`,
+        parameters: {
+          type: 'object',
+          properties: {
+            connectionId: {
+              type: 'string',
+              description: 'The ID of the API connection',
+              const: connection.id
+            },
+            endpoint: {
+              type: 'string',
+              description: 'The API endpoint path',
+              const: endpoint.path
+            },
+            method: {
+              type: 'string',
+              description: 'The HTTP method',
+              const: endpoint.method
+            },
+            parameters: {
+              type: 'object',
+              description: 'Parameters to pass to the API call',
+              properties: this.convertOpenAPIParametersToJSONSchema(safeParameters)
+            }
+          },
+          required: ['connectionId', 'endpoint', 'method']
+        }
+      });
     }
 
     return functions;
+  }
+
+  /**
+   * Filter endpoints based on user context to avoid token limits
+   * This is the key optimization that prevents sending 100+ endpoints to AI
+   */
+  private filterRelevantEndpoints(connections: WorkflowGenerationRequest['availableConnections'], userDescription?: string) {
+    if (!userDescription) {
+      // If no context, return a limited set of endpoints (max 20 total)
+      return this.getLimitedEndpoints(connections, 20);
+    }
+
+    const userText = userDescription.toLowerCase();
+    const relevantEndpoints: Array<{ connection: any; endpoint: any; score: number }> = [];
+
+    // Define context keywords and their associated endpoint patterns
+    const contextPatterns = {
+      // GitHub patterns
+      github: {
+        keywords: ['github', 'issue', 'pull request', 'pr', 'repository', 'repo', 'commit', 'branch'],
+        endpointPatterns: ['issue', 'pull', 'repo', 'commit', 'branch', 'webhook']
+      },
+      // Slack patterns
+      slack: {
+        keywords: ['slack', 'notification', 'message', 'channel', 'chat', 'alert'],
+        endpointPatterns: ['message', 'chat', 'notification', 'channel', 'post']
+      },
+      // Email patterns
+      email: {
+        keywords: ['email', 'mail', 'sendgrid', 'notification', 'alert', 'message'],
+        endpointPatterns: ['mail', 'email', 'send', 'notification']
+      },
+      // Payment patterns
+      payment: {
+        keywords: ['payment', 'stripe', 'charge', 'invoice', 'billing', 'subscription'],
+        endpointPatterns: ['charge', 'payment', 'invoice', 'subscription', 'billing']
+      },
+      // E-commerce patterns
+      ecommerce: {
+        keywords: ['shopify', 'order', 'product', 'inventory', 'customer', 'ecommerce'],
+        endpointPatterns: ['order', 'product', 'inventory', 'customer', 'shop']
+      },
+      // QuickBooks patterns
+      quickbooks: {
+        keywords: ['quickbooks', 'invoice', 'accounting', 'billing', 'payment'],
+        endpointPatterns: ['invoice', 'customer', 'payment', 'account']
+      },
+      // ShipStation patterns
+      shipstation: {
+        keywords: ['shipstation', 'shipping', 'label', 'fulfillment', 'package'],
+        endpointPatterns: ['label', 'shipment', 'order', 'package']
+      },
+      // Project management patterns
+      project: {
+        keywords: ['trello', 'card', 'board', 'task', 'project', 'kanban'],
+        endpointPatterns: ['card', 'board', 'list', 'task', 'project']
+      }
+    };
+
+    // Score each endpoint based on relevance
+    for (const connection of connections) {
+      for (const endpoint of connection.endpoints) {
+        let relevanceScore = 0;
+        const endpointText = `${endpoint.summary} ${endpoint.path} ${endpoint.method}`.toLowerCase();
+
+        // Check against context patterns
+        for (const [category, patterns] of Object.entries(contextPatterns)) {
+          const keywordMatches = patterns.keywords.filter(keyword => userText.includes(keyword)).length;
+          const endpointMatches = patterns.endpointPatterns.filter(pattern => 
+            endpointText.includes(pattern)
+          ).length;
+
+          if (keywordMatches > 0 && endpointMatches > 0) {
+            relevanceScore += (keywordMatches * 2) + endpointMatches;
+          }
+        }
+
+        // Always include health/status endpoints with low priority
+        if (endpointText.includes('health') || endpointText.includes('status')) {
+          relevanceScore += 0.5;
+        }
+
+        // Include endpoints with high relevance scores
+        if (relevanceScore > 0) {
+          relevantEndpoints.push({ connection, endpoint, score: relevanceScore });
+        }
+      }
+    }
+
+    // Sort by relevance score and limit to prevent token overflow
+    const sortedEndpoints = relevantEndpoints
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 15) // Limit to 15 most relevant endpoints
+      .map(({ connection, endpoint }) => ({ connection, endpoint }));
+
+    // If we don't have enough relevant endpoints, add some general ones
+    if (sortedEndpoints.length < 5) {
+      const generalEndpoints = this.getLimitedEndpoints(connections, 10);
+      sortedEndpoints.push(...generalEndpoints);
+    }
+
+    return sortedEndpoints;
+  }
+
+  /**
+   * Get a limited number of endpoints from all connections
+   */
+  private getLimitedEndpoints(connections: WorkflowGenerationRequest['availableConnections'], maxTotal: number) {
+    const endpoints: Array<{ connection: any; endpoint: any }> = [];
+    const maxPerConnection = Math.ceil(maxTotal / connections.length);
+
+    for (const connection of connections) {
+      const connectionEndpoints = connection.endpoints.slice(0, maxPerConnection);
+      for (const endpoint of connectionEndpoints) {
+        endpoints.push({ connection, endpoint });
+      }
+    }
+
+    return endpoints.slice(0, maxTotal);
+  }
+
+  /**
+   * Get total endpoint count across all connections
+   */
+  private getTotalEndpoints(connections: WorkflowGenerationRequest['availableConnections']) {
+    return connections.reduce((total, conn) => total + conn.endpoints.length, 0);
   }
 
   /**
@@ -536,12 +665,17 @@ export class NaturalLanguageWorkflowService {
    */
   private createSystemPrompt(connectionsWithEndpoints: WorkflowGenerationRequest['availableConnections']): string {
     const connectionIds = connectionsWithEndpoints.map(conn => `${conn.name}: ${conn.id}`).join(', ');
+    const validIds = connectionsWithEndpoints.map(conn => conn.id).join(', ');
     
     return `You are an expert workflow automation specialist. Your job is to create multi-step workflows from natural language descriptions.
 
 CRITICAL REQUIREMENT: You MUST use ONLY the exact connection IDs provided in the available connections list. Do NOT generate or make up connection IDs.
 
 AVAILABLE CONNECTION IDS: ${connectionIds}
+
+VALID CONNECTION IDS (use these EXACTLY): ${validIds}
+
+WARNING: If you use any connection ID that is NOT in the list above, the workflow will be rejected and you will be asked to retry.
 
 IMPORTANT: Always generate MULTI-STEP workflows for complex requests. Break down complex workflows into 2-5 logical steps.
 

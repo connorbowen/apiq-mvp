@@ -457,7 +457,7 @@ This document outlines the detailed implementation plan for the B2C version of o
 - **Logging:** ELK Stack or cloud logging
 
 ### External Integrations
-- **LLM:** OpenAI GPT-4 with function calling
+- **LLM:** OpenAI GPT-4o-mini with function calling (optimized for performance and cost)
 - **APIs:** Weather, Calendar, Email, SMS, Maps
 - **Payment:** Stripe for subscription management
 - **Analytics:** Mixpanel or Amplitude

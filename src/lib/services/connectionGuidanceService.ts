@@ -307,7 +307,12 @@ export class ConnectionGuidanceService {
    */
   static async analyzeRequest(
     userMessage: string, 
-    availableConnections: Array<{ name: string; id: string }>
+    availableConnections: Array<{ 
+      name: string; 
+      id: string; 
+      baseUrl?: string;
+      endpoints?: Array<{ path: string; method: string; summary: string }>;
+    }>
   ): Promise<ConnectionGuidance> {
     console.log('🔍 ConnectionGuidanceService - Analyzing request with AI:', { userMessage, availableConnections });
     

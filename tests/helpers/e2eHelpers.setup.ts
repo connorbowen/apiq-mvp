@@ -298,8 +298,8 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
  */
 export const closeAllModals = async (page: Page): Promise<void> => {
   try {
-    // Check if any modal is visible
-    const modalOverlay = page.locator('.fixed.inset-0.bg-gray-600.bg-opacity-50');
+    // Check if any modal is visible - be more specific about modal detection
+    const modalOverlay = page.locator('.fixed.inset-0.bg-gray-600.bg-opacity-50[role="dialog"], .fixed.inset-0.bg-gray-600.bg-opacity-50[data-testid*="modal"]');
     const isModalVisible = await modalOverlay.isVisible({ timeout: 1000 }).catch(() => false);
     
     if (isModalVisible) {

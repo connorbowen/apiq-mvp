@@ -31,11 +31,15 @@ export class ResponseFormatter {
   static formatApiResponse(apiResponse: ApiResponseData): FormattedResponse {
     const { method, url, statusCode, responseData, executionTime, error } = apiResponse;
     
-    if (error) {
+    // Only treat as error if status code indicates failure AND there's an error message
+    // If status code is successful (2xx), ignore any error field as it might be legacy
+    const isSuccess = statusCode >= 200 && statusCode < 300;
+    const shouldTreatAsError = !isSuccess && error;
+    
+    if (shouldTreatAsError) {
       return this.formatErrorResponse(apiResponse);
     }
 
-    const isSuccess = statusCode >= 200 && statusCode < 300;
     const status = isSuccess ? 'success' : 'warning';
     
     // Generate contextual summary based on method and status

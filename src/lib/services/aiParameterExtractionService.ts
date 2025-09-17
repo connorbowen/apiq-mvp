@@ -45,13 +45,13 @@ export class AIParameterExtractionService {
     context: Record<string, any> = {}
   ): Promise<AIParameterExtractionResult> {
     try {
-      const systemPrompt = this.buildParameterExtractionPrompt(endpoint);
+      const systemPrompt = this.buildParameterExtractionPrompt(endpoint, context);
       
       const response = await (this.openaiService as any).client.chat.completions.create({
         model: (this.openaiService as any).model,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `User request: "${message}"\nContext: ${JSON.stringify(context, null, 2)}` }
+          { role: 'user', content: `User request: "${message}"` }
         ],
         functions: [
           {
@@ -155,16 +155,27 @@ export class AIParameterExtractionService {
   /**
    * Build system prompt for parameter extraction
    */
-  private buildParameterExtractionPrompt(endpoint: any): string {
+  private buildParameterExtractionPrompt(endpoint: any, context: Record<string, any> = {}): string {
     const parameterDescriptions = endpoint.parameters.map((param: ParameterSchema) => {
       const mappings = param.naturalLanguageMappings?.join(', ') || param.name;
       const examples = param.examples?.length ? ` (examples: ${param.examples.join(', ')})` : '';
       const required = param.required ? ' (REQUIRED)' : ' (optional)';
       const validation = param.validation ? ` (validation: ${JSON.stringify(param.validation)})` : '';
+      const enumValues = param.validation?.enum ? ` (valid values: ${param.validation.enum.join(', ')})` : '';
+      const defaultValue = param.defaultValue ? ` (default: ${param.defaultValue})` : '';
       
       return `- ${param.name}${required}: ${param.description || 'No description'} 
-        Natural language: ${mappings}${examples}${validation}`;
+        Natural language: ${mappings}${examples}${validation}${enumValues}${defaultValue}`;
     }).join('\n');
+
+    // Build context summary for better understanding
+    const contextSummary = context.conversationHistory ? 
+      context.conversationHistory.map((ctx: any) => {
+        if (ctx.type === 'assistant' && ctx.apiCallResult) {
+          return `Previous API call: ${ctx.apiCallResult.method} ${ctx.apiCallResult.url} returned ${ctx.apiCallResult.statusCode}`;
+        }
+        return `${ctx.type}: ${ctx.content}`;
+      }).join('\n') : 'No previous context';
 
     return `You are an AI assistant that extracts parameters from natural language for API calls.
 
@@ -174,14 +185,19 @@ Description: ${endpoint.description || endpoint.summary || 'No description'}
 Available Parameters:
 ${parameterDescriptions}
 
+Conversation Context:
+${contextSummary}
+
 EXTRACTION RULES:
 1. Extract parameter values from the user's natural language message
-2. Map natural language terms to the correct parameter names
-3. Use examples and descriptions to understand expected values
-4. Consider context and previous conversation
+2. Map natural language terms to the correct parameter names using the provided mappings
+3. Use examples, descriptions, and enum values to understand expected values
+4. Consider context and previous conversation - if user asks for "sold pets" after getting "available pets", use status=sold
 5. Provide confidence scores for each extraction
 6. Suggest alternatives when uncertain
 7. Handle implicit values (e.g., "current user" → user ID from context)
+8. Use default values when no explicit value is provided
+9. Be flexible with synonyms and variations
 
 EXAMPLES:
 - "Find pets with status available" → {"status": "available"}
@@ -189,8 +205,11 @@ EXAMPLES:
 - "Search for John's email" → {"email": "john@example.com"}
 - "Show me recent orders" → {"status": "recent", "limit": 10}
 - "Create a new project called 'Website Redesign'" → {"name": "Website Redesign"}
+- "Get all available pets" → {"status": "available"} (if status parameter exists)
+- "Find pets by status" → {"status": "available"} (using default if available)
+- "Now get all sold pets to see the difference" → {"status": "sold"} (after getting available pets)
 
-Be intelligent about context and provide helpful reasoning for your extractions.`;
+IMPORTANT: Always extract at least one parameter if the endpoint has parameters. Use default values when appropriate. Be generous with confidence scores for obvious matches. Consider the conversation context to understand what the user is asking for.`;
   }
 
   /**
@@ -230,19 +249,63 @@ Be comprehensive but relevant to the parameter's purpose.`;
     const mappings: AIParameterMapping[] = [];
 
     for (const param of endpoint.parameters) {
-      const mappings = param.naturalLanguageMappings || [param.name];
+      const paramMappings = param.naturalLanguageMappings || [param.name];
       let extractedValue = null;
       let confidence = 0;
+      let reasoning = '';
 
-      // Try to find the parameter value using basic patterns
-      for (const mapping of mappings) {
-        const pattern = new RegExp(`\\b${mapping}\\s*[:=]\\s*([^\\s,]+)`, 'i');
-        const match = message.match(pattern);
-        if (match) {
-          extractedValue = match[1];
-          confidence = 0.7;
+      // Try multiple extraction patterns
+      for (const mapping of paramMappings) {
+        // Pattern 1: "status available" or "status=available"
+        const pattern1 = new RegExp(`\\b${mapping}\\s+(?:is\\s+)?([^\\s,]+)`, 'i');
+        const match1 = message.match(pattern1);
+        if (match1) {
+          extractedValue = match1[1];
+          confidence = 0.8;
+          reasoning = `Found using pattern: "${mapping} [value]"`;
           break;
         }
+
+        // Pattern 2: "with status available" or "with status=available"
+        const pattern2 = new RegExp(`(?:with\\s+)?${mapping}\\s*[:=]\\s*([^\\s,]+)`, 'i');
+        const match2 = message.match(pattern2);
+        if (match2) {
+          extractedValue = match2[1];
+          confidence = 0.7;
+          reasoning = `Found using pattern: "with ${mapping} = [value]"`;
+          break;
+        }
+
+        // Pattern 3: "available pets" (value before the mapping)
+        const pattern3 = new RegExp(`([^\\s,]+)\\s+${mapping}`, 'i');
+        const match3 = message.match(pattern3);
+        if (match3) {
+          extractedValue = match3[1];
+          confidence = 0.6;
+          reasoning = `Found using pattern: "[value] ${mapping}"`;
+          break;
+        }
+
+        // Pattern 4: Direct value matching for enum values
+        if (param.validation?.enum) {
+          for (const enumValue of param.validation.enum) {
+            const pattern4 = new RegExp(`\\b${enumValue}\\b`, 'i');
+            if (pattern4.test(message)) {
+              extractedValue = enumValue;
+              confidence = 0.9;
+              reasoning = `Found enum value: "${enumValue}"`;
+              break;
+            }
+          }
+          if (extractedValue) break;
+        }
+      }
+
+      // If still no value found, try default values
+      if (!extractedValue && param.defaultValue) {
+        extractedValue = param.defaultValue;
+        confidence = 0.5;
+        reasoning = `Using default value: "${param.defaultValue}"`;
       }
 
       if (extractedValue) {
@@ -251,7 +314,7 @@ Be comprehensive but relevant to the parameter's purpose.`;
           parameterName: param.name,
           extractedValue,
           confidence,
-          reasoning: `Found using pattern matching`
+          reasoning
         });
       }
     }

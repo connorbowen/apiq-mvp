@@ -35,6 +35,11 @@
 - [ ] **Error handling implemented**: Proper error handling for all new code paths
 - [ ] **User experience is polished**: No obvious UX issues or broken flows
 - [ ] **UX compliance validated**: Feature complies with UX spec requirements
+- [ ] **Performance optimized**: New features use performance optimization services where applicable
+  - [ ] **ParallelAIService**: Use for concurrent AI operations
+  - [ ] **AICacheService**: Implement caching for repeated operations
+  - [ ] **PerformanceMonitor**: Track metrics for new features
+  - [ ] **Context-aware filtering**: Use for AI operations to reduce token usage
 - [ ] **Documentation updated**: README, API docs, or user guides updated if needed
 
 ### **5. Database & Infrastructure**

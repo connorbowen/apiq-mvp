@@ -25,13 +25,19 @@
 - [x] User management system
 - [x] RBAC (Role-Based Access Control)
 - [x] Frontend UI components
-- [x] Natural language workflow generation (OpenAI GPT-4)
+- [x] Natural language workflow generation (OpenAI GPT-4o-mini)
 - [x] Workflow execution engine with state management
 - [x] Secrets vault with AES-256 encryption
 - [x] Audit logging system
 - [x] E2E testing suite
 - [x] Background job queuing (PgBoss)
 - [x] Workflow execution control (pause/resume/cancel)
+- [x] **Performance Optimization System** - 60-70% faster responses with parallel AI processing
+- [x] **Intelligent Caching** - 95%+ faster cached responses with `AICacheService`
+- [x] **Context-Aware Filtering** - 83% token reduction (17,355 → 2,995 tokens)
+- [x] **Direct API Call Support** - Execute APIs directly through chat interface
+- [x] **Performance Monitoring** - Real-time metrics with `/api/performance/metrics`
+- [x] **Responsive Layout Enhancements** - Better mobile and desktop experience
 
 ### 🔄 In Progress
 - [ ] Advanced workflow templates
@@ -314,7 +320,7 @@ curl -X POST http://localhost:3000/api/oauth/authorize \
 ## Key Features
 
 ### Natural Language Workflow Generation
-- **AI-Powered**: Uses OpenAI GPT-4 for natural language understanding
+- **AI-Powered**: Uses OpenAI GPT-4o-mini for natural language understanding
 - **Context Aware**: Maintains conversation context for complex workflows
 - **Function Calling**: Automatically generates functions from OpenAPI specs
 - **Validation**: Validates generated workflows before execution

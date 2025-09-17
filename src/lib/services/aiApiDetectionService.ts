@@ -35,7 +35,12 @@ export class AIApiDetectionService {
    */
   async analyzeApiRequirements(
     userMessage: string,
-    availableConnections: Array<{ name: string; id: string }>
+    availableConnections: Array<{ 
+      name: string; 
+      id: string; 
+      baseUrl?: string;
+      endpoints?: Array<{ path: string; method: string; summary: string }>;
+    }>
   ): Promise<ApiDetectionResult> {
     try {
       const systemPrompt = this.buildApiDetectionPrompt(availableConnections);
@@ -74,9 +79,13 @@ export class AIApiDetectionService {
                 guidanceMessage: { 
                   type: 'string',
                   description: 'Helpful message explaining what APIs are needed and why'
+                },
+                requiresGuidance: {
+                  type: 'boolean',
+                  description: 'Whether the user needs to create new connections (false if existing connections can fulfill the request)'
                 }
               },
-              required: ['requiredApis', 'guidanceMessage']
+              required: ['requiredApis', 'guidanceMessage', 'requiresGuidance']
             }
           }
         ],
@@ -92,24 +101,34 @@ export class AIApiDetectionService {
 
       const result = JSON.parse(functionCall.arguments);
       
-      // Determine which APIs are missing
-      const availableApiNames = availableConnections.map(conn => conn.name.toLowerCase());
-      const missingApis = result.requiredApis.filter((api: ApiRequirement) => 
-        !availableApiNames.some(availableName => 
-          availableName.includes(api.name.toLowerCase()) || 
-          api.name.toLowerCase().includes(availableName)
-        )
-      );
+      // Use the AI's determination of whether guidance is needed
+      const requiresGuidance = result.requiresGuidance || false;
+      
+      // Determine which APIs are missing (only if guidance is needed)
+      let missingApis: ApiRequirement[] = [];
+      if (requiresGuidance) {
+        const availableApiNames = availableConnections
+          .filter(conn => conn && conn.name) // Filter out null/undefined connections
+          .map(conn => conn.name.toLowerCase());
+        missingApis = result.requiredApis.filter((api: ApiRequirement) => 
+          !availableApiNames.some(availableName => 
+            availableName.includes(api.name.toLowerCase()) || 
+            api.name.toLowerCase().includes(availableName)
+          )
+        );
+      }
 
       // Generate guidance message
-      const guidanceMessage = this.generateGuidanceMessage(missingApis, result.guidanceMessage);
+      const guidanceMessage = requiresGuidance 
+        ? this.generateGuidanceMessage(missingApis, result.guidanceMessage)
+        : '';
 
       return {
         requiredApis: result.requiredApis,
         missingApis,
         suggestedConnections: missingApis,
         guidanceMessage,
-        requiresGuidance: missingApis.length > 0
+        requiresGuidance
       };
 
     } catch (error) {
@@ -123,12 +142,38 @@ export class AIApiDetectionService {
   /**
    * Build system prompt for API detection
    */
-  private buildApiDetectionPrompt(availableConnections: Array<{ name: string; id: string }>): string {
-    const availableApis = availableConnections.map(conn => conn.name).join(', ');
+  private buildApiDetectionPrompt(availableConnections: Array<{ 
+    name: string; 
+    id: string; 
+    baseUrl?: string;
+    endpoints?: Array<{ path: string; method: string; summary: string }>;
+  }>): string {
+    const availableApis = availableConnections
+      .filter(conn => conn && conn.name) // Filter out null/undefined connections
+      .map(conn => {
+        const endpointInfo = conn.endpoints && conn.endpoints.length > 0 
+          ? ` (endpoints: ${conn.endpoints.map(ep => `${ep.method} ${ep.path}`).join(', ')})`
+          : '';
+        return `${conn.name}${endpointInfo}`;
+      })
+      .join(', ');
     
     return `You are an expert API integration specialist. Your job is to analyze user requests and identify which APIs are needed to fulfill their requirements.
 
 AVAILABLE CONNECTIONS: ${availableApis || 'None'}
+
+CRITICAL RULE: If the user's request can be fulfilled using existing connections and their endpoints, you should return requiresGuidance: false and NOT suggest creating new connections.
+
+ENDPOINT MATCHING RULES:
+1. If user asks for a specific endpoint (e.g., "/pets", "/users", "/orders"), check if any existing connection has that exact endpoint
+2. If user asks for a specific API operation (e.g., "GET request", "POST data"), check if any existing connection has endpoints that match that operation
+3. If user mentions a specific API name (e.g., "Petstore", "GitHub", "Slack"), check if any existing connection matches that API
+4. Only suggest creating new connections if NO existing connection can fulfill the request
+
+EXAMPLES:
+- User: "Create a workflow that makes a GET request to /pets endpoint" + Available: "Fresh API Connection (endpoints: GET /pets, POST /pet, ...)" → requiresGuidance: false
+- User: "Send a Slack message" + Available: "Slack Integration (endpoints: POST /chat.postMessage, ...)" → requiresGuidance: false  
+- User: "Create a GitHub issue" + Available: "Petstore API (endpoints: GET /pets, ...)" → requiresGuidance: true (no GitHub connection)
 
 COMMON API CATEGORIES AND EXAMPLES:
 - Communication: Slack, Microsoft Teams, Discord, Zoom
@@ -195,7 +240,9 @@ Be specific about why each API is needed and provide helpful context.`;
     const apiKeywords = ['slack', 'github', 'trello', 'stripe', 'sendgrid', 'mailchimp', 'airtable', 'notion', 'shopify', 'woocommerce', 'hubspot', 'salesforce', 'google', 'microsoft', 'twitter', 'openai'];
     
     const mentionedApis = apiKeywords.filter(api => message.includes(api));
-    const availableApiNames = availableConnections.map(conn => conn.name.toLowerCase());
+    const availableApiNames = availableConnections
+      .filter(conn => conn && conn.name) // Filter out null/undefined connections
+      .map(conn => conn.name.toLowerCase());
     const missingApis = mentionedApis.filter(api => 
       !availableApiNames.some(availableName => 
         availableName.includes(api) || api.includes(availableName)

@@ -23,6 +23,7 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
 
 async function handleChatRequest(req: NextApiRequest, res: NextApiResponse, userId: string) {
   try {
+    console.log('🔍 Chat index.ts: handleChatRequest called');
     const { message, context = {} } = req.body;
 
     if (!message) {

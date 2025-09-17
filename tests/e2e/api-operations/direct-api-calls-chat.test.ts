@@ -49,6 +49,124 @@ import { Role } from '../../../src/generated/prisma';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
+// Helper function to create Petstore endpoint with proper parameters
+async function createPetstoreEndpointWithParameters(connection: any) {
+  const { prisma } = await import('../../../lib/database/client');
+  
+  await prisma.endpoint.create({
+    data: {
+      apiConnectionId: connection.id,
+      path: '/pet/findByStatus',
+      method: 'GET',
+      summary: 'Finds Pets by status',
+      description: 'Multiple status values can be provided with comma separated strings',
+      isActive: true,
+      parameters: [
+        {
+          name: 'status',
+          in: 'query',
+          description: 'Status values that need to be considered for filter',
+          required: true,
+          schema: {
+            type: 'string',
+            enum: ['available', 'pending', 'sold'],
+            default: 'available'
+          },
+          naturalLanguageMappings: [
+            'status',
+            'pet status', 
+            'availability',
+            'available',
+            'pending', 
+            'sold',
+            'state'
+          ]
+        }
+      ],
+      responses: {
+        '200': {
+          description: 'Successful operation',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer' },
+                    name: { type: 'string' },
+                    status: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        },
+        '400': {
+          description: 'Invalid status value'
+        }
+      }
+    }
+  });
+}
+
+// Helper function to create Petstore pet ID endpoint with proper parameters
+async function createPetstorePetIdEndpoint(connection: any) {
+  const { prisma } = await import('../../../lib/database/client');
+  
+  await prisma.endpoint.create({
+    data: {
+      apiConnectionId: connection.id,
+      path: '/pet/{petId}',
+      method: 'GET',
+      summary: 'Find pet by ID',
+      description: 'Returns a single pet by its ID',
+      isActive: true,
+      parameters: [
+        {
+          name: 'petId',
+          in: 'path',
+          description: 'ID of pet to return',
+          required: true,
+          schema: {
+            type: 'string'
+          },
+          naturalLanguageMappings: [
+            'id',
+            'pet id',
+            'petId',
+            'pet ID',
+            'identifier'
+          ]
+        }
+      ],
+      responses: {
+        '200': {
+          description: 'Successful operation',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  name: { type: 'string' },
+                  status: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        '400': {
+          description: 'Invalid ID supplied'
+        },
+        '404': {
+          description: 'Pet not found'
+        }
+      }
+    }
+  });
+}
+
 test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
   let testUser: TestUser;
   let testData: any;
@@ -98,10 +216,16 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
     if (testData.connection) {
       await createTestEndpoint(testData.connection, '/pet', 'GET', 'Get all pets');
       await createTestEndpoint(testData.connection, '/pet', 'POST', 'Add a new pet');
-      await createTestEndpoint(testData.connection, '/pet/{petId}', 'GET', 'Get pet by ID');
+      
+      // Create the pet ID endpoint with proper parameters
+      await createPetstorePetIdEndpoint(testData.connection);
+      
+      // Create other pet ID endpoints without parameters (for PUT/DELETE)
       await createTestEndpoint(testData.connection, '/pet/{petId}', 'PUT', 'Update pet');
       await createTestEndpoint(testData.connection, '/pet/{petId}', 'DELETE', 'Delete pet');
-      await createTestEndpoint(testData.connection, '/pet/findByStatus', 'GET', 'Find pets by status');
+      
+      // Create the findByStatus endpoint with proper parameters
+      await createPetstoreEndpointWithParameters(testData.connection);
       
       createdConnectionIds.push(testData.connection.id);
       
@@ -140,9 +264,36 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
         {
           message: 'Get pet by ID 123',
           expectedParams: { petId: '123' },
-          expectedEndpoint: '/pet/123'  // AI substitutes the parameter in the actual URL
+          expectedEndpoint: '/pet/123'  // The URL will be substituted during execution
         }
       ];
+
+      // Set up console monitoring for all messages
+      const consoleMessages: string[] = [];
+      page.on('console', msg => {
+        consoleMessages.push(`[${msg.type()}] ${msg.text()}`);
+        if (msg.type() === 'error') {
+          console.log('🚨 Browser Console Error:', msg.text());
+        } else if (msg.text().includes('ChatInterface') || msg.text().includes('API') || msg.text().includes('processMessage')) {
+          console.log('🔍 Browser Console:', msg.text());
+        }
+      });
+
+      // Check if React component is actually mounting
+      console.log('🔍 Checking if React component is mounting...');
+      const chatInterface = page.locator('[data-testid="chat-interface"]');
+      const isChatInterfaceVisible = await chatInterface.isVisible();
+      console.log('🔍 Chat interface visible:', isChatInterfaceVisible);
+      
+      // Check if the input field is actually interactive (not just HTML)
+      const chatInput = page.locator('[data-testid="chat-input"]');
+      const isInputEnabled = await chatInput.isEnabled();
+      console.log('🔍 Chat input enabled:', isInputEnabled);
+      
+      // Check if the send button is actually interactive
+      const sendButton = page.locator('[data-testid="primary-action chat-send-btn"]');
+      const isSendButtonEnabled = await sendButton.isEnabled();
+      console.log('🔍 Send button enabled:', isSendButtonEnabled);
 
       for (const testCase of testCases) {
         // Send test message using helper
@@ -170,6 +321,16 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
         // Wait a bit before next test case
         await page.waitForTimeout(1000);
       }
+
+      // Log any console messages that occurred during the test
+      if (consoleMessages.length > 0) {
+        console.log('🔍 Total console messages during test:', consoleMessages.length);
+        consoleMessages.forEach((msg, index) => {
+          console.log(`🔍 Message ${index + 1}:`, msg);
+        });
+      } else {
+        console.log('✅ No console messages detected');
+      }
     });
 
     test('should handle complex parameter extraction scenarios', async ({ page }) => {
@@ -184,7 +345,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await expect(apiCallResults).toHaveCount(1); // Should handle one request at a time for now
       
       // Verify the response shows understanding of the request
-      const responseText = await page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900').last().textContent();
+      const responseText = await page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]').last().textContent();
       expect(responseText).toContain('available');
     });
 
@@ -196,7 +357,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Verify the AI either extracted a default parameter or provided helpful guidance
-      const responseText = await page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900').last().textContent();
+      const responseText = await page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]').last().textContent();
       
       // Should either have made an API call with extracted parameters or provided helpful guidance
       expect(responseText).toBeTruthy();
@@ -216,7 +377,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await expect(apiCallResults).toHaveCount(2);
       
       // Verify both responses show proper parameter extraction
-      const responses = page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900');
+      const responses = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]');
       const firstResponse = await responses.nth(0).textContent();
       const secondResponse = await responses.nth(1).textContent();
       
@@ -248,6 +409,12 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
     });
 
     test('should execute successful GET request to retrieve pet data', async ({ page }) => {
+      // Capture console logs for debugging
+      const consoleLogs: string[] = [];
+      page.on('console', msg => {
+        consoleLogs.push(`[${msg.type()}] ${msg.text()}`);
+      });
+
       // Validate UX compliance
       await validateUXCompliance(page, {
         title: 'APIQ',
@@ -256,6 +423,10 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
         validateAccessibility: true
       });
 
+      // DEBUG: Check what connections exist in the database
+      console.log('🔍 DEBUG: About to send chat message');
+      console.log('🔍 DEBUG: Test connection created:', testData.connection?.id, testData.connection?.name);
+      
       // Send message to get available pets (this should work reliably)
       await sendChatMessage(page, 'Get all available pets from the petstore');
 
@@ -280,6 +451,9 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       // Verify the response body contains pet data
       const responseBody = page.locator('[data-testid="response-body"]');
       const responseText = await responseBody.textContent();
+      
+      console.log('API Response body:', responseText);
+      console.log('Console logs from browser:', consoleLogs);
       expect(responseText).toMatch(/pets|available|id|name/i);
     });
 
@@ -457,16 +631,20 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       // Wait a bit for the second API call result to be fully rendered
       await page.waitForTimeout(2000);
       
+      // Find all API call results and get the second one
+      const apiCallResults = page.locator('[data-testid="api-call-result"]');
+      const secondApiCallResult = apiCallResults.nth(1);
+      
       // Expand the details section for the second API call
-      const secondDetailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' }).last();
+      const secondDetailsElement = secondApiCallResult.locator('details summary').filter({ hasText: 'Raw Response Data' });
       await secondDetailsElement.click();
       
       // Wait for the details to expand
       await page.waitForTimeout(1000);
       
       // Verify second API call succeeded
-      const secondResponseStatus = page.locator('[data-testid="response-status"]').last();
-      const secondResponseBody = page.locator('[data-testid="response-body"]').last();
+      const secondResponseStatus = secondApiCallResult.locator('[data-testid="response-status"]');
+      const secondResponseBody = secondApiCallResult.locator('[data-testid="response-body"]');
       
       await expect(secondResponseStatus).toBeVisible();
       await expect(secondResponseBody).toBeVisible();
@@ -555,16 +733,20 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       // Wait a bit for the second API call result to be fully rendered
       await page.waitForTimeout(2000);
       
+      // Find all API call results and get the second one
+      const apiCallResults = page.locator('[data-testid="api-call-result"]');
+      const secondApiCallResult = apiCallResults.nth(1);
+      
       // Expand the details section for the second API call
-      const secondDetailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' }).last();
+      const secondDetailsElement = secondApiCallResult.locator('details summary').filter({ hasText: 'Raw Response Data' });
       await secondDetailsElement.click();
       
       // Wait for the details to expand
       await page.waitForTimeout(1000);
       
       // Verify second API call succeeded
-      const secondResponseStatus = page.locator('[data-testid="response-status"]').last();
-      const secondResponseBody = page.locator('[data-testid="response-body"]').last();
+      const secondResponseStatus = secondApiCallResult.locator('[data-testid="response-status"]');
+      const secondResponseBody = secondApiCallResult.locator('[data-testid="response-body"]');
       
       await expect(secondResponseStatus).toBeVisible();
       await expect(secondResponseBody).toBeVisible();
@@ -670,7 +852,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await page.waitForTimeout(5000);
       
       // Debug: Check what elements are present
-      const allMessages = page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg');
+      const allMessages = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"]');
       const messageCount = await allMessages.count();
       console.log(`🔍 DEBUG: Found ${messageCount} chat messages`);
       
@@ -755,7 +937,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Verify chat conversation flow - look for actual chat message elements
-      const messages = page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg');
+      const messages = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"]');
       await expect(messages).toHaveCount(2); // User message + Assistant response
       
       // Verify user message
@@ -769,16 +951,49 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
     });
 
     test('should maintain chat history with API call results', async ({ page }) => {
+      // Add debugging to see what's happening
+      const consoleLogs: string[] = [];
+      page.on('console', msg => {
+        consoleLogs.push(`[${msg.type()}] ${msg.text()}`);
+        if (msg.text().includes('ChatInterface') || msg.text().includes('API') || msg.text().includes('processMessage')) {
+          console.log('🔍 Browser Console:', msg.text());
+        }
+      });
+
       // First API call
       await sendChatMessage(page, 'Get petstore inventory');
       await waitForChatResponse(page, 15000);
+      
+      // Debug: Check what elements are present after first message
+      const messagesAfterFirst = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"]');
+      const messageCountAfterFirst = await messagesAfterFirst.count();
+      console.log(`🔍 DEBUG: Messages after first call: ${messageCountAfterFirst}`);
+      
+      const apiCallResultsAfterFirst = page.locator('[data-testid="api-call-result"]');
+      const apiResultCountAfterFirst = await apiCallResultsAfterFirst.count();
+      console.log(`🔍 DEBUG: API call results after first call: ${apiResultCountAfterFirst}`);
       
       // Second API call
       await sendChatMessage(page, 'Now get all available pets');
       await waitForChatResponse(page, 15000);
       
+      // Debug: Check what elements are present after second message
+      const messagesAfterSecond = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"]');
+      const messageCountAfterSecond = await messagesAfterSecond.count();
+      console.log(`🔍 DEBUG: Messages after second call: ${messageCountAfterSecond}`);
+      
+      const apiCallResultsAfterSecond = page.locator('[data-testid="api-call-result"]');
+      const apiResultCountAfterSecond = await apiCallResultsAfterSecond.count();
+      console.log(`🔍 DEBUG: API call results after second call: ${apiResultCountAfterSecond}`);
+      
+      // Log console messages for debugging
+      console.log('🔍 Total console messages:', consoleLogs.length);
+      consoleLogs.forEach((msg, index) => {
+        console.log(`🔍 Message ${index + 1}:`, msg);
+      });
+      
       // Verify chat history is maintained - look for actual chat message elements
-      const messages = page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg');
+      const messages = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"]');
       await expect(messages).toHaveCount(4); // 2 user messages + 2 assistant responses
       
       // Verify both API call results are visible
@@ -803,7 +1018,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 10000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 10000 });
       
       // Verify no API call result is shown
       await expect(page.locator('[data-testid="api-call-result"]')).not.toBeVisible();
@@ -871,7 +1086,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
 
       // Wait for all responses
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 20000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 20000 });
       
       // Verify all API calls completed
       const apiCallResults = page.locator('[data-testid="api-call-result"]');
@@ -893,7 +1108,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
       
       // Wait for both to complete
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 20000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 20000 });
       
       // Verify both API calls completed
       const apiCallResults = page.locator('[data-testid="api-call-result"]');
@@ -913,7 +1128,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // Verify no malicious script execution (check for script tags with malicious content)
       const maliciousScripts = page.locator('script').filter({ hasText: /alert\(|xss|malicious/i });
@@ -929,7 +1144,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
 
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
       
       // Test data exposure prevention
@@ -944,10 +1159,10 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
 
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // Verify response is handled appropriately
-      await expect(page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900')).toBeVisible();
+      await expect(page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]')).toBeVisible();
     });
   });
 
@@ -960,10 +1175,10 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // Verify no SQL injection occurs - should get normal error or no result
-      await expect(page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900')).toBeVisible();
+      await expect(page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]')).toBeVisible();
       // Verify no database error messages are exposed
       await expect(page.locator('text=SQL')).not.toBeVisible();
       await expect(page.locator('text=database')).not.toBeVisible();
@@ -975,10 +1190,10 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Verify response is visible
-      await expect(page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900')).toBeVisible();
+      await expect(page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]')).toBeVisible();
       
       // Verify SSRF protection is working by checking response content
-      const responseText = await page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900').textContent();
+      const responseText = await page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]').textContent();
       
       // Check if SSRF protection is implemented
       if (responseText?.match(/error|blocked|forbidden|not allowed|invalid|ssrf/i)) {
@@ -999,13 +1214,13 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // Verify response is received
-      await expect(page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900')).toBeVisible();
+      await expect(page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]')).toBeVisible();
       
       // Verify internal endpoint validation is working by checking response content
-      const responseText = await page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900').textContent();
+      const responseText = await page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]').textContent();
       
       // Check if internal endpoint validation is implemented
       if (responseText?.match(/error|blocked|forbidden|not allowed|invalid|internal|localhost/i)) {
@@ -1028,17 +1243,17 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // Verify XSS prevention in request bodies
-      await expect(page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900')).toBeVisible();
+      await expect(page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]')).toBeVisible();
       // Verify no malicious script execution (check for script tags with malicious content)
       const maliciousScripts = page.locator('script').filter({ hasText: /alert\(|xss|malicious/i });
       await expect(maliciousScripts).toHaveCount(0);
       
       // Verify that malicious content is properly escaped in chat messages (not executed)
       // The text should be visible in chat but not executed as code
-      const chatMessages = page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg');
+      const chatMessages = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"]');
       const maliciousMessage = chatMessages.filter({ hasText: 'alert(1)' });
       await expect(maliciousMessage).toHaveCount(1); // Should be visible as text, not executed
     });
@@ -1051,7 +1266,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // Verify API call was executed
       await expect(page.locator('[data-testid="api-call-result"]')).toBeVisible();
@@ -1061,12 +1276,12 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // TODO: Currently the system doesn't distinguish between API calls and workflow creation
       // Both are treated as API calls. Once workflow creation is implemented in chat, update this test.
       // For now, verify that we get some response
-      const responseText = await page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900').first().textContent();
+      const responseText = await page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]').first().textContent();
       expect(responseText).toBeTruthy();
       
       // TODO: Once workflow creation is implemented, change this to:
@@ -1082,10 +1297,10 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // Verify dangerous operations are blocked
-      await expect(page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900')).toBeVisible();
+      await expect(page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]')).toBeVisible();
       // Verify no dangerous operations were executed
       await expect(page.locator('[data-testid="api-call-result"]')).not.toBeVisible();
       await expect(page.locator('text=deleted')).not.toBeVisible();
@@ -1097,15 +1312,15 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // Verify parameter validation
-      await expect(page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900')).toBeVisible();
+      await expect(page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]')).toBeVisible();
       
       // TODO: Currently the system doesn't have robust parameter validation in the chat interface
       // The AI might still attempt to execute the API call even with invalid parameters
       // For now, just verify that we get some response
-      const responseText = await page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900').first().textContent();
+      const responseText = await page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]').first().textContent();
       expect(responseText).toBeTruthy();
       
       // TODO: Once parameter validation is implemented, change this to:
@@ -1131,7 +1346,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await expect(page.locator('[data-testid="api-call-result"]')).toBeVisible();
       
       // Verify chat conversation flow is maintained
-      const messages = page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg');
+      const messages = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"]');
       await expect(messages).toHaveCount(2); // User message + Assistant response
     });
 
@@ -1141,12 +1356,12 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       
       // TODO: Currently the system doesn't show explicit error elements for API failures
       // The error might be shown in the response text instead
       // For now, just verify that we get some response
-      const responseText = await page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900').first().textContent();
+      const responseText = await page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]').first().textContent();
       expect(responseText).toBeTruthy();
       
       // Verify chat state is maintained after error
@@ -1154,7 +1369,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await expect(chatInput).toBeEnabled();
       
       // Verify chat conversation flow is maintained
-      const messages = page.locator('div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg');
+      const messages = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"]');
       await expect(messages).toHaveCount(2); // User message + Assistant response
       
       // TODO: Once explicit error handling is implemented, change this to:
@@ -1214,7 +1429,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await chatInput.press('Enter');
       
       // Wait for response
-      await waitForElement(page, 'div.max-w-xs.lg\\:max-w-md.px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
+      await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
       await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
       
       // Verify API call result is visible on mobile

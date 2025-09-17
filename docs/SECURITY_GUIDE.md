@@ -400,6 +400,19 @@ export const logSecurityEvent = async (event: SecurityEvent): Promise<void> => {
 
 #### Real-time Monitoring
 
+**Performance Monitoring Endpoint** 🆕
+```bash
+# Admin-only performance metrics endpoint
+GET /api/performance/metrics
+Authorization: Bearer <admin-token>
+
+# Security considerations:
+# - Admin-only access (requires ADMIN role)
+# - No sensitive data in performance metrics
+# - Rate limited to prevent abuse
+# - Audit logged for security compliance
+```
+
 **Security Event Monitoring**
 ```typescript
 // Security event monitoring

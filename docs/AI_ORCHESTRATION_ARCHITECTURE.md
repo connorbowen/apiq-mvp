@@ -41,6 +41,7 @@ This document describes the new AI orchestration architecture implemented to sim
 **Key Features**:
 - AI-powered message classification
 - Automatic connection guidance detection
+- Context-aware endpoint filtering for performance optimization
 - Unified error handling
 - Standardized response format
 
@@ -207,7 +208,31 @@ Easy to add new service types:
 - `integration_setup` - For complex integration setup
 - `troubleshooting` - For debugging and error resolution
 
-### 3. Context Awareness
+### 3. Context-Aware Endpoint Filtering
+
+**Purpose**: Optimize workflow generation performance by intelligently selecting only relevant API endpoints.
+
+**Implementation**: `src/lib/services/naturalLanguageWorkflowService.ts`
+
+**Key Features**:
+- **Smart Pattern Matching**: Analyzes user requests to identify required APIs
+- **Token Optimization**: Reduces OpenAI token usage by 83% (17,355 → 2,995 tokens)
+- **Error Prevention**: Prevents "maximum context length exceeded" errors
+- **API-Specific Patterns**: Supports GitHub, Slack, QuickBooks, ShipStation, etc.
+
+**How It Works**:
+1. Analyzes user request for API keywords and context
+2. Matches against predefined patterns for each API type
+3. Scores endpoints based on relevance (exact match, pattern match, context match)
+4. Selects top 15 most relevant endpoints for AI processing
+5. Ensures comprehensive coverage while staying under token limits
+
+**Performance Impact**:
+- **Before**: 120+ endpoints sent to OpenAI (exceeded token limit)
+- **After**: ~15 relevant endpoints sent to OpenAI (well under limit)
+- **Result**: 83% reduction in token usage, faster responses, no API errors
+
+### 4. Context Awareness
 The AI orchestrator can be enhanced with:
 - Conversation history
 - User preferences

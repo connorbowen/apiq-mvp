@@ -20,6 +20,11 @@ APIQ provides two distinct methods for creating workflows, each optimized for di
 - Context-aware conversation with follow-up questions
 - Automatic data mapping between steps
 - Workflow validation and optimization suggestions
+- **Performance Optimizations**:
+  - Context-aware endpoint filtering (83% token reduction)
+  - Smart API selection based on user intent
+  - Prevents OpenAI token limit errors
+  - Faster response times with relevant endpoints only
 
 ### Example Usage
 ```

@@ -4,6 +4,62 @@ This guide covers common issues and their solutions when working with the APIQ p
 
 ## 🔐 Common Issues
 
+### Performance Issues 🆕
+
+#### Issue: Slow workflow generation responses
+**Error**: Workflow generation taking 8-15 seconds or longer
+
+**Root Cause**: Sequential AI processing and large token usage
+
+**Solution**: Performance optimizations have been implemented:
+- **Parallel AI Processing**: 60-70% faster responses with `ParallelAIService`
+- **Intelligent Caching**: 95%+ faster cached responses with `AICacheService`
+- **Context-Aware Filtering**: 83% token reduction (17,355 → 2,995 tokens)
+- **Optimized Models**: Using `gpt-4o-mini` for faster, cheaper processing
+
+**Verification**:
+```bash
+# Check performance metrics
+curl -H "Authorization: Bearer <admin-token>" /api/performance/metrics
+
+# Expected response times: 3-6s (down from 8-15s)
+# Expected cache hit rate: 45%+ for repeated requests
+```
+
+#### Issue: OpenAI token limit exceeded errors
+**Error**: "This model's maximum context length is 16385 tokens"
+
+**Root Cause**: Sending too many API endpoints to OpenAI
+
+**Solution**: Context-aware endpoint filtering implemented:
+- Automatically filters from 120+ endpoints to ~15 most relevant ones
+- Reduces token usage by 83%
+- Prevents token limit errors
+- Smart pattern matching for different APIs
+
+**Verification**:
+```bash
+# Check token usage in performance metrics
+# Should show average token usage < 2000 per request
+```
+
+#### Issue: High OpenAI API costs
+**Error**: Unexpected high costs from OpenAI API usage
+
+**Root Cause**: Inefficient token usage and model selection
+
+**Solution**: Cost optimizations implemented:
+- **Model Optimization**: Using `gpt-4o-mini` (50% cheaper than `gpt-4`)
+- **Token Reduction**: 83% fewer tokens per request
+- **Intelligent Caching**: Reduces repeated API calls
+- **Context Filtering**: Only sends relevant endpoints
+
+**Verification**:
+```bash
+# Monitor token usage trends in performance metrics
+# Should show decreasing token usage over time
+```
+
 ### Authentication Issues
 
 #### Issue: Login form not showing error messages for invalid credentials
@@ -264,6 +320,165 @@ PORT=3001
 API_BASE_URL=http://localhost:3001
 NEXTAUTH_URL=http://localhost:3001
 CORS_ORIGIN=http://localhost:3001
+```
+
+## 🤖 AI Orchestrator Issues
+
+### AI Service Errors
+
+#### Issue: AI orchestrator returning "Failed to process message" errors
+**Error**: Chat interface shows generic error instead of processing messages
+
+**Root Cause**: AI services (OpenAI, classification, etc.) are failing or not properly configured
+
+**Solution**: Check AI service configuration and status:
+
+1. **Verify OpenAI API Key**:
+   ```bash
+   # Check if OpenAI API key is set
+   echo $OPENAI_API_KEY
+   # Should show a real API key starting with 'sk-'
+   ```
+
+2. **Check Environment Configuration**:
+   ```bash
+   # For testing
+   NODE_ENV=test npm run dev
+   
+   # For development  
+   NODE_ENV=development npm run dev
+   ```
+
+3. **Verify AI Service Status**:
+   ```bash
+   # Test AI orchestrator directly
+   curl -X POST http://localhost:3000/api/chat/process \
+     -H "Content-Type: application/json" \
+     -H "Cookie: accessToken=your-jwt-token" \
+     -d '{"message": "Test message"}'
+   ```
+
+**Common Causes**:
+- Missing or invalid OpenAI API key
+- Wrong environment configuration (dev vs test)
+- OpenAI API rate limits exceeded
+- Network connectivity issues
+
+#### Issue: AI orchestrator returning connection guidance instead of generating workflows
+**Error**: User asks for workflow creation but gets connection setup guidance
+
+**Root Cause**: AI classification service is detecting missing API connections
+
+**Solution**: Connect the required APIs first:
+
+1. **Check Available Connections**:
+   - Go to Connections tab in dashboard
+   - Verify required APIs are connected
+   - Check connection status (active/inactive)
+
+2. **Connect Missing APIs**:
+   - Follow the connection guidance provided
+   - Use the connection setup form
+   - Test connections before creating workflows
+
+3. **Retry Workflow Creation**:
+   - Once all required APIs are connected
+   - Try the workflow creation request again
+   - AI orchestrator should now generate the workflow
+
+#### Issue: AI orchestrator responses are slow or timing out
+**Error**: Chat interface shows loading state for extended periods
+
+**Root Cause**: AI processing is taking too long or failing
+
+**Solution**: Check AI service performance:
+
+1. **Check OpenAI API Status**:
+   ```bash
+   # Test OpenAI API directly
+   curl -X POST https://api.openai.com/v1/chat/completions \
+     -H "Authorization: Bearer $OPENAI_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "test"}]}'
+   ```
+
+2. **Check Server Logs**:
+   ```bash
+   # Look for AI service errors
+   tail -f logs/combined.log | grep -i "ai\|openai\|orchestrator"
+   ```
+
+3. **Verify Rate Limits**:
+   - Check if you've exceeded OpenAI rate limits
+   - Wait for rate limit reset
+   - Consider upgrading OpenAI plan if needed
+
+#### Issue: AI orchestrator not understanding user intent correctly
+**Error**: AI routes requests to wrong service or provides incorrect responses
+
+**Root Cause**: Message classification is not working properly
+
+**Solution**: Improve message clarity and check classification:
+
+1. **Use Clear, Specific Language**:
+   - "Create a workflow to send Slack notifications" (good)
+   - "Make it work" (unclear)
+
+2. **Check Classification Service**:
+   ```bash
+   # Test message classification directly
+   curl -X POST http://localhost:3000/api/chat/classify \
+     -H "Content-Type: application/json" \
+     -H "Cookie: accessToken=your-jwt-token" \
+     -d '{"message": "Create a workflow to send Slack notifications"}'
+   ```
+
+3. **Provide More Context**:
+   - Include specific API names
+   - Mention the desired outcome
+   - Use workflow-related keywords
+
+### AI Orchestrator Error Codes
+
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| `AI_ORCHESTRATOR_ERROR` | General AI orchestrator failure | Check AI service configuration |
+| `CLASSIFICATION_FAILED` | Message classification failed | Check OpenAI API key and status |
+| `WORKFLOW_GENERATION_FAILED` | Workflow generation failed | Check available API connections |
+| `CONNECTION_GUIDANCE_FAILED` | Connection guidance failed | Check connection service status |
+| `RATE_LIMIT_EXCEEDED` | OpenAI rate limit exceeded | Wait for reset or upgrade plan |
+| `INVALID_MESSAGE_FORMAT` | Message format is invalid | Check message structure and content |
+
+### AI Orchestrator Debugging
+
+#### Enable Debug Logging
+```bash
+# Set debug environment variable
+export DEBUG=ai-orchestrator:*
+
+# Start server with debug logging
+npm run dev
+```
+
+#### Check AI Service Health
+```bash
+# Test all AI services
+curl -X GET http://localhost:3000/api/health/ai-services
+
+# Test specific service
+curl -X POST http://localhost:3000/api/chat/classify \
+  -H "Content-Type: application/json" \
+  -d '{"message": "test"}'
+```
+
+#### Monitor AI Performance
+```bash
+# Check AI service response times
+curl -X POST http://localhost:3000/api/chat/process \
+  -H "Content-Type: application/json" \
+  -H "Cookie: accessToken=your-jwt-token" \
+  -d '{"message": "Create a simple workflow"}' \
+  -w "Time: %{time_total}s\n"
 ```
 
 ## 🔧 Quick Fixes

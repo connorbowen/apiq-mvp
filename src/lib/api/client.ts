@@ -183,8 +183,10 @@ class ApiClient {
       const accessToken = cookies.split(';').find(c => c.trim().startsWith('accessToken='))?.split('=')[1];
       
       console.log('🔍 API Client: Making request to:', config.url);
+      console.log('🔍 API Client: Full URL:', `${this.baseURL}${config.url}`);
       console.log('🔍 API Client: Access token found:', !!accessToken);
       console.log('🔍 API Client: Cookies:', cookies);
+      console.log('🔍 API Client: Request config:', JSON.stringify(config, null, 2));
       
       const response: AxiosResponse<ApiResponse<T>> = await axios({
         ...config,
@@ -615,7 +617,7 @@ class ApiClient {
     return result as any;
   }
 
-  async processMessage(message: string): Promise<ApiResponse<{
+  async processMessage(message: string, context: any[] = []): Promise<ApiResponse<{
     type: 'workflow' | 'direct_api_call' | 'connection_guidance' | 'general_chat';
     content: string;
     workflow?: any;
@@ -625,14 +627,20 @@ class ApiClient {
     suggestedAction?: string;
   }>> {
     console.log('🔍 API Client: processMessage called with:', message);
+    console.log('🔍 API Client: Context:', context);
+    console.log('🔍 API Client: Making request to /api/chat/process');
+    console.log('🔍 API Client: Base URL:', this.baseURL);
+    console.log('🔍 API Client: Full URL will be:', `${this.baseURL}/api/chat/process`);
+    
     const result = await this.request({
       method: 'POST',
       url: '/api/chat/process',
-      data: { message },
+      data: { message, context },
     });
     console.log('🔍 API Client: processMessage response:', result);
     return result as any;
   }
+
 
   // OAuth2 management
   async getOAuth2Providers(): Promise<ApiResponse<{ providers: OAuth2Provider[] }>> {

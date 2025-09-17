@@ -671,8 +671,8 @@ export const config = {
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
-    model: 'gpt-4',
-    maxTokens: 4000
+    model: 'gpt-4o-mini',
+    maxTokens: 1500
   },
   logging: {
     level: 'debug',
@@ -700,8 +700,8 @@ export const config = {
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
-    model: 'gpt-4',
-    maxTokens: 4000,
+    model: 'gpt-4o-mini',
+    maxTokens: 1500,
     timeout: 30000
   },
   logging: {
@@ -748,6 +748,18 @@ export const validateConfig = (config: any) => {
 ## Monitoring & Logging
 
 ### Application Monitoring
+
+**Performance Monitoring Endpoint** 🆕
+```bash
+# Get real-time performance metrics (admin only)
+curl -H "Authorization: Bearer <admin-token>" /api/performance/metrics
+
+# Response includes:
+# - Response times and success rates
+# - Cache hit rates and token usage
+# - Performance trends and recommendations
+# - Breakdown by service (classification, workflow generation, etc.)
+```
 
 **Health Check Endpoint**
 ```typescript

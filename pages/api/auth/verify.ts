@@ -75,18 +75,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { token }
     });
 
-    // Generate authentication tokens
-    const accessToken = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: '1h' }
-    );
+    // Generate authentication tokens using the consistent session helper
+    const { generateToken } = await import('../../../src/lib/auth/session');
+    
+    const accessToken = generateToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      isActive: user.isActive
+    }, 'access');
 
-    const refreshToken = jwt.sign(
-      { userId: user.id, tokenType: 'refresh' },
-      process.env.JWT_SECRET!,
-      { expiresIn: '7d' }
-    );
+    const refreshToken = generateToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      isActive: user.isActive
+    }, 'refresh');
 
     // Log the verification
     await prisma.auditLog.create({

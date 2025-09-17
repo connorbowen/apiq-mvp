@@ -254,9 +254,11 @@ APIQ provides a unified platform that:
 **Description**: Enable users to create workflows using natural language (OAuth2 flows, including Google, fully tested)
 
 **Requirements**:
-- OpenAI GPT-4 integration for natural language processing
+- OpenAI GPT-4o-mini integration for natural language processing (optimized for performance)
 - Function calling based on OpenAPI specifications
 - Multi-step workflow planning and generation
+- Parallel AI processing for 60-70% faster responses
+- Intelligent caching for 95%+ faster cached responses
 - User confirmation before execution
 - Workflow optimization suggestions
 - Context-aware conversation handling
@@ -485,9 +487,11 @@ APIQ provides a unified platform that:
 ### Integration Requirements
 
 #### 1. OpenAI Integration
-- GPT-4 API for natural language processing
+- GPT-4o-mini API for natural language processing (optimized for performance and cost)
 - Function calling for API orchestration
 - Context management for conversations
+- Parallel processing for faster responses
+- Intelligent caching for repeated requests
 - Rate limiting and cost optimization
 - Fallback mechanisms for API failures
 

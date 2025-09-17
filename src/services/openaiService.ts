@@ -2,6 +2,7 @@ import getOpenAIClient from '../lib/openaiWrapper';
 import axios from 'axios';
 import { logError, logInfo, logDebug } from '../utils/logger';
 import { ParameterExtractionService } from '../lib/services/parameterExtractionService';
+import { AIParameterExtractionService } from '../lib/services/aiParameterExtractionService';
 import { 
   WorkflowGenerationRequest, 
   WorkflowGenerationResponse, 
@@ -324,7 +325,7 @@ export class OpenAIService {
               ).join(', ')}`
             : '';
           
-          return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}${paramInfo}`;
+          return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || endpoint.description || 'No description'}${paramInfo}`;
         } catch (error) {
           console.error('Failed to enhance endpoint:', error);
           return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}`;
@@ -484,22 +485,8 @@ Please execute the appropriate API call and return the result.`;
                 },
                 parameters: {
                   type: 'object',
-                  description: 'Query parameters for the API call. Extract from user message and map to correct parameter names (e.g., "status available" → {"status": "available"})',
-                  additionalProperties: true,
-                  properties: {
-                    status: {
-                      type: 'string',
-                      description: 'Pet status (available, pending, sold)'
-                    },
-                    petId: {
-                      type: 'string', 
-                      description: 'Pet ID for specific pet operations'
-                    },
-                    tags: {
-                      type: 'string',
-                      description: 'Comma-separated tags for pet filtering'
-                    }
-                  }
+                  description: 'Query parameters for the API call. CRITICAL: Extract ALL relevant parameters from the user message and map them to correct parameter names based on the available parameters listed in the system prompt above. If the user mentions filtering words like "available", "pending", "sold", "active", etc., these MUST be included as parameters. Only use empty object {} when NO filtering or specific values are mentioned in the user message.',
+                  additionalProperties: true
                 },
                 requestBody: {
                   type: 'object',
@@ -513,23 +500,23 @@ Please execute the appropriate API call and return the result.`;
                 },
                 connectionId: {
                   type: 'string',
-                  description: 'ID of the API connection to use'
+                  description: 'ID of the API connection to use (REQUIRED - must match one of the available connection IDs)'
                 },
                 explanation: {
                   type: 'string',
-                  description: 'A friendly, conversational explanation of what the API call will do and what the user can expect. Use natural language and be encouraging. Examples: "I\'ll help you find all available pets from your pet store API" or "Let me retrieve the latest orders for you"'
+                  description: 'A friendly, conversational explanation of what the API call will do and what the user can expect. Use natural language and be encouraging. Examples: "I\'ll help you find all active items from your API" or "Let me retrieve the latest data for you"'
                 },
                 suggestedAction: {
                   type: 'string',
-                  description: 'A helpful suggestion for what the user can do next with the API response data. Be specific and actionable. Examples: "You can now create workflows using this data" or "Try filtering for specific pets by status"'
+                  description: 'A helpful suggestion for what the user can do next with the API response data. Be specific and actionable. Examples: "You can now create workflows using this data" or "Try filtering for specific items by status"'
                 }
               },
-              required: ['intent', 'explanation']
+              required: ['intent', 'explanation', 'parameters']
             }
           }
         ],
         function_call: { name: 'execute_api_call' },
-        temperature: 0.1,
+        temperature: 0.3,
         max_tokens: 1000
       });
 
@@ -543,14 +530,117 @@ Please execute the appropriate API call and return the result.`;
 
       const result = JSON.parse(functionCall.arguments);
       
+      // Debug logging to see what the AI chose
+      console.log('🔍 DEBUG: AI chose endpoint:', {
+        method: result.method,
+        url: result.url,
+        connectionId: result.connectionId,
+        parameters: result.parameters,
+        intent: result.intent,
+        explanation: result.explanation
+      });
+      console.log('🔍 DEBUG: User message:', request.message);
+      console.log('🔍 DEBUG: Available connections:', request.availableConnections.length);
+      
+      
+      // FALLBACK: If AI didn't include parameters but should have, add them manually
+      // This is a generic fallback that works with any API by analyzing the endpoint parameters
+      if ((!result.parameters || Object.keys(result.parameters).length === 0) && result.intent === 'api_call' && result.connectionId && result.url) {
+        const connection = request.availableConnections.find(conn => conn.id === result.connectionId);
+        if (connection) {
+          const endpoint = connection.endpoints?.find((ep: any) => 
+            ep.path === result.url && ep.method?.toUpperCase() === (result.method || 'GET').toUpperCase()
+          );
+          
+          if (endpoint && endpoint.parameters && endpoint.parameters.length > 0) {
+            const userMessage = request.message.toLowerCase();
+            const fallbackParams: Record<string, any> = {};
+            
+            // Generic parameter extraction based on natural language mappings
+            endpoint.parameters.forEach((param: any) => {
+              if (param.naturalLanguageMappings && param.naturalLanguageMappings.length > 0) {
+                const mappings = param.naturalLanguageMappings.map((m: string) => m.toLowerCase());
+                const foundMapping = mappings.find((mapping: string) => userMessage.includes(mapping));
+                if (foundMapping) {
+                  // For status parameters, use the actual value from the user message, not the mapping word
+                  if (param.name === 'status') {
+                    // Look for specific status values in the user message
+                    if (userMessage.includes('available')) {
+                      fallbackParams[param.name] = 'available';
+                    } else if (userMessage.includes('pending')) {
+                      fallbackParams[param.name] = 'pending';
+                    } else if (userMessage.includes('sold')) {
+                      fallbackParams[param.name] = 'sold';
+                    } else {
+                      // Default to available if no specific status mentioned
+                      fallbackParams[param.name] = 'available';
+                    }
+                  } else if (param.name === 'petId' && param.in === 'path') {
+                    // For path parameters like petId, extract the ID from the user message
+                    const idMatch = userMessage.match(/\b(\d+)\b/);
+                    if (idMatch) {
+                      fallbackParams[param.name] = idMatch[1];
+                    }
+                  } else {
+                    // For other parameters, use the mapping word as the value
+                    fallbackParams[param.name] = foundMapping;
+                  }
+                }
+              }
+            });
+            
+            if (Object.keys(fallbackParams).length > 0) {
+              result.parameters = fallbackParams;
+              console.log('🔍 DEBUG: Added fallback parameters:', result.parameters);
+            }
+          }
+        }
+      }
+      
+      // Debug available connections
+      console.log('🔍 DEBUG: Available connection IDs:', request.availableConnections.map(conn => conn.id));
+      console.log('🔍 DEBUG: AI selected connection ID:', result.connectionId);
+      
       // Validate connection ID
       if (result.intent === 'api_call' && result.connectionId) {
         const validConnectionIds = new Set(request.availableConnections.map(conn => conn.id));
         if (!validConnectionIds.has(result.connectionId)) {
+          console.log('🔍 DEBUG: Invalid connection ID detected!');
+          console.log('🔍 DEBUG: AI selected:', result.connectionId);
+          console.log('🔍 DEBUG: Valid IDs:', Array.from(validConnectionIds));
           return {
             success: false,
             error: 'Invalid connection ID provided by AI'
           };
+        }
+      }
+
+      // If this is an API call, enhance parameter extraction using AI
+      if (result.intent === 'api_call' && result.connectionId && result.url) {
+        try {
+          const enhancedParams = await this.enhanceParameterExtraction(
+            request.message,
+            result.connectionId,
+            result.url,
+            result.method || 'GET',
+            request.availableConnections,
+            request.context
+          );
+          
+          if (enhancedParams && Object.keys(enhancedParams).length > 0) {
+            console.log('🔍 DEBUG: Using enhanced parameters');
+            console.log('🔍 DEBUG: Original parameters:', result.parameters);
+            console.log('🔍 DEBUG: Enhanced parameters:', enhancedParams);
+            result.parameters = enhancedParams;
+            logInfo('Enhanced parameter extraction completed', {
+              originalParams: result.parameters,
+              enhancedParams: enhancedParams
+            });
+          } else {
+            console.log('🔍 DEBUG: Enhanced parameters empty, keeping fallback parameters:', result.parameters);
+          }
+        } catch (error) {
+          logError('Parameter enhancement failed, using original parameters', error as Error);
         }
       }
 
@@ -562,7 +652,19 @@ Please execute the appropriate API call and return the result.`;
 
       return {
         success: true,
-        data: result
+        data: {
+          intent: result.intent,
+          apiCallResult: result.intent === 'api_call' ? {
+            method: result.method || 'GET', // Default to GET if method is undefined
+            url: result.url,
+            parameters: result.parameters,
+            requestBody: result.requestBody,
+            headers: result.headers,
+            connectionId: result.connectionId
+          } : undefined,
+          explanation: result.explanation,
+          suggestedAction: result.suggestedAction
+        }
       };
 
     } catch (error) {
@@ -589,7 +691,7 @@ Please execute the appropriate API call and return the result.`;
               ).join(', ')}`
             : '';
           
-          return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}${paramInfo}`;
+          return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || endpoint.description || 'No description'}${paramInfo}`;
         } catch (error) {
           console.error('Failed to enhance endpoint:', error);
           return `- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}`;
@@ -601,8 +703,13 @@ ${endpointsInfo}`;
     }));
 
     const connectionsText = connectionsInfo.join('\n\n');
+    
+    // Debug logging to see what endpoints are being provided
+    console.log('🔍 DEBUG: Available endpoints for AI:', JSON.stringify(connectionsInfo, null, 2));
 
     return `You are a friendly AI assistant that helps users execute API calls through natural language. Be conversational, encouraging, and helpful.
+
+CRITICAL EXAMPLE: If a user says "Get all available items" and you have an endpoint "/items/findByStatus" with a "status" parameter that accepts "available", you MUST include parameters: {"status": "available"} in your response.
 
 Available API Connections:
 ${connectionsText}
@@ -610,30 +717,57 @@ ${connectionsText}
 Your task is to:
 1. Analyze the user's message to determine their intent
 2. If they want to execute an API call, determine the appropriate endpoint and parameters
-   - CRITICAL: Always extract parameters from the user's natural language
-   - Look for words like "status", "available", "sold", "pending", "ID", "123", etc.
-   - Map them to the correct parameter names in the parameters object
+   - CRITICAL: Carefully analyze ALL available endpoints listed above to find the best match
+   - Look for endpoints that match the user's intent (GET for retrieving data, POST for creating, PUT for updating, DELETE for removing)
+   - For "get all" or "find" requests, look for endpoints with "find", "list", "get", or "search" in the path or description
+   - For specific item requests, look for endpoints with path parameters like {id}, {petId}, etc.
+   - CRITICAL: Extract parameters from the user's natural language and map them to the actual parameter names from the chosen endpoint
+   - CRITICAL: Use the natural language mappings provided for each parameter to understand what the user means
+   - CRITICAL: When the user mentions filtering words (like "available", "pending", "sold", "active", etc.), ALWAYS include them as parameters
+   - Only include parameters that are actually available for the chosen endpoint
+   - CRITICAL: Always include the connectionId from the available connections above
+   - CRITICAL: Choose the endpoint that best matches the user's intent, not just the first one listed
 3. If they want to create a workflow, suggest workflow creation instead
 4. If it's general chat, respond conversationally
 
 Intent Detection:
-- "Get all pets", "Show me users", "Add a new pet", "Find pets with status available" → api_call
+- "Get all users", "Show me data", "Add a new record", "Find items with status active" → api_call
+- "Now get all sold pets", "Get me the pending items", "Show me different status" → api_call (NEW API CALL)
 - "Create a workflow that...", "Build an automation that..." → workflow_creation  
 - "Hello", "How are you?", "What can you do?" → general_chat
 
+CRITICAL: When a user asks for data with different parameters (like "sold pets" after getting "available pets"), this is ALWAYS a new API call request, not a follow-up question. Always make a new API call when the user requests different data or different parameters.
+
+Endpoint Selection Examples:
+- "Get all items" or "Show me data" → Look for GET endpoints like "/items", "/users", "/products"
+- "Find items that are active" → Look for GET endpoints with status parameters like "/items/findByStatus"
+- "Get item with ID 123" → Look for GET endpoints with path parameters like "/items/{id}" or "/items/123"
+- "Add a new item" → Look for POST endpoints like "/items", "/users", "/products"
+- "Update item 123" → Look for PUT endpoints like "/items" or "/items/{id}"
+- "Delete item 123" → Look for DELETE endpoints like "/items/{id}"
+
 Parameter Extraction Examples:
-- "Find pets with status available" → parameters: {"status": "available"}
-- "Find pets with status sold" → parameters: {"status": "sold"}
-- "Get pet by ID 123" → parameters: {"petId": "123"}
-- "Find pets by tags" → parameters: {"tags": "tag1,tag2"}
+- "Get all items" → parameters: {} (no parameters needed, only if no filtering is specified)
+- "Show me all users" → parameters: {} (no parameters needed)
+- "Find items with status active" → parameters: {"status": "active"}
+- "Find items with status inactive" → parameters: {"status": "inactive"}
+- "Get available items" → parameters: {"status": "available"}
+- "Get all available items" → parameters: {"status": "available"}
+- "Show me pending items" → parameters: {"status": "pending"}
+- "Find sold items" → parameters: {"status": "sold"}
+- "Get item by ID 123" → parameters: {"id": "123"}
+- "Find items by category" → parameters: {"category": "electronics"}
+- "Search for users by email" → parameters: {"email": "user@example.com"}
+- "Filter products by price range" → parameters: {"minPrice": "100", "maxPrice": "500"}
+
+CRITICAL: When a user mentions words that match parameter natural language mappings (like "available", "pending", "sold"), ALWAYS include those as parameters even if they say "get all". The key is to look for filtering words in the user's message.
 
 For API calls:
-- Use the most appropriate endpoint from available connections
+- CRITICAL: Analyze ALL available endpoints and choose the one that best matches the user's intent
+- Use the most appropriate endpoint from available connections (not just the first one)
 - ALWAYS use the exact connection ID provided in the connection info above
 - Extract parameters from the user's natural language and map them to the correct parameter names
 - For query parameters, look for words like "status", "id", "name", "email", etc. in the user's message
-- For example: "Find pets with status available" → parameters: {"status": "available"}
-- For example: "Get user by ID 123" → parameters: {"id": "123"}
 - Choose the correct HTTP method based on the action
 - Provide friendly, conversational explanations that make the user feel confident
 
@@ -667,9 +801,121 @@ Always be helpful, friendly, and provide clear next steps.`;
           prompt += `\n   Response: ${JSON.stringify(result.responseData).substring(0, 200)}...`;
         }
       });
+      
+      prompt += `\n\nIMPORTANT: If the user is asking for different data or different parameters (like "sold pets" after getting "available pets"), this is a NEW API call request. Do NOT just respond with the previous data - make a new API call with the different parameters.`;
     }
 
     return prompt;
+  }
+
+  /**
+   * Enhance parameter extraction using AI parameter extraction service
+   */
+  private async enhanceParameterExtraction(
+    message: string,
+    connectionId: string,
+    url: string,
+    method: string,
+    availableConnections: any[],
+    context: any[] = []
+  ): Promise<Record<string, any> | null> {
+    try {
+      // Find the connection and endpoint
+      const connection = availableConnections.find(conn => conn.id === connectionId);
+      if (!connection) {
+        logError('Connection not found for parameter enhancement', new Error('Connection not found'), { connectionId });
+        return null;
+      }
+
+      const endpoint = connection.endpoints?.find((ep: any) => 
+        ep.path === url && ep.method?.toUpperCase() === method.toUpperCase()
+      );
+      
+      if (!endpoint) {
+        logError('Endpoint not found for parameter enhancement', new Error('Endpoint not found'), { 
+          connectionId, 
+          url, 
+          method 
+        });
+        return null;
+      }
+
+      // Enhance the endpoint with parameter intelligence
+      const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint, this);
+      
+      // Build context for parameter extraction
+      const contextForExtraction = this.buildContextForParameterExtraction(context, message);
+      
+      // Use AI parameter extraction service
+      const aiExtractionService = new AIParameterExtractionService(this);
+      const extractionResult = await aiExtractionService.extractParametersFromNaturalLanguage(
+        message,
+        enhancedEndpoint,
+        { conversationHistory: context }
+      );
+
+      logInfo('AI parameter extraction completed', {
+        message: message.substring(0, 100),
+        endpointId: endpoint.id,
+        extractedCount: Object.keys(extractionResult.parameters).length,
+        confidence: extractionResult.confidence,
+        mappings: extractionResult.mappings.length,
+        contextUsed: Object.keys(contextForExtraction).length
+      });
+
+      return extractionResult.parameters;
+
+    } catch (error) {
+      logError('Failed to enhance parameter extraction', error as Error, {
+        message: message.substring(0, 100),
+        connectionId,
+        url,
+        method
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Build context for parameter extraction from conversation history
+   */
+  private buildContextForParameterExtraction(context: any[], currentMessage: string): Record<string, any> {
+    const contextData: Record<string, any> = {
+      conversationHistory: context,
+      currentMessage,
+      extractedValues: {},
+      previousApiCalls: []
+    };
+
+    // Extract values from previous API calls in context
+    context.forEach((item, index) => {
+      if (item.type === 'direct_api_call' && item.apiCallResult) {
+        contextData.previousApiCalls.push({
+          index,
+          method: item.apiCallResult.method,
+          url: item.apiCallResult.url,
+          parameters: item.apiCallResult.parameters,
+          responseData: item.apiCallResult.responseData
+        });
+
+        // Extract useful values from previous responses
+        if (item.apiCallResult.responseData) {
+          const responseData = item.apiCallResult.responseData;
+          if (Array.isArray(responseData) && responseData.length > 0) {
+            // Extract IDs from previous responses
+            responseData.forEach((item: any) => {
+              if (item.id) {
+                contextData.extractedValues[`previous_${item.id}`] = item;
+              }
+            });
+          } else if (responseData.id) {
+            contextData.extractedValues[`previous_${responseData.id}`] = responseData;
+          }
+        }
+      }
+    });
+
+    return contextData;
   }
 
   /**
