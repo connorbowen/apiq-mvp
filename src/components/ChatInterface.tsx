@@ -16,7 +16,7 @@ interface Message {
   isExecuted?: boolean;
   executionResult?: any;
   // Direct API call properties
-  intent?: 'api_call' | 'workflow_creation' | 'general_chat';
+  intent?: 'api_call' | 'workflow_creation' | 'general_chat' | 'connection_guidance';
   apiCallResult?: {
     method: string;
     url: string;
@@ -177,7 +177,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         content: response.data.content,
         timestamp: new Date(),
         intent: response.data.type === 'workflow' ? 'workflow_creation' : 
-                response.data.type === 'direct_api_call' ? 'api_call' : 'general_chat',
+                response.data.type === 'direct_api_call' ? 'api_call' : 
+                response.data.type || 'general_chat',
         workflow: response.data.workflow ? {
           ...response.data.workflow,
           isSaved: false
@@ -187,6 +188,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         connectionGuidance: response.data.connectionGuidance,
         suggestedAction: response.data.suggestedAction
       };
+
+      // Debug logging for connection guidance
+      if (response.data.type === 'connection_guidance') {
+        console.log('🔍 ChatInterface: Connection guidance detected:', {
+          type: response.data.type,
+          connectionGuidance: response.data.connectionGuidance,
+          requiresGuidance: response.data.connectionGuidance?.requiresGuidance,
+          missingApis: response.data.connectionGuidance?.missingApis?.length || 0
+        });
+        
+        // Debug the message object being created
+        console.log('🔍 ChatInterface: Creating message with connection guidance:', {
+          intent: assistantMessage.intent,
+          connectionGuidance: assistantMessage.connectionGuidance,
+          requiresGuidance: assistantMessage.connectionGuidance?.requiresGuidance
+        });
+      }
 
       // Create formatted response for API call results
       if (response.data.apiCallResult) {
@@ -287,6 +305,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     setShowConnectionSetup(true);
   }, []);
 
+  const handleSetupConnection = useCallback((api: any) => {
+    setConnectionSetupApi(api);
+    setShowConnectionSetup(true);
+  }, []);
+
   const handleCancelConnectionSetup = useCallback(() => {
     setShowConnectionSetup(false);
     setConnectionSetupApi(null);
@@ -298,7 +321,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
 
     setIsSavingConnection(true);
     try {
-      const response = await fetch('/api/connections', {
+      // First, create the connection
+      const connectionResponse = await fetch('/api/connections', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -307,16 +331,39 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
           description: connectionSetupApi.description,
           authType: connectionSetupApi.authType,
           baseUrl: connectionSetupApi.baseUrl,
-          credentials
+          documentationUrl: connectionSetupApi.documentationUrl
         })
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to save connection');
+      if (!connectionResponse.ok) {
+        const error = await connectionResponse.json();
+        throw new Error(error.message || 'Failed to create connection');
       }
 
-      const result = await response.json();
+      const connection = await connectionResponse.json();
+      
+      // Then, add the secrets/credentials
+      if (Object.keys(credentials).length > 0) {
+        for (const [key, value] of Object.entries(credentials)) {
+          const secretResponse = await fetch(`/api/connections/${connection.data.id}/secrets`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: key,
+              value: value,
+              type: connectionSetupApi.authType,
+              description: `${connectionSetupApi.displayName} ${key}`,
+              enableRotation: false
+            })
+          });
+
+          if (!secretResponse.ok) {
+            const error = await secretResponse.json();
+            console.error('Failed to save secret:', error);
+            // Continue with other secrets even if one fails
+          }
+        }
+      }
       
       // Close the setup form
       setShowConnectionSetup(false);
@@ -630,11 +677,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-medium text-blue-900 mb-2">
-                        {message.connectionGuidance.guidanceMessage}
+                        {message.connectionGuidance?.guidanceMessage}
                       </h4>
                       
                       {/* Error state for connection guidance */}
-                      {message.connectionGuidance.error && (
+                      {message.connectionGuidance?.error && (
                         <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3" data-testid="connection-guidance-error">
                           <div className="flex items-start">
                             <div className="flex-shrink-0">
@@ -643,18 +690,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                               </svg>
                             </div>
                             <div className="ml-2">
-                              <p className="text-sm text-red-800">{message.connectionGuidance.error}</p>
+                              <p className="text-sm text-red-800">{message.connectionGuidance?.error}</p>
                             </div>
                           </div>
                         </div>
                       )}
                       
                       {/* Missing APIs list */}
-                      {message.connectionGuidance.missingApis.length > 0 && (
+                      {message.connectionGuidance?.missingApis && message.connectionGuidance.missingApis.length > 0 && (
                         <div className="mb-3">
                           <div className="text-xs font-medium text-blue-800 mb-2">Missing API connections:</div>
                           <div className="space-y-2" data-testid="missing-apis-list">
-                            {message.connectionGuidance.missingApis.map((api, index) => (
+                            {message.connectionGuidance?.missingApis?.map((api, index) => (
                               <div key={index} className="flex items-center space-x-2 p-2 bg-white rounded border border-blue-100" data-testid={`api-suggestion-${api.displayName}`}>
                                 <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                                   <span className="text-blue-600 font-medium text-xs">{index + 1}</span>
@@ -673,13 +720,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                       )}
 
                       {/* Setup instructions */}
-                      {message.connectionGuidance.setupInstructions && (
+                      {message.connectionGuidance?.setupInstructions && (
                         <div className="mb-3">
                           <div className="text-xs font-medium text-blue-800 mb-2">
-                            {message.connectionGuidance.setupInstructions.title}:
+                            {message.connectionGuidance?.setupInstructions?.title}:
                           </div>
                           <div className="space-y-1" data-testid="connection-instructions">
-                            {message.connectionGuidance.setupInstructions.steps.map((step, index) => (
+                            {message.connectionGuidance?.setupInstructions?.steps?.map((step, index) => (
                               <div key={index} className="flex items-start space-x-2 text-xs text-gray-700" data-testid={`instruction-step-${index + 1}`}>
                                 <div className="flex-shrink-0 w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
                                   <span className="text-blue-600 font-medium text-xs">{index + 1}</span>
@@ -695,7 +742,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                       <div className="space-y-2">
                         {/* Individual API setup buttons */}
                         <div className="space-y-1">
-                          {message.connectionGuidance.missingApis.map((api, index) => (
+                          {message.connectionGuidance?.missingApis?.map((api, index) => (
                             <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                               <div className="flex-1">
                                 <div className="text-sm font-medium text-gray-900">{api.displayName}</div>
@@ -704,7 +751,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                               <button
                                 onClick={() => handleStartConnectionSetup(api, message.id)}
                                 className="ml-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                                data-testid={`setup-in-chat-${api.name}`}
+                                data-testid={`setup-in-chat-${api.name.toLowerCase()}`}
+                                data-primary-action={`setup-in-chat-${api.name.toLowerCase()}`}
                               >
                                 Set up in Chat
                               </button>
@@ -729,7 +777,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                         </div>
                         
                         {/* Recovery options */}
-                        {message.connectionGuidance.error && (
+                        {message.connectionGuidance?.error && (
                           <div className="mt-3 pt-3 border-t border-gray-200" data-testid="recovery-options">
                             <div className="flex flex-wrap gap-2">
                               <button

@@ -498,7 +498,7 @@ function ConnectionsTab({
         ) : (
           <ul className="divide-y divide-gray-200 overflow-y-auto max-h-full connections-list overflow-container">
             {filteredConnections.map((connection) => (
-              <li key={connection.id} data-testid="connection-card" data-connection-id={connection.id}>
+              <li key={connection.id} data-testid={`connection-card-${connection.id}`} data-connection-id={connection.id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">

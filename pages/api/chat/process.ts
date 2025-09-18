@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { ParallelAIService } from '../../../src/lib/services/parallelAIService';
+import { ConnectionGuidanceService } from '../../../src/lib/services/connectionGuidanceService';
 import { errorHandler } from '../../../src/middleware/errorHandler';
 import { prisma } from '../../../lib/database/client';
 import axios from 'axios';
@@ -184,27 +185,42 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
     // Use optimized parallel AI service
     const parallelAIService = new ParallelAIService(process.env.OPENAI_API_KEY!);
     
-    // Handle case with no connections
-    if (connections.length === 0) {
-      console.log('🤖 AI Orchestrator: No connections available, providing guidance');
-      const connectionGuidance = {
-        requiresGuidance: true,
-        missingApis: [{
-          name: 'notification',
-          displayName: 'Notification Service',
-          description: 'A service to send notifications when events occur',
-          authType: 'API_KEY',
-          setupInstructions: {
-            step1: 'Choose a notification service (Slack, Discord, Email, etc.)',
-            step2: 'Get API credentials from the service',
-            step3: 'Add the connection in APIQ'
-          }
-        }],
+    // Check if connection guidance is needed (regardless of whether connections exist)
+    console.log('🔍 Process endpoint: Checking connection guidance for message:', message);
+    console.log('🔍 Process endpoint: Available connections:', connections.map(conn => ({ name: conn.name, id: conn.id })));
+    
+    let connectionGuidance;
+    try {
+      connectionGuidance = await ConnectionGuidanceService.analyzeRequest(
+        message,
+        connections.map(conn => ({ 
+          name: conn.name, 
+          id: conn.id,
+          baseUrl: conn.baseUrl,
+          endpoints: conn.endpoints.map(endpoint => ({
+            path: endpoint.path,
+            method: endpoint.method,
+            summary: endpoint.summary || ''
+          }))
+        }))
+      );
+    } catch (error) {
+      console.error('🔍 Process endpoint: Connection guidance error:', error);
+      // Continue with normal processing if guidance fails
+      connectionGuidance = {
+        requiresGuidance: false,
+        missingApis: [],
         suggestedConnections: [],
-        guidanceMessage: 'To create workflows that send notifications, you\'ll need to connect to a notification service first. Please go to the Connections tab and add an API connection for your preferred notification service (like Slack, Discord, or email).',
-        redirectToConnections: true
+        guidanceMessage: ''
       };
-      
+    }
+
+    console.log('🔍 Process endpoint: Connection guidance result:', connectionGuidance);
+
+    // If connection guidance is needed, return guidance instead of processing
+    if (connectionGuidance.requiresGuidance) {
+      console.log('→ Connection guidance needed for:', connectionGuidance.missingApis.map(api => api.displayName));
+      console.log('🔍 Process endpoint: Returning connection guidance response');
       return res.status(200).json({
         success: true,
         data: {
@@ -213,6 +229,8 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
           connectionGuidance: connectionGuidance
         }
       });
+    } else {
+      console.log('🔍 Process endpoint: No connection guidance needed, proceeding with normal processing');
     }
 
     // Process with parallel AI service

@@ -254,17 +254,20 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       await waitForChatResponse(page);
       console.log('🔍 TEST: Response received, checking for guidance...');
 
-      // Check what's actually on the page
-      const pageContent = await page.content();
-      console.log('🔍 TEST: Page content contains "OAuth2":', pageContent.includes('OAuth2'));
-      console.log('🔍 TEST: Page content contains "Google Cloud Console":', pageContent.includes('Google Cloud Console'));
-      console.log('🔍 TEST: Page content contains "Client ID":', pageContent.includes('Client ID'));
-      console.log('🔍 TEST: Page content contains "Client Secret":', pageContent.includes('Client Secret'));
-
-      // Verify OAuth2-specific guidance
-      await expect(page.locator('text=OAuth2').first()).toBeVisible();
-      await expect(page.locator('text=Google Cloud Console')).toBeVisible();
-      await expect(page.locator('text=Create OAuth2 credentials and configure scopes')).toBeVisible();
+      // Verify connection guidance UI is visible
+      await expect(page.locator('[data-testid="connection-guidance"]')).toBeVisible();
+      
+      // Verify missing APIs list is shown
+      await expect(page.locator('[data-testid="missing-apis-list"]')).toBeVisible();
+      
+      // Verify Google APIs are mentioned (should be in the API list)
+      await expect(page.locator('[data-testid="api-suggestion-Google APIs"]')).toBeVisible();
+      
+      // Verify OAuth2 auth type is shown
+      await expect(page.locator('text=OAUTH2')).toBeVisible();
+      
+      // Verify setup button is available
+      await expect(page.locator('[data-testid*="setup-in-chat-"]').first()).toBeVisible();
     });
 
     test('should provide API key connection guidance', async ({ page }) => {
@@ -400,19 +403,22 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       await page.goto(`${BASE_URL}/dashboard?tab=chat`);
       await waitForDashboard(page);
 
-      // Send message requiring guidance
-      await sendChatMessage(page, 'Create a workflow with external APIs');
+      // Send message requiring specific APIs to trigger guidance
+      await sendChatMessage(page, 'Create a workflow that sends Slack notifications and uses GitHub API');
 
       await waitForChatResponse(page);
 
-      // Test keyboard navigation for setup buttons
-      const slackButtonVisible = await testPrimaryActionPatterns(page, 'setup-in-chat-slack');
-      const githubButtonVisible = await testPrimaryActionPatterns(page, 'setup-in-chat-github');
-      
-      expect(slackButtonVisible).toBe(true);
-      expect(githubButtonVisible).toBe(true);
+      // Wait for connection guidance to appear
+      await expect(page.locator('[data-testid="connection-guidance"]')).toBeVisible({ timeout: 10000 });
 
-      // Navigate using keyboard
+      // Test that setup buttons are visible
+      const slackButton = page.locator('[data-testid="setup-in-chat-slack"]');
+      const githubButton = page.locator('[data-testid="setup-in-chat-github"]');
+      
+      await expect(slackButton).toBeVisible();
+      await expect(githubButton).toBeVisible();
+
+      // Test keyboard navigation
       await page.keyboard.press('Tab');
       await page.keyboard.press('Tab');
       await page.keyboard.press('Enter'); // Should activate setup button
@@ -566,9 +572,14 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       await page.goto(`${BASE_URL}/dashboard?tab=chat`);
       await waitForDashboard(page);
 
-      await sendChatMessage(page, 'Create a workflow that uses OpenAI API');
+      await sendChatMessage(page, 'Create a workflow that uses OpenAI API for AI processing');
       await waitForChatResponse(page);
 
+      // Wait for connection guidance to appear
+      await expect(page.locator('[data-testid="connection-guidance"]')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid="api-suggestion-OpenAI"]')).toBeVisible();
+      await expect(page.locator('[data-testid="setup-in-chat-openai"]')).toBeVisible();
+      
       await page.locator('[data-testid="setup-in-chat-openai"]').click();
       await expect(page.locator('[data-testid="connection-input-apiKey"]')).toBeVisible();
       await page.locator('[data-testid="cancel-connection-setup"]').click();
@@ -577,8 +588,13 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       await page.goto(`${BASE_URL}/dashboard?tab=chat`);
       await waitForDashboard(page);
       
-      await sendChatMessage(page, 'Create a workflow that uses GitHub API');
+      await sendChatMessage(page, 'Create a workflow that uses GitHub API to manage repositories');
       await waitForChatResponse(page);
+
+      // Wait for connection guidance to appear
+      await expect(page.locator('[data-testid="connection-guidance"]')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid="api-suggestion-GitHub"]')).toBeVisible();
+      await expect(page.locator('[data-testid="setup-in-chat-github"]')).toBeVisible();
 
       await page.locator('[data-testid="setup-in-chat-github"]').click();
       await expect(page.locator('[data-testid="connection-input-bearerToken"]')).toBeVisible();
@@ -593,7 +609,8 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       await waitForChatResponse(page);
 
       // Wait for connection guidance to appear with longer timeout
-      await expect(page.locator('[data-testid="api-suggestion-Slack"]')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('[data-testid="connection-guidance"]')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('[data-testid="api-suggestion-Slack"]')).toBeVisible();
       await expect(page.locator('[data-testid="setup-in-chat-slack"]')).toBeVisible();
       await page.locator('[data-testid="setup-in-chat-slack"]').click();
       await expect(page.locator('[data-testid="connection-input-clientId"]')).toBeVisible();

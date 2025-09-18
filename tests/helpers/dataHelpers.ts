@@ -38,12 +38,17 @@ export const createTestData = async (options: TestDataOptions = {}): Promise<{
   let workflow: { id: string; name: string; description: string; userId: string } | undefined;
 
   if (options.user) {
-    user = await createTestUser(
-      options.user.email,
-      options.user.password,
-      options.user.role,
-      options.user.name
-    );
+    // If user already has an ID, use it; otherwise create a new user
+    if (options.user.id) {
+      user = options.user as TestUser;
+    } else {
+      user = await createTestUser(
+        options.user.email,
+        options.user.password,
+        options.user.role,
+        options.user.name
+      );
+    }
   }
   if (options.connection && user) {
     connection = await createTestConnection(

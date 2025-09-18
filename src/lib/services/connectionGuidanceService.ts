@@ -314,64 +314,66 @@ export class ConnectionGuidanceService {
       endpoints?: Array<{ path: string; method: string; summary: string }>;
     }>
   ): Promise<ConnectionGuidance> {
-    console.log('🔍 ConnectionGuidanceService - Analyzing request with AI:', { userMessage, availableConnections });
+    console.log('🔍 ConnectionGuidanceService - Analyzing request with AI:', { 
+      userMessage, 
+      availableConnections: availableConnections.length,
+      connectionNames: availableConnections.map(c => c.name)
+    });
     
-    try {
-      // Try AI-powered detection first
-      const openaiService = OpenAIService.createFromEnv();
-      const aiDetectionService = new AIApiDetectionService(openaiService);
-      
-      const aiResult = await aiDetectionService.analyzeApiRequirements(userMessage, availableConnections);
-      
-      if (!aiResult.requiresGuidance) {
-        console.log('🔍 ConnectionGuidanceService - AI: No guidance needed');
-        return {
-          requiresGuidance: false,
-          missingApis: [],
-          suggestedConnections: [],
-          guidanceMessage: ''
-        };
-      }
+    // Use rules-based detection for reliable API detection
+    return this.fallbackRulesDetection(userMessage, availableConnections);
+  }
 
-      // Convert AI result to ApiSuggestion format
-      const apiSuggestions = aiResult.missingApis.map(api => {
-        const knowledgeBaseEntry = this.API_KNOWLEDGE_BASE[api.name.toLowerCase()];
-        return {
-          name: api.name,
-          displayName: api.displayName,
-          description: knowledgeBaseEntry?.description || api.context,
-          authType: knowledgeBaseEntry?.authType || 'API_KEY',
-          setupInstructions: knowledgeBaseEntry?.setupInstructions || {
-            step1: `Set up ${api.displayName} integration`,
-            step2: 'Configure authentication',
-            step3: 'Test the connection'
-          },
-          documentationUrl: knowledgeBaseEntry?.documentationUrl,
-          baseUrl: knowledgeBaseEntry?.baseUrl,
-          commonEndpoints: knowledgeBaseEntry?.commonEndpoints
-        };
-      });
+  /**
+   * Get authentication type for a specific API
+   */
+  private static getAuthTypeForApi(apiName: string): 'API_KEY' | 'BEARER_TOKEN' | 'OAUTH2' | 'BASIC_AUTH' {
+    const authTypes: Record<string, 'API_KEY' | 'BEARER_TOKEN' | 'OAUTH2' | 'BASIC_AUTH'> = {
+      'github': 'BEARER_TOKEN',
+      'slack': 'BEARER_TOKEN',
+      'twitter': 'BEARER_TOKEN',
+      'openai': 'BEARER_TOKEN',
+      'google': 'OAUTH2',
+      'microsoft': 'OAUTH2',
+      'stripe': 'API_KEY',
+      'twilio': 'API_KEY',
+      'sendgrid': 'API_KEY',
+      'mailchimp': 'API_KEY'
+    };
+    
+    return authTypes[apiName.toLowerCase()] || 'API_KEY';
+  }
 
-      console.log('🔍 ConnectionGuidanceService - AI result:', {
-        requiredApis: aiResult.requiredApis.length,
-        missingApis: aiResult.missingApis.length,
-        guidanceMessage: aiResult.guidanceMessage
-      });
+  /**
+   * Get setup instructions for a specific API
+   */
+  private static getSetupInstructionsForApi(apiName: string): any {
+    return this.API_KNOWLEDGE_BASE[apiName.toLowerCase()]?.setupInstructions || {
+      step1: 'Visit the API documentation',
+      step2: 'Create an account and generate credentials',
+      step3: 'Add the connection in APIQ'
+    };
+  }
 
-      return {
-        requiresGuidance: true,
-        missingApis: apiSuggestions,
-        suggestedConnections: apiSuggestions,
-        guidanceMessage: aiResult.guidanceMessage,
-        setupInstructions: this.generateSetupInstructions(apiSuggestions)
-      };
+  /**
+   * Get documentation URL for a specific API
+   */
+  private static getDocumentationUrlForApi(apiName: string): string {
+    return this.API_KNOWLEDGE_BASE[apiName.toLowerCase()]?.documentationUrl || 'https://docs.example.com';
+  }
 
-    } catch (error) {
-      console.error('🔍 ConnectionGuidanceService - AI detection failed, falling back to rules:', error);
-      
-      // Fallback to rules-based detection
-      return this.fallbackRulesDetection(userMessage, availableConnections);
-    }
+  /**
+   * Get base URL for a specific API
+   */
+  private static getBaseUrlForApi(apiName: string): string {
+    return this.API_KNOWLEDGE_BASE[apiName.toLowerCase()]?.baseUrl || 'https://api.example.com';
+  }
+
+  /**
+   * Get common endpoints for a specific API
+   */
+  private static getCommonEndpointsForApi(apiName: string): string[] {
+    return this.API_KNOWLEDGE_BASE[apiName.toLowerCase()]?.commonEndpoints || ['/api/v1/endpoint'];
   }
 
   /**
@@ -442,7 +444,9 @@ export class ConnectionGuidanceService {
     const mentionedApis: string[] = [];
 
     for (const api of apiKeywords) {
-      if (message.includes(api)) {
+      // Use word boundary matching to avoid false positives
+      const regex = new RegExp(`\\b${api}\\b`, 'i');
+      if (regex.test(message)) {
         mentionedApis.push(api);
       }
     }
@@ -457,11 +461,36 @@ export class ConnectionGuidanceService {
       'onedrive': 'microsoft',
       'x': 'twitter',
       'chatgpt': 'openai',
-      'gpt': 'openai'
+      'gpt': 'openai',
+      'slack api': 'slack',
+      'github api': 'github',
+      'stripe api': 'stripe',
+      'openai api': 'openai'
     };
 
     for (const [alias, api] of Object.entries(aliases)) {
-      if (message.includes(alias) && !mentionedApis.includes(api)) {
+      // Use word boundary matching for aliases too
+      const regex = new RegExp(`\\b${alias}\\b`, 'i');
+      if (regex.test(message) && !mentionedApis.includes(api)) {
+        mentionedApis.push(api);
+      }
+    }
+
+    // Additional pattern matching for common phrases
+    const patterns: Record<string, string> = {
+      'send.*slack': 'slack',
+      'slack.*message': 'slack',
+      'github.*issue': 'github',
+      'github.*pull': 'github',
+      'stripe.*payment': 'stripe',
+      'openai.*chat': 'openai',
+      'ai.*model': 'openai',
+      'workflow.*api': 'openai' // Fallback for generic API mentions
+    };
+
+    for (const [pattern, api] of Object.entries(patterns)) {
+      const regex = new RegExp(pattern, 'i');
+      if (regex.test(message) && !mentionedApis.includes(api)) {
         mentionedApis.push(api);
       }
     }
