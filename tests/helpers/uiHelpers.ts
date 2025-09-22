@@ -114,9 +114,60 @@ export const waitForElement = async (
   selector: string,
   options: WaitOptions = {}
 ): Promise<void> => {
-  const { timeout = 5000, state = 'domcontentloaded' } = options;
+  const { timeout = 10000, state = 'domcontentloaded' } = options;
   await page.waitForLoadState(state);
-  await page.waitForSelector(selector, { timeout });
+  
+  // Wait for the element to be visible
+  await page.waitForSelector(selector, { state: 'visible', timeout });
+  
+  // Small wait to ensure the element is fully rendered
+  await page.waitForTimeout(200);
+};
+
+/**
+ * Wait specifically for API call result elements to be fully rendered
+ */
+export const waitForApiCallResult = async (
+  page: Page,
+  options: WaitOptions = {}
+): Promise<void> => {
+  const { timeout = 15000 } = options;
+  
+  try {
+    // Wait for the element to be present and visible
+    await page.waitForSelector('[data-testid="api-call-result"]', { 
+      state: 'visible', 
+      timeout: timeout 
+    });
+    
+    // Wait for the element to have content
+    await page.waitForFunction(() => {
+      const element = document.querySelector('[data-testid="api-call-result"]');
+      return element && element.textContent && element.textContent.trim().length > 0;
+    }, { timeout: 5000 });
+    
+    // Small wait to ensure React has finished rendering
+    await page.waitForTimeout(500);
+    
+  } catch (error) {
+    // If the element is not found, try a more aggressive approach
+    try {
+      // Wait for any element with data-testid that contains "api-call"
+      await page.waitForSelector('[data-testid*="api-call"]', { 
+        state: 'visible', 
+        timeout: 5000 
+      });
+      
+      // Wait for content
+      await page.waitForFunction(() => {
+        const element = document.querySelector('[data-testid*="api-call"]');
+        return element && element.textContent && element.textContent.trim().length > 0;
+      }, { timeout: 5000 });
+      
+    } catch (altError) {
+      throw new Error(`API call result element not found after ${timeout}ms. Error: ${altError instanceof Error ? altError.message : String(altError)}`);
+    }
+  }
 };
 
 /**
