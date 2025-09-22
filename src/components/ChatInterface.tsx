@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { apiClient } from '../lib/api/client';
 import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFormatter';
 import { ConnectionSetupForm } from './ConnectionSetupForm';
+import ConnectionGuidance from './ConnectionGuidance';
+import { createFormSubmissionHandler, createGlobalFormSubmissionFunction } from '../lib/utils/formSubmissionUtils';
 
 interface Message {
   id: string;
@@ -42,9 +44,9 @@ interface Message {
         step3: string;
         additionalNotes?: string;
       };
-      documentationUrl?: string;
-      baseUrl?: string;
-      commonEndpoints?: string[];
+      documentationUrl: string;
+      baseUrl: string;
+      commonEndpoints: string[];
     }>;
     suggestedConnections: Array<{
       name: string;
@@ -57,16 +59,13 @@ interface Message {
         step3: string;
         additionalNotes?: string;
       };
-      documentationUrl?: string;
-      baseUrl?: string;
-      commonEndpoints?: string[];
+      documentationUrl: string;
+      baseUrl: string;
+      commonEndpoints: string[];
     }>;
     guidanceMessage: string;
+    setupInstructions: Record<string, any>;
     error?: string;
-    setupInstructions?: {
-      title: string;
-      steps: string[];
-    };
   };
 }
 
@@ -92,11 +91,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   onWorkflowSaved,
 }) => {
   console.log('🔍 ChatInterface: Component mounting/rendering');
+  console.log('🔍 ChatInterface: Props:', { onWorkflowGenerated, onWorkflowSaved });
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [savingWorkflow, setSavingWorkflow] = useState<string | null>(null);
+
+  // Debug loading state changes
+  useEffect(() => {
+    console.log('🔍 ChatInterface: isLoading state changed to:', isLoading);
+  }, [isLoading]);
   const [executingWorkflow, setExecutingWorkflow] = useState<string | null>(null);
   
   // Connection setup state
@@ -116,18 +121,51 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   }, [messages, scrollToBottom]);
 
   // Auto-focus on chat input when component mounts
-  React.useEffect(() => {
+  React.  useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
   }, []);
 
+  // Force reset loading state as a backup mechanism
+  useEffect(() => {
+    const forceResetTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.log('🔍 ChatInterface: Force resetting isLoading via useEffect');
+        setIsLoading(false);
+      }
+    }, 15000); // 15 second force reset
+
+    return () => clearTimeout(forceResetTimeout);
+  }, [isLoading]);
+
+  // Additional aggressive backup mechanism
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isLoading) {
+        console.log('🔍 ChatInterface: Interval check - isLoading has been true for too long, forcing reset');
+        setIsLoading(false);
+      }
+    }, 8000); // Check every 8 seconds
+
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     console.log('🔍 ChatInterface: handleSubmit called');
+    console.log('🔍 ChatInterface: Event type:', e.type);
+    console.log('🔍 ChatInterface: Event target:', e.target);
+    console.log('🔍 ChatInterface: Event currentTarget:', e.currentTarget);
+    console.log('🔍 ChatInterface: Input message:', inputMessage);
+    console.log('🔍 ChatInterface: Is loading:', isLoading);
+    
     e.preventDefault();
+    e.stopPropagation();
     
     if (!inputMessage.trim() || isLoading) {
       console.log('🔍 ChatInterface: Early return - no message or loading');
+      console.log('🔍 ChatInterface: Message trim check:', !inputMessage.trim());
+      console.log('🔍 ChatInterface: Loading check:', isLoading);
       return;
     }
     
@@ -143,8 +181,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
+    console.log('🔍 ChatInterface: Setting isLoading to true');
     setIsLoading(true);
     setError('');
+
+    // Set multiple aggressive timeouts to ensure loading state is reset
+    const loadingTimeout1 = setTimeout(() => {
+      console.log('🔍 ChatInterface: Loading timeout 1 reached (5s), resetting isLoading');
+      setIsLoading(false);
+    }, 5000); // 5 second timeout
+    
+    const loadingTimeout2 = setTimeout(() => {
+      console.log('🔍 ChatInterface: Loading timeout 2 reached (8s), force resetting isLoading');
+      setIsLoading(false);
+    }, 8000); // 8 second timeout
+    
+    const loadingTimeout3 = setTimeout(() => {
+      console.log('🔍 ChatInterface: Loading timeout 3 reached (12s), emergency reset isLoading');
+      setIsLoading(false);
+    }, 12000); // 12 second timeout
 
     try {
       // Build context from previous messages
@@ -160,13 +215,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
 
       // Let AI orchestrator handle everything
       console.log('🤖 ChatInterface: Sending message to AI orchestrator');
-      console.log('🤖 ChatInterface: Message being sent:', inputMessage);
+      console.log('🤖 ChatInterface: Message being sent:', messageText);
       console.log('🤖 ChatInterface: Context being sent:', context);
-      const response = await apiClient.processMessage(inputMessage, context);
+      
+      console.log('🔍 ChatInterface: About to call apiClient.processMessage');
+      console.log('🔍 ChatInterface: apiClient object:', apiClient);
+      console.log('🔍 ChatInterface: apiClient.processMessage method:', typeof apiClient.processMessage);
+      
+      const response = await apiClient.processMessage(messageText, context);
+      console.log('🔍 ChatInterface: API client response received');
       console.log('🤖 ChatInterface: AI orchestrator response:', response);
       console.log('🤖 ChatInterface: Response data:', JSON.stringify(response.data, null, 2));
       
       if (!response.success || !response.data) {
+        console.error('🔍 ChatInterface: API client returned error:', response.error);
         throw new Error(response.error || 'Failed to process message');
       }
 
@@ -188,6 +250,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         connectionGuidance: response.data.connectionGuidance,
         suggestedAction: response.data.suggestedAction
       };
+
+      // Debug logging for API call results
+      if (response.data.apiCallResult) {
+        console.log('🔍 ChatInterface: API call result detected:', {
+          type: response.data.type,
+          apiCallResult: response.data.apiCallResult,
+          hasApiCallResult: !!response.data.apiCallResult,
+          statusCode: response.data.apiCallResult.statusCode,
+          method: response.data.apiCallResult.method,
+          url: response.data.apiCallResult.url
+        });
+      }
 
       // Debug logging for connection guidance
       if (response.data.type === 'connection_guidance') {
@@ -212,14 +286,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         assistantMessage.formattedResponse = formatted;
       }
 
+      console.log('🔍 ChatInterface: About to update messages with assistant message');
       setMessages(prev => [...prev, assistantMessage]);
+      console.log('🔍 ChatInterface: Messages updated successfully');
 
       // Call the callback if provided
       if (onWorkflowGenerated && response.data.workflow && response.data.steps) {
+        console.log('🔍 ChatInterface: Calling onWorkflowGenerated callback');
         onWorkflowGenerated(response.data.workflow, response.data.steps);
       }
+      
+      console.log('🔍 ChatInterface: About to exit try block');
+      
+      // Reset loading state after successful processing
+      console.log('🔍 ChatInterface: Setting isLoading to false after success');
+      clearTimeout(loadingTimeout1);
+      clearTimeout(loadingTimeout2);
+      clearTimeout(loadingTimeout3);
+      setIsLoading(false);
 
     } catch (err) {
+      console.error('🔍 ChatInterface: Error processing message:', err);
+      console.error('🔍 ChatInterface: Error stack:', err instanceof Error ? err.stack : 'No stack trace');
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
       
@@ -231,10 +319,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       };
       
       setMessages(prev => [...prev, errorMsg]);
-    } finally {
+      
+      // Reset loading state after error processing
+      console.log('🔍 ChatInterface: Setting isLoading to false after error');
+      clearTimeout(loadingTimeout1);
+      clearTimeout(loadingTimeout2);
+      clearTimeout(loadingTimeout3);
       setIsLoading(false);
     }
-  }, [inputMessage, isLoading, onWorkflowGenerated]);
+  }, [inputMessage, isLoading, onWorkflowGenerated, messages]);
 
 
   const handleSaveWorkflow = useCallback(async (messageId: string) => {
@@ -549,7 +642,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
           </div>
         )}
 
-        {messages.map((message) => (
+        {messages.map((message) => {
+          // Debug logging for message rendering
+          if (message.apiCallResult) {
+            console.log('🔍 ChatInterface: Rendering message with API call result:', {
+              messageId: message.id,
+              hasApiCallResult: !!message.apiCallResult,
+              statusCode: message.apiCallResult.statusCode,
+              method: message.apiCallResult.method,
+              url: message.apiCallResult.url
+            });
+          }
+          
+          return (
           <div
             key={message.id}
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -567,6 +672,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
               }`}>
                 {formatTime(message.timestamp)}
               </div>
+              
+              {/* Connection Guidance */}
+              {message.connectionGuidance && message.type === 'assistant' && (
+                <div className="mt-3">
+                  <ConnectionGuidance 
+                    message={message.content} 
+                    connectionGuidance={message.connectionGuidance} 
+                  />
+                </div>
+              )}
               
               {message.workflow && message.steps && (
                 <div className="mt-3 p-3 bg-white rounded border border-gray-200">
@@ -664,158 +779,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                 </div>
               )}
 
-              {/* Connection guidance */}
-              {message.connectionGuidance && message.connectionGuidance.requiresGuidance && (
-                <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200" data-testid="connection-guidance">
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-blue-900 mb-2">
-                        {message.connectionGuidance?.guidanceMessage}
-                      </h4>
-                      
-                      {/* Error state for connection guidance */}
-                      {message.connectionGuidance?.error && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3" data-testid="connection-guidance-error">
-                          <div className="flex items-start">
-                            <div className="flex-shrink-0">
-                              <svg className="h-4 w-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            </div>
-                            <div className="ml-2">
-                              <p className="text-sm text-red-800">{message.connectionGuidance?.error}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Missing APIs list */}
-                      {message.connectionGuidance?.missingApis && message.connectionGuidance.missingApis.length > 0 && (
-                        <div className="mb-3">
-                          <div className="text-xs font-medium text-blue-800 mb-2">Missing API connections:</div>
-                          <div className="space-y-2" data-testid="missing-apis-list">
-                            {message.connectionGuidance?.missingApis?.map((api, index) => (
-                              <div key={index} className="flex items-center space-x-2 p-2 bg-white rounded border border-blue-100" data-testid={`api-suggestion-${api.displayName}`}>
-                                <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <span className="text-blue-600 font-medium text-xs">{index + 1}</span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium text-gray-900">{api.displayName}</div>
-                                  <div className="text-xs text-gray-600">{api.description}</div>
-                                  <div className="text-xs text-blue-600 mt-1">
-                                    Auth: {api.authType} • {api.baseUrl}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Setup instructions */}
-                      {message.connectionGuidance?.setupInstructions && (
-                        <div className="mb-3">
-                          <div className="text-xs font-medium text-blue-800 mb-2">
-                            {message.connectionGuidance?.setupInstructions?.title}:
-                          </div>
-                          <div className="space-y-1" data-testid="connection-instructions">
-                            {message.connectionGuidance?.setupInstructions?.steps?.map((step, index) => (
-                              <div key={index} className="flex items-start space-x-2 text-xs text-gray-700" data-testid={`instruction-step-${index + 1}`}>
-                                <div className="flex-shrink-0 w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
-                                  <span className="text-blue-600 font-medium text-xs">{index + 1}</span>
-                                </div>
-                                <div className="flex-1">{step}</div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Action buttons */}
-                      <div className="space-y-2">
-                        {/* Individual API setup buttons */}
-                        <div className="space-y-1">
-                          {message.connectionGuidance?.missingApis?.map((api, index) => (
-                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-900">{api.displayName}</div>
-                                <div className="text-xs text-gray-600">{api.description}</div>
-                              </div>
-                              <button
-                                onClick={() => handleStartConnectionSetup(api, message.id)}
-                                className="ml-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                                data-testid={`setup-in-chat-${api.name.toLowerCase()}`}
-                                data-primary-action={`setup-in-chat-${api.name.toLowerCase()}`}
-                              >
-                                Set up in Chat
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Help button */}
-                        <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
-                          <button
-                            onClick={() => {
-                              // Show more detailed instructions
-                              console.log('Show detailed instructions for:', message.connectionGuidance?.missingApis);
-                            }}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                          >
-                            <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Set up connections
-                          </button>
-                        </div>
-                        
-                        {/* Recovery options */}
-                        {message.connectionGuidance?.error && (
-                          <div className="mt-3 pt-3 border-t border-gray-200" data-testid="recovery-options">
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                onClick={() => {
-                                  // Retry connection guidance
-                                  console.log('Retrying connection guidance');
-                                }}
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                              >
-                                <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Try again
-                              </button>
-                              <button
-                                onClick={() => {
-                                  // Contact support
-                                  window.open('mailto:support@apiq.com?subject=Connection Guidance Error', '_blank');
-                                }}
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                              >
-                                <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                Contact support
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Direct API call result */}
-              {message.apiCallResult && (
-                <div className="mt-3 p-3 bg-white rounded border border-gray-200" data-testid="api-call-result">
+              {message.apiCallResult && message.type === 'assistant' && (
+                <div 
+                  className="mt-3 p-3 bg-white rounded border border-gray-200" 
+                  data-testid="api-call-result"
+                >
                   <div className="text-xs font-medium text-gray-900 mb-2">
                     🔗 API Call Result
                   </div>
@@ -936,7 +905,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
               )}
             </div>
           </div>
-        ))}
+        );
+        })}
 
         {isLoading && (
           <div className="flex justify-start">
@@ -954,17 +924,30 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
 
       {/* Input */}
       <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50">
-        <form onSubmit={(e) => {
-          console.log('🔍 ChatInterface: Form onSubmit triggered');
-          handleSubmit(e);
-        }} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+         <form 
+           onSubmit={(e) => {
+             console.log('🔍 ChatInterface: Form onSubmit triggered');
+             console.log('🔍 ChatInterface: Form event type:', e.type);
+             console.log('🔍 ChatInterface: Form event target:', e.target);
+             console.log('🔍 ChatInterface: Form event currentTarget:', e.currentTarget);
+             console.log('🔍 ChatInterface: Form event defaultPrevented:', e.defaultPrevented);
+             handleSubmit(e);
+           }} 
+           className="flex flex-col sm:flex-row gap-2 sm:gap-3"
+           data-testid="chat-form"
+         >
           <div className="flex-1 relative">
             <input
               ref={inputRef}
               data-testid="chat-input"
               type="text"
               value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+              onChange={(e) => {
+                console.log('🔍 ChatInterface: Input onChange triggered');
+                console.log('🔍 ChatInterface: Input value:', e.target.value);
+                console.log('🔍 ChatInterface: Input value length:', e.target.value.length);
+                setInputMessage(e.target.value);
+              }}
               placeholder="Describe what you want to automate..."
               disabled={isLoading}
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 text-sm sm:text-base min-h-[44px]"
@@ -985,9 +968,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             data-testid="primary-action chat-send-btn"
             type="submit"
             disabled={!inputMessage.trim() || isLoading}
-            onClick={() => {
-              console.log('🔍 ChatInterface: Send button clicked');
-            }}
             className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-200 shadow-sm hover:shadow-md min-h-[44px] w-full sm:w-auto"
           >
             {isLoading ? (

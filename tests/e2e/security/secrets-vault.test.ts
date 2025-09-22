@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser, cleanupTestUser, generateTestId } from '../../helpers/testUtils';
 import { UXComplianceHelper } from '../../helpers/uxCompliance';
+import { submitFormWithUtils } from '../../helpers/dataHelpers';
 import * as jsonwebtoken from 'jsonwebtoken';
 
 // Helper function to safely parse JSON responses
@@ -307,7 +308,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Submit form - ensure submit button exists
       const submitButton = page.locator('[data-testid="primary-action create-secret-btn-modal"]');
       await expect(submitButton).toBeVisible();
-      await submitButton.click();
+      await submitFormWithUtils(page, '[data-testid="create-secret-form"]');
       
       // Should show loading state - the implementation shows "Creating..." text
       await expect(page.getByText(/Creating|Saving/i).first()).toBeVisible({ timeout: 5000 });
@@ -476,7 +477,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Submit form - ensure submit button exists
       const submitButton = page.locator('[data-testid="primary-action create-secret-btn-modal"]');
       await expect(submitButton).toBeVisible();
-      await submitButton.click();
+      await submitFormWithUtils(page, '[data-testid="create-secret-form"]');
       
       // Wait for success message in modal first
       const successMessage = page.locator('[role="dialog"] [data-testid="success-message"]');
@@ -537,7 +538,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Submit form - ensure submit button exists
       const submitButton = page.locator('[data-testid="primary-action create-secret-btn-modal"]');
       await expect(submitButton).toBeVisible();
-      await submitButton.click();
+      await submitFormWithUtils(page, '[data-testid="create-secret-form"]');
       
       // Wait for success message in modal first
       const successMessage = page.locator('[role="dialog"] [data-testid="success-message"]');
@@ -591,7 +592,7 @@ test.describe('Secrets Vault E2E Tests', () => {
       // Submit form - ensure submit button exists
       const submitButton = page.locator('[data-testid="primary-action create-secret-btn-modal"]');
       await expect(submitButton).toBeVisible();
-      await submitButton.click();
+      await submitFormWithUtils(page, '[data-testid="create-secret-form"]');
       
       // Wait for success message in modal first
       const successMessage = page.locator('[role="dialog"] [data-testid="success-message"]');

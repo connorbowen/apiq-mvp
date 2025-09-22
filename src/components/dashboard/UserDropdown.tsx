@@ -144,6 +144,14 @@ export default function UserDropdown({ user, onLogout, onHelp }: UserDropdownPro
   };
 
   /**
+   * Navigate to subscription management
+   */
+  const handleSubscriptionClick = () => {
+    setIsOpen(false);
+    router.push('/dashboard?tab=subscription');
+  };
+
+  /**
    * Navigate to audit logs (admin users only)
    */
   const handleAuditClick = () => {
@@ -233,6 +241,21 @@ export default function UserDropdown({ user, onLogout, onHelp }: UserDropdownPro
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 Settings
+              </div>
+            </button>
+
+            {/* Subscription Link */}
+            <button
+              onClick={handleSubscriptionClick}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none transition-colors"
+              role="menuitem"
+              data-testid="user-dropdown-subscription"
+            >
+              <div className="flex items-center">
+                <svg className="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                Subscription
               </div>
             </button>
 

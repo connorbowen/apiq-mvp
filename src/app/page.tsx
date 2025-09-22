@@ -10,15 +10,26 @@ export default function Home() {
   const [userOnboardingStage, setUserOnboardingStage] = useState<string | null>(null);
   const router = useRouter();
   
-
   // Check user onboarding state on component mount
   useEffect(() => {
     const checkUserState = async () => {
       try {
         const response = await fetch('/api/profile');
+        
         if (response.ok) {
           const data = await response.json();
-          setUserOnboardingStage(data.user?.onboardingStage || null);
+          
+          // The API returns { success: true, profile: {...} }
+          // We need to get the onboardingStage from the profile
+          if (data.success && data.profile) {
+            const onboardingStage = data.profile.onboardingStage || 'COMPLETED';
+            setUserOnboardingStage(onboardingStage);
+          } else {
+            setUserOnboardingStage(null);
+          }
+        } else {
+          // User not authenticated - treat as new user
+          setUserOnboardingStage(null);
         }
       } catch (error) {
         // User not logged in or error - treat as new user
@@ -26,7 +37,10 @@ export default function Home() {
       }
     };
 
-    checkUserState();
+    // Add a small delay to ensure proper hydration in tests
+    const timeoutId = setTimeout(() => checkUserState(), 100);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const checkHealth = async () => {
@@ -118,7 +132,7 @@ export default function Home() {
                     {userOnboardingStage === 'NEW_USER' ? 'Start Tour' : 'Try Chat'}
                   </Link>
                   <Link
-                    href="/login"
+                    href={getChatDestination()}
                     className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
                   >
                     Sign In

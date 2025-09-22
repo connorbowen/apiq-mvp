@@ -21,7 +21,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let context: any;
 
   try {
-    console.log('=== API ENDPOINT DEBUG ===');
     console.log('→ Request body:', JSON.stringify(req.body, null, 2));
     
     // Authenticate user using custom JWT authentication

@@ -14,7 +14,7 @@ export const setAuthCookies = async (page: Page, user: TestUser): Promise<void> 
       value: user.accessToken,
       domain: 'localhost',
       path: '/',
-      httpOnly: true,
+      httpOnly: false, // false for E2E tests to allow document.cookie access
       secure: false, // false for localhost testing
       sameSite: 'Lax'
     },
@@ -23,7 +23,7 @@ export const setAuthCookies = async (page: Page, user: TestUser): Promise<void> 
       value: user.refreshToken,
       domain: 'localhost',
       path: '/',
-      httpOnly: true,
+      httpOnly: false, // false for E2E tests to allow document.cookie access
       secure: false, // false for localhost testing
       sameSite: 'Lax'
     }

@@ -17,7 +17,21 @@ import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUti
 import { createE2EUser } from '../../helpers/authHelpers';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton } from '../../helpers/e2eHelpers';
 import { waitForDashboard, validateUXCompliance, closeGuidedTourIfPresent, waitForElement, sendChatMessage, waitForChatResponse, validateChatResponse } from '../../helpers/uiHelpers';
+import { submitFormWithUtils } from '../../helpers/dataHelpers';
 import { testPageLoadTime, testAPIPerformance } from '../../helpers/performanceHelpers';
+
+// Extend Window interface to include our custom properties
+declare global {
+  interface Window {
+    networkRequests?: Array<{ url: string; method: string; timestamp: number }>;
+    formSubmissionTriggered?: boolean;
+    handleSubmitCalled?: boolean;
+    apiClientCalled?: boolean;
+    apiResponse?: any;
+    apiError?: any;
+    lastErrors?: any[];
+  }
+}
 import { testFormAccessibility, testPrimaryActionPatterns } from '../../helpers/accessibilityHelpers';
 import { testModalSubmitLoading, testModalSuccessMessage, testModalErrorHandling } from '../../helpers/modalHelpers';
 import { createTestData, cleanupTestData } from '../../helpers/dataHelpers';
@@ -104,17 +118,146 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       await page.goto(`${BASE_URL}/dashboard?tab=chat`);
       await waitForDashboard(page);
 
+      // Set up network request monitoring
+      await page.route('**/api/**', async (route) => {
+        const request = route.request();
+        console.log('🔍 NETWORK DEBUG: API request:', request.url(), request.method());
+        console.log('🔍 NETWORK DEBUG: Request headers:', request.headers());
+        console.log('🔍 NETWORK DEBUG: Request post data:', request.postData());
+        
+        await page.evaluate((data) => {
+          window.networkRequests = window.networkRequests || [];
+          window.networkRequests.push({ url: data.url, method: data.method, timestamp: Date.now() });
+        }, { url: request.url(), method: request.method() });
+        
+        // Check if this is the chat process request
+        if (request.url().includes('/api/chat/process')) {
+          console.log('🔍 NETWORK DEBUG: Chat process request detected - checking authentication');
+          console.log('🔍 NETWORK DEBUG: Authorization header:', request.headers()['authorization']);
+          console.log('🔍 NETWORK DEBUG: Cookie header:', request.headers()['cookie']);
+        }
+        
+        await route.continue();
+      });
+
+      // Set up console log interception and network monitoring
+      await page.evaluate(() => {
+        window.formSubmissionTriggered = false;
+        window.handleSubmitCalled = false;
+        window.apiClientCalled = false;
+        window.networkRequests = [];
+        
+        // Override console.log to capture logs
+        const originalLog = console.log;
+        window.apiResponse = null;
+        window.apiError = null;
+        
+        console.log = (...args) => {
+          if (args[0] && typeof args[0] === 'string') {
+            if (args[0].includes('Form onSubmit triggered')) {
+              window.formSubmissionTriggered = true;
+            }
+            if (args[0].includes('handleSubmit called')) {
+              window.handleSubmitCalled = true;
+            }
+            if (args[0].includes('API Client: Making request to:')) {
+              window.apiClientCalled = true;
+            }
+            if (args[0].includes('API Client: Response data:')) {
+              window.apiResponse = args[1];
+            }
+            if (args[0].includes('API Client: Request failed:')) {
+              window.apiError = args[1];
+            }
+          }
+          originalLog.apply(console, args);
+        };
+      });
+
+      // Debug: Check if there are any JavaScript errors before sending message
+      console.log('🔍 TEST DEBUG: Checking for JavaScript errors...');
+      const errors = await page.evaluate(() => {
+        return window.lastErrors || [];
+      });
+      console.log('🔍 TEST DEBUG: JavaScript errors:', errors);
+
       // Send a message requiring APIs
       await sendChatMessage(page, 'I want to create a workflow that integrates with Stripe and SendGrid');
 
+      // Debug: Check if the form submission worked
+      console.log('🔍 TEST DEBUG: After sendChatMessage, checking for loading state...');
+      const isLoading = await page.locator('[data-testid="loading"]').isVisible();
+      console.log('🔍 TEST DEBUG: Loading state visible:', isLoading);
+
+      // Debug: Check if form submission was triggered
+      console.log('🔍 TEST DEBUG: Checking form submission flags...');
+      const flags = await page.evaluate(() => {
+        return {
+          formSubmissionTriggered: window.formSubmissionTriggered || false,
+          handleSubmitCalled: window.handleSubmitCalled || false,
+          apiClientCalled: window.apiClientCalled || false
+        };
+      });
+      console.log('🔍 TEST DEBUG: Form submission flags:', flags);
+
+      // Debug: Check for any error messages in the UI
+      const errorElements = await page.locator('.text-red-600, .text-red-500, [class*="error"]').count();
+      console.log('🔍 TEST DEBUG: Error elements found:', errorElements);
+
+      // Debug: Check if there are any messages in the chat
+      const chatMessages = await page.locator('[data-testid="message"], .bg-gray-100, .bg-white').count();
+      console.log('🔍 TEST DEBUG: Chat messages found:', chatMessages);
+
+      // Debug: Check what those messages actually are
+      const messageTexts = await page.evaluate(() => {
+        const messages = document.querySelectorAll('[data-testid="message"], .bg-gray-100, .bg-white');
+        return Array.from(messages).map(el => el.textContent?.trim()).filter(text => text && text.length > 0);
+      });
+      console.log('🔍 TEST DEBUG: Message texts:', messageTexts);
+
+      // Debug: Check API response
+      const apiData = await page.evaluate(() => {
+        return {
+          apiResponse: window.apiResponse,
+          apiError: window.apiError
+        };
+      });
+      console.log('🔍 TEST DEBUG: API response data:', apiData);
+
+      // Debug: Check network requests
+      const networkRequests = await page.evaluate(() => {
+        return window.networkRequests || [];
+      });
+      console.log('🔍 TEST DEBUG: Network requests:', networkRequests);
+
+      // Debug: Check for any error messages
+      const errorMessages = await page.locator('[data-testid*="error"], .error, .text-red-500').count();
+      console.log('🔍 TEST DEBUG: Error messages found:', errorMessages);
+
+      // Debug: Check if the message was added to the chat
+      const messageCount = await page.locator('[data-testid="message"]').count();
+      console.log('🔍 TEST DEBUG: Message count:', messageCount);
+
       await waitForChatResponse(page);
+
+      // Debug: Check what's actually on the page
+      const pageContent = await page.textContent('body');
+      console.log('🔍 TEST DEBUG: Page content after message:', pageContent?.substring(0, 500));
+
+      // Debug: Check for any error messages
+      const errorMessages2 = await page.locator('[data-testid*="error"], .error, .text-red-500').count();
+      console.log('🔍 TEST DEBUG: Error messages found:', errorMessages2);
+
+      // Debug: Check if connection guidance element exists
+      const guidanceExists = await page.locator('[data-testid="connection-guidance"]').count();
+      console.log('🔍 TEST DEBUG: Connection guidance elements found:', guidanceExists);
 
       // Verify helpful guidance is provided
       await expect(page.locator('[data-testid="connection-guidance"]')).toBeVisible();
       
       // Verify guidance is actionable, not just an error
-      await expect(page.locator('text=This workflow requires connections to Stripe and SendGrid').first()).toBeVisible();
-      await expect(page.locator('text=Set up connections').first()).toBeVisible();
+      await expect(page.locator('text=To create this, you\'ll need to connect to Stripe and SendGrid').first()).toBeVisible();
+      await expect(page.locator('text=I can help you set these up!').first()).toBeVisible();
       
       // Verify no generic error messages
       await expect(page.locator('text=I cannot help you')).not.toBeVisible();
@@ -215,10 +358,19 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       const inputValue = await chatInput.inputValue();
       console.log('🔍 TEST DEBUG: Input value:', inputValue);
 
-      // Debug: Try clicking the button directly
-      console.log('🔍 TEST DEBUG: Attempting to click send button directly...');
-      await sendButton.click();
-      console.log('🔍 TEST DEBUG: Send button clicked directly');
+      // Use enhanced form submission with utilities
+      console.log('🔍 TEST DEBUG: Using enhanced form submission...');
+      const submissionSuccessful = await submitFormWithUtils(
+        page,
+        'form[data-testid="chat-form"]',
+        '[data-testid="primary-action chat-send-btn"]'
+      );
+      
+      if (!submissionSuccessful) {
+        console.log('🔍 TEST DEBUG: Enhanced submission failed, trying direct click...');
+        await sendButton.click();
+      }
+      console.log('🔍 TEST DEBUG: Form submission completed');
 
       await waitForChatResponse(page);
 
@@ -478,7 +630,8 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
       const buttonText = await button.textContent();
       console.log('🔍 TEST DEBUG: Button text:', buttonText);
       
-      // Click "Set up in Chat" button
+      // Click "Set up in Chat" button using enhanced approach
+      console.log('🔍 TEST DEBUG: Clicking setup button...');
       await button.click();
       
       // Debug: Check if modal appeared after click

@@ -6,6 +6,8 @@ import { ApplicationError, badRequest, conflict, internalServerError } from '../
 import { EmailService } from '../../../src/lib/services/emailService';
 import { logInfo, logError } from '../../../src/utils/logger';
 import { generateToken } from '../../../src/lib/auth/session';
+import { usageTrackingService } from '../../../src/lib/services/usageTrackingService';
+import { PlanType } from '../../../src/generated/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -71,6 +73,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         onboardingCompletedAt: null
       }
     });
+
+    // Create default FREE plan for new user
+    await usageTrackingService.createOrUpdateUserPlan(user.id, PlanType.FREE);
 
     // Create verification token
     await prisma.verificationToken.create({

@@ -15,7 +15,6 @@ import { OnboardingProvider, useOnboarding } from '../../contexts/OnboardingCont
 import { useGuidedTour, GuidedTour } from '../../components/GuidedTour';
 import { UserProvider } from '../../contexts/UserContext';
 import ResponsiveLayoutHandler from '../../components/ResponsiveLayoutHandler';
-import ResponsiveDebugger from '../../components/ResponsiveDebugger';
 
 // Import components directly for better test reliability
 import WorkflowsTab from '../../components/dashboard/WorkflowsTab';
@@ -23,6 +22,7 @@ import SettingsTab from '../../components/dashboard/SettingsTab';
 import AdminTab from '../../components/dashboard/AdminTab';
 import ConnectionsTab from '../../components/dashboard/ConnectionsTab';
 import ProfileTab from '../../components/dashboard/ProfileTab';
+// import SubscriptionTab from '../../components/dashboard/SubscriptionTab';
 
 // Dynamic import for modal component (not directly tested)
 const CreateConnectionModal = dynamic(() => import('../../components/dashboard/CreateConnectionModal'), {
@@ -42,7 +42,7 @@ interface User {
 }
 
 // New 3-tab configuration
-type TabType = 'chat' | 'workflows' | 'connections' | 'settings' | 'profile';
+type TabType = 'chat' | 'workflows' | 'connections' | 'settings' | 'profile' | 'subscription';
 
 const tabConfig = {
   chat: {
@@ -94,6 +94,16 @@ const tabConfig = {
       </svg>
     ),
     testId: 'tab-profile',
+    adminOnly: false,
+  },
+  subscription: {
+    label: 'Subscription',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+    ),
+    testId: 'tab-subscription',
     adminOnly: false,
   },
 };
@@ -537,6 +547,11 @@ function DashboardContent() {
       mainTabs.push('profile');
     }
     
+    // If subscription tab is active (accessed via dropdown), include it
+    if (activeTab === 'subscription') {
+      mainTabs.push('subscription');
+    }
+    
     console.log('🔍 Dashboard: Final filtered tabs:', mainTabs);
     return mainTabs;
   }, [user, activeTab]);
@@ -546,7 +561,7 @@ function DashboardContent() {
     const handleUrlChange = () => {
       const url = new URL(window.location.href);
       const tabParam = url.searchParams.get('tab');
-      const validTabs = ['chat', 'workflows', 'connections', 'settings', 'profile'];
+      const validTabs = ['chat', 'workflows', 'connections', 'settings', 'profile', 'subscription'];
       if (tabParam && validTabs.includes(tabParam)) {
         setActiveTab(tabParam as TabType);
       } else {
@@ -622,7 +637,6 @@ function DashboardContent() {
   return (
     <div className="dashboard-container">
       <ResponsiveLayoutHandler />
-      <ResponsiveDebugger />
       <SupportModal open={showSupportModal} onClose={() => setShowSupportModal(false)} user={user ? { email: user.email, name: user.name || user.email } : { email: '', name: '' }} />
       
       <header role="banner" className="dashboard-header bg-white shadow relative z-50">
@@ -647,12 +661,13 @@ function DashboardContent() {
                activeTab === 'workflows' ? 'Workflows' :
                activeTab === 'connections' ? 'Connections' :
                activeTab === 'settings' ? 'Settings' :
-               activeTab === 'profile' ? 'Profile' : 'Dashboard'}
+               activeTab === 'profile' ? 'Profile' :
+               activeTab === 'subscription' ? 'Subscription' : 'Dashboard'}
             </h1>
           </div>
           <div className="flex items-center justify-between sm:justify-end">
             {/* Mobile tab navigation */}
-            {user && !['profile', 'settings'].includes(activeTab) && (
+            {user && !['profile', 'settings', 'subscription'].includes(activeTab) && (
               <div className="sm:hidden flex space-x-1 bg-gray-100 p-1 rounded-lg">
                 {filteredTabs.map((tab) => (
                   <button
@@ -693,7 +708,7 @@ function DashboardContent() {
       )}
 
       {/* Tab Navigation - Enhanced with better visual hierarchy */}
-      {user && !['profile', 'settings'].includes(activeTab) && (
+      {user && !['profile', 'settings', 'subscription'].includes(activeTab) && (
         <div className="mb-4 hidden lg:block">
           <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm border border-gray-200" aria-label="Tabs" role="tablist">
             {filteredTabs.map((tab) => (
@@ -893,6 +908,13 @@ function DashboardContent() {
                 setSuccessMessage('Profile updated successfully!');
               }}
             />
+            </div>
+          </Suspense>
+        )}
+        {!isTabLoading && activeTab === 'subscription' && (
+          <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+            <div className="flex-1 flex flex-col min-h-0 w-full">
+              {/* <SubscriptionTab /> */}
             </div>
           </Suspense>
         )}

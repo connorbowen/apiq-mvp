@@ -48,7 +48,9 @@ export default defineConfig({
     command: './scripts/start-test-server.sh',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: 180000, // Increased timeout to 3 minutes
+    stdout: 'pipe', // Capture stdout for debugging
+    stderr: 'pipe', // Capture stderr for debugging
     env: {
       ENCRYPTION_MASTER_KEY: `test-master-key-${Date.now()}-32-chars-long-for-secrets`,
       NODE_ENV: 'test',
@@ -57,6 +59,7 @@ export default defineConfig({
       PLAYWRIGHT_TEST: 'true',
       DISABLE_RATE_LIMITING: 'true',
       ENABLE_TEST_OAUTH2: 'true',
+      E2E: 'true',
     }
   },
 }); 

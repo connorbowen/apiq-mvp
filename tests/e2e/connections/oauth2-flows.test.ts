@@ -4,6 +4,7 @@ import { createUXComplianceHelper } from '../../helpers/uxCompliance';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton } from '../../helpers/e2eHelpers';
 import { waitForModal, waitForTestId } from '../../helpers/waitHelpers';
 import { createE2EUser } from '../../helpers/authHelpers';
+import { submitFormWithUtils } from '../../helpers/dataHelpers';
 import { Role } from '../../../src/generated/prisma';
 
 // OAuth2 Flow E2E Tests with comprehensive UX compliance validation
@@ -157,7 +158,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await expect(submitBtn).toBeEnabled();
       
       console.log('🪵 About to click submit button');
-      await submitBtn.click();
+      await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
       console.log('🪵 Clicked submit button');
       
       // Wait for form processing with debug output
@@ -378,7 +379,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await expect(submitBtn).toBeEnabled();
       
       console.log('🪵 About to click submit button');
-      await submitBtn.click();
+      await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
       console.log('🪵 Clicked submit button');
       
       // Wait for form processing with debug output
@@ -540,7 +541,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Submit form using primary action pattern and validate loading state
       const submitButton = getPrimaryActionButton(page, 'submit-connection');
-      await submitButton.click();
+      await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
       
       // Validate loading state transitions
       await uxHelper.validateLoadingState('[data-testid="primary-action submit-connection-btn"]');
@@ -1059,7 +1060,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Submit form
       const submitButton = getPrimaryActionButton(page, 'submit-connection');
-      await submitButton.click();
+      await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
       
       // Should show validation error in modal (check for any error message)
       await expect(page.locator('[data-testid="error-message"], .bg-red-50, [role="alert"]')).toBeVisible();
@@ -1084,7 +1085,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Try to submit form
       const submitButton = getPrimaryActionButton(page, 'submit-connection');
-      await submitButton.click();
+      await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
       
       // Should redirect to login or show session expired error (check for any redirect or error)
       const currentUrl = page.url();
@@ -1123,7 +1124,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Submit form
       const submitButton = getPrimaryActionButton(page, 'submit-connection');
-      await submitButton.click();
+      await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
       
       // Should show validation error (check for any error message)
       await expect(page.locator('[data-testid="error-message"], .bg-red-50, [role="alert"]')).toBeVisible();
@@ -1417,7 +1418,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await expect(submitBtn).toBeEnabled();
       
       console.log('🪵 About to click submit button');
-      await submitBtn.click();
+      await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
       console.log('🪵 Clicked submit button');
       
       // Wait for form processing with debug output

@@ -25,9 +25,22 @@ export class HybridMessageClassificationService {
   /**
    * Classify user message using hybrid approach
    */
-  async classifyMessage(message: string, context: Record<string, any> = {}): Promise<MessageClassification> {
+  async classifyMessage(message: string, context: Record<string, any> = {}, availableConnections: any[] = []): Promise<MessageClassification> {
     // First, apply rules-based filtering for obvious cases
     const rulesResult = this.applyRulesBasedFiltering(message);
+    
+    // If no connections are available and this would be a direct API call, 
+    // classify as connection guidance instead
+    if (rulesResult.type === 'direct_api_call' && (!availableConnections || availableConnections.length === 0)) {
+      console.log('🔍 Classification: No connections available, changing direct_api_call to connection_guidance');
+      return {
+        type: 'connection_guidance',
+        confidence: 0.9,
+        reasoning: 'No API connections available for direct API call',
+        suggestedActions: ['Show connection guidance', 'Provide setup instructions'],
+        requiresApiConnections: false
+      };
+    }
     
     if (rulesResult.confidence > 0.9) {
       return rulesResult;
@@ -52,8 +65,11 @@ export class HybridMessageClassificationService {
   private applyRulesBasedFiltering(message: string): MessageClassification {
     const lowerMessage = message.toLowerCase();
     
+    console.log('🔍 Classification - Rules-based filtering for:', message);
+    
     // High-confidence rules
     if (this.isExplicitWorkflowRequest(lowerMessage)) {
+      console.log('🔍 Classification - Detected as workflow request');
       return {
         type: 'workflow',
         confidence: 0.95,
@@ -64,6 +80,7 @@ export class HybridMessageClassificationService {
     }
 
     if (this.isExplicitApiCall(lowerMessage)) {
+      console.log('🔍 Classification - Detected as explicit API call');
       return {
         type: 'direct_api_call',
         confidence: 0.9,

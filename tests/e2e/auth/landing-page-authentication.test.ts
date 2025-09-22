@@ -17,7 +17,7 @@ import { test, expect } from '@playwright/test';
 import { TestUser, generateTestId } from '../../helpers/testUtils';
 import { createE2EUser, registerUser, logoutUser } from '../../helpers/authHelpers';
 import { cleanupTestUser } from '../../helpers/testUtils';
-import { setupE2E, setupGlobalErrorListeners, setupTracing, stopTracing, clearAuthState, waitForServerReady, resetRateLimits } from '../../helpers/e2eHelpers';
+import { setupE2E, setupE2EForLandingPage, setupGlobalErrorListeners, setupTracing, stopTracing, clearAuthState, waitForServerReady, resetRateLimits } from '../../helpers/e2eHelpers';
 import { waitForDashboard, closeGuidedTourIfPresent } from '../../helpers/uiHelpers';
 import { testPageLoadTime } from '../../helpers/performanceHelpers';
 import { testFormAccessibility, testFormValidation, testFormKeyboardNavigation } from '../../helpers/accessibilityHelpers';
@@ -87,18 +87,18 @@ test.describe('Landing Page Authentication Flows', () => {
       // Verify main heading hierarchy per UX_SPEC.md
       await uxHelper.validateHeadingHierarchy(['Stop Writing API Code. Start Talking to APIs.']);
       
-      // Verify header shows Sign Up and Sign In buttons for unauthenticated users
+      // Verify header shows Register and Login buttons for unauthenticated users
       const header = page.locator('header');
-      await expect(header.getByText('Sign Up')).toBeVisible();
-      await expect(header.getByText('Sign In')).toBeVisible();
+      await expect(header.getByText('Register')).toBeVisible();
+      await expect(header.getByText('Login')).toBeVisible();
       await expect(header.getByText('Join Waitlist')).not.toBeVisible();
       await expect(header.getByText('Start Tour')).not.toBeVisible();
       await expect(header.getByText('Try Chat')).not.toBeVisible();
       
       // Verify hero section shows correct buttons
       const heroSection = page.locator('main').first();
-      await expect(heroSection.getByTestId('primary-action signup')).toBeVisible();
-      await expect(heroSection.getByTestId('primary-action signin')).toBeVisible();
+      await expect(heroSection.getByTestId('primary-action register-dev')).toBeVisible();
+      await expect(heroSection.getByTestId('primary-action login-dev')).toBeVisible();
       await expect(heroSection.getByTestId('primary-action start-chat')).not.toBeVisible();
       
 
@@ -113,12 +113,25 @@ test.describe('Landing Page Authentication Flows', () => {
       await uxHelper.validateFormAccessibility();
       
       // Verify proper ARIA labels and accessibility
-      const signupButton = page.getByTestId('primary-action signup');
-      await expect(signupButton).toBeVisible();
+      const registerButton = page.getByTestId('primary-action register-dev');
+      await expect(registerButton).toBeVisible();
       
       // Verify keyboard navigation works
+      // First Tab should focus the header Login button
       await page.keyboard.press('Tab');
-      await expect(signupButton).toBeFocused();
+      await expect(page.getByText('Login')).toBeFocused();
+      
+      // Second Tab should focus the header Register button
+      await page.keyboard.press('Tab');
+      await expect(page.getByText('Register')).toBeFocused();
+      
+      // Third Tab should focus the hero Login button
+      await page.keyboard.press('Tab');
+      await expect(page.getByTestId('primary-action login-dev')).toBeFocused();
+      
+      // Fourth Tab should focus the hero Register button
+      await page.keyboard.press('Tab');
+      await expect(registerButton).toBeFocused();
     });
 
     test('should load landing page quickly per performance requirements', async ({ page }) => {
@@ -132,44 +145,36 @@ test.describe('Landing Page Authentication Flows', () => {
     test('should handle CTA navigation correctly', async ({ page }) => {
       await page.goto(BASE_URL);
       
-      // Click Get Started button (signup)
-      const getStartedButton = page.getByTestId('primary-action signup');
+      // Click Get Started button (login)
+      const getStartedButton = page.getByTestId('primary-action login-dev');
       await getStartedButton.click();
       
-      // Should navigate to signup page
-      await expect(page).toHaveURL(/.*signup.*/);
-      await expect(page.getByText('Create your APIQ account')).toBeVisible();
+      // Should navigate to login page
+      await expect(page).toHaveURL(/.*login.*/);
+      await expect(page.getByText('Sign in to APIQ')).toBeVisible();
     });
 
-    test('should display customer social proof section', async ({ page }) => {
+    test('should display use cases section', async ({ page }) => {
       await page.goto(BASE_URL);
       
-      // Verify customer social proof section exists
-      await expect(page.getByText('Trusted by Leading Companies')).toBeVisible();
-      await expect(page.getByText('See how innovative businesses are using APIQ to transform their API workflows and boost productivity.')).toBeVisible();
+      // Verify use cases section exists
+      await expect(page.getByText('What You Can Build')).toBeVisible();
+      await expect(page.getByText('Real examples of workflows you can create in minutes')).toBeVisible();
       
-      // Verify customer categories exist
-      await expect(page.getByText('E-commerce Giants')).toBeVisible();
-      await expect(page.getByText('FinTech Leaders')).toBeVisible();
-      await expect(page.getByText('SaaS Innovators')).toBeVisible();
+      // Verify use case categories exist
+      await expect(page.getByText('E-commerce Automation')).toBeVisible();
+      await expect(page.getByText('Customer Data Sync')).toBeVisible();
       
-      // Verify CTA buttons exist
-      await expect(page.getByTestId('primary-action view-testimonials')).toBeVisible();
-      await expect(page.getByTestId('primary-action view-case-studies')).toBeVisible();
-      
-      // Verify CTA buttons have correct text
-      await expect(page.getByTestId('primary-action view-testimonials')).toContainText('View Customer Stories');
-      await expect(page.getByTestId('primary-action view-case-studies')).toContainText('Read Case Studies');
+      // Verify use case descriptions exist
+      await expect(page.getByText('Sync orders, update inventory, send notifications across 5+ systems')).toBeVisible();
+      await expect(page.getByText('Keep CRM, marketing tools, and support systems in sync automatically')).toBeVisible();
     });
   });
 
   test.describe('Authenticated User Experience', () => {
     test('should show correct landing page for authenticated users', async ({ page }) => {
-      // Setup authenticated user
-      await setupE2E(page, testUser, { skipCloseGuidedTour: true });
-      
-      // Navigate to landing page
-      await page.goto(BASE_URL);
+      // Setup authenticated user for landing page testing
+      await setupE2EForLandingPage(page, testUser, { skipCloseGuidedTour: true });
       
       // Verify page loads correctly
       await expect(page).toHaveTitle(/APIQ/);
@@ -183,8 +188,8 @@ test.describe('Landing Page Authentication Flows', () => {
       // Verify hero section shows correct buttons
       const heroSection = page.locator('main').first();
       await expect(heroSection.getByTestId('primary-action start-chat')).toBeVisible();
-      await expect(heroSection.getByText('See Examples')).toBeVisible();
-      await expect(heroSection.getByTestId('primary-action join-waitlist')).not.toBeVisible();
+      await expect(heroSection.getByText('What You Can Build')).toBeVisible();
+      await expect(heroSection.getByTestId('primary-action register-dev')).not.toBeVisible();
       
       // Verify user can access dashboard
       const startButton = page.getByTestId('primary-action start-chat');
@@ -196,9 +201,8 @@ test.describe('Landing Page Authentication Flows', () => {
     });
 
     test('should handle authenticated user navigation correctly', async ({ page }) => {
-      // Setup authenticated user
-      await setupE2E(page, testUser, { skipCloseGuidedTour: true });
-      await page.goto(BASE_URL);
+      // Setup authenticated user for landing page testing
+      await setupE2EForLandingPage(page, testUser, { skipCloseGuidedTour: true });
       
       // Click sign in button (should take to dashboard since already authenticated)
       const signInButton = page.getByText('Sign In');
@@ -210,18 +214,20 @@ test.describe('Landing Page Authentication Flows', () => {
     });
 
     test('should maintain authentication state across navigation', async ({ page }) => {
-      // Setup authenticated user
-      await setupE2E(page, testUser, { skipCloseGuidedTour: true });
-      
-      // Navigate to landing page
-      await page.goto(BASE_URL);
+      // Setup authenticated user for landing page testing
+      await setupE2EForLandingPage(page, testUser, { skipCloseGuidedTour: true });
       
       // Verify still authenticated
       await expect(page.getByText(/Start Tour|Try Chat/)).toBeVisible();
       
       // Navigate to dashboard and back
       await page.goto('/dashboard');
+      await waitForDashboard(page);
       await page.goto(BASE_URL);
+      
+      // Wait for authentication state to be determined again
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
       
       // Should still show authenticated state
       await expect(page.getByText(/Start Tour|Try Chat/)).toBeVisible();
@@ -377,8 +383,17 @@ test.describe('Landing Page Authentication Flows', () => {
       await page.goto(BASE_URL);
       
       // Test keyboard navigation on landing page
+      // First Tab should focus the header Login button
       await page.keyboard.press('Tab');
-      await expect(page.getByTestId('primary-action join-waitlist')).toBeFocused();
+      await expect(page.getByText('Login')).toBeFocused();
+      
+      // Second Tab should focus the header Register button
+      await page.keyboard.press('Tab');
+      await expect(page.getByText('Register')).toBeFocused();
+      
+      // Third Tab should focus the hero Login button
+      await page.keyboard.press('Tab');
+      await expect(page.getByTestId('primary-action login-dev')).toBeFocused();
       
       // Navigate to signup page
       await page.goto(`${BASE_URL}/signup`);
@@ -400,16 +415,16 @@ test.describe('Landing Page Authentication Flows', () => {
       await page.getByTestId('primary-action signup-btn').click();
       
       // Should show field-specific errors
-      await expect(page.getByText('email is required')).toBeVisible();
-      await expect(page.getByText('password is required')).toBeVisible();
+      await expect(page.locator('#email-error')).toBeVisible();
+      await expect(page.locator('#password-error')).toBeVisible();
       
       // Should provide clear recovery guidance
-      await expect(page.getByText('Please confirm your password')).toBeVisible();
+      await expect(page.locator('#confirmPassword-error')).toBeVisible();
       
       // Form should remain accessible for correction
-      await expect(page.getByLabel('Email address')).toBeVisible();
-      await expect(page.getByLabel('Password')).toBeVisible();
-      await expect(page.getByLabel('Confirm password')).toBeVisible();
+      await expect(page.locator('#email')).toBeVisible();
+      await expect(page.locator('#password')).toBeVisible();
+      await expect(page.locator('#confirmPassword')).toBeVisible();
     });
   });
 

@@ -3,7 +3,7 @@ import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUti
 import { createE2EUser } from '../../helpers/authHelpers';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton } from '../../helpers/e2eHelpers';
 import { waitForDashboard, validateUXCompliance, waitForElement } from '../../helpers/uiHelpers';
-import { createTestData, cleanupTestData } from '../../helpers/dataHelpers';
+import { createTestData, cleanupTestData, submitFormWithUtils } from '../../helpers/dataHelpers';
 import { waitForModal } from '../../helpers/waitHelpers';
 import { testPageLoadTime, testAPIPerformance } from '../../helpers/performanceHelpers';
 import { testXSSPrevention, testDataExposure } from '../../helpers/securityHelpers';
@@ -315,8 +315,7 @@ test.describe('API Catalog Architecture E2E Tests', () => {
               await page.locator('[data-testid="api-key-input"]').fill('test-api-key-123');
               
               // Submit connection
-              const submitButton = getPrimaryActionButton(page, 'create-connection-btn');
-              await submitButton.click();
+              await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
               
               // Verify connection is created
               await testModalSuccessMessage(page, 'Connection created successfully');
@@ -412,8 +411,7 @@ test.describe('API Catalog Architecture E2E Tests', () => {
         await addApiForm.locator('[data-testid="api-category-select"]').selectOption('testing');
         
         // Submit form
-        const submitButton = getPrimaryActionButton(page, 'add-api-btn');
-        await submitButton.click();
+        await submitFormWithUtils(page, '[data-testid="add-api-form"]');
         
         // Verify API is added to catalog
         await testModalSuccessMessage(page, 'API added to catalog successfully');
@@ -568,8 +566,7 @@ test.describe('API Catalog Architecture E2E Tests', () => {
           await addApiForm.locator('[data-testid="api-documentation-url-input"]').fill('https://invalid-url-that-does-not-exist.com/openapi.json');
           
           // Submit form
-          const submitButton = getPrimaryActionButton(page, 'add-api-btn');
-          await submitButton.click();
+          await submitFormWithUtils(page, '[data-testid="add-api-form"]');
           
           // Verify error handling
           await testModalErrorHandling(page, 'Failed to fetch API documentation');

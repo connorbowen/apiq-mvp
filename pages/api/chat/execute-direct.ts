@@ -68,27 +68,28 @@ interface DirectApiCallResponse {
 async function executeApiCall(apiCallData: any, connections: any[], userId: string) {
   const startTime = Date.now();
   
+  console.log('executeApiCall - apiCallData:', apiCallData);
+  console.log('executeApiCall - connections:', connections.map(c => ({ id: c.id, name: c.name })));
+  console.log('executeApiCall - looking for connectionId:', apiCallData.connectionId);
+  
+  const connection = connections.find(conn => conn.id === apiCallData.connectionId);
+  if (!connection) {
+    console.log('executeApiCall - Connection not found for ID:', apiCallData.connectionId);
+    return {
+      success: false,
+      data: { error: 'Connection not found' }
+    };
+  }
+  
+  // Substitute path parameters in the URL
+  let substitutedUrl = apiCallData.url;
+  if (apiCallData.parameters) {
+    for (const [key, value] of Object.entries(apiCallData.parameters)) {
+      substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
+    }
+  }
+  
   try {
-    console.log('executeApiCall - apiCallData:', apiCallData);
-    console.log('executeApiCall - connections:', connections.map(c => ({ id: c.id, name: c.name })));
-    console.log('executeApiCall - looking for connectionId:', apiCallData.connectionId);
-    
-    const connection = connections.find(conn => conn.id === apiCallData.connectionId);
-    if (!connection) {
-      console.log('executeApiCall - Connection not found for ID:', apiCallData.connectionId);
-      return {
-        success: false,
-        data: { error: 'Connection not found' }
-      };
-    }
-    
-    // Substitute path parameters in the URL
-    let substitutedUrl = apiCallData.url;
-    if (apiCallData.parameters) {
-      for (const [key, value] of Object.entries(apiCallData.parameters)) {
-        substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
-      }
-    }
     
     const fullUrl = `${connection.baseUrl}${substitutedUrl}`;
     
@@ -108,7 +109,6 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
       console.log('No authentication required for connection:', connection.name);
     }
 
-    let response;
     const requestConfig = {
       method: apiCallData.method,
       url: fullUrl,
@@ -128,7 +128,7 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
       userId
     });
 
-    response = await axios(requestConfig);
+    const response = await axios(requestConfig);
     
     const executionTime = Date.now() - startTime;
 
@@ -136,7 +136,7 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
       success: true,
       data: {
         method: apiCallData.method,
-        url: apiCallData.url,
+        url: substitutedUrl, // Use the substituted URL instead of template
         statusCode: response.status,
         responseData: response.data,
         responseHeaders: response.headers as Record<string, string>,
@@ -153,7 +153,7 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
         success: true, // Still successful from our perspective
         data: {
           method: apiCallData.method,
-          url: apiCallData.url,
+          url: substitutedUrl, // Use the substituted URL instead of template
           statusCode: error.response.status,
           responseData: error.response.data,
           responseHeaders: error.response.headers as Record<string, string>,
@@ -167,7 +167,7 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
         success: false,
         data: {
           method: apiCallData.method,
-          url: apiCallData.url,
+          url: substitutedUrl, // Use the substituted URL instead of template
           statusCode: 0,
           responseData: null,
           responseHeaders: {},

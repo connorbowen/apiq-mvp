@@ -332,7 +332,9 @@ export class OpenAIService {
         }
       }));
 
-      return `**${conn.name}** (ID: ${conn.id}, Base URL: ${conn.baseUrl})
+      return `**${conn.name}** 
+CONNECTION ID: ${conn.id}
+Base URL: ${conn.baseUrl}
 ${endpointsInfo}`;
     }));
 
@@ -424,6 +426,7 @@ Please execute the appropriate API call and return the result.`;
     message: string;
     availableConnections: any[];
     context: any[];
+    guidanceResponse?: any;
   }): Promise<{
     success: boolean;
     data?: {
@@ -453,7 +456,7 @@ Please execute the appropriate API call and return the result.`;
         hasContext: request.context.length > 0
       });
 
-      const systemPrompt = await this.buildDirectApiCallSystemPrompt(request.availableConnections);
+      const systemPrompt = await this.buildDirectApiCallSystemPrompt(request.availableConnections, request.guidanceResponse);
       const userPrompt = this.buildDirectApiCallUserPrompt(request.message, request.context);
 
       const response = await this.client.chat.completions.create({
@@ -500,7 +503,7 @@ Please execute the appropriate API call and return the result.`;
                 },
                 connectionId: {
                   type: 'string',
-                  description: 'ID of the API connection to use (REQUIRED - must match one of the available connection IDs)'
+                  description: 'ID of the API connection to use (REQUIRED - must match one of the available connection IDs EXACTLY as shown in the Available API Connections section above)'
                 },
                 explanation: {
                   type: 'string',
@@ -511,7 +514,7 @@ Please execute the appropriate API call and return the result.`;
                   description: 'A helpful suggestion for what the user can do next with the API response data. Be specific and actionable. Examples: "You can now create workflows using this data" or "Try filtering for specific items by status"'
                 }
               },
-              required: ['intent', 'explanation', 'parameters']
+              required: ['intent', 'explanation', 'parameters', 'connectionId']
             }
           }
         ],
@@ -637,10 +640,26 @@ Please execute the appropriate API call and return the result.`;
               enhancedParams: enhancedParams
             });
           } else {
-            console.log('🔍 DEBUG: Enhanced parameters empty, keeping fallback parameters:', result.parameters);
+            console.log('🔍 DEBUG: Enhanced parameters empty, trying fallback extraction');
+            // Try fallback parameter extraction
+            const fallbackParams = this.extractFallbackParameters(request.message, result.url);
+            if (fallbackParams && Object.keys(fallbackParams).length > 0) {
+              console.log('🔍 DEBUG: Using fallback parameters:', fallbackParams);
+              result.parameters = fallbackParams;
+            } else {
+              console.log('🔍 DEBUG: No fallback parameters found, keeping original:', result.parameters);
+            }
           }
         } catch (error) {
-          logError('Parameter enhancement failed, using original parameters', error as Error);
+          console.log('🔍 DEBUG: Parameter enhancement failed, trying fallback extraction');
+          logError('Parameter enhancement failed, trying fallback', error as Error);
+          
+          // Try fallback parameter extraction
+          const fallbackParams = this.extractFallbackParameters(request.message, result.url);
+          if (fallbackParams && Object.keys(fallbackParams).length > 0) {
+            console.log('🔍 DEBUG: Using fallback parameters after error:', fallbackParams);
+            result.parameters = fallbackParams;
+          }
         }
       }
 
@@ -679,7 +698,7 @@ Please execute the appropriate API call and return the result.`;
   /**
    * Build system prompt for direct API call execution
    */
-  private async buildDirectApiCallSystemPrompt(connections: any[]): Promise<string> {
+  private async buildDirectApiCallSystemPrompt(connections: any[], guidanceResponse?: any): Promise<string> {
     const connectionsInfo = await Promise.all(connections.map(async conn => {
       const endpointsInfo = await Promise.all(conn.endpoints.map(async (endpoint: any) => {
         try {
@@ -698,7 +717,9 @@ Please execute the appropriate API call and return the result.`;
         }
       }));
 
-      return `**${conn.name}** (ID: ${conn.id}, Base URL: ${conn.baseUrl})
+      return `**${conn.name}** 
+CONNECTION ID: ${conn.id}
+Base URL: ${conn.baseUrl}
 ${endpointsInfo}`;
     }));
 
@@ -713,6 +734,27 @@ CRITICAL EXAMPLE: If a user says "Get all available items" and you have an endpo
 
 Available API Connections:
 ${connectionsText}
+
+🚨 CRITICAL: You MUST use the exact CONNECTION ID provided above. Do NOT modify or guess connection IDs. Copy them exactly as shown.
+
+${guidanceResponse && guidanceResponse.details && guidanceResponse.details.requiredApis ? `
+🚨 CRITICAL GUIDANCE FROM CONNECTION SERVICE 🚨
+The connection guidance service has analyzed this request and suggests the following endpoints:
+${guidanceResponse.details.requiredApis.map((api: any) => 
+  `- ${api.displayName}: ${api.suggestedEndpoints.join(', ')} (${api.reason})`
+).join('\n')}
+
+🚨🚨🚨 MANDATORY INSTRUCTION - FOLLOW THIS EXACTLY 🚨🚨🚨
+You MUST use the suggested endpoints above as your primary choice. The guidance service has already determined the best endpoints for this request. 
+
+CRITICAL: If the user asks for a specific item by ID (like "Get pet by ID 123"), you MUST use the endpoint with path parameters like "/pet/{petId}", NOT the general listing endpoint like "/pet/findByStatus".
+
+ABSOLUTELY CRITICAL: When the guidance service suggests "/pet/{petId}" for "Get pet by ID 123", you MUST use "/pet/{petId}", NOT "/pet/findByStatus".
+
+DO NOT choose other endpoints unless the suggested ones are not available. The guidance service is more accurate than your own analysis.
+
+FAILURE TO FOLLOW THIS GUIDANCE WILL RESULT IN INCORRECT API CALLS.
+` : ''}
 
 Your task is to:
 1. Analyze the user's message to determine their intent
@@ -742,9 +784,13 @@ Endpoint Selection Examples:
 - "Get all items" or "Show me data" → Look for GET endpoints like "/items", "/users", "/products"
 - "Find items that are active" → Look for GET endpoints with status parameters like "/items/findByStatus"
 - "Get item with ID 123" → Look for GET endpoints with path parameters like "/items/{id}" or "/items/123"
+- "Get pet by ID 123" → Look for GET endpoints with path parameters like "/pet/{petId}" or "/pet/123"
+- "Find pet by ID 456" → Look for GET endpoints with path parameters like "/pet/{petId}" or "/pet/456"
 - "Add a new item" → Look for POST endpoints like "/items", "/users", "/products"
 - "Update item 123" → Look for PUT endpoints like "/items" or "/items/{id}"
 - "Delete item 123" → Look for DELETE endpoints like "/items/{id}"
+
+CRITICAL: When a user asks for a specific item by ID (like "Get pet by ID 123", "Find pet by ID 456"), ALWAYS use the endpoint with path parameters like "/pet/{petId}", NOT the general listing endpoint like "/pet/findByStatus".
 
 Parameter Extraction Examples:
 - "Get all items" → parameters: {} (no parameters needed, only if no filtering is specified)
@@ -756,20 +802,32 @@ Parameter Extraction Examples:
 - "Show me pending items" → parameters: {"status": "pending"}
 - "Find sold items" → parameters: {"status": "sold"}
 - "Get item by ID 123" → parameters: {"id": "123"}
+- "Get pet by ID 123" → parameters: {"petId": "123"}
+- "Find pet by ID 456" → parameters: {"petId": "456"}
 - "Find items by category" → parameters: {"category": "electronics"}
 - "Search for users by email" → parameters: {"email": "user@example.com"}
 - "Filter products by price range" → parameters: {"minPrice": "100", "maxPrice": "500"}
 
+CRITICAL: When a user asks for a specific item by ID, extract the ID number and map it to the correct parameter name from the endpoint (like "petId" for "/pet/{petId}" endpoint).
+
 CRITICAL: When a user mentions words that match parameter natural language mappings (like "available", "pending", "sold"), ALWAYS include those as parameters even if they say "get all". The key is to look for filtering words in the user's message.
 
 For API calls:
-- CRITICAL: Analyze ALL available endpoints and choose the one that best matches the user's intent
+- CRITICAL: Analyze ALL available endpoints and choose the one that best matches the user's intent. If CRITICAL GUIDANCE is provided, prioritize those suggested endpoints.
+- ABSOLUTELY CRITICAL: When guidance suggests "/pet/{petId}" for "Get pet by ID 123", use "/pet/{petId}", NOT "/pet/findByStatus"
 - Use the most appropriate endpoint from available connections (not just the first one)
 - ALWAYS use the exact connection ID provided in the connection info above
 - Extract parameters from the user's natural language and map them to the correct parameter names
 - For query parameters, look for words like "status", "id", "name", "email", etc. in the user's message
 - Choose the correct HTTP method based on the action
 - Provide friendly, conversational explanations that make the user feel confident
+
+🚨 CRITICAL ENDPOINT SELECTION RULES:
+- If user asks for a specific item by ID (like "Get pet by ID 123"), use "/pet/{petId}" NOT "/pet/findByStatus"
+- If user asks for items with a status (like "Get pets with status sold"), use "/pet/findByStatus" with status parameter
+- ALWAYS prioritize the guidance from the connection service if provided
+- For ID-based requests, the URL should be the template with path parameters (e.g., "/pet/{petId}")
+- The actual substitution will happen during execution (e.g., "/pet/{petId}" becomes "/pet/123")
 
 Explanation Guidelines:
 - Use "I'll help you..." or "Let me..." to start explanations
@@ -820,25 +878,81 @@ Always be helpful, friendly, and provide clear next steps.`;
     context: any[] = []
   ): Promise<Record<string, any> | null> {
     try {
+      console.log('🔍 enhanceParameterExtraction: Starting parameter enhancement');
+      console.log('🔍 enhanceParameterExtraction: message:', message);
+      console.log('🔍 enhanceParameterExtraction: connectionId:', connectionId);
+      console.log('🔍 enhanceParameterExtraction: url:', url);
+      console.log('🔍 enhanceParameterExtraction: method:', method);
+      console.log('🔍 enhanceParameterExtraction: availableConnections:', availableConnections.map(c => ({ 
+        id: c.id, 
+        name: c.name, 
+        endpointCount: c.endpoints?.length || 0 
+      })));
+
       // Find the connection and endpoint
       const connection = availableConnections.find(conn => conn.id === connectionId);
       if (!connection) {
+        console.log('🔍 enhanceParameterExtraction: Connection not found for ID:', connectionId);
         logError('Connection not found for parameter enhancement', new Error('Connection not found'), { connectionId });
         return null;
       }
 
-      const endpoint = connection.endpoints?.find((ep: any) => 
+      console.log('🔍 enhanceParameterExtraction: Found connection:', { 
+        id: connection.id, 
+        name: connection.name,
+        endpointCount: connection.endpoints?.length || 0
+      });
+
+      // Look for endpoint with more flexible matching
+      let endpoint = connection.endpoints?.find((ep: any) => 
         ep.path === url && ep.method?.toUpperCase() === method.toUpperCase()
       );
       
+      // If exact match fails, try more flexible matching
       if (!endpoint) {
+        console.log('🔍 enhanceParameterExtraction: Exact match failed, trying flexible matching');
+        console.log('🔍 enhanceParameterExtraction: Available endpoints:', connection.endpoints?.map((ep: any) => ({
+          path: ep.path,
+          method: ep.method,
+          summary: ep.summary
+        })));
+        
+        // Try matching by path only (for cases where method might be undefined)
+        endpoint = connection.endpoints?.find((ep: any) => ep.path === url);
+        
+        // If still no match, try partial path matching
+        if (!endpoint) {
+          endpoint = connection.endpoints?.find((ep: any) => 
+            url.includes(ep.path) || ep.path.includes(url)
+          );
+        }
+      }
+      
+      if (!endpoint) {
+        console.log('🔍 enhanceParameterExtraction: Endpoint not found after all attempts');
+        console.log('🔍 enhanceParameterExtraction: Looking for:', { url, method });
+        console.log('🔍 enhanceParameterExtraction: Available endpoints:', connection.endpoints?.map((ep: any) => ({
+          path: ep.path,
+          method: ep.method,
+          summary: ep.summary
+        })));
+        
         logError('Endpoint not found for parameter enhancement', new Error('Endpoint not found'), { 
           connectionId, 
           url, 
-          method 
+          method,
+          availableEndpoints: connection.endpoints?.map((ep: any) => ({ path: ep.path, method: ep.method })) || []
         });
         return null;
       }
+
+      console.log('🔍 enhanceParameterExtraction: Found endpoint:', {
+        id: endpoint.id,
+        path: endpoint.path,
+        method: endpoint.method,
+        hasParameters: !!endpoint.parameters,
+        parameterCount: endpoint.parameters?.length || 0
+      });
 
       // Enhance the endpoint with parameter intelligence
       const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint, this);
@@ -854,6 +968,12 @@ Always be helpful, friendly, and provide clear next steps.`;
         { conversationHistory: context }
       );
 
+      console.log('🔍 enhanceParameterExtraction: AI extraction result:', {
+        extractedCount: Object.keys(extractionResult.parameters).length,
+        confidence: extractionResult.confidence,
+        parameters: extractionResult.parameters
+      });
+
       logInfo('AI parameter extraction completed', {
         message: message.substring(0, 100),
         endpointId: endpoint.id,
@@ -866,6 +986,7 @@ Always be helpful, friendly, and provide clear next steps.`;
       return extractionResult.parameters;
 
     } catch (error) {
+      console.error('🔍 enhanceParameterExtraction: Error during parameter enhancement:', error);
       logError('Failed to enhance parameter extraction', error as Error, {
         message: message.substring(0, 100),
         connectionId,
@@ -873,6 +994,75 @@ Always be helpful, friendly, and provide clear next steps.`;
         method
       });
       return null;
+    }
+  }
+
+  /**
+   * Fallback parameter extraction using simple pattern matching
+   */
+  private extractFallbackParameters(message: string, url: string): Record<string, any> {
+    const params: Record<string, any> = {};
+    
+    try {
+      console.log('🔍 extractFallbackParameters: Extracting parameters from message:', message);
+      console.log('🔍 extractFallbackParameters: For URL:', url);
+      
+      // Common parameter patterns
+      const patterns = [
+        // Status parameters
+        { pattern: /(?:status|state|condition)\s*[=:]\s*["']?(\w+)["']?/i, param: 'status' },
+        { pattern: /(?:available|pending|sold)\s+(?:pets?|items?|records?)/i, param: 'status', value: 'available' },
+        { pattern: /(?:get|find|search)\s+(?:all\s+)?(available|pending|sold)/i, param: 'status' },
+        
+        // ID parameters
+        { pattern: /(?:id|identifier)\s*[=:]\s*["']?(\w+)["']?/i, param: 'id' },
+        { pattern: /(?:pet|item|record)\s+(?:with\s+)?(?:id|identifier)\s+(\w+)/i, param: 'petId' },
+        { pattern: /(?:get|find|retrieve)\s+(?:pet|item|record)\s+(?:with\s+)?(?:id\s+)?(\w+)/i, param: 'petId' },
+        
+        // General parameters
+        { pattern: /(?:name|title)\s*[=:]\s*["']?([^"']+)["']?/i, param: 'name' },
+        { pattern: /(?:limit|count|size)\s*[=:]\s*(\d+)/i, param: 'limit' },
+        { pattern: /(?:offset|skip)\s*[=:]\s*(\d+)/i, param: 'offset' }
+      ];
+      
+      // Apply patterns
+      for (const { pattern, param, value } of patterns) {
+        const match = message.match(pattern);
+        if (match) {
+          const extractedValue = value || match[1];
+          if (extractedValue) {
+            params[param] = extractedValue;
+            console.log('🔍 extractFallbackParameters: Extracted parameter:', param, '=', extractedValue);
+          }
+        }
+      }
+      
+      // Special handling for common endpoints
+      if (url.includes('/findByStatus') || url.includes('/findBy')) {
+        // Look for status-related keywords
+        if (message.toLowerCase().includes('available')) {
+          params.status = 'available';
+        } else if (message.toLowerCase().includes('pending')) {
+          params.status = 'pending';
+        } else if (message.toLowerCase().includes('sold')) {
+          params.status = 'sold';
+        }
+      }
+      
+      if (url.includes('/{petId}') || url.includes('/pet/')) {
+        // Look for ID patterns
+        const idMatch = message.match(/(\d+)/);
+        if (idMatch) {
+          params.petId = idMatch[1];
+        }
+      }
+      
+      console.log('🔍 extractFallbackParameters: Final extracted parameters:', params);
+      return params;
+      
+    } catch (error) {
+      console.error('🔍 extractFallbackParameters: Error during fallback extraction:', error);
+      return {};
     }
   }
 

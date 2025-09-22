@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { apiClient, CreateConnectionRequest } from '../../lib/api/client';
+import { createFormSubmissionHandler, createRateLimitedSubmission } from '../../lib/utils/formSubmissionUtils';
 
 // TODO: [P1.5-OPENAPI-DISCOVERY] Add OpenAPI auto-discovery feature
 // - Add common path discovery (/swagger.json, /openapi.json, etc.)
@@ -286,27 +287,14 @@ export default function CreateConnectionModal({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Create rate-limited submission function
+  const submitConnection = createRateLimitedSubmission(async () => {
     console.info('[modal] Form submission triggered');
     console.info('[modal] Form data:', formData);
-    e.preventDefault();
+    
     setIsSubmitting(true);
     setErrorMessage('');
     setFieldErrors({});
-    const now = Date.now();
-    const lastSubmission = (window as any).lastConnectionSubmission || 0;
-    if (now - lastSubmission < 1000) {
-      setErrorMessage('Rate limit exceeded. Please wait before trying again.');
-      onError('Rate limit exceeded. Please wait before trying again.');
-      setIsSubmitting(false);
-      return;
-    }
-    (window as any).lastConnectionSubmission = now;
-    const lastReset = (window as any).lastRateLimitReset || 0;
-    if (now - lastReset > 60000) {
-      (window as any).connectionSubmissionCount = 0;
-      (window as any).lastRateLimitReset = now;
-    }
     try {
       console.log('🔍 handleSubmit - complete formData at submission:', formData);
       console.log('🔍 handleSubmit - credentials:', formData.credentials);
@@ -367,7 +355,25 @@ export default function CreateConnectionModal({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, 1000); // 1 second rate limit
+
+  // Create form submission handler
+  const handleSubmit = createFormSubmissionHandler(
+    async (formData: FormData) => {
+      await submitConnection();
+    },
+    {
+      preventDefault: true,
+      stopPropagation: true,
+      onSubmissionStart: () => console.log('🔍 CreateConnectionModal: Form submission started'),
+      onSubmissionComplete: () => console.log('🔍 CreateConnectionModal: Form submission completed'),
+      onSubmissionError: (error) => {
+        console.error('🔍 CreateConnectionModal: Form submission error:', error);
+        setErrorMessage(error.message);
+        onError(error.message);
+      }
+    }
+  );
 
   // Error handling function for consistent error management
   const handleSubmissionError = (error: any) => {
@@ -559,7 +565,12 @@ export default function CreateConnectionModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6" role="form">
+          <form 
+            onSubmit={handleSubmit} 
+            className="space-y-6" 
+            role="form"
+            data-testid="create-connection-form"
+          >
             {/* Basic Information Section */}
             <section>
               <h4 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h4>

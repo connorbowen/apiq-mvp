@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../lib/api/client';
+import { createFormSubmissionHandler } from '../lib/utils/formSubmissionUtils';
 
 interface WorkflowShare {
   id: string;
@@ -45,37 +46,48 @@ export default function WorkflowShareModal({ workflowId, isOpen, onClose }: Work
     }
   }, [isOpen, loadShares]);
 
-  const addShare = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
+  const addShare = createFormSubmissionHandler(
+    async (formData: FormData) => {
+      if (!email.trim()) return;
 
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
+      setIsLoading(true);
+      setError('');
+      setSuccess('');
 
-    try {
-      const response = await fetch(`/api/workflows/${workflowId}/share`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: email.trim(), permission }),
-      });
+      try {
+        const response = await fetch(`/api/workflows/${workflowId}/share`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email: email.trim(), permission }),
+        });
 
-      const data = await response.json();
-      if (data.success) {
-        setSuccess('User added successfully');
-        setEmail('');
-        setPermission('VIEW');
-        loadShares();
-      } else {
-        setError(data.error || 'Failed to add user');
+        const data = await response.json();
+        if (data.success) {
+          setSuccess('User added successfully');
+          setEmail('');
+          setPermission('VIEW');
+          loadShares();
+        } else {
+          setError(data.error || 'Failed to add user');
+        }
+      } catch (error) {
+        setError('Failed to add user');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      setError('Failed to add user');
-    } finally {
-      setIsLoading(false);
+    },
+    {
+      preventDefault: true,
+      stopPropagation: true,
+      onSubmissionStart: () => console.log('🔍 WorkflowShareModal: Form submission started'),
+      onSubmissionComplete: () => console.log('🔍 WorkflowShareModal: Form submission completed'),
+      onSubmissionError: (error) => {
+        console.error('🔍 WorkflowShareModal: Form submission error:', error);
+        setError(error.message);
+      }
     }
-  };
+  );
 
   const updatePermission = async (email: string, newPermission: 'VIEW' | 'EDIT' | 'OWNER') => {
     try {
@@ -137,7 +149,11 @@ export default function WorkflowShareModal({ workflowId, isOpen, onClose }: Work
           </div>
 
           {/* Add new user form */}
-          <form onSubmit={addShare} className="mb-6">
+          <form 
+            onSubmit={addShare} 
+            className="mb-6"
+            data-testid="workflow-share-form"
+          >
             <div className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">

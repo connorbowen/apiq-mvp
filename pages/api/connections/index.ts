@@ -5,6 +5,8 @@ import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session
 import { parseOpenApiSpec } from '../../../src/lib/api/parser';
 import { extractAndStoreEndpoints } from '../../../src/lib/api/endpoints';
 import { logInfo, logError } from '../../../src/utils/logger';
+import { usageTrackingService } from '../../../src/lib/services/usageTrackingService';
+import { UsageType } from '../../../src/generated/prisma';
 
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
@@ -12,7 +14,6 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
 
     if (req.method === 'GET') {
       // Get all connections for the user
-      console.log('🔍 [DEBUG] GET /api/connections - User ID:', user.id);
       
       const connections = await prisma.apiConnection.findMany({
         where: { userId: user.id },
@@ -34,13 +35,6 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         orderBy: { createdAt: 'desc' }
       });
 
-      console.log('🔍 [DEBUG] GET /api/connections - Found connections:', connections.length);
-      console.log('🔍 [DEBUG] GET /api/connections - Connection details:', connections.map(c => ({
-        id: c.id,
-        name: c.name,
-        ingestionStatus: c.ingestionStatus
-      })));
-
       return res.status(200).json({
         success: true,
         data: { connections }
@@ -50,16 +44,20 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
     if (req.method === 'POST') {
       const { name, description, authType, baseUrl, authConfig, documentationUrl } = req.body;
 
-      console.log('🔍 [DEBUG] POST /api/connections - User ID:', user.id);
-      console.log('🔍 [DEBUG] POST /api/connections - Connection data:', {
-        name,
-        authType,
-        baseUrl,
-        documentationUrl
-      });
-
       if (!name || !authType) {
         return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Check usage limits before creating connection
+      const canCreate = await usageTrackingService.canPerformAction(user.id, 'api_connection');
+      if (!canCreate.allowed) {
+        return res.status(403).json({
+          success: false,
+          error: 'API connection limit reached',
+          details: canCreate.reason,
+          code: 'USAGE_LIMIT_REACHED',
+          timestamp: new Date()
+        });
       }
 
       // Encrypt auth config if provided
@@ -76,12 +74,6 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           documentationUrl: documentationUrl || null,
           userId: user.id,
         }
-      });
-
-      console.log('🔍 [DEBUG] POST /api/connections - Created connection:', {
-        id: connection.id,
-        name: connection.name,
-        userId: connection.userId
       });
 
       let ingestionStatus = 'PENDING';
@@ -144,6 +136,19 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           warning = `OpenAPI specification processing failed: ${error.message}`;
         }
       }
+
+      // Track usage after successful connection creation
+      await usageTrackingService.trackUsage(
+        user.id,
+        UsageType.API_CONNECTION,
+        connection.id,
+        'api_connection',
+        {
+          name: connection.name,
+          authType: connection.authType,
+          baseUrl: connection.baseUrl
+        }
+      );
 
       return res.status(201).json({
         success: true,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createFormSubmissionHandler } from '../lib/utils/formSubmissionUtils';
 
 interface WaitlistFormData {
   email: string;
@@ -50,45 +51,57 @@ export default function WaitlistSignup() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus('idle');
+  const handleSubmit = createFormSubmissionHandler(
+    async (formData: FormData) => {
+      setIsSubmitting(true);
+      setSubmitStatus('idle');
 
-    try {
-      const response = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        setSubmitStatus('success');
-        setSubmitMessage(result.message || 'Successfully added to waitlist!');
-        // Reset form
-        setFormData({
-          email: '',
-          name: '',
-          company: '',
-          role: '',
-          interests: [],
-          useCase: ''
+      try {
+        const response = await fetch('/api/waitlist', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
         });
-      } else {
+
+        const result = await response.json();
+
+        if (response.ok) {
+          setSubmitStatus('success');
+          setSubmitMessage(result.message || 'Successfully added to waitlist!');
+          // Reset form
+          setFormData({
+            email: '',
+            name: '',
+            company: '',
+            role: '',
+            interests: [],
+            useCase: ''
+          });
+        } else {
+          setSubmitStatus('error');
+          setSubmitMessage(result.message || result.error || 'Something went wrong. Please try again.');
+        }
+      } catch (error) {
         setSubmitStatus('error');
-        setSubmitMessage(result.message || result.error || 'Something went wrong. Please try again.');
+        setSubmitMessage('Network error. Please check your connection and try again.');
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      setSubmitStatus('error');
-      setSubmitMessage('Network error. Please check your connection and try again.');
-    } finally {
-      setIsSubmitting(false);
+    },
+    {
+      preventDefault: true,
+      stopPropagation: true,
+      onSubmissionStart: () => console.log('🔍 WaitlistSignup: Form submission started'),
+      onSubmissionComplete: () => console.log('🔍 WaitlistSignup: Form submission completed'),
+      onSubmissionError: (error) => {
+        console.error('🔍 WaitlistSignup: Form submission error:', error);
+        setSubmitStatus('error');
+        setSubmitMessage(error.message);
+      }
     }
-  };
+  );
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
@@ -118,7 +131,11 @@ export default function WaitlistSignup() {
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form 
+          onSubmit={handleSubmit} 
+          className="space-y-6"
+          data-testid="waitlist-signup-form"
+        >
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">

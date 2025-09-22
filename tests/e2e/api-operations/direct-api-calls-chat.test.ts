@@ -33,6 +33,7 @@ import {
   validateUXCompliance, 
   closeGuidedTourIfPresent, 
   waitForElement,
+  waitForApiCallResult,
   sendChatMessage,
   waitForChatResponse,
   validateChatResponse,
@@ -41,7 +42,7 @@ import {
 import { testPageLoadTime, testAPIPerformance } from '../../helpers/performanceHelpers';
 import { testFormAccessibility, testPrimaryActionPatterns } from '../../helpers/accessibilityHelpers';
 import { testModalSubmitLoading, testModalSuccessMessage, testModalErrorHandling } from '../../helpers/modalHelpers';
-import { createTestData, cleanupTestData } from '../../helpers/dataHelpers';
+import { createTestData, cleanupTestData, submitFormWithUtils } from '../../helpers/dataHelpers';
 import { createTestEndpoint } from '../../helpers/testUtils';
 import { testXSSPrevention, testDataExposure } from '../../helpers/securityHelpers';
 import { waitForNetworkIdle } from '../../helpers/waitHelpers';
@@ -295,7 +296,9 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       const isSendButtonEnabled = await sendButton.isEnabled();
       console.log('🔍 Send button enabled:', isSendButtonEnabled);
 
-      for (const testCase of testCases) {
+      for (let i = 0; i < testCases.length; i++) {
+        const testCase = testCases[i];
+        
         // Send test message using helper
         await sendChatMessage(page, testCase.message);
 
@@ -303,12 +306,13 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
         await waitForChatResponse(page, 15000);
         
         // Verify API call was made with correct parameters
+        // Wait for the API call result to appear
         const apiCallResult = page.locator('[data-testid="api-call-result"]').last();
         await expect(apiCallResult).toBeVisible();
         
-        // Verify the endpoint matches expected
+        // Wait for the specific API call URL to appear with the expected endpoint
         const apiCallUrl = page.locator('[data-testid="api-call-url"]').last();
-        await expect(apiCallUrl).toContainText(testCase.expectedEndpoint);
+        await expect(apiCallUrl).toContainText(testCase.expectedEndpoint, { timeout: 10000 });
         
         // Verify parameters were extracted correctly
         const responseBody = page.locator('[data-testid="response-body"]').last();
@@ -401,7 +405,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
 
       // Wait for AI response with API call result
       await waitForChatResponse(page, 15000);
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 15000 });
+      await waitForApiCallResult(page, { timeout: 15000 });
       
       // Verify API call result is visible
       const apiCallResult = page.locator('[data-testid="api-call-result"]');
@@ -498,7 +502,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for API call result
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Expand the details section to make response headers and body visible
       const detailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' });
@@ -523,7 +527,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for API call result
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Expand the details section to make response headers and body visible
       const detailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' });
@@ -552,7 +556,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for API call result
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Expand the details section to make response headers and body visible
       const detailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' });
@@ -578,7 +582,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
 
       // Wait for AI response
       await waitForChatResponse(page, 15000);
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Verify execution details are displayed
       await expect(page.locator('[data-testid="api-call-method"]')).toBeVisible();
@@ -604,7 +608,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for API call result
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Expand the details section to make response headers and body visible
       const detailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' });
@@ -626,7 +630,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
 
       // Wait for second API call to complete
       await waitForChatResponse(page, 15000);
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Wait a bit for the second API call result to be fully rendered
       await page.waitForTimeout(2000);
@@ -667,7 +671,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await waitForChatResponse(page, 15000);
       
       // Wait for API call result
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Expand the details section to make response headers and body visible
       const detailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' });
@@ -689,7 +693,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
 
       // Wait for second API call to complete
       await waitForChatResponse(page, 15000);
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Expand the details section for the second API call
       const secondDetailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' }).last();
@@ -706,7 +710,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
 
       // Wait for response
       await waitForChatResponse(page, 15000);
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Expand the details section to make response headers and body visible
       const detailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' });
@@ -728,7 +732,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
 
       // Wait for second API call
       await waitForChatResponse(page, 15000);
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Wait a bit for the second API call result to be fully rendered
       await page.waitForTimeout(2000);
@@ -767,7 +771,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
 
       // Wait for response
       await waitForChatResponse(page, 15000);
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Expand the details section to make response headers and body visible
       const detailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' });
@@ -792,7 +796,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
 
       // Wait for update API call
       await waitForChatResponse(page, 15000);
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Expand the details section for the update API call
       const updateDetailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' }).last();
@@ -1006,7 +1010,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       
       // Test empty message
       await chatInput.fill('');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       // Verify no API call is made
       await page.waitForTimeout(1000);
@@ -1015,7 +1019,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       
       // Test message that doesn't involve API calls
       await chatInput.fill('Hello, how are you?');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       // Wait for response
       await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 10000 });
@@ -1048,7 +1052,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await sendChatMessage(page, 'Get all available pets');
 
       // Wait for completion
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       const endTime = Date.now();
       const executionTime = endTime - startTime;
@@ -1063,7 +1067,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await sendChatMessage(page, 'Get pet with ID 123');
       
       // Wait for API call result
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       const apiEndTime = Date.now();
       const apiExecutionTime = apiEndTime - apiStartTime;
@@ -1077,13 +1081,13 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       
       // Send multiple API call requests quickly
       await chatInput.fill('Get petstore inventory');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       await chatInput.fill('Get all available pets');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       await chatInput.fill('Get all pending pets');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
 
       // Wait for all responses
       await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 20000 });
@@ -1098,14 +1102,14 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       
       // Start API call
       await chatInput.fill('Get all available pets');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       // Verify chat input remains responsive
       await expect(chatInput).toBeEnabled();
       
       // Try to send another message while first is executing
       await chatInput.fill('Also get the inventory');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       // Wait for both to complete
       await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 20000 });
@@ -1125,7 +1129,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       
       // Test with malicious input
       await chatInput.fill('Get pet with name <script>alert("xss")</script>');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       // Wait for response
       await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
@@ -1141,11 +1145,11 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
     test('should prevent data exposure in API call results', async ({ page }) => {
       const chatInput = page.locator('[data-testid="chat-input"]');
       await chatInput.fill('Get all available pets');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
 
       // Wait for response
       await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Test data exposure prevention
       await testDataExposure(page, ['[data-testid="api-call-result"]', '[data-testid="response-body"]']);
@@ -1156,7 +1160,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       // For now, we'll test the error handling mechanism
       const chatInput = page.locator('[data-testid="chat-input"]');
       await chatInput.fill('Get all available pets');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
 
       // Wait for response
       await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
@@ -1172,7 +1176,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       
       // Test SQL injection attempts in chat messages
       await chatInput.fill('Get pet with name "test\'; DROP TABLE pets; --"');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       // Wait for response
       await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
@@ -1240,7 +1244,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       
       // Test malicious JSON payloads
       await chatInput.fill('Create pet with malicious payload: {"name": "<script>alert(1)</script>"}');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       // Wait for response
       await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
@@ -1340,7 +1344,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       await expect(chatInput).toBeEnabled();
       
       // Wait for API call to complete
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Verify API call completed successfully
       await expect(page.locator('[data-testid="api-call-result"]')).toBeVisible();
@@ -1404,7 +1408,7 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       
       // Test typing and sending a message with keyboard
       await chatInput.fill('Get pet with ID 123');
-      await page.keyboard.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       // Wait for response
       await waitForChatResponse(page, 15000);
@@ -1426,11 +1430,11 @@ test.describe('P1.3.1: Direct API Calls via Chat E2E Tests', () => {
       // Test API call on mobile
       const chatInput = page.locator('[data-testid="chat-input"]');
       await chatInput.fill('Get all available pets');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
       
       // Wait for response
       await waitForElement(page, 'div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]', { timeout: 15000 });
-      await waitForElement(page, '[data-testid="api-call-result"]', { timeout: 10000 });
+      await waitForApiCallResult(page, { timeout: 10000 });
       
       // Verify API call result is visible on mobile
       await expect(page.locator('[data-testid="api-call-result"]')).toBeVisible();

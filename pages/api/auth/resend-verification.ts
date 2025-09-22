@@ -6,8 +6,6 @@ import { EmailService } from '../../../src/lib/services/emailService';
 import { logInfo, logError } from '../../../src/utils/logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  console.log('DEBUG: HEADERS', req.headers);
-  console.log('DEBUG: COOKIES', req.cookies);
   if (req.method !== 'POST') {
     return res.status(405).json({
       success: false,

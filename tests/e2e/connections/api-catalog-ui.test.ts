@@ -3,7 +3,7 @@ import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUti
 import { createE2EUser } from '../../helpers/authHelpers';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton } from '../../helpers/e2eHelpers';
 import { waitForDashboard, validateUXCompliance, waitForElement } from '../../helpers/uiHelpers';
-import { createTestData, cleanupTestData } from '../../helpers/dataHelpers';
+import { createTestData, cleanupTestData, submitFormWithUtils } from '../../helpers/dataHelpers';
 import { waitForModal } from '../../helpers/waitHelpers';
 import { testPageLoadTime, testAPIPerformance } from '../../helpers/performanceHelpers';
 import { testXSSPrevention, testDataExposure } from '../../helpers/securityHelpers';

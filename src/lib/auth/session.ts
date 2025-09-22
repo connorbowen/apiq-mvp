@@ -63,13 +63,9 @@ export const generateToken = (user: AuthenticatedUser, type: 'access' | 'refresh
  */
 export const verifyToken = (token: string): JWTPayload => {
   try {
-    console.log('🔍 DEBUG: verifyToken - JWT_SECRET in use:', JWT_SECRET);
-    console.log('🔍 DEBUG: verifyToken - token to verify:', token.substring(0, 50) + '...');
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
-    console.log('🔍 DEBUG: verifyToken - token verified successfully:', decoded);
     return decoded;
   } catch (error) {
-    console.log('🔍 DEBUG: verifyToken - verification failed:', error);
     throw unauthenticated('Please log in again to continue. Your session may have expired.');
   }
 };
@@ -78,27 +74,18 @@ export const verifyToken = (token: string): JWTPayload => {
  * Extract token from request cookies or headers
  */
 export const extractToken = (req: NextApiRequest): string | null => {
-  console.log('🔍 DEBUG: extractToken - URL:', req.url);
-  console.log('🔍 DEBUG: extractToken - method:', req.method);
-  console.log('🔍 DEBUG: extractToken - all headers:', req.headers);
-  console.log('🔍 DEBUG: extractToken - cookie header:', req.headers.cookie);
-  console.log('🔍 DEBUG: extractToken - parsed cookies:', req.cookies);
-  
   // First try to get token from cookies (preferred for SSR)
   const cookieToken = req.cookies.accessToken;
-  console.log('🔍 DEBUG: extractToken - accessToken cookie:', cookieToken);
   if (cookieToken) {
     return cookieToken;
   }
   
   // Fallback to Authorization header for API calls
   const authHeader = req.headers.authorization;
-  console.log('🔍 DEBUG: extractToken - authorization header:', authHeader);
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
   
-  console.log('🔍 DEBUG: extractToken - no token found');
   return null;
 };
 
@@ -114,16 +101,8 @@ export const authenticateUser = async (email: string, password: string): Promise
     throw unauthenticated('Invalid credentials');
   }
   
-  console.log('[DEBUG] Login attempt for user:', {
-    email,
-    dbHash: user.password,
-    incomingPassword: password,
-    at: new Date().toISOString(),
-  });
-
   // Always use bcrypt for password validation - no plain text fallback
   const isPasswordValid = await bcrypt.compare(password, user.password);
-  console.log('[DEBUG] bcrypt.compare result:', isPasswordValid);
   
   if (!isPasswordValid) {
     throw unauthenticated('Invalid credentials');
@@ -180,23 +159,18 @@ export const getUserById = async (userId: string): Promise<AuthenticatedUser | n
 export const requireAuth = async (req: AuthenticatedRequest, res: NextApiResponse): Promise<AuthenticatedUser> => {
   const token = extractToken(req);
   
-  console.log('🔍 DEBUG: requireAuth - token:', token ? 'present' : 'missing');
-  
   if (!token) {
     throw unauthenticated('Please log in to access this feature. Click the login button to continue.');
   }
   
   try {
-    console.log('🔍 DEBUG: requireAuth - about to call verifyToken with token:', token.substring(0, 50) + '...');
     const payload = verifyToken(token);
-    console.log('🔍 DEBUG: requireAuth - payload:', payload);
     
     if (payload.type !== 'access') {
       throw unauthenticated('Please log in again. Your session token is invalid.');
     }
     
     const user = await getUserById(payload.userId);
-    console.log('🔍 DEBUG: requireAuth - user:', user ? 'found' : 'not found');
     
     if (!user) {
       throw unauthenticated('Please log in again. Your account may have been deactivated.');
@@ -207,7 +181,6 @@ export const requireAuth = async (req: AuthenticatedRequest, res: NextApiRespons
     
     return user;
   } catch (error) {
-    console.log('🔍 DEBUG: requireAuth - error:', error);
     if (error instanceof ApplicationError) {
       throw error;
     }
@@ -390,10 +363,6 @@ export const handleRefreshToken = async (req: NextApiRequest, res: NextApiRespon
  * Get current user endpoint handler
  */
 export const handleGetCurrentUser = async (req: AuthenticatedRequest, res: NextApiResponse) => {
-  console.log('🔍 DEBUG: handleGetCurrentUser called');
-  console.log('🔍 DEBUG: handleGetCurrentUser - method:', req.method);
-  console.log('🔍 DEBUG: handleGetCurrentUser - url:', req.url);
-  
   if (req.method !== 'GET') {
     return res.status(405).json({
       success: false,
@@ -402,9 +371,7 @@ export const handleGetCurrentUser = async (req: AuthenticatedRequest, res: NextA
   }
   
   try {
-    console.log('🔍 DEBUG: handleGetCurrentUser - calling requireAuth');
     const user = await requireAuth(req, res);
-    console.log('🔍 DEBUG: handleGetCurrentUser - requireAuth succeeded, user:', user.email);
     
     // Get full user data including onboarding fields
     const fullUser = await prisma.user.findUnique({
@@ -446,7 +413,6 @@ export const handleGetCurrentUser = async (req: AuthenticatedRequest, res: NextA
       }
     });
   } catch (error) {
-    console.log('🔍 DEBUG: handleGetCurrentUser - error:', error);
     if (error instanceof ApplicationError) {
       return res.status(error.status).json({
         success: false,

@@ -16,7 +16,7 @@ import { createE2EUser } from '../../helpers/authHelpers';
 import { cleanupTestUser } from '../../helpers/testUtils';
 import { setupE2E, closeAllModals, resetRateLimits } from '../../helpers/e2eHelpers';
 import { waitForDashboard, validateUXCompliance, closeGuidedTourIfPresent, waitForElement } from '../../helpers/uiHelpers';
-import { createTestData, cleanupTestData } from '../../helpers/dataHelpers';
+import { createTestData, cleanupTestData, submitFormWithUtils } from '../../helpers/dataHelpers';
 import { Role } from '../../../src/generated/prisma';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
@@ -178,7 +178,7 @@ test.describe('P1.3.2: Parameter Extraction E2E Tests', () => {
 
       // Send a message that requires parameter extraction
       await chatInput.fill('Find all pets with status available');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
 
       // Wait for AI response
       await waitForElement(page, 'div.max-w-xs.sm\\:max-w-sm.md\\:max-w-md.lg\\:max-w-lg.px-3.sm\\:px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
@@ -236,7 +236,7 @@ test.describe('P1.3.2: Parameter Extraction E2E Tests', () => {
       for (const testCase of testCases) {
         await chatInput.clear();
         await chatInput.fill(testCase);
-        await chatInput.press('Enter');
+        await submitFormWithUtils(page, '[data-testid="chat-form"]');
 
         // Wait for response
         await waitForElement(page, 'div.max-w-xs.sm\\:max-w-sm.md\\:max-w-md.lg\\:max-w-lg.px-3.sm\\:px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
@@ -272,7 +272,7 @@ test.describe('P1.3.2: Parameter Extraction E2E Tests', () => {
 
       // Send a message that should create a workflow
       await chatInput.fill('Create a workflow that finds available pets and then gets details for a specific pet');
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
 
       // Wait for AI response with workflow
       await waitForElement(page, 'div.max-w-xs.sm\\:max-w-sm.md\\:max-w-md.lg\\:max-w-lg.px-3.sm\\:px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 30000 });
@@ -344,7 +344,7 @@ test.describe('P1.3.2: Parameter Extraction E2E Tests', () => {
 
       const chatInput = page.locator('[data-testid="chat-input"]');
       await chatInput.fill(testMessage);
-      await chatInput.press('Enter');
+      await submitFormWithUtils(page, '[data-testid="chat-form"]');
 
       await waitForElement(page, 'div.max-w-xs.sm\\:max-w-sm.md\\:max-w-md.lg\\:max-w-lg.px-3.sm\\:px-4.py-2.rounded-lg.bg-gray-100.text-gray-900', { timeout: 15000 });
 

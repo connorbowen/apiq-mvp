@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
+import { createFormSubmissionHandler } from '../../lib/utils/formSubmissionUtils';
 
 interface PasswordChangeData {
   currentPassword: string;
@@ -89,7 +90,11 @@ export default function PasswordChangeForm({ onPasswordChanged }: PasswordChange
 
       {/* Password Change Form */}
       {showForm && (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form 
+          onSubmit={handleSubmit(onSubmit)} 
+          className="space-y-6"
+          data-testid="password-change-form"
+        >
           <div className="bg-white shadow rounded-lg p-6">
             <div className="space-y-4">
               <div>

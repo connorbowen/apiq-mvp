@@ -1,9 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { ParallelAIService } from '../../../src/lib/services/parallelAIService';
-import { ConnectionGuidanceService } from '../../../src/lib/services/connectionGuidanceService';
+import { ConnectionGuidanceOrchestrator } from '../../../src/lib/services/connectionGuidanceOrchestrator';
 import { errorHandler } from '../../../src/middleware/errorHandler';
 import { prisma } from '../../../lib/database/client';
+import { usageTrackingService } from '../../../src/lib/services/usageTrackingService';
+import { UsageType } from '../../../src/generated/prisma';
 import axios from 'axios';
 
 interface ProcessMessageResponse {
@@ -23,27 +25,42 @@ interface ProcessMessageResponse {
 async function executeDirectApiCall(apiCallData: any, connections: any[], userId: string) {
   const startTime = Date.now();
   
-  try {
-    console.log('executeDirectApiCall - apiCallData:', apiCallData);
-    console.log('executeDirectApiCall - connections:', connections.map(c => ({ id: c.id, name: c.name })));
-    console.log('executeDirectApiCall - looking for connectionId:', apiCallData.connectionId);
-    
-    const connection = connections.find(conn => conn.id === apiCallData.connectionId);
-    if (!connection) {
-      console.log('executeDirectApiCall - Connection not found for ID:', apiCallData.connectionId);
-      return {
-        success: false,
-        data: { error: 'Connection not found' }
-      };
-    }
-    
-    // Substitute path parameters in the URL
-    let substitutedUrl = apiCallData.url;
-    if (apiCallData.parameters) {
-      for (const [key, value] of Object.entries(apiCallData.parameters)) {
-        substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
+  console.log('executeDirectApiCall - apiCallData:', apiCallData);
+  console.log('executeDirectApiCall - connections:', connections.map(c => ({ id: c.id, name: c.name })));
+  console.log('executeDirectApiCall - looking for connectionId:', apiCallData.connectionId);
+  
+  // Check usage limits before executing direct API call
+  const canExecute = await usageTrackingService.canPerformAction(userId, 'direct_api_call');
+  if (!canExecute.allowed) {
+    console.log('executeDirectApiCall - Usage limit reached:', canExecute.reason);
+    return {
+      success: false,
+      data: { 
+        error: 'Direct API call limit reached',
+        details: canExecute.reason,
+        code: 'USAGE_LIMIT_REACHED'
       }
+    };
+  }
+  
+  const connection = connections.find(conn => conn.id === apiCallData.connectionId);
+  if (!connection) {
+    console.log('executeDirectApiCall - Connection not found for ID:', apiCallData.connectionId);
+    return {
+      success: false,
+      data: { error: 'Connection not found' }
+    };
+  }
+  
+  // Substitute path parameters in the URL
+  let substitutedUrl = apiCallData.url;
+  if (apiCallData.parameters) {
+    for (const [key, value] of Object.entries(apiCallData.parameters)) {
+      substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
     }
+  }
+  
+  try {
     
     const fullUrl = `${connection.baseUrl}${substitutedUrl}`;
     
@@ -87,11 +104,26 @@ async function executeDirectApiCall(apiCallData: any, connections: any[], userId
     
     const executionTime = Date.now() - startTime;
 
+    // Track usage after successful API call
+    await usageTrackingService.trackUsage(
+      userId,
+      UsageType.DIRECT_API_CALL,
+      apiCallData.connectionId,
+      'direct_api_call',
+      {
+        method: apiCallData.method,
+        url: apiCallData.url,
+        statusCode: response.status,
+        executionTime,
+        connectionName: connection.name
+      }
+    );
+
     return {
       success: true,
       data: {
         method: apiCallData.method,
-        url: apiCallData.url,
+        url: substitutedUrl, // Use the substituted URL instead of template
         statusCode: response.status,
         responseData: response.data,
         responseHeaders: response.headers as Record<string, string>,
@@ -108,7 +140,7 @@ async function executeDirectApiCall(apiCallData: any, connections: any[], userId
         success: true, // Still successful from our perspective
         data: {
           method: apiCallData.method,
-          url: apiCallData.url,
+          url: substitutedUrl, // Use the substituted URL instead of template
           statusCode: error.response.status,
           responseData: error.response.data,
           responseHeaders: error.response.headers as Record<string, string>,
@@ -122,12 +154,13 @@ async function executeDirectApiCall(apiCallData: any, connections: any[], userId
         success: false,
         data: {
           method: apiCallData.method,
-          url: apiCallData.url,
+          url: substitutedUrl, // Use the substituted URL instead of template
           statusCode: 0,
           responseData: null,
           responseHeaders: {},
           executionTime,
           error: error.message || 'Network error'
+          
         }
       };
     }
@@ -135,6 +168,7 @@ async function executeDirectApiCall(apiCallData: any, connections: any[], userId
 }
 
 async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMessageResponse>) {
+  console.log('🚀🚀🚀 CHAT PROCESS HANDLER CALLED - REQUEST RECEIVED 🚀🚀🚀');
   try {
     console.log('🔍 Process endpoint: Request received', {
       method: req.method,
@@ -172,65 +206,54 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
       }
     });
 
-    console.log('🔍 [DEBUG] Connections found for workflow generation:', {
-      connectionCount: connections.length,
-      connections: connections.map(conn => ({
-        id: conn.id,
-        name: conn.name,
-        endpointCount: conn.endpoints.length,
-        ingestionStatus: conn.ingestionStatus
-      }))
-    });
-
     // Use optimized parallel AI service
     const parallelAIService = new ParallelAIService(process.env.OPENAI_API_KEY!);
     
     // Check if connection guidance is needed (regardless of whether connections exist)
-    console.log('🔍 Process endpoint: Checking connection guidance for message:', message);
-    console.log('🔍 Process endpoint: Available connections:', connections.map(conn => ({ name: conn.name, id: conn.id })));
+    // Use centralized connection guidance orchestrator
+    console.log('🔍 Process endpoint: Using centralized connection guidance orchestrator');
+    const orchestrator = new ConnectionGuidanceOrchestrator();
     
-    let connectionGuidance;
-    try {
-      connectionGuidance = await ConnectionGuidanceService.analyzeRequest(
-        message,
-        connections.map(conn => ({ 
-          name: conn.name, 
-          id: conn.id,
-          baseUrl: conn.baseUrl,
-          endpoints: conn.endpoints.map(endpoint => ({
-            path: endpoint.path,
-            method: endpoint.method,
-            summary: endpoint.summary || ''
-          }))
+    const guidanceResponse = await orchestrator.processMessage({
+      message,
+      availableConnections: connections.map(conn => ({ 
+        name: conn.name, 
+        id: conn.id,
+        baseUrl: conn.baseUrl,
+        endpoints: conn.endpoints.map(endpoint => ({
+          path: endpoint.path,
+          method: endpoint.method,
+          summary: endpoint.summary || ''
         }))
-      );
-    } catch (error) {
-      console.error('🔍 Process endpoint: Connection guidance error:', error);
-      // Continue with normal processing if guidance fails
-      connectionGuidance = {
-        requiresGuidance: false,
-        missingApis: [],
-        suggestedConnections: [],
-        guidanceMessage: ''
-      };
-    }
+      })),
+      userId: user.id,
+      context: context
+    });
 
-    console.log('🔍 Process endpoint: Connection guidance result:', connectionGuidance);
+    console.log('🔍 Process endpoint: Centralized guidance response:', guidanceResponse);
+    console.log('🔍 Process endpoint: shouldProvideGuidance:', guidanceResponse.shouldProvideGuidance);
+    console.log('🔍 Process endpoint: guidanceType:', guidanceResponse.guidanceType);
 
-    // If connection guidance is needed, return guidance instead of processing
-    if (connectionGuidance.requiresGuidance) {
-      console.log('→ Connection guidance needed for:', connectionGuidance.missingApis.map(api => api.displayName));
-      console.log('🔍 Process endpoint: Returning connection guidance response');
+    // If guidance is needed, return it instead of processing
+    if (guidanceResponse.shouldProvideGuidance) {
+      console.log('→ Centralized guidance needed:', guidanceResponse.guidanceType);
+      console.log('🔍 Process endpoint: Returning centralized guidance response');
       return res.status(200).json({
         success: true,
         data: {
           type: 'connection_guidance',
-          content: connectionGuidance.guidanceMessage,
-          connectionGuidance: connectionGuidance
+          content: guidanceResponse.message,
+          connectionGuidance: {
+            requiresGuidance: true,
+            missingApis: guidanceResponse.details?.requiredApis || [],
+            suggestedConnections: guidanceResponse.details?.requiredApis || [],
+            guidanceMessage: guidanceResponse.message,
+            setupInstructions: guidanceResponse.details?.requiredApis?.[0]?.setupInstructions || {}
+          }
         }
       });
     } else {
-      console.log('🔍 Process endpoint: No connection guidance needed, proceeding with normal processing');
+      console.log('🔍 Process endpoint: No guidance needed, proceeding with normal processing');
     }
 
     // Process with parallel AI service
@@ -240,31 +263,41 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
     console.log('🔍 Process endpoint: User ID:', user.id);
     console.log('🔍 Process endpoint: Connections count:', connections.length);
     console.log('🔍 Process endpoint: Context:', context);
-    const result = await parallelAIService.processWorkflowRequest(message, user.id, connections, context);
+    console.log('🔍 Process endpoint: Guidance response:', guidanceResponse);
+    
+    // Pass the guidance response to the AI service so it can use the suggested endpoints
+    const result = await parallelAIService.processWorkflowRequest(message, user.id, connections, context, guidanceResponse);
     console.log('🔍 Process endpoint: ParallelAIService result:', result);
     
     console.log(`⚡ Processing completed in ${result.processingTime}ms`);
     
     if (result.success) {
-      // If it's a direct API call, execute it
+      // If it's a direct API call, check if it needs to be executed
       if (result.data?.type === 'direct_api_call' && result.data?.apiCallResult) {
-        console.log('🔧 Executing direct API call...');
-        const apiResult = await executeDirectApiCall(result.data.apiCallResult, connections, user.id);
-        
-        if (apiResult.success) {
-          // Update the result with actual API call execution
-          result.data.apiCallResult = {
-            method: apiResult.data.method,
-            url: apiResult.data.url,
-            statusCode: apiResult.data.statusCode,
-            responseData: apiResult.data.responseData,
-            responseHeaders: apiResult.data.responseHeaders,
-            executionTime: apiResult.data.executionTime,
-            error: apiResult.data.error
-          };
+        // Check if the API call has already been executed (has statusCode and responseData)
+        const apiCallResult = result.data.apiCallResult;
+        if (!apiCallResult.statusCode && !apiCallResult.responseData) {
+          console.log('🔧 Executing direct API call...');
+          const apiResult = await executeDirectApiCall(apiCallResult, connections, user.id);
+          
+          if (apiResult.success) {
+            // Update the result with actual API call execution
+            result.data.apiCallResult = {
+              method: apiResult.data.method,
+              url: apiResult.data.url,
+              statusCode: apiResult.data.statusCode,
+              responseData: apiResult.data.responseData,
+              responseHeaders: apiResult.data.responseHeaders,
+              executionTime: apiResult.data.executionTime,
+              error: apiResult.data.error,
+              connectionId: apiCallResult.connectionId // Preserve the connectionId
+            };
+          } else {
+            // Handle API execution error
+            apiCallResult.error = apiResult.data?.error || 'API call failed';
+          }
         } else {
-          // Handle API execution error
-          result.data.apiCallResult.error = apiResult.data?.error || 'API call failed';
+          console.log('🔧 API call already executed, skipping execution');
         }
       }
       
@@ -281,10 +314,14 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
 
   } catch (error) {
     console.error('AI Orchestrator error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to process message'
-    });
+    
+    // Ensure response is not already sent
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to process message'
+      });
+    }
   }
 }
 

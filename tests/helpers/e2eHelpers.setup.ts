@@ -75,7 +75,6 @@ export const setupE2E = async (
       
       // Mock tour state API calls to fix OAuth2 authentication issues
       if (typeof url === 'string' && url.includes('/api/tour/state')) {
-        console.log('🔍 E2E DEBUG: Mocking tour state API - fixing OAuth2 auth issue');
         return new Response(JSON.stringify({
           success: true,
           data: {
@@ -115,7 +114,6 @@ export const setupE2E = async (
   try {
     await closeAllModals(page);
   } catch (error) {
-    console.log('🔍 E2E DEBUG: Modal cleanup failed, continuing...');
   }
 
   // Optimized login and navigation
@@ -124,7 +122,6 @@ export const setupE2E = async (
   // Handle guided tour timing - it appears 1 second after dashboard load
   // Only skip if explicitly requested (for tests that need to test guided tour)
   if (!options.skipCloseGuidedTour) {
-    console.log('🔍 E2E DEBUG: Checking for guided tour...');
     
     // Reduced timeout and more efficient check
     try {
@@ -132,12 +129,9 @@ export const setupE2E = async (
       const isTourVisible = await guidedTourOverlay.isVisible({ timeout: 1000 }).catch(() => false);
       
       if (isTourVisible) {
-        console.log('🔍 E2E DEBUG: Closing guided tour...');
         await closeGuidedTourIfPresent(page);
-        console.log('🔍 E2E DEBUG: Guided tour closed');
       }
     } catch (error) {
-      console.log('🔍 E2E DEBUG: Guided tour check failed, continuing...');
     }
   }
   
@@ -148,7 +142,6 @@ export const setupE2E = async (
       await uxHelper.validateHeadingHierarchy(['Dashboard']);
       await uxHelper.validateFormAccessibility();
     } catch (error) {
-      console.log('🔍 E2E DEBUG: UX validation failed, continuing...');
     }
   }
 };
@@ -162,23 +155,19 @@ export const loginAndNavigate = async (
   user: TestUser,
   options: E2ESetupOptions = {}
 ): Promise<void> => {
-  console.log('🔍 E2E DEBUG: Starting login process for user:', user.email);
   
   // Clear any existing authentication state first
   await page.context().clearCookies();
   
   // Simplified authentication check - just one check instead of multiple
-  console.log('🔍 E2E DEBUG: Checking if user is already authenticated...');
   try {
     const authCheckResponse = await page.request.get('/api/auth/me');
     if (authCheckResponse.status() === 200) {
-      console.log('🔍 E2E DEBUG: User is already authenticated, navigating to dashboard');
       await page.goto('/dashboard', { waitUntil: 'domcontentloaded', timeout: 10000 });
       await navigateToDesiredTab(page, options);
       return;
     }
   } catch (error) {
-    console.log('🔍 E2E DEBUG: Auth check failed, proceeding with login:', error);
   }
   
   // Navigate to login with reduced timeout
@@ -186,16 +175,13 @@ export const loginAndNavigate = async (
   
   // Check if we're already authenticated (login page might redirect to dashboard)
   const currentUrl = page.url();
-  console.log('🔍 E2E DEBUG: Current URL after navigating to login:', currentUrl);
   
   if (currentUrl.includes('/dashboard')) {
-    console.log('🔍 E2E DEBUG: Already authenticated, navigating to desired tab');
     await navigateToDesiredTab(page, options);
     return;
   }
   
   // Use the fixed authentication helper that has the JWT secret fix
-  console.log('🔍 E2E DEBUG: Using fixed authentication helper with JWT secret fix');
   
   try {
     // Import the authentication helpers
@@ -204,13 +190,11 @@ export const loginAndNavigate = async (
     // If user doesn't have tokens, create a full user first
     let fullUser = user;
     if (!user.accessToken || !user.refreshToken) {
-      console.log('🔍 E2E DEBUG: User missing tokens, creating full user...');
       fullUser = await createTestUser(user.email, user.password);
     }
     
     await authenticateE2EPage(page, fullUser);
     
-    console.log('🔍 E2E DEBUG: Authentication successful using fixed helper');
     await navigateToDesiredTab(page, options);
     return;
   } catch (authError) {
@@ -227,9 +211,7 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
   
   try {
     await waitForDashboard(page);
-    console.log('🔍 E2E DEBUG: Dashboard loaded successfully');
   } catch (error) {
-    console.log('🔍 E2E DEBUG: Dashboard wait failed, checking authentication status...');
     
     // Check if we're redirected to login (authentication failed)
     const currentUrl = page.url();
@@ -245,12 +227,10 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
     }
     
     // If we get here, the dashboard might be loading but elements aren't ready
-    console.log('🔍 E2E DEBUG: Dashboard elements not ready, waiting longer...');
     await page.waitForTimeout(3000);
     
     // Try one more time with a longer timeout
     await waitForDashboard(page);
-    console.log('🔍 E2E DEBUG: Dashboard loaded on retry');
   }
   
   if (options.tab) {
@@ -261,19 +241,14 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
       await navigateToProfile(page);
     } else if (options.tab === 'connections') {
       // Navigate to connections tab by URL since desktop tabs might not be visible
-      console.log(`🔍 E2E DEBUG: Navigating to connections tab via URL`);
       await page.goto('/dashboard?tab=connections', { waitUntil: 'domcontentloaded', timeout: 10000 });
       await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
-      console.log(`🔍 E2E DEBUG: Successfully navigated to connections tab via URL`);
     } else if (options.tab === 'chat') {
       // Navigate to chat tab by URL to ensure it's properly initialized
-      console.log(`🔍 E2E DEBUG: Navigating to chat tab via URL`);
       await page.goto('/dashboard?tab=chat', { waitUntil: 'domcontentloaded', timeout: 10000 });
       await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
-      console.log(`🔍 E2E DEBUG: Successfully navigated to chat tab via URL`);
     } else {
       // For other tabs, just ensure the dashboard is loaded and continue
-      console.log(`🔍 E2E DEBUG: Skipping tab navigation for ${options.tab} - dashboard is ready`);
     }
   }
   
@@ -282,7 +257,6 @@ const navigateToDesiredTab = async (page: Page, options: E2ESetupOptions): Promi
     if (options.section === 'connections') {
       // Connections are in the Connections tab, not Settings tab
       if (options.tab !== 'connections') {
-        console.log(`🔍 E2E DEBUG: Navigating to connections tab for section`);
         await page.goto('/dashboard?tab=connections', { waitUntil: 'domcontentloaded', timeout: 10000 });
         await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
       }
@@ -541,4 +515,89 @@ export const safeCleanupTestData = async (): Promise<void> => {
   } catch (error) {
     console.warn('Safe cleanup failed:', error);
   }
+};
+
+/**
+ * Setup E2E authentication specifically for landing page testing
+ * This helper ensures authentication state is properly maintained when navigating to the landing page
+ */
+export const setupE2EForLandingPage = async (
+  page: Page,
+  user: TestUser,
+  options: E2ESetupOptions = {}
+): Promise<void> => {
+        // Block external requests to prevent ERR_ABORTED errors in tests
+        await page.route('**/google-analytics.com/**', route => route.abort());
+        await page.route('**/googletagmanager.com/**', route => route.abort());
+        await page.route('**/googleadservices.com/**', route => route.abort());
+        await page.route('**/googlesyndication.com/**', route => route.abort());
+        await page.route('**/doubleclick.net/**', route => route.abort());
+        await page.route('**/facebook.com/tr/**', route => route.abort());
+        await page.route('**/connect.facebook.net/**', route => route.abort());
+        await page.route('**/twitter.com/i/adsct/**', route => route.abort());
+        await page.route('**/analytics.twitter.com/**', route => route.abort());
+        
+        // Clear any existing authentication state first
+        await page.context().clearCookies();
+        
+        // Set up authentication cookies directly
+        try {
+          // Import the authentication helpers
+          const { setAuthCookies, createTestUser } = await import('./testUtils.auth');
+          
+          // If user doesn't have tokens, create a full user first
+          let fullUser = user;
+          if (!user.accessToken || !user.refreshToken) {
+            fullUser = await createTestUser(user.email, user.password);
+          }
+          
+          // Navigate to the site first to establish the origin
+          const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+          await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 10000 });
+          
+          // Set authentication cookies directly
+          await setAuthCookies(page, fullUser);
+          
+          // Navigate to landing page with authentication already set
+          await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 10000 });
+          
+          // Wait for authentication state to be determined
+          await page.waitForLoadState('networkidle');
+          await page.waitForTimeout(2000); // Small delay to allow client-side auth to process
+    
+            // Wait for the landing page to fully load and render
+            await page.waitForLoadState('domcontentloaded');
+            await page.waitForLoadState('networkidle');
+            
+            // Wait for the authenticated UI elements to appear
+            try {
+              await page.waitForSelector('text=/Start Tour|Try Chat/', { timeout: 10000 });
+            } catch (error) {
+              // If initial check fails, try navigating again or waiting longer
+              await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 10000 });
+              await page.waitForLoadState('networkidle');
+              await page.waitForTimeout(2000);
+              
+              // Try to wait for authenticated elements again
+              try {
+                await page.waitForSelector('text=/Start Tour|Try Chat/', { timeout: 10000 });
+              } catch (retryError) {
+                // If still failing, the user might not exist in the database
+                // This can happen due to test isolation - create a fresh user
+                const freshUser = await createTestUser(fullUser.email, fullUser.password);
+                await setAuthCookies(page, freshUser);
+                await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 10000 });
+                await page.waitForLoadState('networkidle');
+                await page.waitForTimeout(2000);
+                await page.waitForSelector('text=/Start Tour|Try Chat/', { timeout: 10000 });
+              }
+            }
+    
+    if (!options.skipCloseGuidedTour) {
+      await closeGuidedTourIfPresent(page);
+    }
+    
+          } catch (authError) {
+            throw new Error(`Landing page authentication setup failed: ${authError}`);
+          }
 }; 

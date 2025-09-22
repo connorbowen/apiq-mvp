@@ -502,6 +502,19 @@ AI: "Ordered Fluffy! Order ID: 789"
 **Next Steps**: See [Future Roadmap](docs/future-roadmap.md#p32-advanced-workflow-features)
 **Success Criteria**: Power users can create complex workflows with advanced features
 
+#### **P3.3: Enhanced AI Detection for Unknown APIs** 🚧 **PLANNED**
+**Status**: Not started
+**Description**: Improve AI service to provide more detailed information about unknown APIs that aren't in the predefined knowledge base
+**Features**:
+- **Enhanced AI Detection**: Make the AI service provide more detailed information about unknown APIs
+- **Dynamic API Learning**: Allow the system to learn about new APIs from user interactions
+- **API Discovery**: Integrate with API discovery services to get real-time API information
+**Success Criteria**: 
+- AI can provide accurate setup instructions for unknown APIs
+- System learns from user interactions to improve API guidance
+- Integration with API discovery services for real-time API information
+- Reduced generic fallback responses for unknown APIs
+
 ## 🎨 **UX SIMPLIFICATION PLAN** ✅ **COMPLETED**
 
 ### **Overview**
@@ -666,122 +679,133 @@ AI: "Ordered Fluffy! Order ID: 789"
 
 ---
 
-## 💰 **AI SERVICE USAGE TRACKING & BILLING** 🚧 **PLANNED**
+## 💰 **SAAS FREEMIUM BILLING SYSTEM** 🚧 **PLANNED**
 
 ### **Overview**
-**Goal**: Track OpenAI API usage and costs for the AI chat interface service to enable usage-based billing and cost management.
+**Goal**: Implement SaaS freemium billing model based on API connections and executions (workflows + direct API calls) to enable subscription-based revenue generation.
 
-**Business Impact**: Enables usage-based pricing, cost control, and revenue optimization
-**User Value**: Transparent usage tracking, cost visibility, and plan management
-**Technical Value**: Comprehensive usage analytics and billing infrastructure
+**Business Impact**: Enables subscription-based pricing, predictable revenue, and user growth through freemium model
+**User Value**: Clear plan limits, usage visibility, and seamless upgrade experience
+**Technical Value**: Comprehensive usage tracking and subscription management infrastructure
+
+### **Pricing Model** (From PRD)
+- **Free Tier**: 5 API connections, 100 total executions/month
+- **Starter**: $29/month - 25 connections, 1,000 executions
+- **Professional**: $99/month - 100 connections, 10,000 executions  
+- **Enterprise**: Custom pricing - Unlimited connections and executions
 
 ### **Implementation Plan**
 
 #### **Phase 1: Database Schema & Core Models** 🚧 **PLANNED**
-**Goal**: Create comprehensive database schema for usage tracking
+**Goal**: Create comprehensive database schema for subscription and usage tracking
 
 **Database Models**:
-- **UsageRecord**: Individual API call tracking with token counts and costs
+- **UserPlan**: User subscription plan and limits
+- **UsageRecord**: Individual usage tracking (connections, workflows, direct API calls)
 - **UsageSummary**: Monthly aggregated usage for billing
-- **PricingConfig**: Dynamic pricing configuration for different models and services
+- **PlanLimits**: Plan configuration and limits
 
 **Key Features**:
-- Token usage tracking (prompt, completion, total)
-- Cost calculation in cents (avoid floating point issues)
-- Request metadata (endpoint, workflow, execution tracking)
-- Monthly aggregation for billing
-- Plan limits and overage tracking
+- Plan type tracking (FREE, STARTER, PROFESSIONAL, ENTERPRISE)
+- Usage limits enforcement (connections, executions)
+- Monthly usage aggregation and reset
+- Plan upgrade/downgrade tracking
+- Billing cycle management
 
 #### **Phase 2: Usage Tracking Service** 🚧 **PLANNED**
-**Goal**: Implement core usage tracking and cost calculation service
+**Goal**: Implement core usage tracking and plan enforcement service
 
 **Core Service Features**:
-- OpenAI token usage extraction from API responses
-- Real-time cost calculation based on current pricing
-- Usage record creation and storage
-- Monthly usage aggregation
-- Plan limit enforcement
-- Overage calculation and billing
+- API connection usage tracking
+- Workflow execution usage tracking  
+- Direct API call usage tracking
+- Plan limit enforcement and validation
+- Usage summary generation
+- Plan upgrade/downgrade logic
 
 **Integration Points**:
-- OpenAIService wrapper for automatic tracking
-- WorkflowExecution tracking
-- Chat interface usage tracking
-- Natural language workflow generation tracking
+- API connection creation/management
+- Workflow execution engine
+- Direct API call execution
+- Chat interface API calls
+- User registration (default to FREE plan)
 
-#### **Phase 3: Usage Analytics & Reporting** 🚧 **PLANNED**
-**Goal**: Provide comprehensive usage analytics and reporting
+#### **Phase 3: Subscription Management UI** 🚧 **PLANNED**
+**Goal**: Add subscription management to user dropdown and dashboard
 
-**Analytics Features**:
-- Real-time usage dashboard
-- Monthly usage summaries
-- Cost breakdown by service type
-- Usage trends and patterns
-- Plan utilization tracking
-- Overage alerts and notifications
-
-**API Endpoints**:
-- `/api/usage/current` - Current month usage
-- `/api/usage/history` - Historical usage data
-- `/api/usage/summary` - Monthly summaries
-- `/api/usage/analytics` - Detailed analytics
+**UI Features**:
+- Subscription status in user dropdown
+- Usage dashboard with progress bars
+- Plan upgrade/downgrade interface
+- Billing history and invoices
+- Plan limit warnings and upgrade prompts
+- Stripe integration for payments
 
 #### **Phase 4: Billing Integration** 🚧 **PLANNED**
-**Goal**: Integrate with billing system for usage-based pricing
+**Goal**: Integrate with Stripe for subscription management and payments
 
 **Billing Features**:
-- Monthly usage summaries for billing
-- Overage charge calculation
-- Plan upgrade recommendations
-- Usage limit enforcement
-- Billing notification system
+- Stripe subscription creation and management
+- Plan upgrade/downgrade processing
+- Invoice generation and management
+- Payment failure handling
+- Prorated billing for mid-cycle changes
+- Webhook handling for subscription events
 
 ### **Technical Architecture**
 
 #### **Usage Tracking Flow**:
-1. **AI Service Call** → Extract token usage from OpenAI response
-2. **Cost Calculation** → Calculate costs based on current pricing config
-3. **Usage Record** → Store individual usage record in database
-4. **Real-time Aggregation** → Update monthly usage summary
-5. **Limit Checking** → Enforce plan limits and calculate overages
-6. **Analytics Update** → Update usage analytics and reporting
+1. **User Action** → API connection, workflow execution, or direct API call
+2. **Usage Validation** → Check if user has remaining usage allowance
+3. **Usage Recording** → Record usage in database
+4. **Limit Enforcement** → Block action if limits exceeded
+5. **Usage Summary** → Update monthly usage summary
+6. **UI Update** → Update usage display in dashboard
 
 #### **Database Schema**:
 ```sql
+-- User subscription plans
+UserPlan {
+  id, userId, planType (FREE|STARTER|PROFESSIONAL|ENTERPRISE)
+  apiConnectionsLimit, workflowExecutionsLimit, directApiCallsLimit, totalExecutionsLimit
+  currentConnections, currentWorkflowExecutions, currentDirectApiCalls, currentTotalExecutions
+  billingCycle (monthly|yearly), status (active|cancelled|expired)
+  stripeSubscriptionId, stripeCustomerId
+  createdAt, updatedAt
+}
+
 -- Individual usage records
 UsageRecord {
-  id, userId, serviceType, model
-  promptTokens, completionTokens, totalTokens
-  promptCost, completionCost, totalCost (in cents)
-  requestId, endpoint, workflowId, executionId
+  id, userId, usageType (api_connection|workflow_execution|direct_api_call)
+  resourceId, resourceType, metadata
   createdAt
 }
 
 -- Monthly usage summaries
 UsageSummary {
-  id, userId, year, month, serviceType
-  totalRequests, totalTokens, totalCost
-  planLimit, overageAmount, overageCharges
+  id, userId, year, month
+  apiConnections, workflowExecutions, directApiCalls, totalExecutions
+  planLimits, overageAmount
   createdAt, updatedAt
 }
 
--- Pricing configuration
-PricingConfig {
-  id, serviceType, model
-  promptPricePer1K, completionPricePer1K (in cents)
-  freeTierLimit, proTierLimit, businessTierLimit
-  overagePricePer1K, isActive, effectiveFrom, effectiveTo
+-- Plan configuration
+PlanLimits {
+  id, planType, apiConnectionsLimit, workflowExecutionsLimit, directApiCallsLimit, totalExecutionsLimit
+  priceMonthly, priceYearly, stripePriceId
+  isActive, createdAt, updatedAt
 }
 ```
 
 ### **Success Criteria**
-- ✅ Track token usage and costs for each AI service call
-- ✅ Generate monthly usage summaries for billing
-- ✅ Enforce plan limits and calculate overages
-- ✅ Provide usage analytics to customers
-- ✅ Support different pricing tiers and models
-- ✅ Real-time usage monitoring dashboard
-- ✅ Integration with existing AI services
+- ✅ Track API connections, workflow executions, and direct API calls
+- ✅ Enforce plan limits with clear error messages
+- ✅ Subscription management in user dropdown
+- ✅ Usage dashboard with progress indicators
+- ✅ Stripe integration for payments and subscriptions
+- ✅ Plan upgrade/downgrade functionality
+- ✅ Monthly usage reset and billing cycles
+- ✅ Real-time usage monitoring and alerts
 
 ---
 

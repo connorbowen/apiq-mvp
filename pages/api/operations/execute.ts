@@ -3,6 +3,8 @@ import { prisma } from '../../../lib/database/client';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { logInfo, logError } from '../../../src/utils/logger';
 import { ParameterExtractionService } from '../../../src/lib/services/parameterExtractionService';
+import { usageTrackingService } from '../../../src/lib/services/usageTrackingService';
+import { UsageType } from '../../../src/generated/prisma';
 
 interface ExecuteOperationRequest {
   endpointId: string;
@@ -41,6 +43,15 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
 
     if (!endpointId) {
       return res.status(400).json({ success: false, error: 'Endpoint ID is required' });
+    }
+
+    // Check usage limits before executing direct API call
+    const canExecute = await usageTrackingService.canPerformAction(user.id, 'direct_api_call');
+    if (!canExecute.allowed) {
+      return res.status(403).json({
+        success: false,
+        error: 'Direct API call limit reached'
+      });
     }
 
     // Get the endpoint and its connection
@@ -235,6 +246,23 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           error: response.ok ? null : `HTTP ${response.status}: ${response.statusText}`
         }
       });
+
+      // Track usage after successful API call
+      if (response.ok) {
+        await usageTrackingService.trackUsage(
+          user.id,
+          UsageType.DIRECT_API_CALL,
+          endpointId,
+          'direct_api_call',
+          {
+            endpoint: endpoint.path,
+            method: endpoint.method,
+            statusCode: response.status,
+            executionTime,
+            executionId: execution.id
+          }
+        );
+      }
 
       logInfo('API operation executed successfully', {
         userId: user.id,

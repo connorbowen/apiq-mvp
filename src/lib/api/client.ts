@@ -185,8 +185,17 @@ class ApiClient {
       console.log('🔍 API Client: Making request to:', config.url);
       console.log('🔍 API Client: Full URL:', `${this.baseURL}${config.url}`);
       console.log('🔍 API Client: Access token found:', !!accessToken);
+      console.log('🔍 API Client: Access token value:', accessToken ? accessToken.substring(0, 20) + '...' : 'null');
       console.log('🔍 API Client: Cookies:', cookies);
+      console.log('🔍 API Client: Request headers:', {
+        ...config.headers,
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` })
+      });
+      console.log('🔍 API Client: Document available:', typeof document !== 'undefined');
+      console.log('🔍 API Client: Raw cookie string:', cookies);
+      console.log('🔍 API Client: Parsed access token:', accessToken ? accessToken.substring(0, 20) + '...' : 'null');
       console.log('🔍 API Client: Request config:', JSON.stringify(config, null, 2));
+      console.log('🔍 API Client: About to make axios request...');
       
       const response: AxiosResponse<ApiResponse<T>> = await axios({
         ...config,
@@ -205,6 +214,18 @@ class ApiClient {
       return response.data;
     } catch (error: any) {
       console.log('🔍 API Client: Request failed:', error.response?.status, error.response?.data);
+      console.log('🔍 API Client: Error details:', {
+        message: error.message,
+        code: error.code,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
       return {
         success: false,
         error: error.response?.data?.error || error.message || 'Network error',
@@ -638,6 +659,7 @@ class ApiClient {
       data: { message, context },
     });
     console.log('🔍 API Client: processMessage response:', result);
+    console.log('🔍 API Client: Response data:', JSON.stringify(result.data, null, 2));
     return result as any;
   }
 

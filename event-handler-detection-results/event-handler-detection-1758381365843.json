@@ -1,0 +1,600 @@
+{
+  "timestamp": "2025-09-20T15:16:05.842Z",
+  "summary": {
+    "totalFiles": 317,
+    "filesWithConflicts": 12,
+    "criticalConflicts": 9,
+    "highConflicts": 4,
+    "mediumConflicts": 16,
+    "lowConflicts": 0
+  },
+  "conflicts": [
+    {
+      "file": "src/app/forgot-password/page.tsx",
+      "type": "Missing data-testid",
+      "severity": "medium",
+      "message": "Form element missing data-testid attribute",
+      "recommendation": "Add data-testid attribute to form for reliable testing"
+    },
+    {
+      "file": "src/app/forgot-password/page.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/app/login/page.tsx",
+      "type": "onSubmit + onClick conflict",
+      "severity": "critical",
+      "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+      "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+    },
+    {
+      "file": "src/app/login/page.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/app/resend-verification/page.tsx",
+      "type": "Missing data-testid",
+      "severity": "medium",
+      "message": "Form element missing data-testid attribute",
+      "recommendation": "Add data-testid attribute to form for reliable testing"
+    },
+    {
+      "file": "src/app/resend-verification/page.tsx",
+      "type": "Missing primary-action data-testid",
+      "severity": "medium",
+      "message": "Submit button missing primary-action data-testid",
+      "recommendation": "Add data-testid=\"primary-action {action}-btn\" to submit button"
+    },
+    {
+      "file": "src/app/resend-verification/page.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/app/reset-password/page.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "type": "onSubmit + onClick conflict",
+      "severity": "critical",
+      "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+      "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+    },
+    {
+      "file": "src/app/signup/page.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/components/ChatInterface.tsx",
+      "type": "onSubmit + onClick conflict",
+      "severity": "critical",
+      "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+      "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+    },
+    {
+      "file": "src/components/WaitlistSignup.tsx",
+      "type": "onSubmit + onClick conflict",
+      "severity": "critical",
+      "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+      "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+    },
+    {
+      "file": "src/components/WaitlistSignup.tsx",
+      "type": "Missing preventDefault",
+      "severity": "high",
+      "message": "onSubmit handler missing preventDefault() call",
+      "recommendation": "Add e.preventDefault() to onSubmit handler to prevent default form submission"
+    },
+    {
+      "file": "src/components/WaitlistSignup.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/components/WorkflowShareModal.tsx",
+      "type": "onSubmit + onClick conflict",
+      "severity": "critical",
+      "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+      "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+    },
+    {
+      "file": "src/components/WorkflowShareModal.tsx",
+      "type": "Missing preventDefault",
+      "severity": "high",
+      "message": "onSubmit handler missing preventDefault() call",
+      "recommendation": "Add e.preventDefault() to onSubmit handler to prevent default form submission"
+    },
+    {
+      "file": "src/components/WorkflowShareModal.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/components/dashboard/CreateConnectionModal.tsx",
+      "type": "onSubmit + onClick conflict",
+      "severity": "critical",
+      "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+      "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+    },
+    {
+      "file": "src/components/dashboard/CreateConnectionModal.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/components/dashboard/PasswordChangeForm.tsx",
+      "type": "onSubmit + onClick conflict",
+      "severity": "critical",
+      "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+      "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+    },
+    {
+      "file": "src/components/dashboard/PasswordChangeForm.tsx",
+      "type": "Missing primary-action data-testid",
+      "severity": "medium",
+      "message": "Submit button missing primary-action data-testid",
+      "recommendation": "Add data-testid=\"primary-action {action}-btn\" to submit button"
+    },
+    {
+      "file": "src/components/dashboard/PasswordChangeForm.tsx",
+      "type": "Missing preventDefault",
+      "severity": "high",
+      "message": "onSubmit handler missing preventDefault() call",
+      "recommendation": "Add e.preventDefault() to onSubmit handler to prevent default form submission"
+    },
+    {
+      "file": "src/components/dashboard/PasswordChangeForm.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/components/dashboard/SecretsTab.tsx",
+      "type": "onSubmit + onClick conflict",
+      "severity": "critical",
+      "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+      "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+    },
+    {
+      "file": "src/components/dashboard/SecretsTab.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    },
+    {
+      "file": "src/components/dashboard/SupportModal.tsx",
+      "type": "onSubmit + onClick conflict",
+      "severity": "critical",
+      "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+      "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+    },
+    {
+      "file": "src/components/dashboard/SupportModal.tsx",
+      "type": "Missing primary-action data-testid",
+      "severity": "medium",
+      "message": "Submit button missing primary-action data-testid",
+      "recommendation": "Add data-testid=\"primary-action {action}-btn\" to submit button"
+    },
+    {
+      "file": "src/components/dashboard/SupportModal.tsx",
+      "type": "Missing preventDefault",
+      "severity": "high",
+      "message": "onSubmit handler missing preventDefault() call",
+      "recommendation": "Add e.preventDefault() to onSubmit handler to prevent default form submission"
+    },
+    {
+      "file": "src/components/dashboard/SupportModal.tsx",
+      "type": "Missing stopPropagation",
+      "severity": "medium",
+      "message": "onSubmit handler missing stopPropagation() call",
+      "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+    }
+  ],
+  "files": [
+    {
+      "path": "src/app/forgot-password/page.tsx",
+      "conflicts": [
+        {
+          "type": "Missing data-testid",
+          "severity": "medium",
+          "message": "Form element missing data-testid attribute",
+          "recommendation": "Add data-testid attribute to form for reliable testing"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": false,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": false,
+      "hasPrimaryAction": true,
+      "hasPreventDefault": true,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/app/login/page.tsx",
+      "conflicts": [
+        {
+          "type": "onSubmit + onClick conflict",
+          "severity": "critical",
+          "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+          "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": true,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": true,
+      "hasPreventDefault": true,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/app/resend-verification/page.tsx",
+      "conflicts": [
+        {
+          "type": "Missing data-testid",
+          "severity": "medium",
+          "message": "Form element missing data-testid attribute",
+          "recommendation": "Add data-testid attribute to form for reliable testing"
+        },
+        {
+          "type": "Missing primary-action data-testid",
+          "severity": "medium",
+          "message": "Submit button missing primary-action data-testid",
+          "recommendation": "Add data-testid=\"primary-action {action}-btn\" to submit button"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": false,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": false,
+      "hasPrimaryAction": false,
+      "hasPreventDefault": true,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/app/reset-password/page.tsx",
+      "conflicts": [
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": false,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": true,
+      "hasPreventDefault": true,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/app/signup/page.tsx",
+      "conflicts": [
+        {
+          "type": "onSubmit + onClick conflict",
+          "severity": "critical",
+          "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+          "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": true,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": true,
+      "hasPreventDefault": true,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/components/ChatInterface.tsx",
+      "conflicts": [
+        {
+          "type": "onSubmit + onClick conflict",
+          "severity": "critical",
+          "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+          "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": true,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": true,
+      "hasPreventDefault": true,
+      "hasStopPropagation": true
+    },
+    {
+      "path": "src/components/WaitlistSignup.tsx",
+      "conflicts": [
+        {
+          "type": "onSubmit + onClick conflict",
+          "severity": "critical",
+          "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+          "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+        },
+        {
+          "type": "Missing preventDefault",
+          "severity": "high",
+          "message": "onSubmit handler missing preventDefault() call",
+          "recommendation": "Add e.preventDefault() to onSubmit handler to prevent default form submission"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": true,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": true,
+      "hasPreventDefault": false,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/components/WorkflowShareModal.tsx",
+      "conflicts": [
+        {
+          "type": "onSubmit + onClick conflict",
+          "severity": "critical",
+          "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+          "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+        },
+        {
+          "type": "Missing preventDefault",
+          "severity": "high",
+          "message": "onSubmit handler missing preventDefault() call",
+          "recommendation": "Add e.preventDefault() to onSubmit handler to prevent default form submission"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": true,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": true,
+      "hasPreventDefault": false,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/components/dashboard/CreateConnectionModal.tsx",
+      "conflicts": [
+        {
+          "type": "onSubmit + onClick conflict",
+          "severity": "critical",
+          "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+          "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": true,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": true,
+      "hasPreventDefault": true,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/components/dashboard/PasswordChangeForm.tsx",
+      "conflicts": [
+        {
+          "type": "onSubmit + onClick conflict",
+          "severity": "critical",
+          "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+          "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+        },
+        {
+          "type": "Missing primary-action data-testid",
+          "severity": "medium",
+          "message": "Submit button missing primary-action data-testid",
+          "recommendation": "Add data-testid=\"primary-action {action}-btn\" to submit button"
+        },
+        {
+          "type": "Missing preventDefault",
+          "severity": "high",
+          "message": "onSubmit handler missing preventDefault() call",
+          "recommendation": "Add e.preventDefault() to onSubmit handler to prevent default form submission"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": true,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": false,
+      "hasPreventDefault": false,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/components/dashboard/SecretsTab.tsx",
+      "conflicts": [
+        {
+          "type": "onSubmit + onClick conflict",
+          "severity": "critical",
+          "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+          "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": true,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": true,
+      "hasPreventDefault": true,
+      "hasStopPropagation": false
+    },
+    {
+      "path": "src/components/dashboard/SupportModal.tsx",
+      "conflicts": [
+        {
+          "type": "onSubmit + onClick conflict",
+          "severity": "critical",
+          "message": "Form has both onSubmit and onClick handlers which can cause conflicts",
+          "recommendation": "Use formSubmissionUtils.createFormSubmissionHandler() to handle form submission consistently"
+        },
+        {
+          "type": "Missing primary-action data-testid",
+          "severity": "medium",
+          "message": "Submit button missing primary-action data-testid",
+          "recommendation": "Add data-testid=\"primary-action {action}-btn\" to submit button"
+        },
+        {
+          "type": "Missing preventDefault",
+          "severity": "high",
+          "message": "onSubmit handler missing preventDefault() call",
+          "recommendation": "Add e.preventDefault() to onSubmit handler to prevent default form submission"
+        },
+        {
+          "type": "Missing stopPropagation",
+          "severity": "medium",
+          "message": "onSubmit handler missing stopPropagation() call",
+          "recommendation": "Add e.stopPropagation() to onSubmit handler to prevent event bubbling"
+        }
+      ],
+      "hasOnSubmit": true,
+      "hasOnClick": true,
+      "hasFormElement": true,
+      "hasSubmitButton": true,
+      "hasDataTestId": true,
+      "hasPrimaryAction": false,
+      "hasPreventDefault": false,
+      "hasStopPropagation": false
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "high",
+      "issue": "Critical event handler conflicts detected",
+      "solution": "Use formSubmissionUtils.createFormSubmissionHandler() for all form submissions",
+      "files": [
+        "src/app/login/page.tsx",
+        "src/app/signup/page.tsx",
+        "src/components/ChatInterface.tsx",
+        "src/components/WaitlistSignup.tsx",
+        "src/components/WorkflowShareModal.tsx",
+        "src/components/dashboard/CreateConnectionModal.tsx",
+        "src/components/dashboard/PasswordChangeForm.tsx",
+        "src/components/dashboard/SecretsTab.tsx",
+        "src/components/dashboard/SupportModal.tsx"
+      ]
+    },
+    {
+      "priority": "high",
+      "issue": "High severity conflicts detected",
+      "solution": "Add preventDefault() calls to all onSubmit handlers",
+      "files": [
+        "src/components/WaitlistSignup.tsx",
+        "src/components/WorkflowShareModal.tsx",
+        "src/components/dashboard/PasswordChangeForm.tsx",
+        "src/components/dashboard/SupportModal.tsx"
+      ]
+    },
+    {
+      "priority": "medium",
+      "issue": "Medium severity issues detected",
+      "solution": "Add data-testid attributes and stopPropagation() calls",
+      "files": [
+        "src/app/forgot-password/page.tsx",
+        "src/app/forgot-password/page.tsx",
+        "src/app/login/page.tsx",
+        "src/app/resend-verification/page.tsx",
+        "src/app/resend-verification/page.tsx",
+        "src/app/resend-verification/page.tsx",
+        "src/app/reset-password/page.tsx",
+        "src/app/signup/page.tsx",
+        "src/components/WaitlistSignup.tsx",
+        "src/components/WorkflowShareModal.tsx",
+        "src/components/dashboard/CreateConnectionModal.tsx",
+        "src/components/dashboard/PasswordChangeForm.tsx",
+        "src/components/dashboard/PasswordChangeForm.tsx",
+        "src/components/dashboard/SecretsTab.tsx",
+        "src/components/dashboard/SupportModal.tsx",
+        "src/components/dashboard/SupportModal.tsx"
+      ]
+    }
+  ]
+}

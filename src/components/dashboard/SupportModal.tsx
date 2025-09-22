@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createFormSubmissionHandler } from '../../lib/utils/formSubmissionUtils';
 
 interface SupportModalProps {
   open: boolean;
@@ -19,34 +20,45 @@ export default function SupportModal({ open, onClose, user }: SupportModalProps)
 
   if (!open) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSuccess(null);
-    setError(null);
-    try {
-      const res = await fetch('/api/support', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: user.email,
-          name: user.name,
-          message,
-        }),
-      });
-      if (res.ok) {
-        setSuccess('Your support request has been sent! We’ll get back to you soon.');
-        setMessage('');
-      } else {
-        const data = await res.json();
-        setError(data.error || 'Failed to send support request.');
+  const handleSubmit = createFormSubmissionHandler(
+    async (formData: FormData) => {
+      setIsSubmitting(true);
+      setSuccess(null);
+      setError(null);
+      try {
+        const res = await fetch('/api/support', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.name,
+            message,
+          }),
+        });
+        if (res.ok) {
+          setSuccess('Your support request has been sent! We\'ll get back to you soon.');
+          setMessage('');
+        } else {
+          const data = await res.json();
+          setError(data.error || 'Failed to send support request.');
+        }
+      } catch (err) {
+        setError('Failed to send support request.');
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (err) {
-      setError('Failed to send support request.');
-    } finally {
-      setIsSubmitting(false);
+    },
+    {
+      preventDefault: true,
+      stopPropagation: true,
+      onSubmissionStart: () => console.log('🔍 SupportModal: Form submission started'),
+      onSubmissionComplete: () => console.log('🔍 SupportModal: Form submission completed'),
+      onSubmissionError: (error) => {
+        console.error('🔍 SupportModal: Form submission error:', error);
+        setError(error.message);
+      }
     }
-  };
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -62,7 +74,11 @@ export default function SupportModal({ open, onClose, user }: SupportModalProps)
         </button>
         <h2 className="text-lg font-semibold mb-2">Contact Support</h2>
         <p className="text-sm text-gray-600 mb-4">Describe your issue or question below. We’ll get back to you at <span className="font-medium">{user.email}</span>.</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form 
+          onSubmit={handleSubmit} 
+          className="space-y-4"
+          data-testid="support-form"
+        >
           <textarea
             className="w-full border border-gray-300 rounded-md p-2 min-h-[100px] focus:ring-blue-500 focus:border-blue-500"
             placeholder="How can we help you?"

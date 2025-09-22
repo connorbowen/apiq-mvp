@@ -6,6 +6,8 @@ import { errorHandler } from '../../../../src/middleware/errorHandler';
 import { createWorkflowExecutor } from '../../../../src/lib/workflow/executor';
 import { ExecutionStateManager } from '../../../../src/lib/workflow/executionStateManager';
 import { QueueService } from '../../../../src/lib/queue/queueService';
+import { usageTrackingService } from '../../../../src/lib/services/usageTrackingService';
+import { UsageType } from '../../../../src/generated/prisma';
 
 async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   try {
@@ -74,6 +76,19 @@ async function executeWorkflow(req: NextApiRequest, res: NextApiResponse, userId
       return res.status(400).json({ success: false, error: 'Workflow has no steps' });
     }
 
+    // Check usage limits before executing workflow
+    const canExecute = await usageTrackingService.canPerformAction(userId, 'workflow_execution');
+    if (!canExecute.allowed) {
+      console.log('❌ [executeWorkflow] Usage limit reached:', canExecute.reason);
+      return res.status(403).json({
+        success: false,
+        error: 'Workflow execution limit reached',
+        details: canExecute.reason,
+        code: 'USAGE_LIMIT_REACHED',
+        timestamp: new Date()
+      });
+    }
+
     console.log('🔍 [executeWorkflow] Workflow steps:', workflow.steps.map(step => ({
       id: step.id,
       name: step.name,
@@ -108,6 +123,24 @@ async function executeWorkflow(req: NextApiRequest, res: NextApiResponse, userId
     );
 
     console.log('🔍 [executeWorkflow] Execution result:', result);
+
+    // Track usage after successful workflow execution
+    if (result.success) {
+      await usageTrackingService.trackUsage(
+        userId,
+        UsageType.WORKFLOW_EXECUTION,
+        workflowId,
+        'workflow_execution',
+        {
+          workflowName: workflow.name,
+          stepCount: workflow.steps.length,
+          executionId: result.executionId,
+          totalSteps: result.totalSteps,
+          completedSteps: result.completedSteps,
+          totalDuration: result.totalDuration
+        }
+      );
+    }
 
     return res.status(200).json({
       success: result.success,

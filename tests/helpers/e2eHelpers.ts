@@ -5,6 +5,7 @@
 export type { E2ESetupOptions, TestArtifacts } from './e2eHelpers.setup';
 export { 
   setupE2E, 
+  setupE2EForLandingPage,
   loginAndNavigate, 
   closeAllModals, 
   resetRateLimits, 

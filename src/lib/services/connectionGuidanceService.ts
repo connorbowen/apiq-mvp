@@ -12,8 +12,8 @@
  * - Falls back to rules-based detection if AI fails
  */
 
-import { AIApiDetectionService, ApiDetectionResult } from './aiApiDetectionService';
 import { OpenAIService } from '../../services/openaiService';
+import { AIApiDetectionService, ApiDetectionResult } from './aiApiDetectionService';
 
 export interface ApiSuggestion {
   name: string;
@@ -298,12 +298,27 @@ export class ConnectionGuidanceService {
       documentationUrl: 'https://platform.openai.com/docs',
       baseUrl: 'https://api.openai.com/v1',
       commonEndpoints: ['/chat/completions', '/completions', '/embeddings']
+    },
+    'skilljar': {
+      name: 'skilljar',
+      displayName: 'Skilljar',
+      description: 'Learning management system for course management and training',
+      authType: 'API_KEY',
+      setupInstructions: {
+        step1: 'Go to your Skilljar admin dashboard',
+        step2: 'Navigate to Settings > API Keys',
+        step3: 'Generate a new API key',
+        additionalNotes: 'You\'ll need admin access to generate API keys'
+      },
+      documentationUrl: 'https://support.skilljar.com/hc/en-us/articles/360000240153-API-Overview',
+      baseUrl: 'https://api.skilljar.com/v1',
+      commonEndpoints: ['/courses', '/users', '/enrollments', '/categories']
     }
   };
 
   /**
    * Analyze a user request and determine if connection guidance is needed
-   * Uses AI for intelligent API detection with fallback to rules-based detection
+   * Uses intelligent AI analysis with fallback to simple detection
    */
   static async analyzeRequest(
     userMessage: string, 
@@ -314,14 +329,14 @@ export class ConnectionGuidanceService {
       endpoints?: Array<{ path: string; method: string; summary: string }>;
     }>
   ): Promise<ConnectionGuidance> {
-    console.log('🔍 ConnectionGuidanceService - Analyzing request with AI:', { 
+    console.log('🔍 ConnectionGuidanceService - Analyzing request with intelligent AI:', { 
       userMessage, 
       availableConnections: availableConnections.length,
       connectionNames: availableConnections.map(c => c.name)
     });
     
-    // Use rules-based detection for reliable API detection
-    return this.fallbackRulesDetection(userMessage, availableConnections);
+    // Use intelligent AI-based detection
+    return this.intelligentConnectionGuidance(userMessage, availableConnections);
   }
 
   /**
@@ -338,7 +353,8 @@ export class ConnectionGuidanceService {
       'stripe': 'API_KEY',
       'twilio': 'API_KEY',
       'sendgrid': 'API_KEY',
-      'mailchimp': 'API_KEY'
+      'mailchimp': 'API_KEY',
+      'skilljar': 'API_KEY'
     };
     
     return authTypes[apiName.toLowerCase()] || 'API_KEY';
@@ -377,19 +393,80 @@ export class ConnectionGuidanceService {
   }
 
   /**
-   * Fallback to rules-based detection if AI fails
+   * Intelligent connection guidance using AI to understand user intent
    */
-  private static fallbackRulesDetection(
+  private static async intelligentConnectionGuidance(
+    userMessage: string, 
+    availableConnections: Array<{ name: string; id: string; baseUrl?: string; endpoints?: Array<{ path: string; method: string; summary: string }> }>
+  ): Promise<ConnectionGuidance> {
+    console.log('🔍 ConnectionGuidanceService - Using intelligent AI-based detection');
+    
+    try {
+      // Use the dedicated AIApiDetectionService
+      const openaiService = new (OpenAIService as any)(process.env.OPENAI_API_KEY!, 'gpt-4o-mini');
+      const aiDetectionService = new AIApiDetectionService(openaiService);
+      
+      const aiAnalysis = await aiDetectionService.analyzeUserRequest(userMessage, availableConnections);
+      
+      console.log('🔍 ConnectionGuidanceService - AI analysis result:', JSON.stringify(aiAnalysis, null, 2));
+      
+      if (!aiAnalysis.requiresGuidance) {
+        console.log('🔍 ConnectionGuidanceService - AI determined no guidance needed');
+        return {
+          requiresGuidance: false,
+          missingApis: [],
+          suggestedConnections: [],
+          guidanceMessage: ''
+        };
+      }
+
+      // Get suggestions for the APIs the AI identified as needed
+      const apiSuggestions = aiAnalysis.requiredApis
+        .map(api => this.API_KNOWLEDGE_BASE[api.name])
+        .filter(Boolean);
+
+      console.log('🔍 ConnectionGuidanceService - AI-suggested APIs:', apiSuggestions);
+
+      // Generate guidance message
+      const guidanceMessage = this.generateGuidanceMessage(
+        aiAnalysis.requiredApis.map(api => api.name), 
+        apiSuggestions
+      );
+      
+      // Generate setup instructions
+      const setupInstructions = this.generateSetupInstructions(apiSuggestions);
+
+      const result = {
+        requiresGuidance: true,
+        missingApis: apiSuggestions,
+        suggestedConnections: apiSuggestions,
+        guidanceMessage,
+        setupInstructions
+      };
+
+      console.log('🔍 ConnectionGuidanceService - AI result:', result);
+      return result;
+
+    } catch (error) {
+      console.error('🔍 ConnectionGuidanceService - AI analysis failed, falling back to simple detection:', error);
+      return this.simpleFallbackDetection(userMessage, availableConnections);
+    }
+  }
+
+  /**
+   * Fallback to simple detection if AI fails
+   */
+  private static simpleFallbackDetection(
     userMessage: string, 
     availableConnections: Array<{ name: string; id: string }>
   ): ConnectionGuidance {
     const message = userMessage.toLowerCase();
     
-    console.log('🔍 ConnectionGuidanceService - Using fallback rules detection');
+    console.log('🔍 ConnectionGuidanceService - Using simple fallback detection');
     
-    // Extract mentioned APIs from the message
-    const mentionedApis = this.extractMentionedApis(message);
-    console.log('🔍 ConnectionGuidanceService - Mentioned APIs:', mentionedApis);
+    // Only check for explicitly mentioned API names (no patterns)
+    const mentionedApis = this.extractExplicitMentionedApis(message);
+    console.log('🔍 ConnectionGuidanceService - Explicitly mentioned APIs:', mentionedApis);
     
     // Check which APIs are missing
     const missingApis = mentionedApis.filter(api => 
@@ -437,9 +514,94 @@ export class ConnectionGuidanceService {
   }
 
   /**
-   * Extract API names mentioned in the user message
+   * Use AI to analyze user intent and determine required APIs
    */
-  private static extractMentionedApis(message: string): string[] {
+  private static async analyzeUserIntentWithAI(
+    userMessage: string,
+    availableConnections: Array<{ name: string; id: string; baseUrl?: string; endpoints?: Array<{ path: string; method: string; summary: string }> }>
+  ): Promise<{
+    requiresGuidance: boolean;
+    requiredApis: Array<{ name: string; displayName: string; confidence: number; reason: string }>;
+  }> {
+    // This would use OpenAI to analyze the user's intent
+    // For now, we'll implement a simple version that can be enhanced later
+    const openai = require('openai');
+    const client = new openai.OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+
+    const availableApis = availableConnections.map(conn => ({
+      name: conn.name,
+      baseUrl: conn.baseUrl,
+      endpoints: conn.endpoints?.map(ep => `${ep.method} ${ep.path}`).join(', ') || 'No endpoints'
+    }));
+
+    const prompt = `Analyze this user request and determine what APIs they need to accomplish their goal.
+
+User Request: "${userMessage}"
+
+Available Connections: ${JSON.stringify(availableApis, null, 2)}
+
+Available API Knowledge Base: ${Object.keys(this.API_KNOWLEDGE_BASE).join(', ')}
+
+Instructions:
+1. Understand what the user is trying to accomplish
+2. Determine which APIs would be needed to fulfill their request
+3. Check if any of the available connections can fulfill the request
+4. If no available connections can fulfill the request, suggest the appropriate APIs from the knowledge base
+5. Be intelligent about matching user intent to API capabilities
+
+Respond with JSON in this format:
+{
+  "requiresGuidance": boolean,
+  "requiredApis": [
+    {
+      "name": "api_name",
+      "displayName": "API Display Name", 
+      "confidence": 0.0-1.0,
+      "reason": "Why this API is needed"
+    }
+  ]
+}
+
+Examples:
+- "I want to update my skilljar courses" → requiresGuidance: true, requiredApis: [{"name": "skilljar", "displayName": "Skilljar", "confidence": 0.9, "reason": "User wants to manage courses, which requires a learning management system"}]
+- "Send a message to my team" → requiresGuidance: true, requiredApis: [{"name": "slack", "displayName": "Slack", "confidence": 0.8, "reason": "User wants to send team messages"}]
+- "Get all users from my database" → requiresGuidance: false (if they have a database connection that can handle this)
+
+Be intelligent and consider the user's actual intent, not just keyword matching.`;
+
+    try {
+      const response = await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+        max_tokens: 1000
+      });
+
+      let content = response.choices[0].message.content;
+      
+      // Clean up markdown formatting if present
+      if (content.includes('```json')) {
+        content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      }
+      
+      const result = JSON.parse(content);
+      return result;
+    } catch (error) {
+      console.error('AI analysis failed:', error);
+      // Fallback to simple detection
+      return {
+        requiresGuidance: false,
+        requiredApis: []
+      };
+    }
+  }
+
+  /**
+   * Extract only explicitly mentioned API names (no patterns)
+   */
+  private static extractExplicitMentionedApis(message: string): string[] {
     const apiKeywords = Object.keys(this.API_KNOWLEDGE_BASE);
     const mentionedApis: string[] = [];
 
@@ -471,25 +633,6 @@ export class ConnectionGuidanceService {
     for (const [alias, api] of Object.entries(aliases)) {
       // Use word boundary matching for aliases too
       const regex = new RegExp(`\\b${alias}\\b`, 'i');
-      if (regex.test(message) && !mentionedApis.includes(api)) {
-        mentionedApis.push(api);
-      }
-    }
-
-    // Additional pattern matching for common phrases
-    const patterns: Record<string, string> = {
-      'send.*slack': 'slack',
-      'slack.*message': 'slack',
-      'github.*issue': 'github',
-      'github.*pull': 'github',
-      'stripe.*payment': 'stripe',
-      'openai.*chat': 'openai',
-      'ai.*model': 'openai',
-      'workflow.*api': 'openai' // Fallback for generic API mentions
-    };
-
-    for (const [pattern, api] of Object.entries(patterns)) {
-      const regex = new RegExp(pattern, 'i');
       if (regex.test(message) && !mentionedApis.includes(api)) {
         mentionedApis.push(api);
       }

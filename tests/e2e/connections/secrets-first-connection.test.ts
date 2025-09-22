@@ -4,6 +4,7 @@
 import { test, expect } from '../../helpers/serverHealthCheck';
 import { createTestUser, cleanupTestUser, generateTestId, TestUser } from '../../helpers/testUtils';
 import { UXComplianceHelper } from '../../helpers/uxCompliance';
+import { submitFormWithUtils } from '../../helpers/dataHelpers';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -256,9 +257,9 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
         request.url().includes('/api/connections') && request.method() === 'POST'
       );
       
-      console.log('🪵 About to click submit button');
-      await submitBtn.click();
-      console.log('🪵 Clicked submit button');
+      console.log('🪵 About to submit form');
+      await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
+      console.log('🪵 Form submitted');
       
       // Wait for the API request to complete
       try {
@@ -623,9 +624,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
       await page.selectOption('[data-testid="secret-type-select"]', 'API_KEY');
       await page.fill('[data-testid="secret-value-input"]', 'secondary-secret-key-789');
       
-      const submitSecretButton = page.locator('[data-testid="primary-action submit-secret-btn"]');
-      await expect(submitSecretButton).toBeVisible();
-      await submitSecretButton.click();
+      await submitFormWithUtils(page, '[data-testid="create-secret-form"]');
       
       // Wait for success message
       const successMessage = page.locator('[data-testid="success-message"]');
@@ -677,7 +676,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
       await expect(submitBtn).toBeEnabled();
       
       // Submit form
-      await submitBtn.click();
+      await submitFormWithUtils(page, '[data-testid="create-connection-form"]');
       
       // Wait for modal to close (indicating success)
       await expect(page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });

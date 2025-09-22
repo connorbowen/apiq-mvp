@@ -1,6 +1,6 @@
 import { OpenAIService } from '../../services/openaiService';
 import { HybridMessageClassificationService } from './hybridMessageClassificationService';
-import { ConnectionGuidanceService } from './connectionGuidanceService';
+import { ConnectionGuidanceOrchestrator } from './connectionGuidanceOrchestrator';
 import { OptimizedWorkflowService } from './optimizedWorkflowService';
 import { AICacheService } from './aiCacheService';
 import { PerformanceMonitor } from './performanceMonitor';
@@ -13,7 +13,7 @@ import axios from 'axios';
 export class ParallelAIService {
   private openaiService: OpenAIService;
   private classificationService: HybridMessageClassificationService;
-  private connectionGuidanceService: ConnectionGuidanceService;
+  // Removed ConnectionGuidanceService - using centralized orchestrator instead
   private workflowService: OptimizedWorkflowService;
   private cacheService: AICacheService;
   private performanceMonitor: PerformanceMonitor;
@@ -21,7 +21,7 @@ export class ParallelAIService {
   constructor(apiKey: string) {
     this.openaiService = OpenAIService.createFromEnv();
     this.classificationService = new HybridMessageClassificationService(this.openaiService);
-    this.connectionGuidanceService = new ConnectionGuidanceService();
+    // Removed ConnectionGuidanceService - using centralized orchestrator instead
     this.workflowService = new OptimizedWorkflowService(apiKey);
     this.cacheService = AICacheService.getInstance();
     this.performanceMonitor = PerformanceMonitor.getInstance();
@@ -34,7 +34,8 @@ export class ParallelAIService {
     message: string,
     userId: string,
     connections: any[],
-    context: any[] = []
+    context: any[] = [],
+    guidanceResponse?: any
   ): Promise<{
     success: boolean;
     data?: any;
@@ -74,19 +75,60 @@ export class ParallelAIService {
       // Step 1: Parallel classification and connection analysis with caching
       const classificationStart = Date.now();
       console.log('🔍 Classifying message:', message);
-      const classification = await this.classifyMessageWithCache(message);
+      const classification = await this.classifyMessageWithCache(message, connections);
       console.log('🔍 DEBUG: Message classification result:', JSON.stringify(classification, null, 2));
       console.log('🔍 Classification result:', classification);
       classificationTime = Date.now() - classificationStart;
 
       const connectionStart = Date.now();
-      const connectionGuidance = await this.analyzeConnectionsWithCache(message, connections);
+      const connectionGuidance = await this.analyzeConnectionsWithCentralizedOrchestrator(message, connections, userId);
       connectionAnalysisTime = Date.now() - connectionStart;
 
       const parallelTime = Date.now() - startTime;
       console.log(`⚡ Parallel processing completed in ${parallelTime}ms`);
 
       // Step 2: Route based on results
+      if (classification.type === 'connection_guidance') {
+        // Handle direct connection guidance requests using centralized orchestrator
+        console.log('🔍 ParallelAIService - Connection guidance classification detected');
+        
+        const orchestrator = new ConnectionGuidanceOrchestrator();
+        const guidanceResponse = await orchestrator.processMessage({
+          message,
+          availableConnections: connections,
+          userId,
+          context: context
+        });
+
+        const result = {
+          success: true,
+          data: {
+            type: 'connection_guidance',
+            content: guidanceResponse.message,
+            connectionGuidance: {
+              requiresGuidance: guidanceResponse.shouldProvideGuidance,
+              missingApis: guidanceResponse.details?.requiredApis || [],
+              suggestedConnections: guidanceResponse.details?.requiredApis || [],
+              guidanceMessage: guidanceResponse.message,
+              setupInstructions: guidanceResponse.details?.requiredApis?.[0]?.setupInstructions || {}
+            }
+          },
+          processingTime: Date.now() - startTime
+        };
+
+        this.performanceMonitor.recordRequest({
+          duration: result.processingTime!,
+          success: true,
+          breakdown: {
+            classification: classificationTime,
+            connectionAnalysis: connectionAnalysisTime,
+            workflowGeneration: 0
+          }
+        });
+
+        return result;
+      }
+
       if (classification.type === 'workflow') {
         if (connectionGuidance.requiresGuidance) {
           const result = {
@@ -180,7 +222,8 @@ export class ParallelAIService {
               parameters: Array.isArray(endpoint.parameters) ? endpoint.parameters : []
             }))
           })),
-          context: context
+          context: context,
+          guidanceResponse: guidanceResponse
         });
         
         // If API call parameters were generated successfully, execute the actual API call
@@ -292,7 +335,7 @@ export class ParallelAIService {
   /**
    * Classify message with caching
    */
-  private async classifyMessageWithCache(message: string) {
+  private async classifyMessageWithCache(message: string, connections: any[] = []) {
     // Check cache first
     const cached = this.cacheService.getClassificationResult(message);
     if (cached) {
@@ -302,7 +345,7 @@ export class ParallelAIService {
 
     try {
       const result = await Promise.race([
-        this.classificationService.classifyMessage(message),
+        this.classificationService.classifyMessage(message, {}, connections),
         this.timeoutPromise(5000, 'Classification timeout')
       ]);
       
@@ -327,7 +370,63 @@ export class ParallelAIService {
   }
 
   /**
-   * Analyze connections with caching
+   * Analyze connections using centralized orchestrator
+   */
+  private async analyzeConnectionsWithCentralizedOrchestrator(message: string, connections: any[], userId: string) {
+    // Check cache first
+    const cached = this.cacheService.getConnectionAnalysisResult(message, connections);
+    if (cached) {
+      console.log('🎯 Cache hit for connection analysis');
+      return cached;
+    }
+
+    try {
+      console.log('🔍 ParallelAIService - Using centralized orchestrator');
+      console.log('🔍 ParallelAIService - Message:', message);
+      console.log('🔍 ParallelAIService - Connections:', connections.length);
+      
+      const orchestrator = new ConnectionGuidanceOrchestrator();
+      const result = await Promise.race([
+        orchestrator.processMessage({
+          message,
+          availableConnections: connections,
+          userId,
+          context: {}
+        }),
+        this.timeoutPromise(5000, 'Connection analysis timeout')
+      ]);
+      
+      console.log('🔍 ParallelAIService - Centralized orchestrator result:', JSON.stringify(result, null, 2));
+      
+      // Convert to legacy format for compatibility
+      const legacyResult = {
+        requiresGuidance: result.shouldProvideGuidance,
+        missingApis: result.details?.requiredApis || [],
+        suggestedConnections: result.details?.requiredApis || [],
+        guidanceMessage: result.message
+      };
+      
+      // Cache the result
+      this.cacheService.setConnectionAnalysisResult(message, connections, legacyResult, 10 * 60 * 1000); // 10 minutes
+      return legacyResult;
+    } catch (error) {
+      console.error('Centralized connection analysis failed:', error);
+      // Fallback to basic guidance
+      const fallback = {
+        requiresGuidance: false,
+        missingApis: [],
+        suggestedConnections: [],
+        guidanceMessage: ''
+      };
+      
+      // Cache fallback result for shorter time
+      this.cacheService.setConnectionAnalysisResult(message, connections, fallback, 2 * 60 * 1000); // 2 minutes
+      return fallback;
+    }
+  }
+
+  /**
+   * Analyze connections with caching (legacy method)
    */
   private async analyzeConnectionsWithCache(message: string, connections: any[]) {
     // Check cache first
@@ -338,22 +437,19 @@ export class ParallelAIService {
     }
 
     try {
-      const result = await Promise.race([
-        ConnectionGuidanceService.analyzeRequest(
-          message,
-          connections.map(conn => ({ 
-            name: conn.name, 
-            id: conn.id,
-            baseUrl: conn.baseUrl,
-            endpoints: conn.endpoints.map((endpoint: any) => ({
-              path: endpoint.path,
-              method: endpoint.method,
-              summary: endpoint.summary || ''
-            }))
-          }))
-        ),
-        this.timeoutPromise(5000, 'Connection analysis timeout')
-      ]);
+      console.log('🔍 ParallelAIService - Calling ConnectionGuidanceService.analyzeRequest');
+      console.log('🔍 ParallelAIService - Message:', message);
+      console.log('🔍 ParallelAIService - Connections:', connections.length);
+      
+      // Legacy method - return fallback since we're using centralized orchestrator
+      const result = {
+        requiresGuidance: false,
+        missingApis: [],
+        suggestedConnections: [],
+        guidanceMessage: ''
+      };
+      
+      console.log('🔍 ParallelAIService - ConnectionGuidanceService result:', JSON.stringify(result, null, 2));
       
       // Cache the result
       this.cacheService.setConnectionAnalysisResult(message, connections, result, 10 * 60 * 1000); // 10 minutes
@@ -403,51 +499,52 @@ export class ParallelAIService {
   private async executeApiCall(apiCallData: any, connections: any[], userId: string) {
     const startTime = Date.now();
     
+    console.log('🔍 executeApiCall - DEBUGGING CONNECTION LOOKUP:');
+    console.log('🔍 executeApiCall - apiCallData:', JSON.stringify(apiCallData, null, 2));
+    console.log('🔍 executeApiCall - available connections:', connections.map(c => ({ id: c.id, name: c.name, baseUrl: c.baseUrl })));
+    console.log('🔍 executeApiCall - looking for connectionId:', apiCallData.connectionId);
+    console.log('🔍 executeApiCall - userId:', userId);
+    
+    // Write debug info to file for E2E debugging
+    require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - executeApiCall - connectionId: ${apiCallData.connectionId}, available: ${connections.map(c => c.id).join(',')}\n`);
+    
+    // Try to find connection by ID first
+    let connection = connections.find(conn => conn.id === apiCallData.connectionId);
+    
+    // If not found by ID, try to find by name (fallback)
+    if (!connection && apiCallData.connectionName) {
+      connection = connections.find(conn => conn.name === apiCallData.connectionName);
+      console.log('🔍 executeApiCall - Trying to find by name:', apiCallData.connectionName);
+    }
+    
+    // If still not found, try to find the first available connection (last resort)
+    if (!connection && connections.length > 0) {
+      connection = connections[0];
+      console.log('🔍 executeApiCall - Using first available connection as fallback:', connection.id);
+    }
+    
+    if (!connection) {
+      console.log('🔍 executeApiCall - ❌ Connection NOT FOUND for ID:', apiCallData.connectionId);
+      console.log('🔍 executeApiCall - Available connection IDs:', connections.map(c => c.id));
+      require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - CONNECTION NOT FOUND ERROR\n`);
+      return {
+        success: false,
+        data: { error: 'Connection not found' }
+      };
+    }
+    
+    console.log('🔍 executeApiCall - ✅ Connection FOUND:', { id: connection.id, name: connection.name, baseUrl: connection.baseUrl });
+    require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - Connection FOUND: ${connection.id}, baseUrl: ${connection.baseUrl}\n`);
+    
+    // Substitute path parameters in the URL
+    let substitutedUrl = apiCallData.url;
+    if (apiCallData.parameters) {
+      for (const [key, value] of Object.entries(apiCallData.parameters)) {
+        substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
+      }
+    }
+    
     try {
-      console.log('🔍 executeApiCall - DEBUGGING CONNECTION LOOKUP:');
-      console.log('🔍 executeApiCall - apiCallData:', JSON.stringify(apiCallData, null, 2));
-      console.log('🔍 executeApiCall - available connections:', connections.map(c => ({ id: c.id, name: c.name, baseUrl: c.baseUrl })));
-      console.log('🔍 executeApiCall - looking for connectionId:', apiCallData.connectionId);
-      console.log('🔍 executeApiCall - userId:', userId);
-      
-      // Write debug info to file for E2E debugging
-      require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - executeApiCall - connectionId: ${apiCallData.connectionId}, available: ${connections.map(c => c.id).join(',')}\n`);
-      
-      // Try to find connection by ID first
-      let connection = connections.find(conn => conn.id === apiCallData.connectionId);
-      
-      // If not found by ID, try to find by name (fallback)
-      if (!connection && apiCallData.connectionName) {
-        connection = connections.find(conn => conn.name === apiCallData.connectionName);
-        console.log('🔍 executeApiCall - Trying to find by name:', apiCallData.connectionName);
-      }
-      
-      // If still not found, try to find the first available connection (last resort)
-      if (!connection && connections.length > 0) {
-        connection = connections[0];
-        console.log('🔍 executeApiCall - Using first available connection as fallback:', connection.id);
-      }
-      
-      if (!connection) {
-        console.log('🔍 executeApiCall - ❌ Connection NOT FOUND for ID:', apiCallData.connectionId);
-        console.log('🔍 executeApiCall - Available connection IDs:', connections.map(c => c.id));
-        require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - CONNECTION NOT FOUND ERROR\n`);
-        return {
-          success: false,
-          data: { error: 'Connection not found' }
-        };
-      }
-      
-      console.log('🔍 executeApiCall - ✅ Connection FOUND:', { id: connection.id, name: connection.name, baseUrl: connection.baseUrl });
-      require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - Connection FOUND: ${connection.id}, baseUrl: ${connection.baseUrl}\n`);
-      
-      // Substitute path parameters in the URL
-      let substitutedUrl = apiCallData.url;
-      if (apiCallData.parameters) {
-        for (const [key, value] of Object.entries(apiCallData.parameters)) {
-          substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
-        }
-      }
       
       const fullUrl = `${connection.baseUrl}${substitutedUrl}`;
       
@@ -497,7 +594,7 @@ export class ParallelAIService {
         success: true,
         data: {
           method: apiCallData.method || 'GET', // Default to GET if method is undefined
-          url: apiCallData.url,
+          url: substitutedUrl, // Use the substituted URL instead of template
           statusCode: response.status,
           responseData: response.data,
           responseHeaders: response.headers as Record<string, string>,
@@ -517,7 +614,7 @@ export class ParallelAIService {
           success: true, // Still successful from our perspective
           data: {
             method: apiCallData.method || 'GET', // Default to GET if method is undefined
-            url: apiCallData.url,
+            url: substitutedUrl, // Use the substituted URL instead of template
             statusCode: error.response.status,
             responseData: error.response.data,
             responseHeaders: error.response.headers as Record<string, string>,
@@ -533,7 +630,7 @@ export class ParallelAIService {
           success: false,
           data: {
             method: apiCallData.method || 'GET', // Default to GET if method is undefined
-            url: apiCallData.url,
+            url: substitutedUrl, // Use the substituted URL instead of template
             statusCode: 0,
             responseData: null,
             responseHeaders: {},

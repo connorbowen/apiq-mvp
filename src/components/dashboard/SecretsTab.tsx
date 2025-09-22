@@ -34,6 +34,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../../lib/api/client';
+import { createFormSubmissionHandler } from '../../lib/utils/formSubmissionUtils';
 import axios from 'axios';
 import { AlertBanner } from '../ui/AlertBanner';
 import { SecretTypeSelect } from '../ui/SecretTypeSelect';
@@ -1158,21 +1159,38 @@ function CreateSecretModal({
     return errors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const errors = validateForm(formData);
-    if (Object.keys(errors).length) {
-      flushSync(() => setValidationErrors(errors));
-      // Focus the first field with an error
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField === 'name' && nameInputRef.current) {
-        nameInputRef.current.focus();
+  const handleSubmit = createFormSubmissionHandler(
+    async (formData: FormData) => {
+      const data = {
+        name: formData.get('name') as string,
+        description: formData.get('description') as string,
+        type: formData.get('type') as string,
+        value: formData.get('value') as string,
+      };
+      const errors = validateForm(data);
+      if (Object.keys(errors).length) {
+        flushSync(() => setValidationErrors(errors));
+        // Focus the first field with an error
+        const firstErrorField = Object.keys(errors)[0];
+        if (firstErrorField === 'name' && nameInputRef.current) {
+          nameInputRef.current.focus();
+        }
+        return;
       }
-      return;
+      setValidationErrors({});
+      createSecret(data);
+    },
+    {
+      preventDefault: true,
+      stopPropagation: true,
+      onSubmissionStart: () => console.log('🔍 CreateSecretModal: Form submission started'),
+      onSubmissionComplete: () => console.log('🔍 CreateSecretModal: Form submission completed'),
+      onSubmissionError: (error) => {
+        console.error('🔍 CreateSecretModal: Form submission error:', error);
+        setValidationErrors({ general: error.message });
+      }
     }
-    setValidationErrors({});
-    createSecret(formData);
-  };
+  );
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
@@ -1313,7 +1331,11 @@ function CreateSecretModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form 
+            onSubmit={handleSubmit} 
+            className="space-y-4"
+            data-testid="create-secret-form"
+          >
             {/* Validation Errors Container */}
             {Object.keys(validationErrors).length > 0 && (
               <div 

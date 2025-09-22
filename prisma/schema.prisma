@@ -101,6 +101,32 @@ enum SecretType {
   CUSTOM
 }
 
+enum PlanType {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum PlanStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+  UNPAID
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum UsageType {
+  API_CONNECTION
+  WORKFLOW_EXECUTION
+  DIRECT_API_CALL
+}
+
 // User Management
 model User {
   id        String    @id @default(cuid())
@@ -147,6 +173,11 @@ model User {
   tourState      TourState?
   operations     ApiOperation[]
   operationExecutions OperationExecution[]
+  
+  // Billing relations
+  userPlan       UserPlan?
+  usageRecords   UsageRecord[]
+  usageSummaries UsageSummary[]
 
   @@map("users")
 }
@@ -517,4 +548,131 @@ model Waitlist {
   updatedAt DateTime @updatedAt
 
   @@map("waitlist")
+}
+
+// Billing and Subscription Management
+
+// User subscription plans
+model UserPlan {
+  id                      String      @id @default(cuid())
+  userId                  String      @unique
+  planType                PlanType    @default(FREE)
+  status                  PlanStatus  @default(ACTIVE)
+  billingCycle            BillingCycle @default(MONTHLY)
+  
+  // Plan limits
+  apiConnectionsLimit     Int         @default(5)
+  workflowExecutionsLimit Int         @default(50)
+  directApiCallsLimit     Int         @default(50)
+  totalExecutionsLimit    Int         @default(100)
+  
+  // Current usage (denormalized for performance)
+  currentConnections      Int         @default(0)
+  currentWorkflowExecutions Int       @default(0)
+  currentDirectApiCalls   Int         @default(0)
+  currentTotalExecutions  Int         @default(0)
+  
+  // Stripe integration
+  stripeCustomerId        String?
+  stripeSubscriptionId    String?
+  stripePriceId           String?
+  
+  // Billing dates
+  currentPeriodStart      DateTime?
+  currentPeriodEnd        DateTime?
+  cancelAtPeriodEnd       Boolean     @default(false)
+  canceledAt              DateTime?
+  
+  // Timestamps
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  // Relations
+  user                    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usageRecords            UsageRecord[]
+  usageSummaries          UsageSummary[]
+
+  @@map("user_plans")
+}
+
+// Individual usage records
+model UsageRecord {
+  id          String    @id @default(cuid())
+  userId      String
+  usageType   UsageType
+  resourceId  String?   // ID of the resource (connection, workflow, etc.)
+  resourceType String?  // Type of resource for additional context
+  metadata    Json?     // Additional usage metadata
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userPlan    UserPlan  @relation(fields: [userId], references: [userId], onDelete: Cascade, map: "usage_records_user_plan_fkey")
+
+  @@index([userId, usageType])
+  @@index([userId, createdAt])
+  @@map("usage_records")
+}
+
+// Monthly usage summaries for billing
+model UsageSummary {
+  id                      String    @id @default(cuid())
+  userId                  String
+  year                    Int
+  month                   Int
+  planType                PlanType
+  
+  // Usage counts
+  apiConnections          Int       @default(0)
+  workflowExecutions      Int       @default(0)
+  directApiCalls          Int       @default(0)
+  totalExecutions         Int       @default(0)
+  
+  // Plan limits at time of summary
+  apiConnectionsLimit     Int
+  workflowExecutionsLimit Int
+  directApiCallsLimit     Int
+  totalExecutionsLimit    Int
+  
+  // Overage calculations
+  overageAmount           Int       @default(0) // Total overage in cents
+  overageCharges          Int       @default(0) // Overage charges in cents
+  
+  // Timestamps
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  // Relations
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userPlan                UserPlan  @relation(fields: [userId], references: [userId], onDelete: Cascade, map: "usage_summaries_user_plan_fkey")
+
+  @@unique([userId, year, month])
+  @@index([year, month])
+  @@map("usage_summaries")
+}
+
+// Plan configuration and limits
+model PlanLimits {
+  id                      String      @id @default(cuid())
+  planType                PlanType    @unique
+  apiConnectionsLimit     Int
+  workflowExecutionsLimit Int
+  directApiCallsLimit     Int
+  totalExecutionsLimit    Int
+  
+  // Pricing
+  priceMonthly            Int         // Price in cents
+  priceYearly             Int         // Price in cents (with discount)
+  stripePriceIdMonthly    String?     // Stripe price ID for monthly billing
+  stripePriceIdYearly     String?     // Stripe price ID for yearly billing
+  
+  // Features
+  features                Json?       // Array of features included in plan
+  isActive                Boolean     @default(true)
+  
+  // Timestamps
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  @@map("plan_limits")
 }

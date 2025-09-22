@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ApiConnection } from '../../types';
 import { apiClient } from '../../lib/api/client';
+import { createFormSubmissionHandler, createButtonSubmissionHandler } from '../../lib/utils/formSubmissionUtils';
 
 interface EditConnectionModalProps {
   connection: ApiConnection;
@@ -388,9 +389,9 @@ export default function EditConnectionModal({
             onSubmit={handleSubmit} 
             className="space-y-6" 
             role="form" 
+            data-testid="edit-connection-form"
             onInvalid={(e) => console.log('🔍 Form invalid:', e)} 
             onInput={(e) => console.log('🔍 Form input:', e.target)}
-            data-testid="edit-connection-form"
           >
             {/* Basic Information Section */}
             <section>

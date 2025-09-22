@@ -49,6 +49,7 @@ async function getProfile(req: NextApiRequest, res: NextApiResponse, user: any) 
         createdAt: true,
         updatedAt: true,
         provider: true,
+        onboardingStage: true,
       },
     });
 
@@ -135,6 +136,7 @@ async function updateProfile(req: NextApiRequest, res: NextApiResponse, user: an
         createdAt: true,
         updatedAt: true,
         provider: true,
+        onboardingStage: true,
       },
     });
 
