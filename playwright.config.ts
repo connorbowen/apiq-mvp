@@ -9,20 +9,20 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 1, // Retry configuration for stability
   workers: 1, // Force single worker to prevent context conflicts
   reporter: 'html',
-  timeout: 120000, // Increased timeout to 2 minutes
+  timeout: 60000, // 1 minute per test
   expect: {
-    timeout: 30000, // Increased expect timeout
+    timeout: 15000, // 15 seconds for assertions
   },
   // Add global timeout for better stability
-  globalTimeout: 600000, // 10 minutes
+  globalTimeout: 300000, // 5 minutes for entire suite
   // Add global setup for better parallel test isolation
   globalSetup: require.resolve('./tests/helpers/globalSetup.ts'),
   // globalTeardown: require.resolve('./tests/helpers/globalTeardown.ts'), // Disabled to prevent premature cleanup
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'off', // Set to 'on-first-retry' when debugging test failures
-    actionTimeout: 30000, // Increased action timeout
-    navigationTimeout: 30000, // Increased navigation timeout
+    actionTimeout: 15000, // 15 seconds for actions
+    navigationTimeout: 15000, // 15 seconds for navigation
     // Add context options for better stability
     contextOptions: {
       ignoreHTTPSErrors: true,
