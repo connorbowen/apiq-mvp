@@ -90,18 +90,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   onWorkflowGenerated,
   onWorkflowSaved,
 }) => {
-  console.log('🔍 ChatInterface: Component mounting/rendering');
-  console.log('🔍 ChatInterface: Props:', { onWorkflowGenerated, onWorkflowSaved });
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [savingWorkflow, setSavingWorkflow] = useState<string | null>(null);
 
-  // Debug loading state changes
-  useEffect(() => {
-    console.log('🔍 ChatInterface: isLoading state changed to:', isLoading);
-  }, [isLoading]);
   const [executingWorkflow, setExecutingWorkflow] = useState<string | null>(null);
   
   // Connection setup state
@@ -131,7 +125,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   useEffect(() => {
     const forceResetTimeout = setTimeout(() => {
       if (isLoading) {
-        console.log('🔍 ChatInterface: Force resetting isLoading via useEffect');
         setIsLoading(false);
       }
     }, 15000); // 15 second force reset
@@ -143,7 +136,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   useEffect(() => {
     const interval = setInterval(() => {
       if (isLoading) {
-        console.log('🔍 ChatInterface: Interval check - isLoading has been true for too long, forcing reset');
         setIsLoading(false);
       }
     }, 8000); // Check every 8 seconds
@@ -152,24 +144,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   }, [isLoading]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    console.log('🔍 ChatInterface: handleSubmit called');
-    console.log('🔍 ChatInterface: Event type:', e.type);
-    console.log('🔍 ChatInterface: Event target:', e.target);
-    console.log('🔍 ChatInterface: Event currentTarget:', e.currentTarget);
-    console.log('🔍 ChatInterface: Input message:', inputMessage);
-    console.log('🔍 ChatInterface: Is loading:', isLoading);
-    
     e.preventDefault();
     e.stopPropagation();
     
     if (!inputMessage.trim() || isLoading) {
-      console.log('🔍 ChatInterface: Early return - no message or loading');
-      console.log('🔍 ChatInterface: Message trim check:', !inputMessage.trim());
-      console.log('🔍 ChatInterface: Loading check:', isLoading);
       return;
     }
-    
-    console.log('🔍 ChatInterface: Processing message:', inputMessage);
 
     const messageText = inputMessage.trim();
     const userMessage: Message = {
@@ -181,23 +161,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
-    console.log('🔍 ChatInterface: Setting isLoading to true');
     setIsLoading(true);
     setError('');
 
     // Set multiple aggressive timeouts to ensure loading state is reset
     const loadingTimeout1 = setTimeout(() => {
-      console.log('🔍 ChatInterface: Loading timeout 1 reached (5s), resetting isLoading');
       setIsLoading(false);
     }, 5000); // 5 second timeout
     
     const loadingTimeout2 = setTimeout(() => {
-      console.log('🔍 ChatInterface: Loading timeout 2 reached (8s), force resetting isLoading');
       setIsLoading(false);
     }, 8000); // 8 second timeout
     
     const loadingTimeout3 = setTimeout(() => {
-      console.log('🔍 ChatInterface: Loading timeout 3 reached (12s), emergency reset isLoading');
       setIsLoading(false);
     }, 12000); // 12 second timeout
 
@@ -214,25 +190,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       }));
 
       // Let AI orchestrator handle everything
-      console.log('🤖 ChatInterface: Sending message to AI orchestrator');
-      console.log('🤖 ChatInterface: Message being sent:', messageText);
-      console.log('🤖 ChatInterface: Context being sent:', context);
-      
       console.log('🔍 ChatInterface: About to call apiClient.processMessage');
-      console.log('🔍 ChatInterface: apiClient object:', apiClient);
-      console.log('🔍 ChatInterface: apiClient.processMessage method:', typeof apiClient.processMessage);
-      
       const response = await apiClient.processMessage(messageText, context);
-      console.log('🔍 ChatInterface: API client response received');
-      console.log('🤖 ChatInterface: AI orchestrator response:', response);
-      console.log('🤖 ChatInterface: Response data:', JSON.stringify(response.data, null, 2));
+      console.log('🔍 ChatInterface: API response received:', response);
       
       if (!response.success || !response.data) {
-        console.error('🔍 ChatInterface: API client returned error:', response.error);
         throw new Error(response.error || 'Failed to process message');
       }
 
       // Create assistant message based on AI response
+      
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
@@ -250,35 +217,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         connectionGuidance: response.data.connectionGuidance,
         suggestedAction: response.data.suggestedAction
       };
-
-      // Debug logging for API call results
-      if (response.data.apiCallResult) {
-        console.log('🔍 ChatInterface: API call result detected:', {
-          type: response.data.type,
-          apiCallResult: response.data.apiCallResult,
-          hasApiCallResult: !!response.data.apiCallResult,
-          statusCode: response.data.apiCallResult.statusCode,
-          method: response.data.apiCallResult.method,
-          url: response.data.apiCallResult.url
-        });
-      }
-
-      // Debug logging for connection guidance
-      if (response.data.type === 'connection_guidance') {
-        console.log('🔍 ChatInterface: Connection guidance detected:', {
-          type: response.data.type,
-          connectionGuidance: response.data.connectionGuidance,
-          requiresGuidance: response.data.connectionGuidance?.requiresGuidance,
-          missingApis: response.data.connectionGuidance?.missingApis?.length || 0
-        });
-        
-        // Debug the message object being created
-        console.log('🔍 ChatInterface: Creating message with connection guidance:', {
-          intent: assistantMessage.intent,
-          connectionGuidance: assistantMessage.connectionGuidance,
-          requiresGuidance: assistantMessage.connectionGuidance?.requiresGuidance
-        });
-      }
+      
 
       // Create formatted response for API call results
       if (response.data.apiCallResult) {
@@ -286,28 +225,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         assistantMessage.formattedResponse = formatted;
       }
 
-      console.log('🔍 ChatInterface: About to update messages with assistant message');
       setMessages(prev => [...prev, assistantMessage]);
-      console.log('🔍 ChatInterface: Messages updated successfully');
 
       // Call the callback if provided
       if (onWorkflowGenerated && response.data.workflow && response.data.steps) {
-        console.log('🔍 ChatInterface: Calling onWorkflowGenerated callback');
         onWorkflowGenerated(response.data.workflow, response.data.steps);
       }
       
-      console.log('🔍 ChatInterface: About to exit try block');
-      
       // Reset loading state after successful processing
-      console.log('🔍 ChatInterface: Setting isLoading to false after success');
       clearTimeout(loadingTimeout1);
       clearTimeout(loadingTimeout2);
       clearTimeout(loadingTimeout3);
       setIsLoading(false);
 
     } catch (err) {
-      console.error('🔍 ChatInterface: Error processing message:', err);
-      console.error('🔍 ChatInterface: Error stack:', err instanceof Error ? err.stack : 'No stack trace');
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
       
@@ -321,7 +252,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       setMessages(prev => [...prev, errorMsg]);
       
       // Reset loading state after error processing
-      console.log('🔍 ChatInterface: Setting isLoading to false after error');
       clearTimeout(loadingTimeout1);
       clearTimeout(loadingTimeout2);
       clearTimeout(loadingTimeout3);
@@ -642,19 +572,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
           </div>
         )}
 
-        {messages.map((message) => {
-          // Debug logging for message rendering
-          if (message.apiCallResult) {
-            console.log('🔍 ChatInterface: Rendering message with API call result:', {
-              messageId: message.id,
-              hasApiCallResult: !!message.apiCallResult,
-              statusCode: message.apiCallResult.statusCode,
-              method: message.apiCallResult.method,
-              url: message.apiCallResult.url
-            });
-          }
-          
-          return (
+        {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -678,7 +596,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                 <div className="mt-3">
                   <ConnectionGuidance 
                     message={message.content} 
-                    connectionGuidance={message.connectionGuidance} 
+                    connectionGuidance={message.connectionGuidance}
+                    onSetupClick={handleSetupConnection}
                   />
                 </div>
               )}
@@ -905,8 +824,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
               )}
             </div>
           </div>
-        );
-        })}
+        ))}
 
         {isLoading && (
           <div className="flex justify-start">
@@ -925,14 +843,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       {/* Input */}
       <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-t border-gray-200 bg-gray-50">
          <form 
-           onSubmit={(e) => {
-             console.log('🔍 ChatInterface: Form onSubmit triggered');
-             console.log('🔍 ChatInterface: Form event type:', e.type);
-             console.log('🔍 ChatInterface: Form event target:', e.target);
-             console.log('🔍 ChatInterface: Form event currentTarget:', e.currentTarget);
-             console.log('🔍 ChatInterface: Form event defaultPrevented:', e.defaultPrevented);
-             handleSubmit(e);
-           }} 
+           onSubmit={handleSubmit} 
            className="flex flex-col sm:flex-row gap-2 sm:gap-3"
            data-testid="chat-form"
          >
@@ -942,12 +853,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
               data-testid="chat-input"
               type="text"
               value={inputMessage}
-              onChange={(e) => {
-                console.log('🔍 ChatInterface: Input onChange triggered');
-                console.log('🔍 ChatInterface: Input value:', e.target.value);
-                console.log('🔍 ChatInterface: Input value length:', e.target.value.length);
-                setInputMessage(e.target.value);
-              }}
+              onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Describe what you want to automate..."
               disabled={isLoading}
               className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 text-sm sm:text-base min-h-[44px]"
@@ -968,6 +874,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
             data-testid="primary-action chat-send-btn"
             type="submit"
             disabled={!inputMessage.trim() || isLoading}
+            onClick={async (e) => {
+              // Directly call handleSubmit to bypass form submission issues
+              await handleSubmit(e);
+            }}
             className="inline-flex items-center justify-center px-4 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-all duration-200 shadow-sm hover:shadow-md min-h-[44px] w-full sm:w-auto"
           >
             {isLoading ? (

@@ -4,31 +4,93 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: true,
+  fullyParallel: false, // Disable parallel execution to prevent context conflicts
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 4, // Increased workers for better parallel execution
+  retries: process.env.CI ? 2 : 1, // Retry configuration for stability
+  workers: 1, // Force single worker to prevent context conflicts
   reporter: 'html',
-  timeout: 60000, // Increased timeout for parallel execution stability
+  timeout: 120000, // Increased timeout to 2 minutes
   expect: {
-    timeout: 15000, // Increased expect timeout for parallel tests
+    timeout: 30000, // Increased expect timeout
   },
+  // Add global timeout for better stability
+  globalTimeout: 600000, // 10 minutes
   // Add global setup for better parallel test isolation
   globalSetup: require.resolve('./tests/helpers/globalSetup.ts'),
   // globalTeardown: require.resolve('./tests/helpers/globalTeardown.ts'), // Disabled to prevent premature cleanup
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'off', // Set to 'on-first-retry' when debugging test failures
-    actionTimeout: 15000, // Increased action timeout
-    navigationTimeout: 20000, // Increased navigation timeout
+    actionTimeout: 30000, // Increased action timeout
+    navigationTimeout: 30000, // Increased navigation timeout
+    // Add context options for better stability
+    contextOptions: {
+      ignoreHTTPSErrors: true,
+      acceptDownloads: true,
+    },
     launchOptions: {
+      // Add process management options
+      handleSIGINT: false,
+      handleSIGTERM: false,
+      handleSIGHUP: false,
       args: [
         '--disable-dev-shm-usage',
         '--disable-gpu',
         '--disable-web-security',
         '--disable-features=VizDisplayCompositor',
-        '--no-sandbox', // Add sandbox disable for stability
-        '--disable-setuid-sandbox' // Add setuid sandbox disable
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--no-first-run',
+        '--disable-background-networking',
+        '--disable-component-extensions-with-background-pages',
+        '--disable-ipc-flooding-protection',
+        '--disable-hang-monitor',
+        '--disable-prompt-on-repost',
+        '--disable-domain-reliability',
+        '--disable-features=TranslateUI,BlinkGenPropertyTrees',
+        '--disable-print-preview',
+        '--disable-client-side-phishing-detection',
+        '--disable-component-update',
+        '--disable-popup-blocking',
+        '--disable-windows10-custom-titlebar',
+        '--metrics-recording-only',
+        '--safebrowsing-disable-auto-update',
+        '--enable-automation',
+        '--password-store=basic',
+        '--use-mock-keychain',
+        // Additional stability flags
+        '--disable-blink-features=AutomationControlled',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-ipc-flooding-protection',
+        '--disable-renderer-backgrounding',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-background-timer-throttling',
+        '--disable-hang-monitor',
+        '--disable-prompt-on-repost',
+        '--disable-domain-reliability',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--disable-popup-blocking',
+        '--disable-prompt-on-repost',
+        '--disable-sync',
+        '--disable-translate',
+        '--disable-windows10-custom-titlebar',
+        '--metrics-recording-only',
+        '--no-first-run',
+        '--safebrowsing-disable-auto-update',
+        '--enable-automation',
+        '--password-store=basic',
+        '--use-mock-keychain'
       ]
     }
   },

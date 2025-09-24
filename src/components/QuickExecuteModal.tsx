@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { apiClient } from '../lib/api/client';
-import { ParameterExtractionService } from '../lib/services/parameterExtractionService';
+import { ApiSchemaEnhancementService } from '../lib/services/apiSchemaEnhancementService';
 import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFormatter';
 
 interface Endpoint {
@@ -66,7 +66,7 @@ export default function QuickExecuteModal({
         if (endpoint?.parameters) {
           try {
             // Use enhanced parameters if available
-            const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint);
+            const enhancedEndpoint = await ApiSchemaEnhancementService.enhanceEndpoint(endpoint);
             enhancedEndpoint.parameters.forEach((param: any) => {
               if (param.location === 'query' || param.location === 'path') {
                 initialParams[param.name] = param.type === 'boolean' ? false : 

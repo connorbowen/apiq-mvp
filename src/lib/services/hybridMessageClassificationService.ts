@@ -117,12 +117,11 @@ export class HybridMessageClassificationService {
     message: string, 
     context: Record<string, any>
   ): Promise<MessageClassification> {
-    const response = await (this.openaiService as any).client.chat.completions.create({
+    const response = await this.openaiService.chatCompletion([
+      { role: 'system', content: this.buildClassificationPrompt() },
+      { role: 'user', content: `Message: "${message}"\nContext: ${JSON.stringify(context, null, 2)}` }
+    ], {
       model: (this.openaiService as any).model,
-      messages: [
-        { role: 'system', content: this.buildClassificationPrompt() },
-        { role: 'user', content: `Message: "${message}"\nContext: ${JSON.stringify(context, null, 2)}` }
-      ],
       functions: [
         {
           name: 'classify_message',
@@ -164,7 +163,8 @@ export class HybridMessageClassificationService {
       max_tokens: 500
     });
 
-    const functionCall = response.choices[0]?.message?.function_call;
+    // chatCompletion returns full response when functions are used
+    const functionCall = response.choices?.[0]?.message?.function_call;
     if (!functionCall || functionCall.name !== 'classify_message') {
       throw new Error('Invalid AI response for message classification');
     }

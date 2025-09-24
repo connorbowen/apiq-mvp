@@ -183,10 +183,11 @@ User Input → ChatInterface → AI Orchestrator → Service Routing → Respons
 
 **Technology Stack:**
 - **Message Classification**: HybridMessageClassificationService
-- **Connection Guidance**: ConnectionGuidanceService  
-- **Workflow Generation**: NaturalLanguageWorkflowService
+- **Connection Guidance**: EnhancedConnectionGuidanceOrchestrator (multi-prompt architecture)
+- **Workflow Generation**: NaturalLanguageWorkflowService → WorkflowOrchestrator (multi-prompt architecture)
+- **Direct API Calls**: DirectApiCallOrchestrator (multi-prompt architecture)
 - **Response Formatting**: ResponseFormatter
-- **Integration**: OpenAI GPT-4o-mini with function calling
+- **Integration**: OpenAI GPT-4o-mini with specialized prompt services
 
 **Key Features:**
 - **Intelligent Message Classification**: AI-powered intent detection

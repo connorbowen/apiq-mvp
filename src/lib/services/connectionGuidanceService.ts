@@ -579,7 +579,8 @@ Be intelligent and consider the user's actual intent, not just keyword matching.
         max_tokens: 1000
       });
 
-      let content = response.choices[0].message.content;
+      // chatCompletion returns a string when no functions are used
+      let content = typeof response === 'string' ? response : response.choices?.[0]?.message?.content;
       
       // Clean up markdown formatting if present
       if (content.includes('```json')) {

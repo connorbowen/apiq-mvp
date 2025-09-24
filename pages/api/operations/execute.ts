@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/database/client';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { logInfo, logError } from '../../../src/utils/logger';
-import { ParameterExtractionService } from '../../../src/lib/services/parameterExtractionService';
+import { ApiSchemaEnhancementService } from '../../../src/lib/services/apiSchemaEnhancementService';
 import { usageTrackingService } from '../../../src/lib/services/usageTrackingService';
 import { UsageType } from '../../../src/generated/prisma';
 
@@ -86,7 +86,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
 
     // Validate parameters using enhanced parameter schemas
     if (endpoint.parameters) {
-      const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint);
+      const enhancedEndpoint = await ApiSchemaEnhancementService.enhanceEndpoint(endpoint);
       const validationErrors: string[] = [];
       
       // Check required parameters

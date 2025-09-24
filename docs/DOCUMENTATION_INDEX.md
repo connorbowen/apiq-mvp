@@ -25,6 +25,9 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 
 ### System Architecture
 - **[Architecture Documentation](ARCHITECTURE.md)** - System design, component relationships, and technical architecture
+- **[Multi-Prompt Architecture](MULTI_PROMPT_ARCHITECTURE.md)** - Multi-prompt architecture implementation and benefits
+- **[Multi-Prompt Implementation Guide](MULTI_PROMPT_IMPLEMENTATION_GUIDE.md)** - Detailed guide for implementing and maintaining multi-prompt services
+- **[Multi-Prompt Changelog](MULTI_PROMPT_CHANGELOG.md)** - Complete changelog of multi-prompt architecture changes
 - **[Development Guide](DEVELOPMENT_GUIDE.md)** - Comprehensive development setup, coding standards, and best practices
 - **[Development Tools](DEVELOPMENT_TOOLS.md)** - Development scripts, testing tools, and workflow automation
 - **[API Reference](API_REFERENCE.md)** - Complete API endpoint documentation and specifications

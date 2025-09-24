@@ -238,20 +238,44 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
     if (guidanceResponse.shouldProvideGuidance) {
       console.log('→ Centralized guidance needed:', guidanceResponse.guidanceType);
       console.log('🔍 Process endpoint: Returning centralized guidance response');
-      return res.status(200).json({
+      
+      // Transform the API response to match frontend expectations
+      const requiredApis = guidanceResponse.details?.requiredApis || [];
+      const transformedMissingApis = requiredApis.map(api => ({
+        name: api.name?.toLowerCase() || 'unknown',
+        displayName: api.displayName || api.name || 'Unknown API',
+        description: (api as any).reason || `Connect to ${api.displayName || api.name} to enable this functionality`,
+        authType: api.authType || 'API_KEY',
+        setupInstructions: {
+          step1: `Get your ${api.displayName || api.name} API key`,
+          step2: `Navigate to your ${api.displayName || api.name} dashboard`,
+          step3: `Copy your API key and paste it below`,
+          additionalNotes: (api as any).reason || `This API is required for your workflow`
+        },
+        documentationUrl: `https://docs.${api.name?.toLowerCase() || 'api'}.com`,
+        baseUrl: api.baseUrl || `https://api.${api.name?.toLowerCase() || 'api'}.com`,
+        commonEndpoints: (api as any).suggestedEndpoints || [`/api/v1/endpoint`]
+      }));
+      
+      const responseData: ProcessMessageResponse = {
         success: true,
         data: {
-          type: 'connection_guidance',
+          type: 'connection_guidance' as const,
           content: guidanceResponse.message,
           connectionGuidance: {
             requiresGuidance: true,
-            missingApis: guidanceResponse.details?.requiredApis || [],
-            suggestedConnections: guidanceResponse.details?.requiredApis || [],
+            missingApis: transformedMissingApis,
+            suggestedConnections: transformedMissingApis,
             guidanceMessage: guidanceResponse.message,
-            setupInstructions: guidanceResponse.details?.requiredApis?.[0]?.setupInstructions || {}
+            setupInstructions: transformedMissingApis[0]?.setupInstructions || {}
           }
         }
-      });
+      };
+      
+      console.log('🔍 Process endpoint: Final response data being sent to frontend:', JSON.stringify(responseData, null, 2));
+      console.log('🔍 Process endpoint: transformedMissingApis:', JSON.stringify(transformedMissingApis, null, 2));
+      
+      return res.status(200).json(responseData);
     } else {
       console.log('🔍 Process endpoint: No guidance needed, proceeding with normal processing');
     }

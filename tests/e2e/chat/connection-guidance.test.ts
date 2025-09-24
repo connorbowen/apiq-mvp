@@ -81,6 +81,11 @@ test.describe('P1.4: API Connection Guidance in Chat E2E Tests', () => {
 
   test.describe('Contextual Guidance Detection', () => {
     test('should detect when workflow requires unconnected APIs', async ({ page }) => {
+      // Listen for ALL console logs from the browser
+      page.on('console', msg => {
+        console.log('🖥️ BROWSER CONSOLE:', msg.text());
+      });
+      
       await page.goto(`${BASE_URL}/dashboard?tab=chat`);
       await waitForDashboard(page);
 

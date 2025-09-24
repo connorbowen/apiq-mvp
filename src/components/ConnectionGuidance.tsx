@@ -44,9 +44,10 @@ interface ConnectionGuidanceProps {
     guidanceMessage: string;
     setupInstructions: Record<string, any>;
   };
+  onSetupClick?: (api: any) => void;
 }
 
-export default function ConnectionGuidance({ message, connectionGuidance }: ConnectionGuidanceProps) {
+export default function ConnectionGuidance({ message, connectionGuidance, onSetupClick }: ConnectionGuidanceProps) {
   console.log('🔍 ConnectionGuidance: Component rendered with:', {
     message,
     connectionGuidance,
@@ -54,6 +55,8 @@ export default function ConnectionGuidance({ message, connectionGuidance }: Conn
     missingApis: connectionGuidance?.missingApis?.length || 0,
     suggestedConnections: connectionGuidance?.suggestedConnections?.length || 0
   });
+  
+  console.log('🔍 ConnectionGuidance: Full connectionGuidance object:', JSON.stringify(connectionGuidance, null, 2));
   
   if (!connectionGuidance.requiresGuidance) {
     console.log('🔍 ConnectionGuidance: Not rendering - requiresGuidance is false');
@@ -165,6 +168,7 @@ export default function ConnectionGuidance({ message, connectionGuidance }: Conn
                   <button
                     key={`setup-${api.name}`}
                     data-testid={`setup-in-chat-${api.name.toLowerCase()}`}
+                    onClick={() => onSetupClick?.(api)}
                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     Set up {api.displayName} in chat

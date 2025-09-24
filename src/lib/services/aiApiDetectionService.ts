@@ -264,7 +264,8 @@ CRITICAL: Look for ALL APIs mentioned or implied in the request. If you see "Sla
       max_tokens: 1500
     });
 
-    let content = response.choices[0].message.content;
+    // chatCompletion returns a string when no functions are used
+    let content = typeof response === 'string' ? response : response.choices?.[0]?.message?.content;
     
     if (!content) {
       throw new Error('No content received from OpenAI');

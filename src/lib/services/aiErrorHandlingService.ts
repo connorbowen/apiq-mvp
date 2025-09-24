@@ -57,12 +57,11 @@ export class AIErrorHandlingService {
       const errorMessage = typeof error === 'string' ? error : error.message;
       const systemPrompt = this.buildErrorAnalysisPrompt();
       
-      const response = await (this.openaiService as any).client.chat.completions.create({
+      const response = await this.openaiService.chatCompletion([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: this.buildErrorContextPrompt(errorMessage, context) }
+      ], {
         model: (this.openaiService as any).model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: this.buildErrorContextPrompt(errorMessage, context) }
-        ],
         functions: [
           {
             name: 'analyze_error',
@@ -122,7 +121,8 @@ export class AIErrorHandlingService {
         max_tokens: 1000
       });
 
-      const functionCall = response.choices[0]?.message?.function_call;
+      // chatCompletion returns full response when functions are used
+      const functionCall = response.choices?.[0]?.message?.function_call;
       if (!functionCall || functionCall.name !== 'analyze_error') {
         throw new Error('Failed to analyze error: Invalid response from AI');
       }
@@ -157,12 +157,11 @@ export class AIErrorHandlingService {
     context: ErrorContext
   ): Promise<RecoveryAction[]> {
     try {
-      const response = await (this.openaiService as any).client.chat.completions.create({
+      const response = await this.openaiService.chatCompletion([
+        { role: 'system', content: this.buildRecoveryActionPrompt() },
+        { role: 'user', content: `Error Analysis: ${JSON.stringify(errorAnalysis, null, 2)}\nContext: ${JSON.stringify(context, null, 2)}` }
+      ], {
         model: (this.openaiService as any).model,
-        messages: [
-          { role: 'system', content: this.buildRecoveryActionPrompt() },
-          { role: 'user', content: `Error Analysis: ${JSON.stringify(errorAnalysis, null, 2)}\nContext: ${JSON.stringify(context, null, 2)}` }
-        ],
         functions: [
           {
             name: 'generate_recovery_actions',
@@ -202,7 +201,8 @@ export class AIErrorHandlingService {
         max_tokens: 800
       });
 
-      const functionCall = response.choices[0]?.message?.function_call;
+      // chatCompletion returns full response when functions are used
+      const functionCall = response.choices?.[0]?.message?.function_call;
       if (!functionCall || functionCall.name !== 'generate_recovery_actions') {
         throw new Error('Failed to generate recovery actions: Invalid response from AI');
       }

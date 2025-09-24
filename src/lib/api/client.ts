@@ -647,20 +647,36 @@ class ApiClient {
     connectionGuidance?: any;
     suggestedAction?: string;
   }>> {
-    console.log('🔍 API Client: processMessage called with:', message);
-    console.log('🔍 API Client: Context:', context);
-    console.log('🔍 API Client: Making request to /api/chat/process');
-    console.log('🔍 API Client: Base URL:', this.baseURL);
-    console.log('🔍 API Client: Full URL will be:', `${this.baseURL}/api/chat/process`);
-    
-    const result = await this.request({
-      method: 'POST',
-      url: '/api/chat/process',
-      data: { message, context },
-    });
-    console.log('🔍 API Client: processMessage response:', result);
-    console.log('🔍 API Client: Response data:', JSON.stringify(result.data, null, 2));
-    return result as any;
+    try {
+      const result = await this.request({
+        method: 'POST',
+        url: '/api/chat/process',
+        data: { message, context },
+      });
+      
+      // Validate response structure
+      if (!result || typeof result !== 'object') {
+        console.error('🔍 API Client: Invalid response structure:', result);
+        throw new Error('Invalid response structure from API');
+      }
+      
+      if (!result.success) {
+        console.error('🔍 API Client: API returned error:', result.error);
+        throw new Error(result.error || 'API request failed');
+      }
+      
+      if (!result.data) {
+        console.error('🔍 API Client: No data in response:', result);
+        throw new Error('No data in API response');
+      }
+      
+      console.log('🔍 API Client: Response validation passed, returning result');
+      return result as any;
+    } catch (error) {
+      console.error('🔍 API Client: Error in processMessage:', error);
+      console.error('🔍 API Client: Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      throw error;
+    }
   }
 
 

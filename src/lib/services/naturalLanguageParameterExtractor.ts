@@ -1,14 +1,14 @@
 /**
- * AI-Powered Parameter Extraction Service
+ * Natural Language Parameter Extractor
  * 
- * Uses AI to intelligently extract and map API parameters from natural language
+ * Uses AI to intelligently extract and map API parameter values from natural language
  * instead of relying on hard-coded pattern matching.
  */
 
 import { OpenAIService } from '../../services/openaiService';
-import { ParameterSchema } from './parameterExtractionService';
+import { ParameterSchema } from './apiSchemaEnhancementService';
 
-export interface AIParameterMapping {
+export interface ParameterValueMapping {
   parameterName: string;
   extractedValue: any;
   confidence: number;
@@ -16,14 +16,14 @@ export interface AIParameterMapping {
   alternatives?: string[];
 }
 
-export interface AIParameterExtractionResult {
+export interface ParameterValueExtractionResult {
   parameters: Record<string, any>;
-  mappings: AIParameterMapping[];
+  mappings: ParameterValueMapping[];
   confidence: number;
   suggestions?: string[];
 }
 
-export class AIParameterExtractionService {
+export class NaturalLanguageParameterExtractor {
   private openaiService: OpenAIService;
 
   constructor(openaiService: OpenAIService) {
@@ -31,9 +31,9 @@ export class AIParameterExtractionService {
   }
 
   /**
-   * Extract parameters from natural language using AI
+   * Extract parameter values from natural language using AI
    */
-  async extractParametersFromNaturalLanguage(
+  async extractParameterValues(
     message: string,
     endpoint: { 
       path: string; 
@@ -43,16 +43,31 @@ export class AIParameterExtractionService {
       description?: string;
     },
     context: Record<string, any> = {}
-  ): Promise<AIParameterExtractionResult> {
+  ): Promise<ParameterValueExtractionResult> {
+    console.log('🔍 NaturalLanguageParameterExtractor: Starting parameter value extraction:', {
+      message,
+      endpoint: endpoint.path,
+      method: endpoint.method,
+      parametersCount: endpoint.parameters?.length || 0,
+      parameters: endpoint.parameters
+    });
+
     try {
       const systemPrompt = this.buildParameterExtractionPrompt(endpoint, context);
       
-      const response = await (this.openaiService as any).client.chat.completions.create({
+      console.log('🔍 NaturalLanguageParameterExtractor: Calling AI with prompts:', {
+        systemPromptLength: systemPrompt.length,
+        userMessage: message
+      });
+      
+      // DEBUG: Log the actual prompt being sent to AI
+      console.log('🔍 NaturalLanguageParameterExtractor: FULL SYSTEM PROMPT:', systemPrompt);
+
+      const response = await this.openaiService.chatCompletion([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `User request: "${message}"` }
+      ], {
         model: (this.openaiService as any).model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `User request: "${message}"` }
-        ],
         functions: [
           {
             name: 'extract_parameters',
@@ -90,13 +105,33 @@ export class AIParameterExtractionService {
         max_tokens: 1000
       });
 
-      const functionCall = response.choices[0]?.message?.function_call;
+      console.log('🔍 NaturalLanguageParameterExtractor: AI response received:', {
+        hasChoices: !!response.choices,
+        choicesLength: response.choices?.length,
+        hasFunctionCall: !!response.choices?.[0]?.message?.function_call
+      });
+
+      // chatCompletion returns full response when functions are used
+      const functionCall = response.choices?.[0]?.message?.function_call;
       if (!functionCall || functionCall.name !== 'extract_parameters') {
+        console.error('🔍 NaturalLanguageParameterExtractor: Invalid function call response:', {
+          functionCall,
+          expectedName: 'extract_parameters'
+        });
         throw new Error('Failed to extract parameters: Invalid response from AI');
       }
 
       const result = JSON.parse(functionCall.arguments);
       
+      console.log('🔍 NaturalLanguageParameterExtractor: AI extraction successful:', {
+        parameters: result.parameters,
+        parametersCount: Object.keys(result.parameters || {}).length,
+        confidence: result.overallConfidence
+      });
+      
+      // DEBUG: Log the full AI response
+      console.log('🔍 NaturalLanguageParameterExtractor: FULL AI RESPONSE:', JSON.stringify(result, null, 2));
+
       return {
         parameters: result.parameters || {},
         mappings: result.mappings || [],
@@ -105,10 +140,17 @@ export class AIParameterExtractionService {
       };
 
     } catch (error) {
-      console.error('AI parameter extraction failed:', error);
+      console.error('🔍 NaturalLanguageParameterExtractor: AI extraction failed, using fallback:', error);
       
       // Fallback to basic pattern matching
-      return this.fallbackPatternExtraction(message, endpoint);
+      const fallbackResult = this.fallbackPatternExtraction(message, endpoint);
+      console.log('🔍 NaturalLanguageParameterExtractor: Fallback result:', {
+        parameters: fallbackResult.parameters,
+        parametersCount: Object.keys(fallbackResult.parameters || {}).length,
+        confidence: fallbackResult.confidence
+      });
+      
+      return fallbackResult;
     }
   }
 
@@ -121,17 +163,17 @@ export class AIParameterExtractionService {
     userContext: string = ''
   ): Promise<string[]> {
     try {
-      const response = await (this.openaiService as any).client.chat.completions.create({
+      const response = await this.openaiService.chatCompletion([
+        { role: 'system', content: this.buildMappingGenerationPrompt() },
+        { role: 'user', content: `Parameter: ${JSON.stringify(parameter)}\nEndpoint: ${endpointContext}\nUser context: "${userContext}"` }
+      ], {
         model: (this.openaiService as any).model,
-        messages: [
-          { role: 'system', content: this.buildMappingGenerationPrompt() },
-          { role: 'user', content: `Parameter: ${JSON.stringify(parameter)}\nEndpoint: ${endpointContext}\nUser context: "${userContext}"` }
-        ],
         temperature: 0.3,
         max_tokens: 300
       });
 
-      const result = response.choices[0]?.message?.content;
+      // chatCompletion returns a string when no functions are used
+      const result = typeof response === 'string' ? response : response.choices?.[0]?.message?.content;
       if (!result) {
         throw new Error('No response from AI');
       }
@@ -161,8 +203,11 @@ export class AIParameterExtractionService {
       const examples = param.examples?.length ? ` (examples: ${param.examples.join(', ')})` : '';
       const required = param.required ? ' (REQUIRED)' : ' (optional)';
       const validation = param.validation ? ` (validation: ${JSON.stringify(param.validation)})` : '';
-      const enumValues = param.validation?.enum ? ` (valid values: ${param.validation.enum.join(', ')})` : '';
-      const defaultValue = param.defaultValue ? ` (default: ${param.defaultValue})` : '';
+      // Handle both interface structure (validation.enum) and test data structure (schema.enum)
+      const enumValues = (param.validation?.enum || (param as any).schema?.enum) ? 
+        ` (valid values: ${(param.validation?.enum || (param as any).schema?.enum).join(', ')})` : '';
+      const defaultValue = (param.defaultValue || (param as any).schema?.default) ? 
+        ` (default: ${param.defaultValue || (param as any).schema?.default})` : '';
       
       return `- ${param.name}${required}: ${param.description || 'No description'} 
         Natural language: ${mappings}${examples}${validation}${enumValues}${defaultValue}`;
@@ -206,10 +251,18 @@ EXAMPLES:
 - "Show me recent orders" → {"status": "recent", "limit": 10}
 - "Create a new project called 'Website Redesign'" → {"name": "Website Redesign"}
 - "Get all available pets" → {"status": "available"} (if status parameter exists)
+- "Get all available pets from the petstore" → {"status": "available"} (extract "available" from the message)
 - "Find pets by status" → {"status": "available"} (using default if available)
 - "Now get all sold pets to see the difference" → {"status": "sold"} (after getting available pets)
 
-IMPORTANT: Always extract at least one parameter if the endpoint has parameters. Use default values when appropriate. Be generous with confidence scores for obvious matches. Consider the conversation context to understand what the user is asking for.`;
+CRITICAL: 
+- If the user mentions "available pets" or "available" in their message, extract {"status": "available"}
+- If the user mentions "sold pets" or "sold", extract {"status": "sold"}  
+- If the user mentions "pending pets" or "pending", extract {"status": "pending"}
+- ALWAYS extract at least one parameter if the endpoint has parameters
+- Use default values when appropriate
+- Be generous with confidence scores for obvious matches
+- Consider the conversation context to understand what the user is asking for`;
   }
 
   /**
@@ -244,9 +297,15 @@ Be comprehensive but relevant to the parameter's purpose.`;
   private fallbackPatternExtraction(
     message: string,
     endpoint: any
-  ): AIParameterExtractionResult {
+  ): ParameterValueExtractionResult {
+    console.log('🔍 NaturalLanguageParameterExtractor: Starting fallback pattern extraction:', {
+      message,
+      endpoint: endpoint.path,
+      parametersCount: endpoint.parameters?.length || 0
+    });
+
     const parameters: Record<string, any> = {};
-    const mappings: AIParameterMapping[] = [];
+    const mappings: ParameterValueMapping[] = [];
 
     for (const param of endpoint.parameters) {
       const paramMappings = param.naturalLanguageMappings || [param.name];
@@ -287,8 +346,9 @@ Be comprehensive but relevant to the parameter's purpose.`;
         }
 
         // Pattern 4: Direct value matching for enum values
-        if (param.validation?.enum) {
-          for (const enumValue of param.validation.enum) {
+        const enumValues = param.validation?.enum || (param as any).schema?.enum;
+        if (enumValues) {
+          for (const enumValue of enumValues) {
             const pattern4 = new RegExp(`\\b${enumValue}\\b`, 'i');
             if (pattern4.test(message)) {
               extractedValue = enumValue;
@@ -302,10 +362,15 @@ Be comprehensive but relevant to the parameter's purpose.`;
       }
 
       // If still no value found, try default values
-      if (!extractedValue && param.defaultValue) {
-        extractedValue = param.defaultValue;
+      const defaultValue = param.defaultValue || (param as any).schema?.default;
+      if (!extractedValue && defaultValue) {
+        extractedValue = defaultValue;
         confidence = 0.5;
-        reasoning = `Using default value: "${param.defaultValue}"`;
+        reasoning = `Using default value: "${defaultValue}"`;
+        console.log('🔍 NaturalLanguageParameterExtractor: Using default value for param:', {
+          parameterName: param.name,
+          defaultValue: defaultValue
+        });
       }
 
       if (extractedValue) {
@@ -315,6 +380,18 @@ Be comprehensive but relevant to the parameter's purpose.`;
           extractedValue,
           confidence,
           reasoning
+        });
+        console.log('🔍 NaturalLanguageParameterExtractor: Found parameter value:', {
+          parameterName: param.name,
+          extractedValue,
+          confidence,
+          reasoning
+        });
+      } else {
+        console.log('🔍 NaturalLanguageParameterExtractor: No value found for param:', {
+          parameterName: param.name,
+          mappings: paramMappings,
+          required: param.required
         });
       }
     }

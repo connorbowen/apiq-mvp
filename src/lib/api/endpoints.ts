@@ -2,7 +2,7 @@ import { prisma } from '../../../lib/database/client';
 import { logError, logInfo } from '../../utils/logger';
 import { ParsedOpenApiSpec } from './parser';
 import { SchemaDerefCache } from '../openapi/derefSchema';
-import { ParameterExtractionService } from '../services/parameterExtractionService';
+import { ApiSchemaEnhancementService } from '../services/apiSchemaEnhancementService';
 
 export interface ExtractedEndpoint {
   apiConnectionId: string;

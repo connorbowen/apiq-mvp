@@ -14,6 +14,7 @@
 
 import { AIApiDetectionService, ApiDetectionResult } from './aiApiDetectionService';
 import { OpenAIService } from '../../services/openaiService';
+import { EnhancedConnectionGuidanceOrchestrator } from './enhancedConnectionGuidanceOrchestrator';
 
 export interface ConnectionGuidanceResponse {
   shouldProvideGuidance: boolean;
@@ -55,24 +56,59 @@ export interface MessageContext {
 export class ConnectionGuidanceOrchestrator {
   private aiDetectionService: AIApiDetectionService;
   private openaiService: OpenAIService;
+  private enhancedOrchestrator: EnhancedConnectionGuidanceOrchestrator;
 
   constructor() {
     // Create OpenAIService instance with API key
     this.openaiService = new (OpenAIService as any)(process.env.OPENAI_API_KEY!, 'gpt-4o-mini');
     this.aiDetectionService = new AIApiDetectionService(this.openaiService);
+    this.enhancedOrchestrator = new EnhancedConnectionGuidanceOrchestrator(this.openaiService);
   }
 
   /**
-   * Main entry point for all connection guidance decisions
+   * Main entry point for all connection guidance decisions using multi-prompt architecture
    * This method is called by ALL message processing entry points
    */
   async processMessage(context: MessageContext): Promise<ConnectionGuidanceResponse> {
-    console.log('🔍 ConnectionGuidanceOrchestrator - Processing message:', {
+    console.log('🔍 ConnectionGuidanceOrchestrator - Processing message with multi-prompt architecture:', {
       message: context.message,
       availableConnections: context.availableConnections.length,
       userId: context.userId
     });
 
+    try {
+      console.log('🔍 ConnectionGuidanceOrchestrator - About to call enhancedOrchestrator.processMessage');
+      
+      // Use the enhanced orchestrator for multi-prompt processing
+      const result = await this.enhancedOrchestrator.processMessage({
+        message: context.message,
+        availableConnections: context.availableConnections,
+        userId: context.userId,
+        context: context.context
+      });
+
+      console.log('✅ ConnectionGuidanceOrchestrator - Multi-prompt guidance completed:', {
+        shouldProvideGuidance: result.shouldProvideGuidance,
+        guidanceType: result.guidanceType,
+        message: result.message
+      });
+
+      return result;
+
+    } catch (error) {
+      console.error('❌ ConnectionGuidanceOrchestrator - Error in multi-prompt processing:', error);
+      console.error('❌ ConnectionGuidanceOrchestrator - Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
+      // Fallback to legacy approach
+      console.log('🔄 ConnectionGuidanceOrchestrator - Falling back to legacy guidance');
+      return await this.generateLegacyGuidance(context);
+    }
+  }
+
+  /**
+   * Legacy guidance fallback method
+   */
+  private async generateLegacyGuidance(context: MessageContext): Promise<ConnectionGuidanceResponse> {
     try {
       // Step 1: Check if we have any connections at all
       if (!context.availableConnections || context.availableConnections.length === 0) {
@@ -102,9 +138,9 @@ export class ConnectionGuidanceOrchestrator {
       return this.generateSpecificGuidance(aiAnalysis, context.message);
 
     } catch (error) {
-      console.error('🔍 ConnectionGuidanceOrchestrator - Error processing message:', error);
+      console.error('🔍 ConnectionGuidanceOrchestrator - Error in legacy guidance:', error);
       
-      // Fallback to general guidance
+      // Final fallback to general guidance
       return await this.generateGeneralGuidance(context.message);
     }
   }

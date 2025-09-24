@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { apiClient } from '../lib/api/client';
-import { ParameterExtractionService } from '../lib/services/parameterExtractionService';
+import { ApiSchemaEnhancementService } from '../lib/services/apiSchemaEnhancementService';
 import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFormatter';
 
 interface Endpoint {
@@ -54,7 +54,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
     const initializeEnhanced = async () => {
       if (endpoint.parameters && endpoint.parameters.length > 0) {
         try {
-          const enhancedEndpoint = await ParameterExtractionService.enhanceEndpoint(endpoint);
+          const enhancedEndpoint = await ApiSchemaEnhancementService.enhanceEndpoint(endpoint);
           setEnhancedParameters(enhancedEndpoint.parameters);
         } catch (error) {
           console.error('Failed to initialize enhanced parameters:', error);
