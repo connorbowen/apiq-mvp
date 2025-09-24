@@ -241,7 +241,10 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
       
       // Transform the API response to match frontend expectations
       const requiredApis = guidanceResponse.details?.requiredApis || [];
-      const transformedMissingApis = requiredApis.map(api => ({
+      console.log('🔍 Process endpoint: requiredApis from guidance:', JSON.stringify(requiredApis, null, 2));
+      
+      // If no APIs detected by the guidance system, try to detect them from the message
+      let transformedMissingApis = requiredApis.map(api => ({
         name: api.name?.toLowerCase() || 'unknown',
         displayName: api.displayName || api.name || 'Unknown API',
         description: (api as any).reason || `Connect to ${api.displayName || api.name} to enable this functionality`,
@@ -256,6 +259,43 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
         baseUrl: api.baseUrl || `https://api.${api.name?.toLowerCase() || 'api'}.com`,
         commonEndpoints: (api as any).suggestedEndpoints || [`/api/v1/endpoint`]
       }));
+      
+      // Fallback: If no APIs were detected by the guidance system, try to detect them from the message
+      if (transformedMissingApis.length === 0) {
+        console.log('🔍 Process endpoint: No APIs detected by guidance system, trying fallback detection');
+        const messageText = req.body.message.toLowerCase();
+        
+        // Simple API detection patterns
+        const apiPatterns = [
+          { name: 'slack', displayName: 'Slack', keywords: ['slack', 'message', 'notification', 'team', 'chat'] },
+          { name: 'github', displayName: 'GitHub', keywords: ['github', 'repository', 'issue', 'pull request', 'commit'] },
+          { name: 'google-drive', displayName: 'Google Drive', keywords: ['google drive', 'drive', 'file', 'document', 'sync'] },
+          { name: 'stripe', displayName: 'Stripe', keywords: ['stripe', 'payment', 'billing', 'subscription'] },
+          { name: 'openai', displayName: 'OpenAI', keywords: ['openai', 'gpt', 'ai', 'chatgpt'] },
+          { name: 'airtable', displayName: 'Airtable', keywords: ['airtable', 'database', 'table', 'record'] },
+          { name: 'notion', displayName: 'Notion', keywords: ['notion', 'page', 'database', 'block'] }
+        ];
+        
+        for (const pattern of apiPatterns) {
+          if (pattern.keywords.some(keyword => messageText.includes(keyword))) {
+            transformedMissingApis.push({
+              name: pattern.name,
+              displayName: pattern.displayName,
+              description: `Connect to ${pattern.displayName} to enable this functionality`,
+              authType: pattern.name === 'slack' || pattern.name === 'github' || pattern.name === 'notion' ? 'BEARER_TOKEN' : 'API_KEY',
+              setupInstructions: {
+                step1: `Get your ${pattern.displayName} API key`,
+                step2: `Navigate to your ${pattern.displayName} dashboard`,
+                step3: `Copy your API key and paste it below`,
+                additionalNotes: `This API is required for your workflow`
+              },
+              documentationUrl: `https://docs.${pattern.name}.com`,
+              baseUrl: `https://api.${pattern.name}.com`,
+              commonEndpoints: [`/api/v1/endpoint`]
+            });
+          }
+        }
+      }
       
       const responseData: ProcessMessageResponse = {
         success: true,

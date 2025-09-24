@@ -135,8 +135,9 @@ export default function ConnectionGuidance({ message, connectionGuidance, onSetu
           {(missingApis.length > 0 || suggestedConnections.length > 0) && (
             <div data-testid="connection-instructions" className="space-y-1">
               <p className="text-sm font-medium text-blue-900 mb-2">Setup Instructions:</p>
+              {/* Use missingApis if available, otherwise use suggestedConnections */}
               {(missingApis.length > 0 ? missingApis : suggestedConnections).map((api, apiIndex) => (
-                <div key={api.name} className="mb-4">
+                <div key={`${api.name}-${apiIndex}`} className="mb-4">
                   <h4 className="text-sm font-medium text-blue-800 mb-2">{api.displayName}</h4>
                   <div className="space-y-1">
                     <div data-testid="instruction-step-1" className="text-xs text-blue-700">

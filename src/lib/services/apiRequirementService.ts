@@ -191,69 +191,111 @@ export class ApiRequirementService {
     const message = request.userMessage.toLowerCase();
     const requiredApis: ApiRequirement[] = [];
     
-    // First, check if the user's request can be fulfilled by existing connections
-    const existingConnectionMatch = this.findMatchingExistingConnection(message, request.availableConnections);
-    if (existingConnectionMatch) {
-      logInfo('🔍 ApiRequirementService: Found matching existing connection', {
-        connectionName: existingConnectionMatch.name,
-        connectionId: existingConnectionMatch.id,
-        userMessage: request.userMessage
-      });
-      
-      // User has a connection that can fulfill their request
-      return {
-        success: true,
-        requirements: {
-          requiresGuidance: false,
-          requiredApis: [{
-            name: existingConnectionMatch.name.toLowerCase(),
-            displayName: existingConnectionMatch.name,
-            confidence: 0.9,
-            reason: `User has an existing ${existingConnectionMatch.name} connection that can fulfill their request`,
-            suggestedEndpoints: existingConnectionMatch.endpoints?.map(ep => `${ep.method} ${ep.path}`) || [],
-            isAvailable: true,
-            connectionId: existingConnectionMatch.id
-          }],
-          missingApis: [],
-          availableApis: [{
-            name: existingConnectionMatch.name.toLowerCase(),
-            displayName: existingConnectionMatch.name,
-            confidence: 0.9,
-            reason: `User has an existing ${existingConnectionMatch.name} connection that can fulfill their request`,
-            suggestedEndpoints: existingConnectionMatch.endpoints?.map(ep => `${ep.method} ${ep.path}`) || [],
-            isAvailable: true,
-            connectionId: existingConnectionMatch.id
-          }],
-          userIntent: request.userIntent.userGoal,
-          suggestedWorkflow: `Use existing ${existingConnectionMatch.name} connection`
-        }
-      };
-    }
+    logInfo('🔍 ApiRequirementService: Starting rules-based analysis', {
+      message: message,
+      availableConnections: request.availableConnections.length
+    });
     
-    // If no existing connection matches, analyze message for API keywords
-    const apiKeywords = Object.keys(ApiRequirementService.API_KNOWLEDGE_BASE);
-    
-    for (const apiName of apiKeywords) {
-      const apiInfo = ApiRequirementService.API_KNOWLEDGE_BASE[apiName as keyof typeof ApiRequirementService.API_KNOWLEDGE_BASE];
-      const keywords = apiInfo.keywords;
+    // Enhanced API detection patterns
+    const apiDetectionPatterns = [
+      {
+        name: 'slack',
+        displayName: 'Slack',
+        keywords: ['slack', 'message', 'notification', 'team', 'chat', 'channel'],
+        capabilities: ['messaging', 'notifications', 'team_communication'],
+        authType: 'BEARER_TOKEN',
+        baseUrl: 'https://slack.com/api',
+        commonEndpoints: ['/chat.postMessage', '/conversations.list', '/users.list']
+      },
+      {
+        name: 'github',
+        displayName: 'GitHub',
+        keywords: ['github', 'repository', 'issue', 'pull request', 'commit', 'repo'],
+        capabilities: ['repository_management', 'issue_tracking', 'pull_requests'],
+        authType: 'BEARER_TOKEN',
+        baseUrl: 'https://api.github.com',
+        commonEndpoints: ['/repos/{owner}/{repo}/issues', '/repos/{owner}/{repo}/pulls', '/user']
+      },
+      {
+        name: 'google-drive',
+        displayName: 'Google Drive',
+        keywords: ['google drive', 'drive', 'file', 'document', 'sync', 'upload', 'download'],
+        capabilities: ['file_management', 'document_storage', 'file_sharing'],
+        authType: 'OAUTH2',
+        baseUrl: 'https://www.googleapis.com/drive/v3',
+        commonEndpoints: ['/files', '/files/{fileId}', '/about']
+      },
+      {
+        name: 'stripe',
+        displayName: 'Stripe',
+        keywords: ['stripe', 'payment', 'billing', 'subscription', 'invoice'],
+        capabilities: ['payment_processing', 'billing', 'subscription_management'],
+        authType: 'API_KEY',
+        baseUrl: 'https://api.stripe.com/v1',
+        commonEndpoints: ['/charges', '/customers', '/subscriptions', '/products']
+      },
+      {
+        name: 'openai',
+        displayName: 'OpenAI',
+        keywords: ['openai', 'gpt', 'ai', 'chatgpt', 'completion', 'language model'],
+        capabilities: ['ai_processing', 'language_generation', 'text_completion'],
+        authType: 'API_KEY',
+        baseUrl: 'https://api.openai.com/v1',
+        commonEndpoints: ['/chat/completions', '/completions', '/embeddings']
+      },
+      {
+        name: 'airtable',
+        displayName: 'Airtable',
+        keywords: ['airtable', 'database', 'table', 'record', 'base'],
+        capabilities: ['database_management', 'record_tracking', 'data_storage'],
+        authType: 'API_KEY',
+        baseUrl: 'https://api.airtable.com/v0',
+        commonEndpoints: ['/{baseId}/{tableName}', '/{baseId}/{tableName}/{recordId}']
+      },
+      {
+        name: 'notion',
+        displayName: 'Notion',
+        keywords: ['notion', 'page', 'database', 'block', 'workspace'],
+        capabilities: ['document_management', 'database_management', 'collaboration'],
+        authType: 'BEARER_TOKEN',
+        baseUrl: 'https://api.notion.com/v1',
+        commonEndpoints: ['/pages', '/databases', '/blocks']
+      }
+    ];
+
+    // Check each API pattern
+    for (const apiPattern of apiDetectionPatterns) {
+      const isMentioned = apiPattern.keywords.some(keyword => message.includes(keyword));
       
-      if (keywords.some(keyword => message.includes(keyword))) {
-        const isAvailable = request.availableConnections.some(conn => 
-          conn.name.toLowerCase().includes(apiName) || 
-          apiName.includes(conn.name.toLowerCase())
-        );
+      if (isMentioned) {
+        logInfo('🔍 ApiRequirementService: Detected API mention', {
+          api: apiPattern.name,
+          keywords: apiPattern.keywords.filter(k => message.includes(k))
+        });
         
-        const connection = request.availableConnections.find(conn => 
-          conn.name.toLowerCase().includes(apiName) || 
-          apiName.includes(conn.name.toLowerCase())
-        );
+        // Check if user has this API connected
+        const isAvailable = request.availableConnections.some(conn => {
+          const connName = conn.name.toLowerCase();
+          return connName.includes(apiPattern.name) || 
+                 apiPattern.name.includes(connName) ||
+                 (apiPattern.name === 'google-drive' && connName.includes('google')) ||
+                 (apiPattern.name === 'openai' && connName.includes('openai'));
+        });
+        
+        const connection = request.availableConnections.find(conn => {
+          const connName = conn.name.toLowerCase();
+          return connName.includes(apiPattern.name) || 
+                 apiPattern.name.includes(connName) ||
+                 (apiPattern.name === 'google-drive' && connName.includes('google')) ||
+                 (apiPattern.name === 'openai' && connName.includes('openai'));
+        });
         
         requiredApis.push({
-          name: apiName,
-          displayName: apiInfo.displayName,
-          confidence: 0.8,
-          reason: `User mentioned ${apiName} in their request`,
-          suggestedEndpoints: apiInfo.commonEndpoints,
+          name: apiPattern.name,
+          displayName: apiPattern.displayName,
+          confidence: 0.9,
+          reason: `User mentioned ${apiPattern.displayName} in their request`,
+          suggestedEndpoints: apiPattern.commonEndpoints,
           isAvailable,
           connectionId: connection?.id
         });
@@ -263,6 +305,13 @@ export class ApiRequirementService {
     // Separate available and missing APIs
     const availableApis = requiredApis.filter(api => api.isAvailable);
     const missingApis = requiredApis.filter(api => !api.isAvailable);
+
+    logInfo('🔍 ApiRequirementService: Rules-based analysis complete', {
+      totalApis: requiredApis.length,
+      availableApis: availableApis.length,
+      missingApis: missingApis.length,
+      requiresGuidance: missingApis.length > 0
+    });
 
     return {
       success: true,
