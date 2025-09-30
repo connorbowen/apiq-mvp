@@ -441,7 +441,21 @@ Please execute the appropriate API call and return the result.`;
         requestOptions.function_call = options.function_call || 'auto';
       }
 
+      console.log('🔍 OpenAIService: Making chat completion request:', {
+        model: requestOptions.model,
+        messageCount: messages.length,
+        hasFunctions: !!options?.functions,
+        temperature: requestOptions.temperature,
+        maxTokens: requestOptions.max_tokens
+      });
+
       const response = await this.client.chat.completions.create(requestOptions);
+
+      console.log('🔍 OpenAIService: Chat completion response received:', {
+        hasChoices: !!response.choices,
+        choicesLength: response.choices?.length || 0,
+        hasUsage: !!response.usage
+      });
 
       // If function calling is used, return the full response
       if (options?.functions) {
@@ -451,6 +465,14 @@ Please execute the appropriate API call and return the result.`;
       // Otherwise, return just the content
       return response.choices[0].message.content || '';
     } catch (error) {
+      console.error('🔍 OpenAIService: Chat completion error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        name: error instanceof Error ? error.name : 'Unknown',
+        code: (error as any)?.code,
+        status: (error as any)?.status,
+        response: (error as any)?.response,
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
       logError('OpenAIService: Chat completion failed', error as Error);
       throw error;
     }

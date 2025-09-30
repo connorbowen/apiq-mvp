@@ -32,14 +32,20 @@ export class AICacheService {
    */
   private generateWorkflowCacheKey(
     userDescription: string,
-    connections: Array<{ id: string; name: string; endpoints: any[] }>
+    connections: Array<{ id: string; name: string; endpoints: any[] }>,
+    context?: any[]
   ): string {
     const connectionHash = connections
       .map(conn => `${conn.id}-${conn.endpoints.length}`)
       .sort()
       .join('|');
     
-    return `workflow:${this.hashString(userDescription)}:${this.hashString(connectionHash)}`;
+    // Include conversation context in cache key to avoid stale results
+    const contextHash = context && context.length > 0 
+      ? this.hashString(JSON.stringify(context.map(msg => ({ type: msg.type, content: msg.content }))))
+      : 'no-context';
+    
+    return `workflow:${this.hashString(userDescription)}:${this.hashString(connectionHash)}:${contextHash}`;
   }
 
   /**
@@ -54,14 +60,20 @@ export class AICacheService {
    */
   private generateConnectionAnalysisCacheKey(
     message: string,
-    connections: Array<{ id: string; name: string }>
+    connections: Array<{ id: string; name: string }>,
+    context?: any[]
   ): string {
     const connectionHash = connections
       .map(conn => conn.id)
       .sort()
       .join('|');
     
-    return `connection_analysis:${this.hashString(message)}:${this.hashString(connectionHash)}`;
+    // Include conversation context in cache key to avoid stale results
+    const contextHash = context && context.length > 0 
+      ? this.hashString(JSON.stringify(context.map(msg => ({ type: msg.type, content: msg.content }))))
+      : 'no-context';
+    
+    return `connection_analysis:${this.hashString(message)}:${this.hashString(connectionHash)}:${contextHash}`;
   }
 
   /**
@@ -69,9 +81,10 @@ export class AICacheService {
    */
   getWorkflowResult(
     userDescription: string,
-    connections: Array<{ id: string; name: string; endpoints: any[] }>
+    connections: Array<{ id: string; name: string; endpoints: any[] }>,
+    context?: any[]
   ): any | null {
-    const key = this.generateWorkflowCacheKey(userDescription, connections);
+    const key = this.generateWorkflowCacheKey(userDescription, connections, context);
     return this.get(key);
   }
 
@@ -82,9 +95,10 @@ export class AICacheService {
     userDescription: string,
     connections: Array<{ id: string; name: string; endpoints: any[] }>,
     result: any,
-    ttl?: number
+    ttl?: number,
+    context?: any[]
   ): void {
-    const key = this.generateWorkflowCacheKey(userDescription, connections);
+    const key = this.generateWorkflowCacheKey(userDescription, connections, context);
     this.set(key, result, ttl);
   }
 
@@ -109,9 +123,10 @@ export class AICacheService {
    */
   getConnectionAnalysisResult(
     message: string,
-    connections: Array<{ id: string; name: string }>
+    connections: Array<{ id: string; name: string }>,
+    context?: any[]
   ): any | null {
-    const key = this.generateConnectionAnalysisCacheKey(message, connections);
+    const key = this.generateConnectionAnalysisCacheKey(message, connections, context);
     return this.get(key);
   }
 
@@ -122,9 +137,10 @@ export class AICacheService {
     message: string,
     connections: Array<{ id: string; name: string }>,
     result: any,
-    ttl?: number
+    ttl?: number,
+    context?: any[]
   ): void {
-    const key = this.generateConnectionAnalysisCacheKey(message, connections);
+    const key = this.generateConnectionAnalysisCacheKey(message, connections, context);
     this.set(key, result, ttl);
   }
 

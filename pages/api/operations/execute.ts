@@ -138,10 +138,24 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       }
     }
 
+    // For single API operations, create a temporary ApiOperation record
+    // This is needed because operation_executions has a foreign key constraint to api_operations
+    console.log('Creating temporary ApiOperation with endpointId:', endpointId);
+    const tempOperation = await prisma.apiOperation.create({
+      data: {
+        userId: user.id,
+        endpointId: endpointId,
+        name: `Single API Call - ${endpoint.method} ${endpoint.path}`,
+        description: `Temporary operation for single API call testing`,
+        parameters: parameters || {}
+      }
+    });
+    console.log('Created temporary ApiOperation with id:', tempOperation.id);
+
     // Create operation execution record
     const execution = await prisma.operationExecution.create({
       data: {
-        operationId: endpointId, // Using endpointId as operationId for now
+        operationId: tempOperation.id,
         userId: user.id,
         status: 'PENDING',
         requestData: {
@@ -213,8 +227,11 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
       }
 
       // Execute the API call
+      console.log('Making API call to:', urlObj.toString());
+      console.log('Request options:', requestOptions);
       const response = await fetch(urlObj.toString(), requestOptions);
       const executionTime = Date.now() - startTime;
+      console.log('API call completed with status:', response.status);
 
       // Get response data
       let responseData: any = null;

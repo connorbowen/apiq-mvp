@@ -1,3 +1,4 @@
+
 /**
  * Natural Language Parameter Extractor
  * 
@@ -62,10 +63,17 @@ export class NaturalLanguageParameterExtractor {
       
       // DEBUG: Log the actual prompt being sent to AI
       console.log('🔍 NaturalLanguageParameterExtractor: FULL SYSTEM PROMPT:', systemPrompt);
+      
+      // Construct user message - keep it simple and focused on the current request
+      const userMessage = `Extract parameters from this request: "${message}"`;
+      
+      console.log('🔍 NaturalLanguageParameterExtractor: USER MESSAGE:', userMessage);
+      console.log('🔍 NaturalLanguageParameterExtractor: Current message to extract from:', message);
+      console.log('🔍 NaturalLanguageParameterExtractor: CONTEXT BEING PASSED:', JSON.stringify(context, null, 2));
 
       const response = await this.openaiService.chatCompletion([
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `User request: "${message}"` }
+        { role: 'user', content: userMessage }
       ], {
         model: (this.openaiService as any).model,
         functions: [
@@ -123,17 +131,34 @@ export class NaturalLanguageParameterExtractor {
 
       const result = JSON.parse(functionCall.arguments);
       
+      // Convert mappings to parameters object
+      const parameters: Record<string, any> = {};
+      if (result.mappings && Array.isArray(result.mappings)) {
+        for (const mapping of result.mappings) {
+          if (mapping.parameterName && mapping.extractedValue !== undefined) {
+            parameters[mapping.parameterName] = mapping.extractedValue;
+          }
+        }
+      }
+      
+      // Also include any direct parameters if provided
+      if (result.parameters && typeof result.parameters === 'object') {
+        Object.assign(parameters, result.parameters);
+      }
+
       console.log('🔍 NaturalLanguageParameterExtractor: AI extraction successful:', {
-        parameters: result.parameters,
-        parametersCount: Object.keys(result.parameters || {}).length,
+        parameters: parameters,
+        parametersCount: Object.keys(parameters).length,
         confidence: result.overallConfidence
       });
       
       // DEBUG: Log the full AI response
       console.log('🔍 NaturalLanguageParameterExtractor: FULL AI RESPONSE:', JSON.stringify(result, null, 2));
+      console.log('🔍 NaturalLanguageParameterExtractor: EXTRACTED PARAMETERS:', parameters);
+      console.log('🔍 NaturalLanguageParameterExtractor: MAPPINGS:', result.mappings);
 
       return {
-        parameters: result.parameters || {},
+        parameters: parameters,
         mappings: result.mappings || [],
         confidence: result.overallConfidence || 0.5,
         suggestions: result.suggestions || []
@@ -213,14 +238,8 @@ export class NaturalLanguageParameterExtractor {
         Natural language: ${mappings}${examples}${validation}${enumValues}${defaultValue}`;
     }).join('\n');
 
-    // Build context summary for better understanding
-    const contextSummary = context.conversationHistory ? 
-      context.conversationHistory.map((ctx: any) => {
-        if (ctx.type === 'assistant' && ctx.apiCallResult) {
-          return `Previous API call: ${ctx.apiCallResult.method} ${ctx.apiCallResult.url} returned ${ctx.apiCallResult.statusCode}`;
-        }
-        return `${ctx.type}: ${ctx.content}`;
-      }).join('\n') : 'No previous context';
+    // Build conversation context summary
+    const contextSummary = this.buildContextSummary(context);
 
     return `You are an AI assistant that extracts parameters from natural language for API calls.
 
@@ -230,39 +249,84 @@ Description: ${endpoint.description || endpoint.summary || 'No description'}
 Available Parameters:
 ${parameterDescriptions}
 
-Conversation Context:
 ${contextSummary}
 
 EXTRACTION RULES:
-1. Extract parameter values from the user's natural language message
+1. CRITICAL: Extract parameter values ONLY from the CURRENT user's message, NOT from previous context
 2. Map natural language terms to the correct parameter names using the provided mappings
 3. Use examples, descriptions, and enum values to understand expected values
-4. Consider context and previous conversation - if user asks for "sold pets" after getting "available pets", use status=sold
+4. Consider the conversation context to understand what the user is asking for NOW
 5. Provide confidence scores for each extraction
 6. Suggest alternatives when uncertain
 7. Handle implicit values (e.g., "current user" → user ID from context)
 8. Use default values when no explicit value is provided
 9. Be flexible with synonyms and variations
 
-EXAMPLES:
+EXAMPLES WITH CONTEXT:
+- Previous: "Get available pets", Current: "Now get pending pets" → {"status": "pending"} (extract "pending" from current message)
+- Previous: "Get available pets", Current: "Now get sold pets" → {"status": "sold"} (extract "sold" from current message)
+- Previous: "Find user 123", Current: "Now find user 456" → {"id": "456"} (extract "456" from current message)
+- "Now get pending pets" → {"status": "pending"} (extract "pending" from the message)
+- "Now get available pets" → {"status": "available"} (extract "available" from the message)
+- "Now get sold pets" → {"status": "sold"} (extract "sold" from the message)
 - "Find pets with status available" → {"status": "available"}
 - "Get user by ID 123" → {"id": "123"}
 - "Search for John's email" → {"email": "john@example.com"}
 - "Show me recent orders" → {"status": "recent", "limit": 10}
 - "Create a new project called 'Website Redesign'" → {"name": "Website Redesign"}
-- "Get all available pets" → {"status": "available"} (if status parameter exists)
-- "Get all available pets from the petstore" → {"status": "available"} (extract "available" from the message)
-- "Find pets by status" → {"status": "available"} (using default if available)
-- "Now get all sold pets to see the difference" → {"status": "sold"} (after getting available pets)
 
 CRITICAL: 
-- If the user mentions "available pets" or "available" in their message, extract {"status": "available"}
-- If the user mentions "sold pets" or "sold", extract {"status": "sold"}  
-- If the user mentions "pending pets" or "pending", extract {"status": "pending"}
-- ALWAYS extract at least one parameter if the endpoint has parameters
-- Use default values when appropriate
-- Be generous with confidence scores for obvious matches
-- Consider the conversation context to understand what the user is asking for`;
+- If the CURRENT message mentions "available pets" or "available", extract {"status": "available"}
+- If the CURRENT message mentions "sold pets" or "sold", extract {"status": "sold"}  
+- If the CURRENT message mentions "pending pets" or "pending", extract {"status": "pending"}
+- If the CURRENT message says "Now get [status] pets", extract {"status": "[status]"} where [status] is the actual status word
+- ALWAYS extract parameters from the CURRENT message, NOT from previous context
+- Use default values ONLY when no explicit value is provided in the CURRENT message
+- Consider the conversation context ONLY to understand intent, but extract values from the CURRENT message
+- Pay special attention to status words like "available", "pending", "sold" in the current message`;
+  }
+
+  /**
+   * Build conversation context summary for parameter extraction
+   */
+  private buildContextSummary(context: Record<string, any>): string {
+    if (!context || Object.keys(context).length === 0) {
+      return '';
+    }
+
+    const contextParts: string[] = [];
+    
+    // Add recent conversation context
+    if (context.recentMessages && Array.isArray(context.recentMessages)) {
+      const recentMessages = context.recentMessages.slice(-3); // Last 3 messages
+      if (recentMessages.length > 0) {
+        contextParts.push('RECENT CONVERSATION CONTEXT:');
+        recentMessages.forEach((msg: any, index: number) => {
+          if (msg.type === 'user' && msg.content) {
+            contextParts.push(`- User: "${msg.content}"`);
+          } else if (msg.type === 'assistant' && msg.content) {
+            contextParts.push(`- Assistant: "${msg.content}"`);
+          }
+        });
+        contextParts.push('');
+      }
+    }
+
+    // Add any relevant context from previous API calls
+    if (context.previousApiCalls && Array.isArray(context.previousApiCalls)) {
+      const recentApiCalls = context.previousApiCalls.slice(-2); // Last 2 API calls
+      if (recentApiCalls.length > 0) {
+        contextParts.push('RECENT API CALLS:');
+        recentApiCalls.forEach((call: any, index: number) => {
+          if (call.method && call.url) {
+            contextParts.push(`- ${call.method} ${call.url}${call.parameters ? ` with params: ${JSON.stringify(call.parameters)}` : ''}`);
+          }
+        });
+        contextParts.push('');
+      }
+    }
+
+    return contextParts.length > 0 ? contextParts.join('\n') : '';
   }
 
   /**

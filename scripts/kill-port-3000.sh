@@ -9,7 +9,12 @@ PIDS=$(lsof -ti:3000)
 if [ -n "$PIDS" ]; then
   for PID in $PIDS; do
     # Get the full command line for the process
-    CMDLINE=$(ps -p $PID -o args=)
+    CMDLINE=$(ps -p $PID -o args= 2>/dev/null || echo "")
+    if [ -z "$CMDLINE" ]; then
+      # Process might have died, skip
+      continue
+    fi
+    
     # Check for Next.js dev server or node running from project root
     if [[ "$CMDLINE" == *"next dev"* ]] && [[ "$CMDLINE" == *"$PROJECT_ROOT"* ]]; then
       echo "⚠️  Port 3000 is in use by Next.js dev server (PID $PID). Not killing."
@@ -19,7 +24,10 @@ if [ -n "$PIDS" ]; then
       continue
     else
       echo "⚠️  Found process $PID ($CMDLINE) running on port 3000. Killing it..."
-      kill -9 $PID
+      # Try graceful kill first, then force kill
+      kill -TERM $PID 2>/dev/null || true
+      sleep 1
+      kill -9 $PID 2>/dev/null || true
       echo "✅ Killed process $PID on port 3000"
     fi
   done

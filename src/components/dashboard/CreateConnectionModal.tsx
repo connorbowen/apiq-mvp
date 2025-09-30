@@ -463,15 +463,37 @@ export default function CreateConnectionModal({
 
   // Helper function to sanitize input and prevent XSS
   const sanitizeInput = (input: string): string => {
+    if (!input) return '';
+    
     // Remove script tags and other potentially dangerous content
-    return input
+    let sanitized = input
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       .replace(/javascript:/gi, '')
       .replace(/on\w+\s*=/gi, '')
       .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
       .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
       .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '')
+      .replace(/<script>/gi, '') // Remove opening script tags
+      .replace(/<\/script>/gi, '') // Remove closing script tags
+      .replace(/<script/gi, '') // Remove partial script tags
+      .replace(/<script.*?>/gi, '') // Remove any remaining script tags
+      .replace(/<\/script.*?>/gi, '') // Remove any remaining closing script tags
+      .replace(/<script[^>]*>/gi, '') // Remove any script opening tags
+      .replace(/<\/script[^>]*>/gi, '') // Remove any script closing tags
+      .replace(/<script/gi, '') // Remove any remaining script fragments
+      .replace(/<\/script/gi, '') // Remove any remaining script fragments
       .trim();
+    
+    // Additional aggressive check for any remaining script content
+    if (sanitized.includes('<script') || sanitized.includes('</script') || sanitized.includes('script')) {
+      sanitized = sanitized
+        .replace(/<script.*?<\/script>/gi, '')
+        .replace(/<script[^>]*>/gi, '')
+        .replace(/<\/script[^>]*>/gi, '')
+        .replace(/script/gi, '');
+    }
+    
+    return sanitized;
   };
 
   // Helper function to handle input changes with sanitization
@@ -589,7 +611,9 @@ export default function CreateConnectionModal({
                     aria-describedby={fieldErrors.name ? 'name-error' : undefined}
                     aria-label="Connection name"
                     value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    onChange={(e) => {
+                      handleInputChange('name', e.target.value);
+                    }}
                     className={`form-field-enhanced ${
                       fieldErrors.name 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 

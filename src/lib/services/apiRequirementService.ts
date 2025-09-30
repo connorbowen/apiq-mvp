@@ -164,11 +164,12 @@ export class ApiRequirementService {
 
       const parseResult = parseAIResponse(response);
       if (!parseResult.success) {
+        logError('🔍 ApiRequirementService: JSON parsing failed', new Error(parseResult.error || 'Failed to parse AI response'));
         throw new Error(parseResult.error || 'Failed to parse AI response');
       }
       
       // Process the AI result and check availability
-      const processedRequirements = this.processApiRequirements(parseResult.data as any, request.availableConnections);
+      const processedRequirements = await this.processApiRequirements(parseResult.data as any, request.availableConnections);
       
       return {
         success: true,
@@ -184,6 +185,7 @@ export class ApiRequirementService {
     }
   }
 
+
   /**
    * Use rules-based requirement analysis
    */
@@ -191,9 +193,12 @@ export class ApiRequirementService {
     const message = request.userMessage.toLowerCase();
     const requiredApis: ApiRequirement[] = [];
     
+    // Ensure availableConnections is always an array
+    const availableConnections = request.availableConnections || [];
+    
     logInfo('🔍 ApiRequirementService: Starting rules-based analysis', {
       message: message,
-      availableConnections: request.availableConnections.length
+      availableConnections: availableConnections.length
     });
     
     // Enhanced API detection patterns
@@ -274,7 +279,7 @@ export class ApiRequirementService {
         });
         
         // Check if user has this API connected
-        const isAvailable = request.availableConnections.some(conn => {
+        const isAvailable = availableConnections.some(conn => {
           const connName = conn.name.toLowerCase();
           return connName.includes(apiPattern.name) || 
                  apiPattern.name.includes(connName) ||
@@ -282,7 +287,7 @@ export class ApiRequirementService {
                  (apiPattern.name === 'openai' && connName.includes('openai'));
         });
         
-        const connection = request.availableConnections.find(conn => {
+        const connection = availableConnections.find(conn => {
           const connName = conn.name.toLowerCase();
           return connName.includes(apiPattern.name) || 
                  apiPattern.name.includes(connName) ||
@@ -344,12 +349,15 @@ Available API Knowledge Base: ${JSON.stringify(knowledgeBase, null, 2)}
 REQUIREMENT ANALYSIS RULES:
 1. Analyze the user's message for API keywords and capabilities
 2. Identify all APIs mentioned or implied in the request
-3. Determine which APIs are required vs optional
-4. Provide confidence scores for each API requirement
-5. Suggest relevant endpoints for each API
-6. Consider the user's intent and goals
+3. Check if any required APIs are already available through existing connections
+4. Determine which APIs are required vs optional
+5. Provide confidence scores for each API requirement
+6. Suggest relevant endpoints for each API
+7. Consider the user's intent and goals
+8. CRITICAL: If a connection exists that can fulfill an API requirement, mark that API as available
 
-Respond with JSON in this format:
+CRITICAL: Respond with ONLY valid JSON in this exact format. Do not include any markdown, explanations, or additional text. Ensure all strings are properly quoted and all objects are properly closed:
+
 {
   "requiredApis": [
     {
@@ -357,7 +365,9 @@ Respond with JSON in this format:
       "displayName": "API Display Name",
       "confidence": 0.0-1.0,
       "reason": "Why this API is needed",
-      "suggestedEndpoints": ["endpoint1", "endpoint2"]
+      "suggestedEndpoints": ["endpoint1", "endpoint2"],
+      "isAvailable": true/false,
+      "connectionId": "connection_id_if_available"
     }
   ],
   "userIntent": "What the user is trying to accomplish",
@@ -378,6 +388,13 @@ Respond with JSON in this format:
     return `Analyze API requirements for this request:
 
 User Message: "${request.userMessage}"
+
+Available Connections: ${JSON.stringify(availableConnections, null, 2)}
+
+IMPORTANT: Check if the required APIs are already available through existing connections. If a connection exists that can fulfill the API requirement, mark it as available. For example:
+- If user mentions "GitHub" and you see a connection named "GitHub E2E Connection", that API is available
+- If user mentions "Slack" and you see a connection named "Slack E2E Connection", that API is available
+- If user mentions "Trello" and you see a connection named "Trello E2E Connection", that API is available
 User Goal: "${request.userIntent.userGoal}"
 Guidance Type: "${request.userIntent.guidanceType}"
 Complexity: "${request.userIntent.complexity}"
@@ -391,17 +408,27 @@ ${request.context ? `Context: ${JSON.stringify(request.context)}` : ''}`;
   /**
    * Process AI results and check API availability
    */
-  private processApiRequirements(aiResult: any, availableConnections: ApiRequirementRequest['availableConnections']) {
-    const requiredApis: ApiRequirement[] = aiResult.requiredApis.map((api: any) => {
-      const isAvailable = availableConnections.some(conn => 
-        conn.name.toLowerCase().includes(api.name.toLowerCase()) ||
-        api.name.toLowerCase().includes(conn.name.toLowerCase())
+  private async processApiRequirements(aiResult: any, availableConnections: ApiRequirementRequest['availableConnections']) {
+    console.log('🔍 ApiRequirementService: Processing AI result:', {
+      requiredApis: aiResult.requiredApis?.length || 0,
+      availableConnections: availableConnections.length
+    });
+
+    const requiredApis: ApiRequirement[] = await Promise.all(aiResult.requiredApis.map(async (api: any) => {
+      // Use the AI-powered connection matching logic
+      const matchingConnection = await this.findMatchingExistingConnection(
+        `${api.name} ${api.displayName} ${api.reason}`,
+        availableConnections
       );
       
-      const connection = availableConnections.find(conn => 
-        conn.name.toLowerCase().includes(api.name.toLowerCase()) ||
-        api.name.toLowerCase().includes(conn.name.toLowerCase())
-      );
+      const isAvailable = !!matchingConnection;
+
+      console.log('🔍 ApiRequirementService: API processing result:', {
+        apiName: api.name,
+        isAvailable,
+        connectionId: matchingConnection?.id,
+        connectionName: matchingConnection?.name
+      });
 
       return {
         name: api.name,
@@ -410,12 +437,21 @@ ${request.context ? `Context: ${JSON.stringify(request.context)}` : ''}`;
         reason: api.reason,
         suggestedEndpoints: api.suggestedEndpoints,
         isAvailable,
-        connectionId: connection?.id
+        connectionId: matchingConnection?.id
       };
-    });
+    }));
 
     const availableApis = requiredApis.filter(api => api.isAvailable);
     const missingApis = requiredApis.filter(api => !api.isAvailable);
+
+    console.log('🔍 ApiRequirementService: Final processing result:', {
+      totalApis: requiredApis.length,
+      availableApis: availableApis.length,
+      missingApis: missingApis.length,
+      requiresGuidance: missingApis.length > 0,
+      availableApiNames: availableApis.map(api => api.name),
+      missingApiNames: missingApis.map(api => api.name)
+    });
 
     return {
       requiresGuidance: missingApis.length > 0,
@@ -428,54 +464,123 @@ ${request.context ? `Context: ${JSON.stringify(request.context)}` : ''}`;
   }
 
   /**
-   * Find if any existing connection can fulfill the user's request
+   * Use AI to evaluate if any existing connection can fulfill the user's request
+   * This replaces rigid rule-based matching with intelligent AI evaluation
    */
-  private findMatchingExistingConnection(
+  private async findMatchingExistingConnection(
     message: string, 
     availableConnections: ApiRequirementRequest['availableConnections']
-  ): ApiRequirementRequest['availableConnections'][0] | null {
-    const lowerMessage = message.toLowerCase();
-    
-    // Check if any existing connection can fulfill the request
-    for (const connection of availableConnections) {
-      const connectionName = connection.name.toLowerCase();
+  ): Promise<ApiRequirementRequest['availableConnections'][0] | null> {
+    console.log('🔍 ApiRequirementService: AI-powered connection matching called', {
+      message,
+      availableConnections: availableConnections.map(c => ({ name: c.name, baseUrl: c.baseUrl }))
+    });
+    try {
+      const systemPrompt = `You are an expert API connection evaluator. Your job is to determine if any existing API connections can fulfill a user's request.
+
+EVALUATION RULES:
+1. Analyze the user's request to understand what APIs they need
+2. Examine each available connection to see if it can fulfill those needs
+3. Consider connection names, base URLs, and any available endpoints
+4. Be flexible with naming - "GitHub E2E Connection" should match "GitHub" needs
+5. If a connection can fulfill the request, return the connection details
+6. Use a simple, reliable format that's easy to parse
+
+CRITICAL: If you find ANY connection that can fulfill the request, you MUST return the connection details.
+
+EXAMPLES:
+- "Github E2E Connection" can fulfill "GitHub" requests
+- "Slack E2E Connection" can fulfill "Slack" requests  
+- "Trello E2E Connection" can fulfill "Trello" requests
+
+RESPONSE FORMAT (SIMPLE AND RELIABLE):
+If a connection can fulfill the request, respond with:
+MATCH: [connection_id]|[connection_name]|[reason]
+
+If no connection can fulfill the request, respond with:
+NO_MATCH: [brief explanation]
+
+This format is much more reliable than JSON and easier to parse.`;
+
+      const userPrompt = `Evaluate if any of these connections can fulfill this request:
+
+USER REQUEST: "${message}"
+
+AVAILABLE CONNECTIONS:
+${availableConnections.map(conn => 
+  `- Connection Name: "${conn.name}" | Database ID: "${conn.id}" | Base URL: ${conn.baseUrl}${conn.endpoints ? ` | Endpoints: ${conn.endpoints.length}` : ''}`
+).join('\n')}
+
+CRITICAL INSTRUCTIONS:
+1. The Database ID is the long string that starts with "cmf" (like "cmfztsb2u00069kf96beh5lzo")
+2. Do NOT use any part of the connection name (like timestamps in parentheses) as the ID
+3. The connection name may contain timestamps like "(1758829690901)" - IGNORE these completely
+4. ONLY use the Database ID that starts with "cmf" in your response
+
+Can any of these connections fulfill the user's request?`;
+
+      const response = await this.openaiService.chatCompletion([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ], {
+        model: 'gpt-4o-mini',
+        temperature: 0.1,
+        max_tokens: 300
+      });
+
+      console.log('🔍 ApiRequirementService: AI response:', response);
+
+      // Parse the simple format: MATCH: [id]|[name]|[reason] or NO_MATCH: [explanation]
+      const responseText = response.trim();
       
-      // Check if the connection name or baseUrl matches the user's request
-      if (lowerMessage.includes(connectionName) || 
-          (connection.baseUrl && lowerMessage.includes(connection.baseUrl.toLowerCase()))) {
-        logInfo('🔍 ApiRequirementService: Found connection match', {
-          connectionName: connection.name,
-          connectionId: connection.id,
-          userMessage: message
-        });
-        return connection;
-      }
-      
-      // Check if the connection has endpoints that match the user's request
-      if (connection.endpoints && connection.endpoints.length > 0) {
-        const hasMatchingEndpoint = connection.endpoints.some(endpoint => {
-          const endpointPath = endpoint.path.toLowerCase();
-          const endpointSummary = endpoint.summary?.toLowerCase() || '';
-          
-          // Check if the endpoint path or summary matches the user's request
-          return lowerMessage.includes(endpointPath) || 
-                 lowerMessage.includes(endpointSummary) ||
-                 endpointPath.includes('pet') || // For petstore API
-                 endpointSummary.includes('pet');
-        });
+      if (responseText.startsWith('MATCH:')) {
+        const matchData = responseText.substring(6).trim(); // Remove "MATCH: "
+        const parts = matchData.split('|');
         
-        if (hasMatchingEndpoint) {
-          logInfo('🔍 ApiRequirementService: Found endpoint match', {
-            connectionName: connection.name,
-            connectionId: connection.id,
-            userMessage: message
+        if (parts.length >= 3) {
+          const connectionId = parts[0].trim();
+          const connectionName = parts[1].trim();
+          const reason = parts[2].trim();
+          
+          const matchingConnection = availableConnections.find(conn => conn.id === connectionId);
+          if (matchingConnection) {
+            console.log('🔍 ApiRequirementService: AI found matching connection', {
+              connectionName: matchingConnection.name,
+              connectionId: matchingConnection.id,
+              reason: reason,
+              aiResponse: responseText
+            });
+            return matchingConnection;
+          } else {
+            console.warn('🔍 ApiRequirementService: AI returned connection ID that was not found in available connections', {
+              connectionId,
+              availableConnectionIds: availableConnections.map(c => c.id)
+            });
+          }
+        } else {
+          console.warn('🔍 ApiRequirementService: AI returned malformed MATCH response', {
+            response: responseText,
+            parts: parts
           });
-          return connection;
         }
+      } else if (responseText.startsWith('NO_MATCH:')) {
+        const explanation = responseText.substring(9).trim(); // Remove "NO_MATCH: "
+        console.log('🔍 ApiRequirementService: AI determined no matching connection', {
+          explanation: explanation,
+          aiResponse: responseText
+        });
+      } else {
+        console.warn('🔍 ApiRequirementService: AI returned unexpected response format', {
+          response: responseText
+        });
       }
+
+      return null;
+
+    } catch (error) {
+      console.error('🔍 ApiRequirementService: AI connection matching failed:', error);
+      return null;
     }
-    
-    return null;
   }
 
   /**

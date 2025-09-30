@@ -27,6 +27,17 @@ This document defines the specific development rules, constraints, and guideline
 - A pre-commit hook and CI check will block any commit/PR that introduces forbidden patterns (e.g., `test-user-123`, `demo-key`, `fake API`, etc.) in non-test code or docs.
 - See `package.json` and `.github/workflows/no-mock-data.yml` for details.
 
+## 🔧 Debugging Policy & Core Principles
+
+- **Never resort to browser debug mode** - All debugging must be done through code analysis, logs, and terminal commands
+- **Browser interaction is not required** - All issues can be resolved through non-interactive debugging methods
+- **Use alternative debugging methods**:
+  - Analyze error logs in `/logs/` directory
+  - Run diagnostic terminal commands
+  - Review test failures and outputs
+  - Examine code for logical issues
+  - Use console.log statements strategically
+
 ## 🎨 UX Compliance Policy & Automated Checks
 
 - **All user-facing features must comply with UX spec requirements in `docs/UX_SPEC.md`.**
@@ -1157,6 +1168,7 @@ export const healthCheck = async (req: NextApiRequest, res: NextApiResponse) => 
 - Dashboard authentication/session logic now ensures loading state is always cleared before redirecting unauthenticated users.
 - New integration test (`tests/integration/api/dashboard-auth.integration.test.ts`) verifies API contract for dashboard authentication/session/data loading.
 - All authentication/session flows must have robust unit, integration, and E2E test coverage for loading state, redirects, and error handling.
+
 
 ## Rule Updates
 

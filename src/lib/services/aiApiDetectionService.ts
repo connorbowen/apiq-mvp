@@ -227,6 +227,14 @@ Instructions:
 7. CRITICAL: If the request involves multiple services/APIs, include ALL of them in the requiredApis array
 8. CRITICAL: Look for ALL API names and keywords mentioned in the user request
 9. CRITICAL: Each API mentioned should be included as a separate entry in requiredApis
+10. CRITICAL: Be flexible with connection name matching - test connections may have names like "Github E2E Connection" or "Slack Test API"
+11. CRITICAL: If you see keywords like "notification", "message", "team" - consider Slack
+12. CRITICAL: If you see keywords like "issue", "repository", "commit", "pull request" - consider GitHub
+13. CRITICAL: If you see keywords like "card", "board", "task", "project" - consider Trello
+14. CRITICAL: If you see keywords like "email", "mail", "inbox" - consider Gmail/Email services
+15. CRITICAL: If you see keywords like "payment", "billing", "charge" - consider Stripe
+16. CRITICAL: If you see keywords like "ticket", "support", "helpdesk" - consider Zendesk
+17. CRITICAL: If you see keywords like "webhook", "callback", "trigger" - consider webhook services
 
 Respond with JSON in this format:
 {
@@ -250,7 +258,7 @@ Examples:
 - "Create a workflow that sends a Slack notification when a new GitHub issue is created" → requiresGuidance: true, requiredApis: [{"name": "slack", "displayName": "Slack", "confidence": 0.9, "reason": "User wants to send notifications", "suggestedEndpoints": ["/chat.postMessage"]}, {"name": "github", "displayName": "GitHub", "confidence": 0.9, "reason": "User wants to monitor GitHub issues", "suggestedEndpoints": ["/repos/{owner}/{repo}/issues", "/repos/{owner}/{repo}/issues/{issue_number}"]}]
 - "Get all users from my database" → requiresGuidance: false (if they have a database connection that can handle this)
 
-CRITICAL: Look for ALL APIs mentioned or implied in the request. If you see "Slack" and "GitHub" in the same request, include BOTH. If you see multiple API names, include ALL of them.`;
+CRITICAL: Look for ALL APIs mentioned or implied in the request. If you see "Slack" and "GitHub" in the same request, include BOTH. If you see multiple API names, include ALL of them. Be flexible with connection name matching for test connections.`;
 
     const { OpenAI } = await import('openai');
     const client = new OpenAI({

@@ -208,7 +208,10 @@ export class DirectApiCallOrchestrator {
           parameters: endpoint.parameters || [],
           summary: endpoint.summary
         },
-        { conversationHistory: request.context }
+        { 
+          recentMessages: request.context || [],
+          previousApiCalls: request.context?.filter((msg: any) => msg.apiCallResult) || []
+        }
       );
 
       console.log('🔍 DirectApiCallOrchestrator: Parameters extracted:', {
@@ -220,7 +223,7 @@ export class DirectApiCallOrchestrator {
         success: true,
         data: {
           parameters: result.parameters,
-          requestBody: result.parameters, // Use parameters as requestBody for POST requests
+          requestBody: undefined, // Will be set separately for POST/PUT requests
           headers: undefined // Will be handled by the parameter extraction service
         }
       };

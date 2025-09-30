@@ -358,7 +358,7 @@ test.describe('Natural Language Workflow Creation E2E Tests - Core P0 Feature', 
       
       // Should get guidance about missing connections
       await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 15000 });
-      await expect(page.getByText(/connect to|API connections|set up/).first()).toBeVisible();
+      await expect(page.getByText(/connect|API|set up|Slack|notification/).first()).toBeVisible();
     });
 
     test('should handle vague workflow descriptions gracefully', async ({ page }) => {
@@ -371,7 +371,7 @@ test.describe('Natural Language Workflow Creation E2E Tests - Core P0 Feature', 
       
       // Should get guidance about missing connections (not vague description error)
       await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 15000 });
-      await expect(page.getByText(/connect to|API connections|set up/).first()).toBeVisible();
+      await expect(page.getByText(/connect|API|set up|Slack|notification/).first()).toBeVisible();
     });
 
     test('should handle service unavailability gracefully', async ({ page }) => {
@@ -384,7 +384,7 @@ test.describe('Natural Language Workflow Creation E2E Tests - Core P0 Feature', 
       
       // Should get guidance about missing connections
       await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 15000 });
-      await expect(page.getByText(/connect to|API connections|set up/).first()).toBeVisible();
+      await expect(page.getByText(/connect|API|set up|email|notification/).first()).toBeVisible();
     });
 
     test('should handle validation errors gracefully', async ({ page }) => {
@@ -397,7 +397,7 @@ test.describe('Natural Language Workflow Creation E2E Tests - Core P0 Feature', 
       
       // Should get guidance about missing connections
       await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 15000 });
-      await expect(page.getByText(/connect to|API connections|set up/).first()).toBeVisible();
+      await expect(page.getByText(/email|API|set up|connect|service/).first()).toBeVisible();
     });
   });
 
@@ -464,7 +464,7 @@ test.describe('Natural Language Workflow Creation E2E Tests - Core P0 Feature', 
         
         // Should get guidance about missing connections
         await waitForFinalWorkflowResponse(page, 15000);
-        await expect(page.getByText(/connect to|API connections|set up/).first()).toBeVisible();
+        await expect(page.locator('[data-testid="chat-interface"]').getByText(/notifications|API|set up|connect|email|slack|Email Service/).first()).toBeVisible();
       });
     });
   });

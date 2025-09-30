@@ -4,35 +4,34 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: false, // Disable parallel execution to prevent context conflicts
+  fullyParallel: true, // Enable parallel execution for better performance
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1, // Retry configuration for stability
-  workers: 1, // Force single worker to prevent context conflicts
+  workers: 2, // Allow 2 workers for parallel execution
   reporter: 'html',
-  timeout: 60000, // 1 minute per test
+  timeout: 60000, // 1 minute per test (reduced for faster feedback)
   expect: {
-    timeout: 15000, // 15 seconds for assertions
+    timeout: 10000, // 10 seconds for assertions (increased for stability)
   },
-  // Add global timeout for better stability
-  globalTimeout: 300000, // 5 minutes for entire suite
+  // No global timeout - let tests run naturally with per-test timeouts
   // Add global setup for better parallel test isolation
   globalSetup: require.resolve('./tests/helpers/globalSetup.ts'),
   // globalTeardown: require.resolve('./tests/helpers/globalTeardown.ts'), // Disabled to prevent premature cleanup
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'off', // Set to 'on-first-retry' when debugging test failures
-    actionTimeout: 15000, // 15 seconds for actions
-    navigationTimeout: 15000, // 15 seconds for navigation
+    actionTimeout: 30000, // 30 seconds for actions (increased for stability)
+    navigationTimeout: 30000, // 30 seconds for navigation (increased for stability)
     // Add context options for better stability
     contextOptions: {
       ignoreHTTPSErrors: true,
       acceptDownloads: true,
     },
     launchOptions: {
-      // Add process management options
-      handleSIGINT: false,
-      handleSIGTERM: false,
-      handleSIGHUP: false,
+      // Enable proper signal handling for clean shutdown
+      handleSIGINT: true,
+      handleSIGTERM: true,
+      handleSIGHUP: true,
       args: [
         '--disable-dev-shm-usage',
         '--disable-gpu',
@@ -110,7 +109,7 @@ export default defineConfig({
     command: './scripts/start-test-server.sh',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 180000, // Increased timeout to 3 minutes
+    timeout: 300000, // 5 minutes to start server (reduced from 10 minutes)
     stdout: 'pipe', // Capture stdout for debugging
     stderr: 'pipe', // Capture stderr for debugging
     env: {

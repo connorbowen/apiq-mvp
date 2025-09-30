@@ -56,6 +56,41 @@ export default function EditConnectionModal({
   } | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Helper function to sanitize input and prevent XSS
+  const sanitizeInput = (input: string): string => {
+    if (!input) return '';
+    
+    // Remove script tags and other potentially dangerous content
+    let sanitized = input
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+      .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '')
+      .replace(/<script>/gi, '') // Remove opening script tags
+      .replace(/<\/script>/gi, '') // Remove closing script tags
+      .replace(/<script/gi, '') // Remove partial script tags
+      .replace(/<script.*?>/gi, '') // Remove any remaining script tags
+      .replace(/<\/script.*?>/gi, '') // Remove any remaining closing script tags
+      .replace(/<script[^>]*>/gi, '') // Remove any script opening tags
+      .replace(/<\/script[^>]*>/gi, '') // Remove any script closing tags
+      .replace(/<script/gi, '') // Remove any remaining script fragments
+      .replace(/<\/script/gi, '') // Remove any remaining script fragments
+      .trim();
+    
+    // Additional aggressive check for any remaining script content
+    if (sanitized.includes('<script') || sanitized.includes('</script') || sanitized.includes('script')) {
+      sanitized = sanitized
+        .replace(/<script.*?<\/script>/gi, '')
+        .replace(/<script[^>]*>/gi, '')
+        .replace(/<\/script[^>]*>/gi, '')
+        .replace(/script/gi, '');
+    }
+    
+    return sanitized;
+  };
+
   // Debug modal visibility after mount
   useEffect(() => {
     console.log('🔍 EditConnectionModal useEffect - checking visibility after mount');
@@ -142,8 +177,14 @@ export default function EditConnectionModal({
       console.log('🔍 HTTPS validation passed');
     }
     
-    // XSS validation
-    if (formData.name.includes('<script>') || formData.name.includes('javascript:')) {
+    // XSS validation - check for script tags and other dangerous content
+    const xssPattern = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<script>|<\/script>|<script/gi;
+    if (xssPattern.test(formData.name) ||
+        xssPattern.test(formData.description) ||
+        xssPattern.test(formData.baseUrl) ||
+        formData.name.includes('javascript:') ||
+        formData.description.includes('javascript:') ||
+        formData.baseUrl.includes('javascript:')) {
       console.log('🔍 XSS validation failed');
       errors.name = 'Invalid characters detected';
     } else {
@@ -412,7 +453,7 @@ export default function EditConnectionModal({
                     aria-describedby={fieldErrors.name ? 'name-error' : undefined}
                     aria-label="Connection name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, name: sanitizeInput(e.target.value) })}
                     className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                       fieldErrors.name 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
@@ -433,7 +474,7 @@ export default function EditConnectionModal({
                     data-testid="connection-description-input"
                     aria-label="Connection description"
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, description: sanitizeInput(e.target.value) })}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Optional description of this connection"
                     rows={3}
@@ -453,7 +494,7 @@ export default function EditConnectionModal({
                     aria-invalid={fieldErrors.baseUrl ? 'true' : 'false'}
                     aria-describedby={fieldErrors.baseUrl ? 'baseUrl-error' : undefined}
                     value={formData.baseUrl}
-                    onChange={(e) => setFormData({ ...formData, baseUrl: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, baseUrl: sanitizeInput(e.target.value) })}
                     className={`mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 ${
                       fieldErrors.baseUrl 
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 

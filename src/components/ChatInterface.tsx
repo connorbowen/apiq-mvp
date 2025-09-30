@@ -6,6 +6,7 @@ import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFo
 import { ConnectionSetupForm } from './ConnectionSetupForm';
 import ConnectionGuidance from './ConnectionGuidance';
 import { createFormSubmissionHandler, createGlobalFormSubmissionFunction } from '../lib/utils/formSubmissionUtils';
+import { sanitizeForChat } from '../lib/utils/inputSanitization';
 
 interface Message {
   id: string;
@@ -121,26 +122,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     }
   }, []);
 
-  // Force reset loading state as a backup mechanism
+  // Force reset loading state as a backup mechanism (less aggressive)
   useEffect(() => {
     const forceResetTimeout = setTimeout(() => {
       if (isLoading) {
+        console.log('🔍 ChatInterface: Force resetting loading state after 30 seconds');
         setIsLoading(false);
       }
-    }, 15000); // 15 second force reset
+    }, 30000); // 30 second force reset
 
     return () => clearTimeout(forceResetTimeout);
-  }, [isLoading]);
-
-  // Additional aggressive backup mechanism
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isLoading) {
-        setIsLoading(false);
-      }
-    }, 8000); // Check every 8 seconds
-
-    return () => clearInterval(interval);
   }, [isLoading]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -164,22 +155,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     setIsLoading(true);
     setError('');
 
-    // Set multiple aggressive timeouts to ensure loading state is reset
-    const loadingTimeout1 = setTimeout(() => {
+    // Set a single reasonable timeout to ensure loading state is reset
+    const loadingTimeout = setTimeout(() => {
       setIsLoading(false);
-    }, 5000); // 5 second timeout
-    
-    const loadingTimeout2 = setTimeout(() => {
-      setIsLoading(false);
-    }, 8000); // 8 second timeout
-    
-    const loadingTimeout3 = setTimeout(() => {
-      setIsLoading(false);
-    }, 12000); // 12 second timeout
+    }, 30000); // 30 second timeout - more reasonable for API calls
 
     try {
-      // Build context from previous messages
-      const context = messages.map(msg => ({
+      // Build context from previous messages - use the current messages state
+      // Note: This will include the user message we just added
+      const context = [...messages, userMessage].map(msg => ({
         type: msg.type,
         content: msg.content,
         timestamp: msg.timestamp,
@@ -193,12 +177,33 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       console.log('🔍 ChatInterface: About to call apiClient.processMessage');
       const response = await apiClient.processMessage(messageText, context);
       console.log('🔍 ChatInterface: API response received:', response);
+      console.log('🔍 ChatInterface: Response success:', response.success);
+      console.log('🔍 ChatInterface: Response data:', response.data);
+      console.log('🔍 ChatInterface: API call result:', response.data?.apiCallResult);
+      console.log('🔍 ChatInterface: API call result URL:', response.data?.apiCallResult?.url);
+      console.log('🔍 ChatInterface: API call result statusCode:', response.data?.apiCallResult?.statusCode);
+      console.log('🔍 ChatInterface: API call result error:', response.data?.apiCallResult?.error);
+      console.log('🔍 ChatInterface: Response data type:', response.data?.type);
+      console.log('🔍 ChatInterface: Has apiCallResult:', !!response.data?.apiCallResult);
+      
+      // DEBUG: Log current messages state before adding new message
+      console.log('🔍 ChatInterface: Current messages state before adding new message:', {
+        messageCount: messages.length,
+        lastMessage: messages[messages.length - 1],
+        allMessages: messages.map(m => ({ id: m.id, type: m.type, content: m.content?.substring(0, 50) + '...' }))
+      });
       
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Failed to process message');
       }
 
       // Create assistant message based on AI response
+      console.log('🔍 ChatInterface: Creating assistant message with data:', {
+        content: response.data.content,
+        type: response.data.type,
+        apiCallResult: response.data.apiCallResult,
+        hasApiCallResult: !!response.data.apiCallResult
+      });
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -218,6 +223,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         suggestedAction: response.data.suggestedAction
       };
       
+      console.log('🔍 ChatInterface: Assistant message created:', {
+        id: assistantMessage.id,
+        type: assistantMessage.type,
+        intent: assistantMessage.intent,
+        hasApiCallResult: !!assistantMessage.apiCallResult,
+        apiCallResult: assistantMessage.apiCallResult,
+        content: assistantMessage.content,
+        suggestedAction: assistantMessage.suggestedAction
+      });
+      
 
       // Create formatted response for API call results
       if (response.data.apiCallResult) {
@@ -225,7 +240,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         assistantMessage.formattedResponse = formatted;
       }
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => {
+        const newMessages = [...prev, assistantMessage];
+        console.log('🔍 ChatInterface: Messages updated:', {
+          totalMessages: newMessages.length,
+          lastMessage: newMessages[newMessages.length - 1],
+          hasApiCallResult: !!newMessages[newMessages.length - 1]?.apiCallResult,
+          apiCallResult: newMessages[newMessages.length - 1]?.apiCallResult,
+          apiCallResultUrl: newMessages[newMessages.length - 1]?.apiCallResult?.url,
+          allMessages: newMessages.map(m => ({
+            id: m.id,
+            type: m.type,
+            hasApiCallResult: !!m.apiCallResult,
+            apiCallResultUrl: m.apiCallResult?.url,
+            content: m.content?.substring(0, 50) + '...'
+          }))
+        });
+        return newMessages;
+      });
+      
+      // DEBUG: Log after state update to verify it worked
+      console.log('🔍 ChatInterface: State update completed, checking if new message was added...');
 
       // Call the callback if provided
       if (onWorkflowGenerated && response.data.workflow && response.data.steps) {
@@ -233,9 +268,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       }
       
       // Reset loading state after successful processing
-      clearTimeout(loadingTimeout1);
-      clearTimeout(loadingTimeout2);
-      clearTimeout(loadingTimeout3);
+      clearTimeout(loadingTimeout);
       setIsLoading(false);
 
     } catch (err) {
@@ -252,12 +285,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       setMessages(prev => [...prev, errorMsg]);
       
       // Reset loading state after error processing
-      clearTimeout(loadingTimeout1);
-      clearTimeout(loadingTimeout2);
-      clearTimeout(loadingTimeout3);
+      clearTimeout(loadingTimeout);
       setIsLoading(false);
     }
-  }, [inputMessage, isLoading, onWorkflowGenerated, messages]);
+  }, [inputMessage, isLoading, onWorkflowGenerated]);
 
 
   const handleSaveWorkflow = useCallback(async (messageId: string) => {
@@ -575,6 +606,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         {messages.map((message) => (
           <div
             key={message.id}
+            data-testid="chat-message"
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
@@ -584,7 +616,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                   : 'bg-gray-100 text-gray-900'
               }`}
             >
-              <div className="text-sm">{message.content}</div>
+              <div className="text-sm">{sanitizeForChat(message.content)}</div>
               <div className={`text-xs mt-1 ${
                 message.type === 'user' ? 'text-indigo-200' : 'text-gray-500'
               }`}>
@@ -704,6 +736,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                   className="mt-3 p-3 bg-white rounded border border-gray-200" 
                   data-testid="api-call-result"
                 >
+                  {(() => {
+                    console.log('🔍 ChatInterface: Rendering API call result:', {
+                      messageId: message.id,
+                      hasApiCallResult: !!message.apiCallResult,
+                      apiCallResult: message.apiCallResult
+                    });
+                    return null;
+                  })()}
                   <div className="text-xs font-medium text-gray-900 mb-2">
                     🔗 API Call Result
                   </div>

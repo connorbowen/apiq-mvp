@@ -48,4 +48,5 @@ echo "🔄 Use Ctrl+C to stop the server"
 
 # Start server with better error handling
 echo "🚀 Starting Next.js server..."
-exec node -r ./scripts/server-error-handler.js ./node_modules/.bin/next start -p 3000
+# Use node directly instead of exec to allow proper process management
+node -r ./scripts/server-error-handler.js ./node_modules/.bin/next start -p 3000

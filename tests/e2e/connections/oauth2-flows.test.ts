@@ -209,7 +209,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       
       // Add debugging to see what connections are currently loaded
       console.log('🪵 Checking current connections list...');
-      const currentConnections = await page.locator('[data-testid="connection-card"]').allTextContents();
+      const currentConnections = await page.locator('[data-testid^="connection-card-"]').allTextContents();
       console.log('🪵 Current connections:', currentConnections);
       
       // Wait for connection state to update using robust state-based waiting
@@ -256,7 +256,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
           console.error('🪵 SUCCESS: Connection created successfully but UI not refreshed - UI refresh issue');
           
           // Log the current state for debugging
-          const currentConnections = await page.locator('[data-testid="connection-card"]').allTextContents();
+          const currentConnections = await page.locator('[data-testid^="connection-card-"]').allTextContents();
           console.log('🪵 Current connections:', currentConnections);
           
           // Don't fail the test - just log the issue for investigation
@@ -469,7 +469,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
           console.error('🪵 SUCCESS: Connection created successfully but UI not refreshed - UI refresh issue');
           
           // Log the current state for debugging
-          const currentConnections = await page.locator('[data-testid="connection-card"]').allTextContents();
+          const currentConnections = await page.locator('[data-testid^="connection-card-"]').allTextContents();
           console.log('🪵 Current connections:', currentConnections);
           
           // Don't fail the test - just log the issue for investigation
@@ -557,13 +557,161 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateSuccessContainer('Connection created successfully');
         
       // Wait for the connection to appear in the list
-      await waitForTestId(page, 'connection-card', 10000);
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('Slack API');
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
+      await page.waitForSelector('[data-testid^="connection-card-"]', { timeout: 10000 });
+      await expect(page.locator('[data-testid^="connection-card-"]')).toContainText('Slack API');
+      await expect(page.locator('[data-testid^="connection-card-"]')).toContainText('OAuth2');
       
       // Validate comprehensive screen reader compatibility
       await uxHelper.validateScreenReaderCompatibility();
       await uxHelper.validateARIACompliance();
+    });
+  });
+
+  test.describe('OAuth2 Connection Management', () => {
+    test('should edit OAuth2 connection with UX compliance', async ({ page }) => {
+      const uxHelper = createUXComplianceHelper(page);
+      
+      // First create a connection to edit
+      const connectionName = `OAuth2 Edit Test ${Date.now()}`;
+      const response = await page.request.post('/api/connections', {
+        data: {
+          name: connectionName,
+          description: 'OAuth2 connection to be edited',
+          baseUrl: 'https://api.example.com',
+          authType: 'OAUTH2',
+          authConfig: {
+            provider: 'github',
+            clientId: 'test-edit-client-id',
+            clientSecret: 'test-edit-client-secret',
+            redirectUri: 'http://localhost:3000/api/connections/oauth2/callback',
+            scopes: 'repo'
+          }
+        },
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      expect(response.status()).toBe(201);
+      const connection = await response.json();
+      createdConnectionIds.push(connection.data.id);
+      
+      // Wait for the connection to appear in the list
+      await page.waitForSelector('[data-testid^="connection-card-"]', { timeout: 10000 });
+      await expect(page.locator('[data-testid^="connection-card-"]')).toContainText(connectionName);
+      
+      // Validate comprehensive UX compliance for edit flow
+      await uxHelper.validateActivationFirstUX();
+      await uxHelper.validateFormAccessibility();
+      await uxHelper.validateARIACompliance();
+      
+      // Find and click edit button
+      const editButton = page.locator('[data-testid="edit-connection-btn"]').first();
+      await editButton.click();
+      
+      // Wait for edit modal to open
+      await page.waitForSelector('[data-testid="edit-connection-modal"]', { timeout: 5000 });
+      
+      // Validate edit modal UX compliance
+      await uxHelper.validateFormAccessibility();
+      await uxHelper.validateARIACompliance();
+      await uxHelper.validateScreenReaderCompatibility();
+      
+      // Modify the connection
+      await page.fill('[data-testid="connection-name-input"]', `${connectionName} - Updated`);
+      await page.fill('[data-testid="connection-description-input"]', 'OAuth2 connection to be edited - Updated');
+      
+      // Submit the edit
+      const updateButton = getPrimaryActionButton(page, 'update-connection');
+      await submitFormWithUtils(page, '[data-testid="edit-connection-form"]');
+      
+      // Wait for update to complete
+      await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 10000 });
+      
+      // Validate success message UX compliance
+      await uxHelper.validateSuccessContainer('Connection updated successfully');
+      
+      // Verify the updated connection appears in the list
+      await expect(page.locator('[data-testid="connection-card"]')).toContainText(`${connectionName} - Updated`);
+      
+      // Validate comprehensive UX compliance
+      await uxHelper.validateARIACompliance();
+      await uxHelper.validateScreenReaderCompatibility();
+    });
+
+    test('should delete OAuth2 connection with UX compliance', async ({ page }) => {
+      const uxHelper = createUXComplianceHelper(page);
+      
+      // First create a connection to delete
+      const connectionName = `OAuth2 Delete Test ${Date.now()}`;
+      const response = await page.request.post('/api/connections', {
+        data: {
+          name: connectionName,
+          description: 'OAuth2 connection to be deleted',
+          baseUrl: 'https://api.example.com',
+          authType: 'OAUTH2',
+          authConfig: {
+            provider: 'github',
+            clientId: 'test-delete-client-id',
+            clientSecret: 'test-delete-client-secret',
+            redirectUri: 'http://localhost:3000/api/connections/oauth2/callback',
+            scopes: 'repo'
+          }
+        },
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      expect(response.status()).toBe(201);
+      const connection = await response.json();
+      createdConnectionIds.push(connection.data.id);
+      
+      // Wait for the connection to appear in the list
+      await page.waitForSelector('[data-testid^="connection-card-"]', { timeout: 10000 });
+      await expect(page.locator('[data-testid^="connection-card-"]')).toContainText(connectionName);
+      
+      // Validate comprehensive UX compliance for delete flow
+      await uxHelper.validateActivationFirstUX();
+      await uxHelper.validateFormAccessibility();
+      await uxHelper.validateARIACompliance();
+      
+      // Click Edit button to open the edit modal where delete is located
+      const editButton = page.locator('[data-testid="edit-connection-btn"]').first();
+      await editButton.click();
+      
+      // Wait for edit modal to open
+      await page.waitForSelector('[data-testid="edit-connection-modal"]', { timeout: 5000 });
+      
+      // Now click the delete button inside the modal
+      const deleteButton = page.locator('[data-testid="delete-connection-btn"]');
+      await deleteButton.click();
+      
+      // Wait for confirmation dialog
+      await page.waitForSelector('[role="dialog"]', { timeout: 5000 });
+      
+      // Validate confirmation dialog UX compliance
+      await uxHelper.validateFormAccessibility();
+      await uxHelper.validateARIACompliance();
+      
+      // Confirm deletion
+      const confirmButton = getPrimaryActionButton(page, 'confirm-delete');
+      await confirmButton.click();
+      
+      // Wait for deletion to complete
+      await expect(page.locator('[data-testid="success-message"]')).toBeVisible({ timeout: 10000 });
+      
+      // Validate success message UX compliance
+      await uxHelper.validateSuccessContainer('Connection deleted successfully');
+      
+      // Verify the connection is no longer visible
+      await expect(page.locator('[data-testid="connection-card"]:has-text("' + connectionName + '")')).not.toBeVisible({ timeout: 5000 });
+      
+      // Validate comprehensive UX compliance
+      await uxHelper.validateARIACompliance();
+      await uxHelper.validateScreenReaderCompatibility();
     });
   });
 
@@ -602,11 +750,11 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       createdConnectionIds.push(connection.id);
       
       // Wait for the connection to appear in the list
-      await waitForTestId(page, 'connection-card', 10000);
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('Secure OAuth2 API');
+      await page.waitForSelector('[data-testid^="connection-card-"]', { timeout: 10000 });
+      await expect(page.locator('[data-testid^="connection-card-"]')).toContainText('Secure OAuth2 API');
       
       // Validate security indicators are present
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText('OAuth2');
+      await expect(page.locator('[data-testid^="connection-card-"]')).toContainText('OAuth2');
       
       // Validate comprehensive ARIA compliance
       await uxHelper.validateARIACompliance();
@@ -1321,11 +1469,27 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       // Test OAuth2 security edge cases
       // Test XSS prevention
       await getPrimaryActionButton(page, 'create-connection-header').click();
-      await page.fill('[data-testid="connection-name-input"]', '<script>alert("xss")</script>');
+      
+      // Type the XSS payload character by character to trigger onChange events
+      const xssPayload = '<script>alert("xss")</script>';
+      const input = page.locator('[data-testid="connection-name-input"]');
+      await input.click();
+      await input.clear();
+      
+      // Type each character to trigger onChange events
+      for (const char of xssPayload) {
+        await input.type(char);
+        await page.waitForTimeout(10); // Small delay to ensure onChange fires
+      }
+      
       await page.keyboard.press('Tab');
+      
+      // Wait for sanitization to take effect
+      await page.waitForTimeout(100);
       
       // Verify XSS is prevented
       const value = await page.locator('[data-testid="connection-name-input"]').inputValue();
+      console.log('🔍 XSS Test - Input value after sanitization:', value);
       expect(value).not.toContain('<script>');
       
       // Validate comprehensive security compliance
@@ -1479,7 +1643,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
           console.error('🪵 ❌ API_KEY: Connection created successfully but UI not refreshed - UI refresh issue affects all connection types');
           
           // Log the current state for debugging
-          const currentConnections = await page.locator('[data-testid="connection-card"]').allTextContents();
+          const currentConnections = await page.locator('[data-testid^="connection-card-"]').allTextContents();
           console.log('🪵 Current connections:', currentConnections);
           
           // Don't fail the test - just log the issue for investigation

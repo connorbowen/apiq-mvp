@@ -76,7 +76,8 @@ export const createTestUser = async (
     });
 
     if (freePlan) {
-      await prisma.userPlan.create({
+      console.log('🔍 Creating user plan for user:', user.id, 'with plan:', freePlan);
+      const createdUserPlan = await prisma.userPlan.create({
         data: {
           userId: user.id,
           planType: 'FREE',
@@ -93,7 +94,12 @@ export const createTestUser = async (
           currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
         }
       });
+      console.log('✅ User plan created successfully:', { id: createdUserPlan.id, userId: createdUserPlan.userId, planType: createdUserPlan.planType });
+    } else {
+      console.log('❌ No FREE plan found, cannot create user plan');
     }
+  } else {
+    console.log('✅ User plan already exists:', { id: existingUserPlan.id, userId: existingUserPlan.userId, planType: existingUserPlan.planType });
   }
 
   // Login to get real JWT tokens

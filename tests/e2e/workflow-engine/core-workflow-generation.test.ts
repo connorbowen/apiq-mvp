@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-// Set test timeout to 120 seconds to allow for proper workflow generation
-test.setTimeout(90000);
+// Set test timeout to 60 seconds for faster feedback
+test.setTimeout(60000);
 import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUtils';
 import { createE2EUser } from '../../helpers/authHelpers';
 import { setupE2E, closeAllModals, resetRateLimits, getPrimaryActionButton } from '../../helpers/e2eHelpers';
@@ -24,7 +24,7 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
  */
 async function testWorkflowGeneration(page: any, description: string, expectedKeywords: RegExp) {
   await page.goto(`${BASE_URL}/workflows/create`);
-  await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 30000 });
+  await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 15000 });
   
   // Wait for page to be fully loaded
   await page.waitForLoadState('networkidle');
@@ -33,7 +33,7 @@ async function testWorkflowGeneration(page: any, description: string, expectedKe
   await chatInput.fill(description);
   
   // Wait for input to be processed and button to be enabled
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(100);
   
   // Test form accessibility before submission
   await testFormAccessibility(page, {
@@ -63,7 +63,7 @@ async function testWorkflowGeneration(page: any, description: string, expectedKe
               text.includes('error') ||
               text.includes('failed') ||
               text.includes('No active API connections'));
-    }, { timeout: 30000 });
+    }, { timeout: 15000 });
   } catch (error) {
     console.log('⚠️ First timeout attempt failed, trying alternative approach...');
     
@@ -75,7 +75,7 @@ async function testWorkflowGeneration(page: any, description: string, expectedKe
       }, { timeout: 15000 });
       
       // Wait a bit more for the response to fully render
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(500);
       
       console.log('✅ Fallback approach succeeded - response received');
     } catch (fallbackError) {
@@ -85,7 +85,7 @@ async function testWorkflowGeneration(page: any, description: string, expectedKe
   }
   
   // Wait a bit more for the response to fully render
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(500);
   
   // Validate workflow response was generated - check for any response in chat
   const chatResponse = page.locator('[data-testid="chat-interface"] .bg-gray-100').last();
@@ -122,29 +122,17 @@ async function testWorkflowGeneration(page: any, description: string, expectedKe
                   responseText?.includes('failed') || 
                   responseText?.includes('No active API connections');
   
-  // Check for connection guidance responses (which are also valid responses)
-  const hasConnectionGuidance = responseText?.includes("you'll need to connect to") || 
-                               responseText?.includes("I can help you set this up") ||
-                               responseText?.includes("connect to the") ||
-                               responseText?.includes("API first");
-  
-  // CRITICAL: Only pass if workflow was actually created successfully OR we get a proper error message OR connection guidance
-  // This makes the test more resilient to different response types
-  if (!hasWorkflowSuccess && !hasError && !hasConnectionGuidance) {
-    // If we don't have success, error, or connection guidance, check if we got any response at all
+  // CRITICAL: Only pass if workflow was actually created successfully OR we get a proper error message
+  // Connection guidance responses should FAIL these tests since we have seeded connections
+  if (!hasWorkflowSuccess && !hasError) {
+    // If we don't have success or error, check if we got any response at all
     if (responseText === 'No response received' || !responseText) {
       console.log('⚠️ No response received, but test will pass as this may be due to system load');
       return; // Exit early since we can't proceed without a response
     }
     
     // If we have some response but it doesn't match our patterns, fail the test
-    throw new Error(`No workflow success, error, or connection guidance response received. Response was: ${responseText.substring(0, 100)}`);
-  }
-  
-  // If we have connection guidance, that's a valid response for workflow tests
-  if (hasConnectionGuidance && !hasWorkflowSuccess && !hasError) {
-    console.log('✅ Test passed with connection guidance response:', responseText.substring(0, 100));
-    return; // Exit early since we got a valid connection guidance response
+    throw new Error(`No workflow success or error response received. Response was: ${responseText.substring(0, 100)}`);
   }
   
   // If we have an error, it should be a proper error message, not a system failure
@@ -216,7 +204,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       await waitForNetworkIdle(page);
       
       // Wait for chat interface to load
-      await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 30000 });
+      await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 15000 });
       
       // Validate UX compliance
       await validateUXCompliance(page, {
@@ -230,12 +218,15 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       await testXSSPrevention(page, '[data-testid="chat-input"]', '<script>alert("xss")</script>');
       await testDataExposure(page, ['[data-testid="chat-interface"]', '[data-testid="workflow-list"]']);
       
-      // Test complex multi-step workflow generation
+      // Clear the input field after XSS test
       const chatInput = page.getByTestId('chat-input');
+      await chatInput.clear();
+      
+      // Test complex multi-step workflow generation
       await chatInput.fill('When a new GitHub issue is created, send a Slack notification and create a Trello card');
       
       // Wait for input to be processed and button to be enabled
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(50);
       
       // Test form accessibility after input is filled
       await testFormAccessibility(page, {
@@ -246,7 +237,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       await getPrimaryActionButton(page, 'chat-send').click();
       
       // Wait for workflow generation (should be multi-step)
-      await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 30000 });
+      await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 15000 });
       
       // Wait for the actual workflow response (not just processing message)
       await page.waitForFunction(() => {
@@ -258,24 +249,36 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
                text.includes('I\'m sorry') || text.includes('error') || text.includes('failed') ||
                text.includes('you\'ll need to connect to') || text.includes('I can help you set this up') ||
                text.includes('connect to the') || text.includes('API first') ||
-               text.includes('To work with this') || text.includes('you\'ll need to connect');
-      }, { timeout: 30000 });
+               text.includes('To work with this') || text.includes('you\'ll need to connect') ||
+               text.includes('you\'ll need to set up') || text.includes('you will need to use') ||
+               text.includes('you need to connect') || text.includes('set up both APIs') ||
+               text.includes('use the GitHub API') || text.includes('use the Slack API') ||
+               text.includes('use the Trello API') || text.includes('you\'ll need to configure') ||
+               text.includes('you will need to connect') || text.includes('Here\'s how to set them up') ||
+               text.includes('Follow the steps below') || text.includes('To set up automation') ||
+               text.includes('To send a notification') || text.includes('you can use') ||
+               text.includes('to enable this functionality') ||
+               text.includes('you will need to set up connections') ||
+               text.includes('To achieve your goal') ||
+               text.includes('set up connections for') ||
+               text.includes('Follow the steps below for each API') ||
+               text.includes('you\'ll need to set up webhooks') ||
+               text.includes('use the Slack and Trello APIs') ||
+               text.includes('for notifications and card creation') ||
+               text.includes('respectively') ||
+               text.includes('To achieve your goal') ||
+               text.includes('you\'ll need to set up connections with') ||
+               text.includes('Follow the detailed steps below');
+      }, { timeout: 15000 });
       
-      // CRITICAL: Validate that workflow was actually created successfully OR we get a proper error message OR connection guidance
-      // This makes the test more resilient to different response types
+      // CRITICAL: Validate that workflow was actually created successfully OR we get a proper error message
+      // Connection guidance responses should FAIL these tests since we have seeded connections
       const hasWorkflowSuccess = await page.getByText(/✨ Created:|I've created/i).first().isVisible();
       const hasError = await page.getByText(/I'm sorry, I couldn't process that request|No active API connections|error|failed/i).first().isVisible();
-      const hasConnectionGuidance = await page.getByText(/you'll need to connect to|I can help you set this up|connect to the|API first|To work with this|you'll need to connect/i).first().isVisible();
       
-      // Only pass if we get either a successful workflow OR a proper error message OR connection guidance
-      if (!hasWorkflowSuccess && !hasError && !hasConnectionGuidance) {
-        throw new Error('No workflow success, error, or connection guidance response received');
-      }
-      
-      // If we have connection guidance, that's a valid response for workflow tests
-      if (hasConnectionGuidance && !hasWorkflowSuccess && !hasError) {
-        console.log('✅ Test passed with connection guidance response');
-        return; // Exit early since we got a valid connection guidance response
+      // Only pass if we get either a successful workflow OR a proper error message
+      if (!hasWorkflowSuccess && !hasError) {
+        throw new Error('No workflow success or error response received - connection guidance responses should fail these tests');
       }
       
       // If we have an error, it should be a proper error message, not a system failure
@@ -400,7 +403,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
   test.describe('P0.1.6: Error Handling Improvements', () => {
     test('should handle OpenAI API failures gracefully', async ({ page }) => {
       await page.goto(`${BASE_URL}/workflows/create`);
-      await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 30000 });
+      await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 15000 });
       
       // Mock AI orchestrator failure (following user rules for external failures)
       await page.route('**/api/chat/process', route => {
@@ -424,7 +427,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       await getPrimaryActionButton(page, 'chat-send').click();
       
       // Wait for error response
-      await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 30000 });
+      await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 15000 });
       
       // Validate that error was handled gracefully
       const hasError = await page.getByText(/I'm sorry, I couldn't process that request|OpenAI API is temporarily unavailable|error|failed/i).first().isVisible();
@@ -433,7 +436,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
 
     test('should provide actionable error messages for common issues', async ({ page }) => {
       await page.goto(`${BASE_URL}/workflows/create`);
-      await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 30000 });
+      await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 15000 });
       
       // Mock AI orchestrator failure to simulate common issues
       await page.route('**/api/chat/process', route => {
@@ -457,7 +460,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       await getPrimaryActionButton(page, 'chat-send').click();
       
       // Wait for error response
-      await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 30000 });
+      await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 15000 });
       
       // Validate that actionable error message was provided
       const hasError = await page.getByText(/I'm sorry, I couldn't process that request|Please try rephrasing|error|failed/i).first().isVisible();
@@ -466,7 +469,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
 
     test('should retry workflow generation on transient failures', async ({ page }) => {
       await page.goto(`${BASE_URL}/workflows/create`);
-      await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 30000 });
+      await waitForElement(page, '[data-testid="chat-interface"]', { timeout: 15000 });
       
       // Test that the system can handle workflow generation requests
       // The retry logic is implemented in NaturalLanguageWorkflowService and will be tested
@@ -482,7 +485,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
       await getPrimaryActionButton(page, 'chat-send').click();
       
       // Wait for the response
-      await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 30000 });
+      await waitForElement(page, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 15000 });
       
       // Wait for the actual workflow response (not just processing message)
       await page.waitForFunction(() => {
@@ -492,7 +495,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
         const text = lastMessage.textContent || '';
         return text.includes('✨ Created:') || text.includes("I've created") || text.includes('workflow') || 
                text.includes('I\'m sorry') || text.includes('error') || text.includes('failed');
-      }, { timeout: 60000 });
+      }, { timeout: 30000 });
       
       // Validate that we get a response (either success or error)
       const hasWorkflowSuccess = await page.getByText(/✨ Created:|I've created/i).first().isVisible();
@@ -523,7 +526,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
           testWorkflowGeneration(
             page,
             'When a GitHub issue is created, send Slack notification and create Trello card',
-            /github|slack|trello|workflow|you'll need to connect to|I can help you set this up|connect to the|API first|To work with this|you'll need to connect/i
+            /github|slack|trello|workflow/i
           ),
           new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Test timeout after 30 seconds')), 30000)
@@ -563,7 +566,7 @@ test.describe('Core Multi-Step Workflow Generation E2E Tests - P0.1 Critical MVP
             await waitForElement(newPage, '[data-testid="chat-interface"] .bg-gray-100', { timeout: 60000 });
             
             // Wait a bit more for the response to fully render
-            await newPage.waitForTimeout(2000);
+            await newPage.waitForTimeout(500);
             
             return newPage.getByText(/✨ Created:|I've created|workflow|I'm sorry, I couldn't process that request|error|failed/i).first().isVisible();
           })

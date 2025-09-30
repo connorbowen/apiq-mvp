@@ -360,7 +360,7 @@ Make the instructions clear, actionable, and encouraging.`;
     } else if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('connection')) {
       errorType = 'network';
       severity = 'high';
-      userFriendlyMessage = 'Network connection issue. Please check your internet connection.';
+      userFriendlyMessage = 'Connection issue. Please try again.';
       shouldRetry = true;
     }
 
@@ -393,9 +393,9 @@ Make the instructions clear, actionable, and encouraging.`;
         'Review API documentation for correct format'
       ],
       network: [
-        'Check your internet connection',
         'Try again in a few moments',
-        'Verify the API endpoint is accessible'
+        'Verify the API endpoint is accessible',
+        'Check your connection settings'
       ],
       rate_limit: [
         'Wait before retrying',

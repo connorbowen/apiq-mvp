@@ -23,7 +23,7 @@ export const testModalSubmitLoading = async (
   await button.click();
   // Validate loading state
   await expect(button).toBeDisabled({ timeout });
-  await expect(button).toHaveText(/Loading|Saving|Creating|Processing|Success!/i, { timeout });
+  await expect(button).toHaveText(/Loading|Saving|Creating|Processing|Executing|Success!/i, { timeout });
 };
 
 /**

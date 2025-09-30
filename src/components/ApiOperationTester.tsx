@@ -148,6 +148,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
       });
 
       if (response.success && response.data) {
+        console.log('API execution response:', response.data);
         setResult(response.data);
         
         // Format the response for human-friendly display
@@ -165,6 +166,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
           setFormattedResponse(formatted);
         }
       } else {
+        console.log('API execution failed:', response.error);
         setError(response.error || 'Failed to execute operation');
       }
     } catch (err) {
@@ -199,7 +201,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
       <button
         onClick={handleExpand}
         className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800 font-medium"
-        data-testid="try-it-out-toggle"
+        data-testid={`try-it-out-btn-${endpoint.id || endpoint.path}-${endpoint.method}`}
       >
         <span>🚀 Try It Out</span>
         <svg
@@ -216,7 +218,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
         <div className="mt-4 space-y-4" data-testid="operation-tester">
           {/* Parameters Section */}
           {endpoint.parameters && endpoint.parameters.length > 0 && (
-            <div data-testid="parameter-form">
+            <form data-testid="parameter-form">
               <h4 className="text-sm font-medium text-gray-900 mb-3">Parameters</h4>
               <div className="space-y-3">
                 {enhancedParameters.map((param: any, index: number) => (
@@ -229,6 +231,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
                     <div className="flex-1">
                       {param.type === 'boolean' ? (
                         <select
+                          name={param.name}
                           value={parameters[param.name] || ''}
                           onChange={(e) => handleParameterChange(param.name, e.target.value === 'true')}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -241,6 +244,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
                       ) : param.type === 'number' ? (
                         <input
                           type="number"
+                          name={param.name}
                           value={parameters[param.name] || ''}
                           onChange={(e) => handleParameterChange(param.name, e.target.value ? Number(e.target.value) : '')}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -252,6 +256,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
                       ) : (
                         <input
                           type="text"
+                          name={param.name}
                           value={parameters[param.name] || ''}
                           onChange={(e) => handleParameterChange(param.name, e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -273,7 +278,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
                   </div>
                 ))}
               </div>
-            </div>
+            </form>
           )}
 
           {/* Request Body Section */}
@@ -318,7 +323,7 @@ export default function ApiOperationTester({ endpoint, connectionName, baseUrl }
               onClick={handleExecute}
               disabled={isExecuting}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              data-testid="primary-action execute-api-btn"
+              data-testid="primary-action-execute-api-btn"
             >
               {isExecuting ? 'Executing...' : 'Execute'}
             </button>

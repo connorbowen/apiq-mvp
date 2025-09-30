@@ -119,6 +119,26 @@ export const setupE2E = async (
   // Optimized login and navigation
   await loginAndNavigate(page, user, options);
   
+  // Wait for authentication to be fully complete
+  await page.waitForFunction(() => {
+    return !window.location.href.includes('/login');
+  }, { timeout: 10000 });
+  
+  // Wait for dashboard elements to be visible based on the target page
+  if (options.tab === 'connections' || (options.tab === 'settings' && options.section === 'connections')) {
+    // For connections page, wait for connections management element
+    await page.waitForSelector('[data-testid="connections-management"]', { 
+      state: 'visible', 
+      timeout: 10000 
+    });
+  } else {
+    // For chat/dashboard page, wait for chat interface element
+    await page.waitForSelector('[data-testid="chat-interface"]', { 
+      state: 'visible', 
+      timeout: 10000 
+    });
+  }
+  
   // Handle guided tour timing - it appears 1 second after dashboard load
   // Only skip if explicitly requested (for tests that need to test guided tour)
   if (!options.skipCloseGuidedTour) {
@@ -444,18 +464,30 @@ export const cleanupTestConnections = async (page: Page): Promise<void> => {
   try {
     console.log('🔗 Cleaning up test connections...');
     
+    // Check if page context is still valid
+    if (!page || page.isClosed()) {
+      console.log('⚠️ Page context is closed, skipping connection cleanup');
+      return;
+    }
+    
     // Get all connections via API instead of UI (much more reliable)
-    const response = await page.request.get('/api/connections');
+    const response = await page.request.get('/api/connections', { timeout: 5000 });
     if (response.ok()) {
       const connections = await response.json();
       
       if (connections && connections.length > 0) {
         console.log(`🗑️ Found ${connections.length} connections to clean up via API`);
         
-        // Delete each connection via API (bypasses UI interception issues)
-        for (const connection of connections) {
+        // Delete connections in parallel with timeout
+        const deletePromises = connections.map(async (connection: any) => {
           try {
-            const deleteResponse = await page.request.delete(`/api/connections/${connection.id}`);
+            // Check if page is still valid before each request
+            if (page.isClosed()) {
+              console.log('⚠️ Page context closed during cleanup, stopping');
+              return;
+            }
+            
+            const deleteResponse = await page.request.delete(`/api/connections/${connection.id}`, { timeout: 3000 });
             if (deleteResponse.ok()) {
               console.log(`🗑️ Cleaned up connection: ${connection.id}`);
             } else {
@@ -464,7 +496,13 @@ export const cleanupTestConnections = async (page: Page): Promise<void> => {
           } catch (deleteError) {
             console.log(`⚠️ Failed to delete connection ${connection.id}:`, deleteError);
           }
-        }
+        });
+        
+        // Wait for all deletions with a timeout
+        await Promise.race([
+          Promise.allSettled(deletePromises),
+          new Promise(resolve => setTimeout(resolve, 10000)) // 10 second max wait
+        ]);
         
         console.log('✅ All test connections cleaned up via API');
       } else {
@@ -488,6 +526,12 @@ export const completeTestTeardown = async (
   artifacts: TestArtifacts = {}
 ): Promise<void> => {
   try {
+    // Check if page context is still valid
+    if (!page || page.isClosed()) {
+      console.log('⚠️ Page context is closed, skipping teardown');
+      return;
+    }
+    
     // 1. Clean up test connections specifically (prevents "Delete" errors)
     await cleanupTestConnections(page);
     

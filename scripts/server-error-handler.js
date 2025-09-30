@@ -33,13 +33,21 @@ process.on('unhandledRejection', (reason, promise) => {
 // Handle SIGTERM gracefully
 process.on('SIGTERM', () => {
   console.log('🔄 SIGTERM received, shutting down gracefully');
-  process.exit(0);
+  // Force exit after a short delay to ensure cleanup
+  setTimeout(() => process.exit(0), 2000);
 });
 
 // Handle SIGINT gracefully
 process.on('SIGINT', () => {
   console.log('🔄 SIGINT received, shutting down gracefully');
-  process.exit(0);
+  // Force exit after a short delay to ensure cleanup
+  setTimeout(() => process.exit(0), 2000);
+});
+
+// Handle SIGHUP gracefully
+process.on('SIGHUP', () => {
+  console.log('🔄 SIGHUP received, shutting down gracefully');
+  setTimeout(() => process.exit(0), 2000);
 });
 
 console.log('🛡️ Server error handler initialized');

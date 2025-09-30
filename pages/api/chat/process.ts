@@ -6,6 +6,7 @@ import { errorHandler } from '../../../src/middleware/errorHandler';
 import { prisma } from '../../../lib/database/client';
 import { usageTrackingService } from '../../../src/lib/services/usageTrackingService';
 import { UsageType } from '../../../src/generated/prisma';
+import { substituteUrlParameters, createSafeApiUrl } from '../../../src/lib/utils/urlSubstitution';
 import axios from 'axios';
 
 interface ProcessMessageResponse {
@@ -52,12 +53,39 @@ async function executeDirectApiCall(apiCallData: any, connections: any[], userId
     };
   }
   
-  // Substitute path parameters in the URL
-  let substitutedUrl = apiCallData.url;
-  if (apiCallData.parameters) {
-    for (const [key, value] of Object.entries(apiCallData.parameters)) {
-      substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
-    }
+  // Substitute path parameters in the URL using robust utility
+  const urlSubstitutionResult = substituteUrlParameters({
+    url: apiCallData.url,
+    parameters: apiCallData.parameters || {},
+    debug: true
+  });
+  
+  const substitutedUrl = urlSubstitutionResult.substitutedUrl;
+  
+  console.log('🔍 executeDirectApiCall - URL substitution result:', {
+    originalUrl: apiCallData.url,
+    substitutedUrl,
+    substitutions: urlSubstitutionResult.substitutions,
+    hasUnsubstitutedParams: urlSubstitutionResult.hasUnsubstitutedParams
+  });
+  
+  // Validate the URL is safe to use
+  const safeUrlResult = createSafeApiUrl({
+    url: apiCallData.url,
+    parameters: apiCallData.parameters || {},
+    debug: true
+  });
+  
+  if (!safeUrlResult.isValid) {
+    console.error('🔍 executeDirectApiCall - URL substitution validation failed:', safeUrlResult.errors);
+    return {
+      success: false,
+      data: { 
+        error: `URL substitution failed: ${safeUrlResult.errors.join(', ')}`,
+        url: apiCallData.url,
+        parameters: apiCallData.parameters
+      }
+    };
   }
   
   try {
@@ -81,15 +109,7 @@ async function executeDirectApiCall(apiCallData: any, connections: any[], userId
     }
 
     let response;
-    const requestConfig = {
-      method: apiCallData.method,
-      url: fullUrl,
-      headers,
-      params: apiCallData.parameters,
-      data: apiCallData.requestBody,
-      timeout: 30000
-    };
-
+    
     console.log('Executing API call', {
       method: apiCallData.method,
       originalUrl: apiCallData.url,
@@ -100,7 +120,52 @@ async function executeDirectApiCall(apiCallData: any, connections: any[], userId
       userId
     });
 
-    response = await axios(requestConfig);
+    // Use fetch instead of axios to match workflow implementation
+    // Build URL with query parameters for GET requests
+    let requestUrl = fullUrl;
+    if (apiCallData.parameters && Object.keys(apiCallData.parameters).length > 0) {
+      const urlParams = new URLSearchParams();
+      Object.entries(apiCallData.parameters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          urlParams.append(key, String(value));
+        }
+      });
+      requestUrl = `${fullUrl}?${urlParams.toString()}`;
+    }
+
+    const fetchResponse = await fetch(requestUrl, {
+      method: apiCallData.method || 'GET',
+      headers,
+      body: apiCallData.requestBody ? JSON.stringify(apiCallData.requestBody) : undefined
+    });
+
+    if (!fetchResponse.ok) {
+      // Handle HTTP error responses (4xx, 5xx) but still return the substituted URL
+      const responseData = await fetchResponse.text().catch(() => null);
+      const executionTime = Date.now() - startTime;
+      
+      return {
+        success: true, // Still successful from our perspective (we got a response)
+        data: {
+          method: apiCallData.method,
+          url: substitutedUrl, // Use the substituted URL instead of template
+          statusCode: fetchResponse.status,
+          responseData: responseData,
+          responseHeaders: Object.fromEntries(fetchResponse.headers.entries()),
+          executionTime,
+          error: `API call failed: ${fetchResponse.status} ${fetchResponse.statusText}`
+        }
+      };
+    }
+
+    const responseData = await fetchResponse.json();
+    
+    // Convert fetch response to axios-like format for compatibility
+    response = {
+      status: fetchResponse.status,
+      data: responseData,
+      headers: Object.fromEntries(fetchResponse.headers.entries())
+    };
     
     const executionTime = Date.now() - startTime;
 
@@ -318,6 +383,7 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
       return res.status(200).json(responseData);
     } else {
       console.log('🔍 Process endpoint: No guidance needed, proceeding with normal processing');
+      console.log('🔍 Process endpoint: About to call ParallelAIService.processWorkflowRequest');
     }
 
     // Process with parallel AI service
@@ -333,6 +399,18 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
     const result = await parallelAIService.processWorkflowRequest(message, user.id, connections, context, guidanceResponse);
     console.log('🔍 Process endpoint: ParallelAIService result:', result);
     
+    // DEBUG: Log the specific apiCallResult details
+    if (result.data?.apiCallResult) {
+      console.log('🔍 Process endpoint: apiCallResult details:', {
+        method: result.data.apiCallResult.method,
+        url: result.data.apiCallResult.url,
+        statusCode: result.data.apiCallResult.statusCode,
+        hasResponseData: !!result.data.apiCallResult.responseData,
+        responseDataLength: result.data.apiCallResult.responseData?.length || 0,
+        parameters: result.data.apiCallResult.parameters
+      });
+    }
+    
     console.log(`⚡ Processing completed in ${result.processingTime}ms`);
     
     if (result.success) {
@@ -340,28 +418,65 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
       if (result.data?.type === 'direct_api_call' && result.data?.apiCallResult) {
         // Check if the API call has already been executed (has statusCode and responseData)
         const apiCallResult = result.data.apiCallResult;
+        console.log('🔍 Process endpoint: Checking apiCallResult for execution:', {
+          hasStatusCode: !!apiCallResult.statusCode,
+          hasResponseData: !!apiCallResult.responseData,
+          statusCode: apiCallResult.statusCode,
+          responseData: apiCallResult.responseData,
+          shouldExecute: !apiCallResult.statusCode && !apiCallResult.responseData
+        });
+        
+        // Skip execution if the API call has already been executed by parallelAIService
         if (!apiCallResult.statusCode && !apiCallResult.responseData) {
           console.log('🔧 Executing direct API call...');
           const apiResult = await executeDirectApiCall(apiCallResult, connections, user.id);
           
-          if (apiResult.success) {
-            // Update the result with actual API call execution
-            result.data.apiCallResult = {
-              method: apiResult.data.method,
-              url: apiResult.data.url,
-              statusCode: apiResult.data.statusCode,
-              responseData: apiResult.data.responseData,
-              responseHeaders: apiResult.data.responseHeaders,
-              executionTime: apiResult.data.executionTime,
-              error: apiResult.data.error,
-              connectionId: apiCallResult.connectionId // Preserve the connectionId
-            };
-          } else {
-            // Handle API execution error
-            apiCallResult.error = apiResult.data?.error || 'API call failed';
+          // Update the result with actual API call execution regardless of success/failure
+          // Debug logging for URL substitution issue
+          console.log('🔍 ExecuteDirectApiCall: Updating apiCallResult:', {
+            originalUrl: apiCallResult.url,
+            substitutedUrl: apiResult.data.url,
+            apiResultSuccess: apiResult.success
+          });
+
+          // Substitute URL manually if executeDirectApiCall failed
+          let substitutedUrl = apiResult.data.url;
+          if (!substitutedUrl && apiCallResult.parameters) {
+            substitutedUrl = apiCallResult.url.replace(/\{(\w+)\}/g, (match: string, paramName: string) => 
+              apiCallResult.parameters[paramName] || match
+            );
           }
+
+          result.data.apiCallResult = {
+            method: apiResult.data.method || apiCallResult.method,
+            url: substitutedUrl || apiCallResult.url, // Use substituted URL or fallback to original
+            statusCode: apiResult.data.statusCode || 0,
+            responseData: apiResult.data.responseData || null,
+            responseHeaders: apiResult.data.responseHeaders || {},
+            executionTime: apiResult.data.executionTime || 0,
+            error: apiResult.data.error || 'API call execution failed',
+            connectionId: apiCallResult.connectionId, // Preserve the connectionId
+            parameters: apiCallResult.parameters // Preserve the parameters
+          };
+
+          // Debug logging for final result
+          console.log('🔍 ExecuteDirectApiCall: Updated apiCallResult.url:', result.data.apiCallResult.url);
+          
+          // Debug log to verify the URL is correct
+          console.log('🔍 Process endpoint: Updated apiCallResult with substituted URL:', {
+            originalUrl: apiCallResult.url,
+            substitutedUrl: apiResult.data.url,
+            finalUrl: result.data.apiCallResult.url
+          });
         } else {
-          console.log('🔧 API call already executed, skipping execution');
+          console.log('🔧 API call already executed by parallelAIService, skipping execution');
+          console.log('🔍 Process endpoint: API call result from parallelAIService:', {
+            method: apiCallResult.method,
+            url: apiCallResult.url,
+            statusCode: apiCallResult.statusCode,
+            hasResponseData: !!apiCallResult.responseData,
+            executionTime: apiCallResult.executionTime
+          });
         }
       }
       

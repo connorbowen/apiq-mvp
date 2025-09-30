@@ -4,6 +4,7 @@ import { ConnectionGuidanceOrchestrator } from './connectionGuidanceOrchestrator
 import { OptimizedWorkflowService } from './optimizedWorkflowService';
 import { AICacheService } from './aiCacheService';
 import { PerformanceMonitor } from './performanceMonitor';
+import { substituteUrlParameters, createSafeApiUrl } from '../utils/urlSubstitution';
 import axios from 'axios';
 
 /**
@@ -51,7 +52,7 @@ export class ParallelAIService {
       console.log('🚀 Starting optimized parallel AI processing with caching...');
 
       // Check cache for workflow result first
-      const cachedWorkflow = this.cacheService.getWorkflowResult(message, connections);
+      const cachedWorkflow = this.cacheService.getWorkflowResult(message, connections, context);
       if (cachedWorkflow) {
         console.log('🎯 Cache hit for workflow generation');
         this.performanceMonitor.recordRequest({
@@ -75,13 +76,15 @@ export class ParallelAIService {
       // Step 1: Parallel classification and connection analysis with caching
       const classificationStart = Date.now();
       console.log('🔍 Classifying message:', message);
+      console.log('🔍 DEBUG: About to call classifyMessageWithCache for message:', message);
       const classification = await this.classifyMessageWithCache(message, connections);
+      console.log('🔍 DEBUG: Classification completed for message:', message);
       console.log('🔍 DEBUG: Message classification result:', JSON.stringify(classification, null, 2));
       console.log('🔍 Classification result:', classification);
       classificationTime = Date.now() - classificationStart;
 
       const connectionStart = Date.now();
-      const connectionGuidance = await this.analyzeConnectionsWithCentralizedOrchestrator(message, connections, userId);
+      const connectionGuidance = await this.analyzeConnectionsWithCentralizedOrchestrator(message, connections, userId, classification, context);
       connectionAnalysisTime = Date.now() - connectionStart;
 
       const parallelTime = Date.now() - startTime;
@@ -188,7 +191,7 @@ export class ParallelAIService {
 
         // Cache successful workflow results
         if (workflowResult.success && workflowResult.workflow) {
-          this.cacheService.setWorkflowResult(message, connections, result.data);
+          this.cacheService.setWorkflowResult(message, connections, result.data, undefined, context);
         }
 
         this.performanceMonitor.recordRequest({
@@ -206,7 +209,11 @@ export class ParallelAIService {
       }
 
       // Handle other message types
+      console.log('🔍 ParallelAIService: Checking classification type:', classification.type);
+      console.log('🔍 ParallelAIService: Is DIRECT_API_CALL?', classification.type === 'direct_api_call' || classification.type === 'DIRECT_API_CALL');
+      
       if (classification.type === 'direct_api_call' || classification.type === 'DIRECT_API_CALL') {
+        console.log('🔍 ParallelAIService: Processing DIRECT_API_CALL for message:', message);
         // Generate direct API call parameters
         const directApiStart = Date.now();
         const directApiResult = await this.openaiService.executeDirectApiCall({
@@ -253,25 +260,64 @@ export class ParallelAIService {
           console.log('🔍 ParallelAIService: Skipping API call execution - conditions not met');
         }
         
+        // Debug logging for URL substitution issue
+        console.log('🔍 ParallelAIService: Creating result with executedApiResult:', {
+          executedApiResultExists: !!executedApiResult,
+          executedApiResultSuccess: executedApiResult?.success,
+          executedApiResultUrl: executedApiResult?.data?.url,
+          directApiResultUrl: directApiResult.data?.apiCallResult?.url,
+          executedApiResultData: executedApiResult?.data,
+          conditionMet: !!(executedApiResult && executedApiResult.data)
+        });
+        
+        // Force output to console
+        console.log('🔍 BROWSER DEBUG - executedApiResult exists:', !!executedApiResult);
+        console.log('🔍 BROWSER DEBUG - executedApiResult.data exists:', !!executedApiResult?.data);
+        console.log('🔍 BROWSER DEBUG - executedApiResult.data.url:', executedApiResult?.data?.url);
+        console.log('🔍 BROWSER DEBUG - condition (executedApiResult && executedApiResult.data):', !!(executedApiResult && executedApiResult.data));
+        console.log('🔍 BROWSER DEBUG - will use executedApiResult:', !!(executedApiResult && executedApiResult.data));
+        
+        // Force output to browser console
+        if (typeof window !== 'undefined') {
+          console.log('🔍 BROWSER DEBUG - executedApiResult:', executedApiResult);
+          console.log('🔍 BROWSER DEBUG - condition met:', !!(executedApiResult && executedApiResult.data));
+        }
+        
+
         const result = {
           success: directApiResult.success,
           data: directApiResult.success ? {
             type: 'direct_api_call',
             content: directApiResult.data?.explanation || 'API call executed successfully!',
-            apiCallResult: executedApiResult?.success ? {
-              method: executedApiResult.data.method,
-              url: executedApiResult.data.url,
-              statusCode: executedApiResult.data.statusCode,
-              responseData: executedApiResult.data.responseData,
-              responseHeaders: executedApiResult.data.responseHeaders,
-              executionTime: executedApiResult.data.executionTime,
-              error: executedApiResult.data.error
-            } : directApiResult.data?.apiCallResult,
+            apiCallResult: {
+              method: executedApiResult?.data?.method || directApiResult.data?.apiCallResult?.method || 'GET',
+              url: executedApiResult?.data?.url || directApiResult.data?.apiCallResult?.url || '/unknown', // Use the substituted URL from execution
+              statusCode: executedApiResult?.data?.statusCode || 0,
+              responseData: executedApiResult?.data?.responseData || null,
+              responseHeaders: executedApiResult?.data?.responseHeaders || {},
+              executionTime: executedApiResult?.data?.executionTime || 0,
+              error: executedApiResult?.data?.error || null,
+              connectionId: directApiResult.data?.apiCallResult?.connectionId, // Preserve connectionId
+              parameters: directApiResult.data?.apiCallResult?.parameters // Preserve parameters
+            },
             suggestedAction: directApiResult.data?.suggestedAction
           } : undefined,
           error: directApiResult.error,
           processingTime: Date.now() - startTime
         };
+        
+        // Debug logging for final result
+        console.log('🔍 ParallelAIService: Final result construction:', {
+          executedApiResultExists: !!executedApiResult,
+          executedApiResultUrl: executedApiResult?.data?.url,
+          finalResultUrl: result.data?.apiCallResult?.url,
+          usingExecutedResult: !!(executedApiResult && executedApiResult.data)
+        });
+
+        // Debug logging for final result
+        console.log('🔍 ParallelAIService: Final result apiCallResult.url:', result.data?.apiCallResult?.url);
+        console.log('🔍 ParallelAIService: Using executedApiResult?', !!executedApiResult);
+        console.log('🔍 ParallelAIService: executedApiResult.data.url:', executedApiResult?.data?.url);
 
         this.performanceMonitor.recordRequest({
           duration: result.processingTime!,
@@ -288,6 +334,7 @@ export class ParallelAIService {
       }
 
       // Handle other message types (general_chat, etc.)
+      console.log('🔍 ParallelAIService: No matching classification type, using fallback for type:', classification.type);
       const result = {
         success: true,
         data: {
@@ -336,17 +383,19 @@ export class ParallelAIService {
    * Classify message with caching
    */
   private async classifyMessageWithCache(message: string, connections: any[] = []) {
+    console.log('🔍 DEBUG: classifyMessageWithCache called for message:', message);
     // Check cache first
     const cached = this.cacheService.getClassificationResult(message);
     if (cached) {
-      console.log('🎯 Cache hit for classification');
+      console.log('🎯 Cache hit for classification for message:', message);
       return cached;
     }
+    console.log('🔍 DEBUG: No cache hit, proceeding with fresh classification for message:', message);
 
     try {
       const result = await Promise.race([
         this.classificationService.classifyMessage(message, {}, connections),
-        this.timeoutPromise(5000, 'Classification timeout')
+        this.timeoutPromise(30000, 'Classification timeout')
       ]);
       
       // Cache the result
@@ -355,13 +404,8 @@ export class ParallelAIService {
     } catch (error) {
       console.error('Classification failed:', error);
       // Fallback to rules-based classification
-      const fallback = {
-        type: 'workflow',
-        confidence: 0.7,
-        reasoning: 'Fallback classification',
-        suggestedActions: ['Create workflow'],
-        requiresApiConnections: true
-      };
+      const fallback = this.classificationService.applyRulesBasedFiltering(message);
+      console.log('🔍 Using rules-based fallback classification:', fallback);
       
       // Cache fallback result for shorter time
       this.cacheService.setClassificationResult(message, fallback, 2 * 60 * 1000); // 2 minutes
@@ -372,15 +416,54 @@ export class ParallelAIService {
   /**
    * Analyze connections using centralized orchestrator
    */
-  private async analyzeConnectionsWithCentralizedOrchestrator(message: string, connections: any[], userId: string) {
+  private async analyzeConnectionsWithCentralizedOrchestrator(message: string, connections: any[], userId: string, classification: any, context?: any[]) {
     // Check cache first
-    const cached = this.cacheService.getConnectionAnalysisResult(message, connections);
+    const cached = this.cacheService.getConnectionAnalysisResult(message, connections, context);
     if (cached) {
       console.log('🎯 Cache hit for connection analysis');
       return cached;
     }
 
     try {
+      // Fast path for direct API calls - bypass complex orchestration
+      if (classification.type === 'direct_api_call' && connections.length > 0) {
+        console.log('🔍 ParallelAIService - Using fast path for direct API call');
+        console.log('🔍 ParallelAIService - Message:', message);
+        console.log('🔍 ParallelAIService - Connections:', connections.length);
+        
+        // Use the first available connection for direct API calls
+        const connection = connections[0];
+        console.log('🔍 ParallelAIService - Using connection:', connection.name);
+        
+        // Create a simplified result for direct API calls
+        const result = {
+          shouldProvideGuidance: false,
+          guidanceType: 'none',
+          message: 'You have all the necessary connections. You can proceed with your request.',
+          details: {
+            requiredApis: [],
+            suggestedWorkflow: 'Proceed with your workflow',
+            userIntent: message
+          }
+        };
+        
+        console.log('🔍 ParallelAIService - Fast path result:', JSON.stringify(result, null, 2));
+        
+        // Convert to legacy format for compatibility
+        const legacyResult = {
+          requiresGuidance: result.shouldProvideGuidance,
+          missingApis: result.details?.requiredApis || [],
+          suggestedConnections: result.details?.requiredApis || [],
+          guidanceMessage: result.message
+        };
+        
+        // Cache the result with context to avoid stale results
+        this.cacheService.setConnectionAnalysisResult(message, connections, legacyResult, 10 * 60 * 1000, context);
+        console.log('🔍 ParallelAIService - Fast path result cached');
+        
+        return legacyResult;
+      }
+      
       console.log('🔍 ParallelAIService - Using centralized orchestrator');
       console.log('🔍 ParallelAIService - Message:', message);
       console.log('🔍 ParallelAIService - Connections:', connections.length);
@@ -393,7 +476,7 @@ export class ParallelAIService {
           userId,
           context: {}
         }),
-        this.timeoutPromise(5000, 'Connection analysis timeout')
+        this.timeoutPromise(30000, 'Connection analysis timeout')
       ]);
       
       console.log('🔍 ParallelAIService - Centralized orchestrator result:', JSON.stringify(result, null, 2));
@@ -536,18 +619,55 @@ export class ParallelAIService {
     console.log('🔍 executeApiCall - ✅ Connection FOUND:', { id: connection.id, name: connection.name, baseUrl: connection.baseUrl });
     require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - Connection FOUND: ${connection.id}, baseUrl: ${connection.baseUrl}\n`);
     
-    // Substitute path parameters in the URL
-    let substitutedUrl = apiCallData.url;
-    if (apiCallData.parameters) {
-      for (const [key, value] of Object.entries(apiCallData.parameters)) {
-        substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
-      }
+    // Substitute path parameters in the URL using robust utility
+    const urlSubstitutionResult = substituteUrlParameters({
+      url: apiCallData.url,
+      parameters: apiCallData.parameters || {},
+      debug: true
+    });
+    
+    const substitutedUrl = urlSubstitutionResult.substitutedUrl;
+    
+    console.log('🔍 executeApiCall - URL substitution result:', {
+      originalUrl: apiCallData.url,
+      substitutedUrl,
+      substitutions: urlSubstitutionResult.substitutions,
+      hasUnsubstitutedParams: urlSubstitutionResult.hasUnsubstitutedParams
+    });
+    
+    // Validate the URL is safe to use
+    const safeUrlResult = createSafeApiUrl({
+      url: apiCallData.url,
+      parameters: apiCallData.parameters || {},
+      debug: true
+    });
+    
+    if (!safeUrlResult.isValid) {
+      console.error('🔍 executeApiCall - URL substitution validation failed:', safeUrlResult.errors);
+      return {
+        success: false,
+        data: { 
+          error: `URL substitution failed: ${safeUrlResult.errors.join(', ')}`,
+          url: apiCallData.url,
+          parameters: apiCallData.parameters
+        }
+      };
     }
     
+    // Build URL with query parameters for GET requests
+    const fullUrl = `${connection.baseUrl}${substitutedUrl}`;
+    let requestUrl = fullUrl;
+    if (apiCallData.parameters && Object.keys(apiCallData.parameters).length > 0) {
+      const urlParams = new URLSearchParams();
+      Object.entries(apiCallData.parameters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          urlParams.append(key, String(value));
+        }
+      });
+      requestUrl = `${fullUrl}?${urlParams.toString()}`;
+    }
+
     try {
-      
-      const fullUrl = `${connection.baseUrl}${substitutedUrl}`;
-      
       // Prepare headers
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -565,15 +685,7 @@ export class ParallelAIService {
       }
 
       let response;
-      const requestConfig = {
-        method: apiCallData.method || 'GET', // Default to GET if method is undefined
-        url: fullUrl,
-        headers,
-        params: apiCallData.parameters,
-        data: apiCallData.requestBody,
-        timeout: 30000
-      };
-
+      
       console.log('Executing API call', {
         method: apiCallData.method,
         originalUrl: apiCallData.url,
@@ -586,7 +698,39 @@ export class ParallelAIService {
       
       require('fs').appendFileSync('/tmp/e2e-debug.log', `${new Date().toISOString()} - Making API call to: ${fullUrl}\n`);
 
-      response = await axios(requestConfig);
+      const fetchResponse = await fetch(requestUrl, {
+        method: apiCallData.method || 'GET',
+        headers,
+        body: apiCallData.requestBody ? JSON.stringify(apiCallData.requestBody) : undefined
+      });
+
+      if (!fetchResponse.ok) {
+        // Handle HTTP error responses (4xx, 5xx) but still return the substituted URL
+        const responseData = await fetchResponse.text().catch(() => null);
+        const executionTime = Date.now() - startTime;
+        
+        return {
+          success: true, // Still successful from our perspective (we got a response)
+          data: {
+            method: apiCallData.method || 'GET',
+            url: requestUrl, // Use the full URL with query parameters
+            statusCode: fetchResponse.status,
+            responseData: responseData,
+            responseHeaders: Object.fromEntries(fetchResponse.headers.entries()),
+            executionTime,
+            error: `API call failed: ${fetchResponse.status} ${fetchResponse.statusText}`
+          }
+        };
+      }
+
+      const responseData = await fetchResponse.json();
+      
+      // Convert fetch response to axios-like format for compatibility
+      response = {
+        status: fetchResponse.status,
+        data: responseData,
+        headers: Object.fromEntries(fetchResponse.headers.entries())
+      };
       
       const executionTime = Date.now() - startTime;
 
@@ -594,7 +738,7 @@ export class ParallelAIService {
         success: true,
         data: {
           method: apiCallData.method || 'GET', // Default to GET if method is undefined
-          url: substitutedUrl, // Use the substituted URL instead of template
+          url: requestUrl, // Use the full URL with query parameters
           statusCode: response.status,
           responseData: response.data,
           responseHeaders: response.headers as Record<string, string>,
@@ -614,7 +758,7 @@ export class ParallelAIService {
           success: true, // Still successful from our perspective
           data: {
             method: apiCallData.method || 'GET', // Default to GET if method is undefined
-            url: substitutedUrl, // Use the substituted URL instead of template
+            url: requestUrl, // Use the full URL with query parameters
             statusCode: error.response.status,
             responseData: error.response.data,
             responseHeaders: error.response.headers as Record<string, string>,
@@ -630,7 +774,7 @@ export class ParallelAIService {
           success: false,
           data: {
             method: apiCallData.method || 'GET', // Default to GET if method is undefined
-            url: substitutedUrl, // Use the substituted URL instead of template
+            url: requestUrl, // Use the full URL with query parameters
             statusCode: 0,
             responseData: null,
             responseHeaders: {},

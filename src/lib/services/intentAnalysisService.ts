@@ -69,6 +69,7 @@ export class IntentAnalysisService {
           guidanceType: aiResult.intent?.guidanceType,
           confidence: aiResult.intent?.confidence
         });
+        console.log('🔍 IntentAnalysisService: Final AI result:', JSON.stringify(aiResult, null, 2));
         return aiResult;
       }
 
@@ -102,8 +103,14 @@ export class IntentAnalysisService {
         max_tokens: 400
       });
 
+      console.log('🔍 IntentAnalysisService: AI response:', response);
+      console.log('🔍 IntentAnalysisService: AI response length:', response.length);
+      console.log('🔍 IntentAnalysisService: AI response character codes:', response.split('').slice(0, 100).map((char: string, i: number) => `${i}:${char.charCodeAt(0)}`).join(' '));
+
       const parseResult = parseAIResponse(response);
       if (!parseResult.success) {
+        console.error('🔍 IntentAnalysisService: Parse error details:', parseResult.error);
+        console.error('🔍 IntentAnalysisService: Raw response for debugging:', JSON.stringify(response));
         throw new Error(parseResult.error || 'Failed to parse AI response');
       }
       
@@ -213,7 +220,18 @@ GUIDANCE TYPES:
 - connection_setup: User needs to set up new API connections
 - api_specific: User needs guidance on specific API usage
 - general: User needs general help or information
-- none: User can proceed without guidance
+- none: User can proceed without guidance (including workflow generation AND direct API call requests)
+
+EXAMPLES OF "none" GUIDANCE TYPE:
+- "Get available pets" → guidanceType: "none" (direct API call)
+- "Now get pending pets" → guidanceType: "none" (direct API call)
+- "Find user by ID 123" → guidanceType: "none" (direct API call)
+- "Create a new order" → guidanceType: "none" (direct API call)
+- "When a new order is created, send an email" → guidanceType: "none" (workflow generation)
+
+IMPORTANT: 
+- If the user is requesting workflow generation (e.g., "When X happens, do Y", "Create a workflow", "Automate this process"), and they have the necessary API connections available, classify this as guidanceType: "none" since they can proceed with workflow generation.
+- If the user is making a direct API call request (e.g., "Get available pets", "Now get pending pets", "Find user by ID", "Create a new order"), and they have the necessary API connections available, classify this as guidanceType: "none" since they can proceed with direct API execution.
 
 COMPLEXITY LEVELS:
 - simple: Single API, basic operation
@@ -239,9 +257,52 @@ Respond with JSON in this format:
 User Message: "${request.userMessage}"`;
 
     if (request.context) {
-      prompt += `\n\nContext: ${JSON.stringify(request.context)}`;
+      try {
+        // Sanitize the context to remove potentially problematic content
+        const sanitizedContext = this.sanitizeContext(request.context);
+        prompt += `\n\nContext: ${JSON.stringify(sanitizedContext)}`;
+      } catch (error) {
+        console.error('🔍 IntentAnalysisService: Error sanitizing context:', error);
+        // If sanitization fails, just include a summary
+        prompt += `\n\nContext: Previous conversation with ${Array.isArray(request.context) ? request.context.length : 0} messages`;
+      }
     }
 
     return prompt;
+  }
+
+  /**
+   * Sanitize context to remove problematic content
+   */
+  private sanitizeContext(context: any): any {
+    if (Array.isArray(context)) {
+      return context.map(item => this.sanitizeContext(item));
+    }
+    
+    if (typeof context === 'object' && context !== null) {
+      const sanitized: any = {};
+      for (const [key, value] of Object.entries(context)) {
+        // Skip responseData if it's too large or contains problematic content
+        if (key === 'responseData' && Array.isArray(value)) {
+          sanitized[key] = `[Array with ${value.length} items]`;
+        } else if (key === 'responseData') {
+          sanitized[key] = '[Response data omitted]';
+        } else {
+          sanitized[key] = this.sanitizeContext(value);
+        }
+      }
+      return sanitized;
+    }
+    
+    // For strings, truncate if too long and remove control characters
+    if (typeof context === 'string') {
+      let sanitized = context.replace(/[\x00-\x1F\x7F]/g, '');
+      if (sanitized.length > 500) {
+        sanitized = sanitized.substring(0, 500) + '...';
+      }
+      return sanitized;
+    }
+    
+    return context;
   }
 }

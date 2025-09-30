@@ -367,9 +367,9 @@ export class ResponseFormatter {
         raw: null
       },
       suggestions: [
-        'Check your internet connection',
         'Verify the API endpoint is correct',
-        'Try again in a few moments'
+        'Try again in a few moments',
+        'Check your connection settings'
       ],
       status: 'error'
     };

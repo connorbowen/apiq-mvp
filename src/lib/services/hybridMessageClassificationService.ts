@@ -62,7 +62,7 @@ export class HybridMessageClassificationService {
   /**
    * Apply rules-based filtering for obvious cases
    */
-  private applyRulesBasedFiltering(message: string): MessageClassification {
+  public applyRulesBasedFiltering(message: string): MessageClassification {
     const lowerMessage = message.toLowerCase();
     
     console.log('🔍 Classification - Rules-based filtering for:', message);

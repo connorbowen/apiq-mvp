@@ -6,6 +6,7 @@ import { OpenAIService } from '../../../src/services/openaiService';
 import { ConnectionGuidanceService } from '../../../src/lib/services/connectionGuidanceService';
 import { EnhancedErrorHandler } from '../../../src/lib/services/enhancedErrorHandler';
 import { errorHandler } from '../../../src/middleware/errorHandler';
+import { substituteUrlParameters, createSafeApiUrl } from '../../../src/lib/utils/urlSubstitution';
 import axios from 'axios';
 
 interface DirectApiCallResponse {
@@ -81,18 +82,55 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
     };
   }
   
-  // Substitute path parameters in the URL
-  let substitutedUrl = apiCallData.url;
-  if (apiCallData.parameters) {
-    for (const [key, value] of Object.entries(apiCallData.parameters)) {
-      substitutedUrl = substitutedUrl.replace(`{${key}}`, String(value));
-    }
+  // Substitute path parameters in the URL using robust utility
+  const urlSubstitutionResult = substituteUrlParameters({
+    url: apiCallData.url,
+    parameters: apiCallData.parameters || {},
+    debug: true
+  });
+  
+  const substitutedUrl = urlSubstitutionResult.substitutedUrl;
+  
+  console.log('🔍 executeApiCall - URL substitution result:', {
+    originalUrl: apiCallData.url,
+    substitutedUrl,
+    substitutions: urlSubstitutionResult.substitutions,
+    hasUnsubstitutedParams: urlSubstitutionResult.hasUnsubstitutedParams
+  });
+  
+  // Validate the URL is safe to use
+  const safeUrlResult = createSafeApiUrl({
+    url: apiCallData.url,
+    parameters: apiCallData.parameters || {},
+    debug: true
+  });
+  
+  if (!safeUrlResult.isValid) {
+    console.error('🔍 executeApiCall - URL substitution validation failed:', safeUrlResult.errors);
+    return {
+      success: false,
+      data: { 
+        error: `URL substitution failed: ${safeUrlResult.errors.join(', ')}`,
+        url: apiCallData.url,
+        parameters: apiCallData.parameters
+      }
+    };
   }
   
+  // Build URL with query parameters for GET requests
+  const fullUrl = `${connection.baseUrl}${substitutedUrl}`;
+  let requestUrl = fullUrl;
+  if (apiCallData.parameters && Object.keys(apiCallData.parameters).length > 0) {
+    const urlParams = new URLSearchParams();
+    Object.entries(apiCallData.parameters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        urlParams.append(key, String(value));
+      }
+    });
+    requestUrl = `${fullUrl}?${urlParams.toString()}`;
+  }
+
   try {
-    
-    const fullUrl = `${connection.baseUrl}${substitutedUrl}`;
-    
     // Prepare headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -109,15 +147,6 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
       console.log('No authentication required for connection:', connection.name);
     }
 
-    const requestConfig = {
-      method: apiCallData.method,
-      url: fullUrl,
-      headers,
-      params: apiCallData.parameters,
-      data: apiCallData.requestBody,
-      timeout: 30000
-    };
-
     logInfo('Executing API call', {
       method: apiCallData.method,
       originalUrl: apiCallData.url,
@@ -128,7 +157,24 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
       userId
     });
 
-    const response = await axios(requestConfig);
+    const fetchResponse = await fetch(requestUrl, {
+      method: apiCallData.method || 'GET',
+      headers,
+      body: apiCallData.requestBody ? JSON.stringify(apiCallData.requestBody) : undefined
+    });
+
+    if (!fetchResponse.ok) {
+      throw new Error(`API call failed: ${fetchResponse.status} ${fetchResponse.statusText}`);
+    }
+
+    const responseData = await fetchResponse.json();
+    
+    // Convert fetch response to axios-like format for compatibility
+    const response = {
+      status: fetchResponse.status,
+      data: responseData,
+      headers: Object.fromEntries(fetchResponse.headers.entries())
+    };
     
     const executionTime = Date.now() - startTime;
 
@@ -136,7 +182,7 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
       success: true,
       data: {
         method: apiCallData.method,
-        url: substitutedUrl, // Use the substituted URL instead of template
+        url: requestUrl, // Use the full URL with query parameters
         statusCode: response.status,
         responseData: response.data,
         responseHeaders: response.headers as Record<string, string>,
@@ -153,7 +199,7 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
         success: true, // Still successful from our perspective
         data: {
           method: apiCallData.method,
-          url: substitutedUrl, // Use the substituted URL instead of template
+          url: requestUrl, // Use the full URL with query parameters
           statusCode: error.response.status,
           responseData: error.response.data,
           responseHeaders: error.response.headers as Record<string, string>,
@@ -167,7 +213,7 @@ async function executeApiCall(apiCallData: any, connections: any[], userId: stri
         success: false,
         data: {
           method: apiCallData.method,
-          url: substitutedUrl, // Use the substituted URL instead of template
+          url: requestUrl, // Use the full URL with query parameters
           statusCode: 0,
           responseData: null,
           responseHeaders: {},

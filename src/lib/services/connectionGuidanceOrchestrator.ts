@@ -76,16 +76,42 @@ export class ConnectionGuidanceOrchestrator {
       userId: context.userId
     });
 
+    // Quick check for direct API calls - bypass enhanced orchestrator entirely
+    const isDirectApiCall = this.isDirectApiCallRequest(context.message);
+    if (isDirectApiCall) {
+      console.log('🚀 ConnectionGuidanceOrchestrator - Direct API call detected, bypassing enhanced orchestrator');
+      return {
+        shouldProvideGuidance: false,
+        guidanceType: 'none',
+        message: 'Direct API call request - no guidance needed',
+        details: {
+          requiredApis: []
+        }
+      };
+    }
+
     try {
       console.log('🔍 ConnectionGuidanceOrchestrator - About to call enhancedOrchestrator.processMessage');
       
-      // Use the enhanced orchestrator for multi-prompt processing
-      const result = await this.enhancedOrchestrator.processMessage({
+      // Add timeout wrapper to prevent hanging
+      const timeoutPromise = new Promise<ConnectionGuidanceResponse>((_, reject) => {
+        setTimeout(() => {
+          console.log('⏰ ConnectionGuidanceOrchestrator - Timeout reached, rejecting promise');
+          reject(new Error('Guidance orchestrator timeout after 30 seconds'));
+        }, 30000);
+      });
+      
+      console.log('🔍 ConnectionGuidanceOrchestrator - Creating guidance promise...');
+      const guidancePromise = this.enhancedOrchestrator.processMessage({
         message: context.message,
         availableConnections: context.availableConnections,
         userId: context.userId,
         context: context.context
       });
+      
+      console.log('🔍 ConnectionGuidanceOrchestrator - Racing guidance promise against timeout...');
+      const result = await Promise.race([guidancePromise, timeoutPromise]);
+      console.log('✅ ConnectionGuidanceOrchestrator - Promise race completed successfully');
 
       console.log('✅ ConnectionGuidanceOrchestrator - Multi-prompt guidance completed:', {
         shouldProvideGuidance: result.shouldProvideGuidance,
@@ -93,16 +119,76 @@ export class ConnectionGuidanceOrchestrator {
         message: result.message
       });
 
+      console.log('🔍 ConnectionGuidanceOrchestrator - Full guidance result:', JSON.stringify(result, null, 2));
+
+      // Check if this should proceed to normal processing
+      if (!result.shouldProvideGuidance) {
+        console.log('🔍 ConnectionGuidanceOrchestrator - No guidance needed, should proceed to normal processing');
+      } else {
+        console.log('🔍 ConnectionGuidanceOrchestrator - Guidance needed, will provide guidance response');
+      }
+
       return result;
 
     } catch (error) {
       console.error('❌ ConnectionGuidanceOrchestrator - Error in multi-prompt processing:', error);
       console.error('❌ ConnectionGuidanceOrchestrator - Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      console.error('❌ ConnectionGuidanceOrchestrator - Message that failed:', context.message);
       
-      // Fallback to legacy approach
-      console.log('🔄 ConnectionGuidanceOrchestrator - Falling back to legacy guidance');
-      return await this.generateLegacyGuidance(context);
+      // Check if this looks like a direct API call request
+      const isDirectApiCall = this.isDirectApiCallRequest(context.message);
+      console.log('🔍 ConnectionGuidanceOrchestrator - Is direct API call request:', isDirectApiCall);
+      
+      if (isDirectApiCall) {
+        console.log('🔄 ConnectionGuidanceOrchestrator - Treating as direct API call, returning no guidance needed');
+        return {
+          shouldProvideGuidance: false,
+          guidanceType: 'none',
+          message: 'Direct API call request - no guidance needed',
+          details: {
+            requiredApis: []
+          }
+        };
+      }
+      
+      // For non-direct API calls, try a quick fallback without AI
+      console.log('🔄 ConnectionGuidanceOrchestrator - Using quick fallback for non-direct API calls');
+      return {
+        shouldProvideGuidance: false,
+        guidanceType: 'none',
+        message: 'Request processed - no guidance needed',
+        details: {
+          requiredApis: []
+        }
+      };
     }
+  }
+
+  /**
+   * Check if a message looks like a direct API call request
+   */
+  private isDirectApiCallRequest(message: string): boolean {
+    const directApiPatterns = [
+      /^(get|find|search|list|show|display|retrieve|fetch)\s+/i,
+      /^(create|add|insert|post|put|update|edit|modify|delete|remove)\s+/i,
+      /^(now\s+)?(get|find|search|list|show|display|retrieve|fetch)\s+/i,
+      /pets?\s+(available|pending|sold)/i,
+      /users?\s+by\s+id/i,
+      /orders?\s+(create|new|list)/i,
+      /^now\s+get\s+/i,
+      /^get\s+pending\s+/i,
+      /^get\s+available\s+/i,
+      /^get\s+sold\s+/i
+    ];
+    
+    const isDirectApi = directApiPatterns.some(pattern => pattern.test(message));
+    console.log('🔍 ConnectionGuidanceOrchestrator - Direct API call detection:', {
+      message,
+      isDirectApi,
+      matchedPatterns: directApiPatterns.filter(pattern => pattern.test(message))
+    });
+    
+    return isDirectApi;
   }
 
   /**

@@ -30,7 +30,6 @@ import { useState, useEffect, memo, useRef } from 'react';
 import { apiClient, ApiConnection, Secret } from '../../lib/api/client';
 import CreateConnectionModal from './CreateConnectionModal';
 import EditConnectionModal from './EditConnectionModal';
-import QuickExecuteModal from '../QuickExecuteModal';
 import { useUser } from '../../contexts/UserContext';
 
 interface ConnectionsTabProps {
@@ -74,12 +73,14 @@ function ConnectionsTab({
   const [rotateSuccess, setRotateSuccess] = useState<Record<string, string>>({});
   const [viewingSecret, setViewingSecret] = useState<Secret | null>(null);
   
-  // Quick execute modal state
-  const [quickExecuteModal, setQuickExecuteModal] = useState<{
-    isOpen: boolean;
-    connection: ApiConnection | null;
-    endpoint: any | null;
-  }>({ isOpen: false, connection: null, endpoint: null });
+  // Connection health testing state
+  const [testingConnection, setTestingConnection] = useState<string | null>(null);
+  const [connectionHealth, setConnectionHealth] = useState<Record<string, {
+    status: 'healthy' | 'unhealthy' | 'testing' | 'unknown';
+    lastChecked: Date | null;
+    responseTime: number | null;
+    error: string | null;
+  }>>({});
   
   // Ref to prevent duplicate API calls for the same connection set
   const lastFetchedConnectionIds = useRef<string>('');
@@ -252,41 +253,68 @@ function ConnectionsTab({
     console.log('🔍 editingConnection state should now be set');
   };
 
-  const handleQuickExecute = async (connection: ApiConnection) => {
-    console.log('🚀 Quick Execute clicked for connection:', connection.id);
-    try {
-      // Get the first available endpoint for quick execution
-      const endpointsResponse = await apiClient.getConnectionEndpoints(connection.id);
-      console.log('📡 Endpoints response:', endpointsResponse);
-      let firstEndpoint = null;
-      
-      if (endpointsResponse.success && endpointsResponse.data?.endpoints?.length && endpointsResponse.data.endpoints.length > 0) {
-        firstEndpoint = endpointsResponse.data.endpoints[0];
-        console.log('✅ Found endpoint:', firstEndpoint);
-      } else {
-        console.log('❌ No endpoints found');
+  // Test individual connection
+  const testConnection = async (connectionId: string) => {
+    setTestingConnection(connectionId);
+    setConnectionHealth(prev => ({
+      ...prev,
+      [connectionId]: {
+        ...prev[connectionId],
+        status: 'testing',
+        lastChecked: new Date(),
+        responseTime: null,
+        error: null
       }
-      
-      // Always open the modal, even if there are no endpoints
-      // The modal will handle the case where there are no endpoints
-      console.log('🎯 Setting modal state:', { isOpen: true, connection: connection.id, endpoint: firstEndpoint?.id || null });
-      setQuickExecuteModal({
-        isOpen: true,
-        connection,
-        endpoint: firstEndpoint
-      });
-      console.log('✅ Modal state set');
+    }));
+
+    try {
+      const startTime = Date.now();
+      const response = await apiClient.testConnection(connectionId);
+      const responseTime = Date.now() - startTime;
+
+      if (response.success) {
+        setConnectionHealth(prev => ({
+          ...prev,
+          [connectionId]: {
+            status: 'healthy',
+            lastChecked: new Date(),
+            responseTime,
+            error: null
+          }
+        }));
+        onConnectionTested();
+      } else {
+        setConnectionHealth(prev => ({
+          ...prev,
+          [connectionId]: {
+            status: 'unhealthy',
+            lastChecked: new Date(),
+            responseTime,
+            error: response.error || 'Connection test failed'
+          }
+        }));
+        onConnectionError(response.error || 'Connection test failed');
+      }
     } catch (error) {
-      console.error('❌ Failed to get endpoints for quick execution:', error);
-      // Still open the modal, but without an endpoint
-      console.log('🎯 Setting modal state (error case):', { isOpen: true, connection: connection.id, endpoint: null });
-      setQuickExecuteModal({
-        isOpen: true,
-        connection,
-        endpoint: null
-      });
-      console.log('✅ Modal state set (error case)');
+      setConnectionHealth(prev => ({
+        ...prev,
+        [connectionId]: {
+          status: 'unhealthy',
+          lastChecked: new Date(),
+          responseTime: null,
+          error: error instanceof Error ? error.message : 'Connection test failed'
+        }
+      }));
+      onConnectionError('Connection test failed');
+    } finally {
+      setTestingConnection(null);
     }
+  };
+
+  // Test all connections
+  const testAllConnections = async () => {
+    const connectionIds = connections.map(c => c.id);
+    await Promise.all(connectionIds.map(id => testConnection(id)));
   };
 
   const handleEditSuccess = () => {
@@ -407,11 +435,47 @@ function ConnectionsTab({
     setViewingSecret(null);
   };
 
+
   return (
     <div data-testid="connections-management" className="h-full flex flex-col min-h-0">
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-800 mb-2">Manage your API integrations and connections</h2>
+      </div>
+
+      {/* Connection Health Overview */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-gray-700">Connection Health</h3>
+          <button
+            data-testid="test-all-connections-btn"
+            onClick={() => testAllConnections()}
+            className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Test All Connections
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {Object.values(connectionHealth).filter(h => h.status === 'healthy').length}
+            </div>
+            <div className="text-sm text-gray-600">Healthy</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-600">
+              {Object.values(connectionHealth).filter(h => h.status === 'unhealthy').length}
+            </div>
+            <div className="text-sm text-gray-600">Unhealthy</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-600">
+              {Object.values(connectionHealth).filter(h => h.status === 'unknown').length}
+            </div>
+            <div className="text-sm text-gray-600">Unknown</div>
+          </div>
+        </div>
       </div>
 
       {/* Search and Filter */}
@@ -588,13 +652,14 @@ function ConnectionsTab({
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {/* Primary Actions - Simplified to 2 buttons */}
+                      {/* Primary Actions - Connection Management Focus */}
                       <button
-                        data-testid={`explore-api-${connection.id}`}
-                        onClick={() => window.location.href = `/connections/${connection.id}`}
-                        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
+                        data-testid={`test-connection-${connection.id}`}
+                        onClick={() => testConnection(connection.id)}
+                        disabled={testingConnection === connection.id}
+                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 min-h-[44px] disabled:opacity-50"
                       >
-                        Explore
+                        {testingConnection === connection.id ? 'Testing...' : 'Test Connection'}
                       </button>
                       <button
                         data-testid="edit-connection-btn"
@@ -603,9 +668,71 @@ function ConnectionsTab({
                       >
                         Edit
                       </button>
+                      <button
+                        data-testid={`delete-connection-${connection.id}`}
+                        onClick={() => handleDeleteClick(connection.id, connection.name)}
+                        className="px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-300 rounded-md hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 min-h-[44px]"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
+                
+                {/* Connection Health Details */}
+                {connectionHealth[connection.id] && (
+                  <div className="border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
+                    <div data-testid="connection-health-details" className="mb-4">
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Connection Health</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white p-4 rounded-lg border">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Status</h4>
+                          <div className="flex items-center">
+                            <div className={`w-3 h-3 rounded-full mr-2 ${
+                              connectionHealth[connection.id].status === 'healthy' ? 'bg-green-500' :
+                              connectionHealth[connection.id].status === 'unhealthy' ? 'bg-red-500' :
+                              connectionHealth[connection.id].status === 'testing' ? 'bg-yellow-500' :
+                              'bg-gray-500'
+                            }`} />
+                            <span className="text-sm font-medium capitalize">
+                              {connectionHealth[connection.id].status}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white p-4 rounded-lg border">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Response Time</h4>
+                          <div className="text-sm">
+                            {connectionHealth[connection.id]?.responseTime ? 
+                              `${connectionHealth[connection.id].responseTime}ms` : 
+                              'Not tested'
+                            }
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white p-4 rounded-lg border">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Last Checked</h4>
+                          <div className="text-sm">
+                            {(() => {
+                              const health = connectionHealth[connection.id];
+                              return health?.lastChecked ? health.lastChecked.toLocaleString() : 'Never';
+                            })()}
+                          </div>
+                        </div>
+                        
+                        {connectionHealth[connection.id]?.error && (
+                          <div className="bg-white p-4 rounded-lg border border-red-200">
+                            <h4 className="text-sm font-medium text-red-700 mb-2">Error</h4>
+                            <div className="text-sm text-red-600">
+                              {connectionHealth[connection.id].error}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -708,15 +835,6 @@ function ConnectionsTab({
         </div>
       )}
 
-      {/* Quick Execute Modal */}
-      {quickExecuteModal.isOpen && quickExecuteModal.connection && (
-        <QuickExecuteModal
-          isOpen={quickExecuteModal.isOpen}
-          onClose={() => setQuickExecuteModal({ isOpen: false, connection: null, endpoint: null })}
-          connection={quickExecuteModal.connection}
-          endpoint={quickExecuteModal.endpoint}
-        />
-      )}
     </div>
   );
 }

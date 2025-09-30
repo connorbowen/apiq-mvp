@@ -62,19 +62,28 @@ export class EndpointSelectionService {
       console.log('🔍 EndpointSelectionService: Connections count:', request.connections.length);
 
       // First, try AI-powered endpoint selection
+      console.log('🔍 EndpointSelectionService: Attempting AI-powered selection...');
       const aiResult = await this.selectEndpointWithAI(request);
+      console.log('🔍 EndpointSelectionService: AI selection result:', aiResult ? 'SUCCESS' : 'FAILED');
+      
       if (aiResult) {
-        console.log('🔍 EndpointSelectionService: AI selection successful');
+        console.log('🔍 EndpointSelectionService: AI selection successful, returning result');
         return aiResult;
       }
 
       // Fallback to rules-based selection
-      console.log('🔍 EndpointSelectionService: Falling back to rules-based selection');
-      return this.selectEndpointWithRules(request);
+      console.log('🔍 EndpointSelectionService: AI selection failed, falling back to rules-based selection');
+      const rulesResult = this.selectEndpointWithRules(request);
+      console.log('🔍 EndpointSelectionService: Rules-based selection result:', rulesResult);
+      return rulesResult;
 
     } catch (error) {
       console.error('🔍 EndpointSelectionService: Error during endpoint selection:', error);
+      console.error('🔍 EndpointSelectionService: Error type:', typeof error);
+      console.error('🔍 EndpointSelectionService: Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('🔍 EndpointSelectionService: Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       // Final fallback to rules-based selection
+      console.log('🔍 EndpointSelectionService: Using final fallback to rules-based selection');
       return this.selectEndpointWithRules(request);
     }
   }
@@ -84,8 +93,11 @@ export class EndpointSelectionService {
    */
   private async selectEndpointWithAI(request: EndpointSelectionRequest): Promise<EndpointSelectionResult | null> {
     try {
+      console.log('🔍 EndpointSelectionService: Starting AI selection process');
+      
       // Filter relevant endpoints to avoid token limits
       const relevantEndpoints = this.filterRelevantEndpoints(request.connections, request.message);
+      console.log('🔍 EndpointSelectionService: Filtered endpoints count:', relevantEndpoints.length);
       
       if (relevantEndpoints.length === 0) {
         console.log('🔍 EndpointSelectionService: No relevant endpoints found for AI selection');
@@ -96,33 +108,157 @@ export class EndpointSelectionService {
       const systemPrompt = this.buildEndpointSelectionPrompt(relevantEndpoints, request.guidanceResponse);
       const userPrompt = `Select the best endpoint for this request: "${request.message}"`;
 
-      const response = await this.openaiService.chatCompletion([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ], {
+      console.log('🔍 EndpointSelectionService: About to call OpenAI API');
+      console.log('🔍 EndpointSelectionService: System prompt length:', systemPrompt.length);
+      console.log('🔍 EndpointSelectionService: User prompt:', userPrompt);
+      console.log('🔍 EndpointSelectionService: System prompt content:');
+      console.log('🔍 EndpointSelectionService: ===== SYSTEM PROMPT START =====');
+      console.log(systemPrompt);
+      console.log('🔍 EndpointSelectionService: ===== SYSTEM PROMPT END =====');
+      console.log('🔍 EndpointSelectionService: User prompt content:');
+      console.log('🔍 EndpointSelectionService: ===== USER PROMPT START =====');
+      console.log(userPrompt);
+      console.log('🔍 EndpointSelectionService: ===== USER PROMPT END =====');
+      console.log('🔍 EndpointSelectionService: OpenAI service instance:', !!this.openaiService);
+      console.log('🔍 EndpointSelectionService: OpenAI service methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.openaiService)));
+
+      // Add timeout wrapper to prevent hanging
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        console.log('🔍 EndpointSelectionService: Setting up timeout promise...');
+        const timeoutId = setTimeout(() => {
+          console.log('⏰ EndpointSelectionService: Timeout reached after 30 seconds');
+          reject(new Error('OpenAI API call timeout after 30 seconds'));
+        }, 30000);
+        console.log('🔍 EndpointSelectionService: Timeout promise set up with ID:', timeoutId);
+        console.log('🔍 EndpointSelectionService: Timeout will fire at:', new Date(Date.now() + 30000).toISOString());
+      });
+
+      console.log('🔍 EndpointSelectionService: Creating AI promise...');
+      console.log('🔍 EndpointSelectionService: About to call openaiService.chatCompletion...');
+      console.log('🔍 EndpointSelectionService: OpenAI API key exists:', !!process.env.OPENAI_API_KEY);
+      console.log('🔍 EndpointSelectionService: OpenAI API key length:', process.env.OPENAI_API_KEY?.length || 0);
+      console.log('🔍 EndpointSelectionService: OpenAI API key prefix:', process.env.OPENAI_API_KEY?.substring(0, 10) || 'N/A');
+      console.log('🔍 EndpointSelectionService: OpenAI API key valid format:', process.env.OPENAI_API_KEY?.startsWith('sk-') || false);
+      console.log('🔍 EndpointSelectionService: Environment NODE_ENV:', process.env.NODE_ENV);
+      console.log('🔍 EndpointSelectionService: Environment OPENAI_BASE_URL:', process.env.OPENAI_BASE_URL || 'default');
+      
+      // Skip test call - go directly to main AI call
+      console.log('🔍 EndpointSelectionService: Skipping test call, proceeding directly to main AI call');
+      
+      // Check if this is the second message by looking at the message content
+      if (request.message.includes('pending')) {
+        console.log('🔍 EndpointSelectionService: This is the second message - investigating hang...');
+        console.log('🔍 EndpointSelectionService: Current time:', new Date().toISOString());
+        console.log('🔍 EndpointSelectionService: Process memory usage:', process.memoryUsage());
+        console.log('🔍 EndpointSelectionService: Process uptime:', process.uptime());
+        
+        // Check OpenAI service state
+        console.log('🔍 EndpointSelectionService: OpenAI service state check:');
+        console.log('🔍 EndpointSelectionService: - Service exists:', !!this.openaiService);
+        console.log('🔍 EndpointSelectionService: - Service constructor:', this.openaiService?.constructor?.name);
+        console.log('🔍 EndpointSelectionService: - Service methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.openaiService)));
+        
+        // Check if there are any pending promises or timers
+        console.log('🔍 EndpointSelectionService: Process debugging info:');
+        console.log('🔍 EndpointSelectionService: - Process PID:', process.pid);
+        console.log('🔍 EndpointSelectionService: - Process platform:', process.platform);
+        console.log('🔍 EndpointSelectionService: - Process version:', process.version);
+      }
+      
+      console.log('🔍 EndpointSelectionService: Creating main AI promise...');
+      console.log('🔍 EndpointSelectionService: Main AI call starting at:', new Date().toISOString());
+      
+      const mainCallParams = {
         model: 'gpt-4o-mini',
         temperature: 0.1,
         max_tokens: 500
+      };
+      
+      console.log('🔍 EndpointSelectionService: Main AI call parameters:', mainCallParams);
+      console.log('🔍 EndpointSelectionService: Main AI call messages:', [
+        { role: 'system', content: systemPrompt.substring(0, 100) + '...' },
+        { role: 'user', content: userPrompt }
+      ]);
+      
+      const aiPromise = this.openaiService.chatCompletion([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ], mainCallParams).then((result) => {
+        console.log('🔍 EndpointSelectionService: AI promise resolved with result:', typeof result);
+        console.log('🔍 EndpointSelectionService: Result length:', result?.length || 0);
+        console.log('🔍 EndpointSelectionService: FULL RESULT:', result);
+        console.log('🔍 EndpointSelectionService: Result preview:', result?.substring(0, 100) || 'N/A');
+        console.log('🔍 EndpointSelectionService: AI promise resolved at:', new Date().toISOString());
+        return result;
+      }).catch((error) => {
+        console.error('🔍 EndpointSelectionService: AI promise rejected with error:', error);
+        console.error('🔍 EndpointSelectionService: Error type:', typeof error);
+        console.error('🔍 EndpointSelectionService: Error message:', error?.message);
+        console.error('🔍 EndpointSelectionService: Error stack:', error?.stack);
+        console.error('🔍 EndpointSelectionService: Error code:', error?.code);
+        console.error('🔍 EndpointSelectionService: Error status:', error?.status);
+        console.error('🔍 EndpointSelectionService: Error response:', error?.response);
+        console.error('🔍 EndpointSelectionService: Error name:', error?.name);
+        console.error('🔍 EndpointSelectionService: Error constructor:', error?.constructor?.name);
+        console.error('🔍 EndpointSelectionService: Full error object:', JSON.stringify(error, null, 2));
+        console.error('🔍 EndpointSelectionService: AI promise rejected at:', new Date().toISOString());
+        throw error;
       });
+      
+      console.log('🔍 EndpointSelectionService: Main AI promise created successfully');
+      
+      console.log('🔍 EndpointSelectionService: AI promise created successfully');
 
-      // chatCompletion returns a string when no functions are used
-      const content = typeof response === 'string' ? response : response.choices?.[0]?.message?.content;
-      if (!content) {
-        console.log('🔍 EndpointSelectionService: No content from AI response');
-        return null;
+      console.log('🔍 EndpointSelectionService: AI promise created, starting race...');
+      console.log('🔍 EndpointSelectionService: Starting Promise.race at:', new Date().toISOString());
+      console.log('🔍 EndpointSelectionService: AI promise state:', aiPromise);
+      console.log('🔍 EndpointSelectionService: Timeout promise state:', timeoutPromise);
+      
+      // Test Promise.race with a simple test first
+      console.log('🔍 EndpointSelectionService: Testing Promise.race with simple test...');
+      try {
+        const testPromise1 = new Promise(resolve => setTimeout(() => resolve('test1'), 1000));
+        const testPromise2 = new Promise(resolve => setTimeout(() => resolve('test2'), 2000));
+        const testResult = await Promise.race([testPromise1, testPromise2]);
+        console.log('🔍 EndpointSelectionService: Promise.race test successful:', testResult);
+      } catch (error) {
+        console.log('🔍 EndpointSelectionService: Promise.race test failed:', error);
       }
+      
+      // Add a progress check every second
+      const progressInterval = setInterval(() => {
+        console.log('🔍 EndpointSelectionService: Still waiting...', new Date().toISOString());
+      }, 1000);
+      
+      try {
+        const response = await Promise.race([aiPromise, timeoutPromise]);
+        clearInterval(progressInterval);
+        console.log('🔍 EndpointSelectionService: Race completed successfully at:', new Date().toISOString());
+        console.log('🔍 EndpointSelectionService: Response received:', typeof response);
+        console.log('🔍 EndpointSelectionService: Response content length:', typeof response === 'string' ? response.length : 'N/A');
+        console.log('🔍 EndpointSelectionService: FULL RACE RESPONSE:', response);
+        console.log('🔍 EndpointSelectionService: Response content preview:', typeof response === 'string' ? response.substring(0, 200) : 'N/A');
 
       // Parse AI response
-      const result = this.parseAIEndpointSelection(content, request.connections);
+        const result = this.parseAIEndpointSelection(response, request.connections);
       if (result) {
         console.log('🔍 EndpointSelectionService: AI selection result:', result);
         return result;
       }
 
       return null;
+      } catch (error) {
+        clearInterval(progressInterval);
+        console.log('🔍 EndpointSelectionService: Race failed at:', new Date().toISOString());
+        console.log('🔍 EndpointSelectionService: Error:', error);
+        throw error;
+      }
 
     } catch (error) {
-      console.error('🔍 EndpointSelectionService: AI selection failed:', error);
+      console.error('🔍 EndpointSelectionService: AI selection failed with error:', error);
+      console.error('🔍 EndpointSelectionService: Error type:', typeof error);
+      console.error('🔍 EndpointSelectionService: Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('🔍 EndpointSelectionService: Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       return null;
     }
   }
@@ -179,43 +315,30 @@ export class EndpointSelectionService {
     relevantEndpoints: Array<{ connection: any; endpoint: any; score: number }>,
     guidanceResponse?: any
   ): string {
-    const endpointsInfo = relevantEndpoints.map(({ connection, endpoint, score }) => 
-      `**${connection.name}** (${connection.id})
-- ${endpoint.method} ${endpoint.path}: ${endpoint.summary || 'No description'}
-- Relevance Score: ${score}`
-    ).join('\n\n');
+    // Create a much simpler, focused prompt
+    const endpointsList = relevantEndpoints.map(({ connection, endpoint, score }) => 
+      `${endpoint.method} ${endpoint.path} (${connection.id}) - ${endpoint.summary || 'No description'}`
+    ).join('\n');
 
-    let prompt = `You are an expert at selecting the most appropriate API endpoint for user requests.
+    let prompt = `Select the best API endpoint for the user request.
 
-Available Endpoints:
-${endpointsInfo}
+Available endpoints:
+${endpointsList}
 
-Your task: Given a user's request, select the single best endpoint.
+Rules:
+- For "pending pets", "available pets", "sold pets": Use GET /pet/findByStatus
+- For "pet by ID": Use GET /pet/{petId}
+- For "create pet": Use POST /pet
+- For "update pet": Use PUT /pet/{petId}
+- For "delete pet": Use DELETE /pet/{petId}
 
-Selection Rules:
-1. For specific items by ID: Use endpoints with path parameters like "/pet/{petId}"
-2. For filtered lists: Use endpoints with query parameters like "/pet/findByStatus"  
-3. For collections: Use general listing endpoints like "/pets"
-4. For creating resources: Use POST endpoints
-5. For updating resources: Use PUT/PATCH endpoints
-6. For deleting resources: Use DELETE endpoints
-
-${guidanceResponse && guidanceResponse.details && guidanceResponse.details.requiredApis ? `
-🚨 CRITICAL GUIDANCE: The connection guidance service suggests these endpoints:
-${guidanceResponse.details.requiredApis.map((api: any) => 
-  `- ${api.displayName}: ${api.suggestedEndpoints.join(', ')} (${api.reason})`
-).join('\n')}
-
-PRIORITIZE these suggested endpoints over your own analysis.
-` : ''}
-
-Return JSON in this format:
+Return JSON:
 {
   "connectionId": "exact_connection_id",
-  "endpoint": "/exact/path",
+  "endpoint": "/exact/path", 
   "method": "GET",
-  "reason": "Why this endpoint is the best choice",
-  "confidence": 0.0-1.0
+  "reason": "Brief explanation",
+  "confidence": 0.9
 }`;
 
     return prompt;
@@ -332,6 +455,11 @@ Return JSON in this format:
       project: {
         keywords: ['trello', 'card', 'board', 'task', 'project', 'kanban'],
         endpointPatterns: ['card', 'board', 'list', 'task', 'project']
+      },
+      // Petstore patterns
+      petstore: {
+        keywords: ['pet', 'pets', 'petstore', 'available', 'sold', 'pending', 'status', 'find', 'get', 'create', 'update', 'delete'],
+        endpointPatterns: ['pet', 'findByStatus', 'findByTags', 'inventory', 'order']
       }
     };
 

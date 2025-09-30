@@ -348,17 +348,25 @@ function DashboardContent() {
         setConnections(connections);
         console.info('[dashboard] setConnections called successfully');
         
-        // Clear any error messages if connections load successfully
-        if (connections.length > 0) {
-          setErrorMessage(null);
-        }
+        // Clear any error messages if connections load successfully (even if empty)
+        setErrorMessage(null);
       } else {
         console.error('❌ DASHBOARD: Failed to load connections:', response.error);
-        setErrorMessage(response.error || 'Failed to load connections');
+        // Only show error for actual API failures, not empty results
+        if (response.error && !response.error.includes('No connections found')) {
+          setErrorMessage(response.error);
+        }
       }
     } catch (error: unknown) {
       console.error('❌ DASHBOARD: Error loading connections:', error);
-      setErrorMessage('Network error while loading connections');
+      // Only show network error for actual network failures, not general errors
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED')) {
+        setErrorMessage('Unable to load connections. Please try again.');
+      } else {
+        // For other errors, don't show a generic network message
+        console.error('Connection loading error (not showing to user):', error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -841,8 +849,10 @@ function DashboardContent() {
             <div id="connections-section" data-testid="connections-section" className="flex-1 flex flex-col min-h-0 w-full h-full pb-4">
               <ConnectionsTab
                 connections={connections}
-                onConnectionCreated={() => {
-                  loadConnections();
+                onConnectionCreated={async () => {
+                  // Add a small delay to ensure the API has processed the new connection
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                  await loadConnections();
                   setSuccessMessage('Connection created successfully!');
                 }}
                 onConnectionEdited={() => {
@@ -870,8 +880,10 @@ function DashboardContent() {
               connections={connections}
               secrets={secrets}
               user={user}
-              onConnectionCreated={() => {
-                loadConnections();
+              onConnectionCreated={async () => {
+                // Add a small delay to ensure the API has processed the new connection
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await loadConnections();
                 setSuccessMessage('Connection created successfully!');
               }}
               onConnectionEdited={() => {

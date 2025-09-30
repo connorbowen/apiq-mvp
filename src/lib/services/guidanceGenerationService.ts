@@ -199,6 +199,28 @@ export class GuidanceGenerationService {
    */
   private async generateGuidanceWithAI(request: GuidanceGenerationRequest): Promise<GuidanceGenerationResult> {
     try {
+      // CRITICAL: Check if guidance is actually needed before calling AI
+      if (!request.apiRequirements.requiresGuidance && request.apiRequirements.missingApis.length === 0) {
+        console.log('🔍 GuidanceGenerationService: Skipping AI call - no guidance needed', {
+          requiresGuidance: request.apiRequirements.requiresGuidance,
+          missingApis: request.apiRequirements.missingApis.length
+        });
+        
+        return {
+          success: true,
+          guidance: {
+            shouldProvideGuidance: false,
+            guidanceType: 'none',
+            message: 'You have all the necessary connections. You can proceed with your request.',
+            details: {
+              requiredApis: [],
+              suggestedWorkflow: 'Proceed with your workflow',
+              userIntent: request.userIntent.userGoal
+            }
+          }
+        };
+      }
+
       const systemPrompt = this.buildGuidanceGenerationSystemPrompt();
       const userPrompt = this.buildGuidanceGenerationUserPrompt(request);
 
@@ -207,22 +229,47 @@ export class GuidanceGenerationService {
         { role: 'user', content: userPrompt }
       ], {
         model: 'gpt-4o-mini',
-        temperature: 0.3,
-        max_tokens: 800
+        temperature: 0.1, // Lower temperature for more consistent JSON output
+        max_tokens: 1000 // Increased token limit for more complete responses
       });
 
       const parseResult = parseAIResponse(response);
       if (!parseResult.success) {
+        console.warn('🔍 GuidanceGenerationService: JSON parsing failed, attempting fallback:', parseResult.error);
+        
+        // Try to extract basic information from the response even if JSON parsing fails
+        const fallbackGuidance = this.extractFallbackGuidance(response, request);
+        if (fallbackGuidance) {
+          return {
+            success: true,
+            guidance: fallbackGuidance
+          };
+        }
+        
         throw new Error(parseResult.error || 'Failed to parse AI response');
+      }
+      
+      // Validate the parsed data has required fields
+      const data = parseResult.data as any;
+      if (!data || typeof data.shouldProvideGuidance === 'undefined') {
+        console.warn('🔍 GuidanceGenerationService: Invalid response structure, using fallback');
+        const fallbackGuidance = this.extractFallbackGuidance(response, request);
+        if (fallbackGuidance) {
+          return {
+            success: true,
+            guidance: fallbackGuidance
+          };
+        }
+        throw new Error('Invalid response structure from AI');
       }
       
       return {
         success: true,
         guidance: {
-          shouldProvideGuidance: (parseResult.data as any).shouldProvideGuidance,
-          guidanceType: (parseResult.data as any).guidanceType,
-          message: (parseResult.data as any).message,
-          details: (parseResult.data as any).details
+          shouldProvideGuidance: data.shouldProvideGuidance,
+          guidanceType: data.guidanceType || 'api_specific',
+          message: data.message || 'API guidance needed',
+          details: data.details || {}
         }
       };
 
@@ -232,6 +279,53 @@ export class GuidanceGenerationService {
         success: false,
         error: 'AI guidance generation failed'
       };
+    }
+  }
+
+  /**
+   * Extract basic guidance information from malformed AI responses
+   */
+  private extractFallbackGuidance(response: string, request: GuidanceGenerationRequest): any | null {
+    try {
+      // Look for key phrases in the response to determine guidance type
+      const lowerResponse = response.toLowerCase();
+      
+      let shouldProvideGuidance = true;
+      let guidanceType: 'connection_setup' | 'api_specific' | 'general' | 'none' = 'api_specific';
+      let message = 'API guidance needed for your request.';
+      
+      // Check if the response indicates no guidance is needed
+      if (lowerResponse.includes('no guidance') || lowerResponse.includes('no specific api')) {
+        shouldProvideGuidance = false;
+        guidanceType = 'none';
+        message = 'No specific API guidance is required for this request.';
+      }
+      
+      // Check for connection setup guidance
+      if (lowerResponse.includes('set up') || lowerResponse.includes('connect') || lowerResponse.includes('configure')) {
+        guidanceType = 'connection_setup';
+        message = 'You need to set up API connections to complete this workflow.';
+      }
+      
+      // Extract a more specific message if possible
+      const messageMatch = response.match(/(?:message|content|response):\s*["']([^"']+)["']/i);
+      if (messageMatch) {
+        message = messageMatch[1];
+      }
+      
+      return {
+        shouldProvideGuidance,
+        guidanceType,
+        message,
+        details: {
+          requiredApis: request.apiRequirements.missingApis,
+          suggestedWorkflow: `Workflow involving ${request.apiRequirements.missingApis.map(api => api.name).join(', ')}`,
+          userIntent: request.userIntent.userGoal
+        }
+      };
+    } catch (error) {
+      console.warn('🔍 GuidanceGenerationService: Fallback extraction failed:', error);
+      return null;
     }
   }
 
@@ -319,6 +413,13 @@ GUIDANCE GENERATION RULES:
 4. Provide helpful tips and additional notes
 5. Make the guidance actionable and easy to follow
 6. Consider the user's technical level and context
+
+CRITICAL DECISION LOGIC:
+- If "Requires Guidance" is FALSE and "Missing APIs" is empty, set shouldProvideGuidance to FALSE and guidanceType to "none"
+- If "Requires Guidance" is TRUE or "Missing APIs" has items, provide appropriate guidance
+- ALWAYS respect the "Requires Guidance" flag from the API requirements analysis
+
+MANDATORY RULE: If the API requirements show "Requires Guidance: false" and "Missing APIs: []", you MUST return shouldProvideGuidance: false and guidanceType: "none". Do NOT provide guidance in this case.
 
 GUIDANCE TYPES:
 - connection_setup: User needs to set up new API connections

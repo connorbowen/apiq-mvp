@@ -106,11 +106,14 @@ export class UsageTrackingService {
     userId: string, 
     actionType: 'api_connection' | 'workflow_execution' | 'direct_api_call'
   ): Promise<{ allowed: boolean; reason?: string }> {
+    console.log('🔍 UsageTrackingService: Looking for user plan for userId:', userId);
     const userPlan = await prisma.userPlan.findUnique({
       where: { userId }
     });
+    console.log('🔍 UsageTrackingService: Found user plan:', userPlan ? { id: userPlan.id, planType: userPlan.planType, status: userPlan.status } : 'null');
 
     if (!userPlan) {
+      console.log('❌ UsageTrackingService: User plan not found for userId:', userId);
       return { allowed: false, reason: 'User plan not found' };
     }
 
