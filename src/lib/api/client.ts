@@ -235,26 +235,25 @@ class ApiClient {
           xhr.onload = () => {
             console.log('🔍 API Client: XMLHttpRequest completed! Status:', xhr.status);
             
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                const responseData = JSON.parse(xhr.responseText);
-                console.log('🔍 API Client: XMLHttpRequest response data:', responseData);
-                
-                // Convert to axios-like format for compatibility
-                const response = {
-                  status: xhr.status,
-                  data: responseData,
-                  headers: {} // XMLHttpRequest doesn't provide easy header access
-                } as AxiosResponse<ApiResponse<T>>;
-                
-                resolve(response.data);
-              } catch (parseError) {
-                console.log('🔍 API Client: XMLHttpRequest JSON parse error:', parseError);
-                reject(new Error(`Failed to parse response: ${parseError}`));
-              }
-            } else {
-              console.log('🔍 API Client: XMLHttpRequest error response:', xhr.responseText);
-              reject(new Error(`API call failed: ${xhr.status} ${xhr.statusText} - ${xhr.responseText}`));
+            try {
+              const responseData = JSON.parse(xhr.responseText);
+              console.log('🔍 API Client: XMLHttpRequest response data:', responseData);
+              
+              // Convert to axios-like format for compatibility
+              const response = {
+                status: xhr.status,
+                data: responseData,
+                headers: {} // XMLHttpRequest doesn't provide easy header access
+              } as AxiosResponse<ApiResponse<T>>;
+              
+              resolve(response.data);
+            } catch (parseError) {
+              console.log('🔍 API Client: XMLHttpRequest JSON parse error:', parseError);
+              // Even if JSON parsing fails, return the error response
+              resolve({
+                success: false,
+                error: xhr.responseText || `HTTP ${xhr.status}: ${xhr.statusText}`
+              });
             }
           };
           
@@ -292,7 +291,15 @@ class ApiClient {
         if (!fetchResponse.ok) {
           const errorText = await fetchResponse.text();
           console.log('🔍 API Client: Fetch error response:', errorText);
-          throw new Error(`API call failed: ${fetchResponse.status} ${fetchResponse.statusText} - ${errorText}`);
+          try {
+            const errorData = JSON.parse(errorText);
+            return errorData; // Return the error response as ApiResponse
+          } catch {
+            return {
+              success: false,
+              error: errorText || `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`
+            };
+          }
         }
 
         const responseData = await fetchResponse.json();
