@@ -33196,3 +33196,1008 @@ Unknown field `avatar` for select statement on model `User`. Available options a
   "error": "Please log in again. Your account may have been deactivated.",
   "stack": "ApplicationError: Please log in again. Your account may have been deactivated.\n    at a (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/login.js:1:6380)\n    at h (/Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/login.js:1:3002)\n    at async l (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows.js:1:1059)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows.js:1:9732\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)"
 }
+2025-09-30 14:00:40 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 4
+}
+2025-09-30 14:00:41 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1011
+}
+2025-09-30 14:00:43 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3016
+}
+2025-09-30 14:00:46 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6020
+}
+2025-09-30 14:00:47 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 2
+}
+2025-09-30 14:00:48 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1007
+}
+2025-09-30 14:00:50 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3016
+}
+2025-09-30 14:00:53 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6021
+}
+2025-09-30 14:00:55 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 1
+}
+2025-09-30 14:00:56 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1008
+}
+2025-09-30 14:00:58 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3011
+}
+2025-09-30 14:01:01 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6015
+}
+2025-09-30 14:01:05 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 3
+}
+2025-09-30 14:01:06 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1007
+}
+2025-09-30 14:01:08 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3010
+}
+2025-09-30 14:01:11 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002j9k6djrxpvr83",
+  "stepName": "Get Pet Data",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6013
+}
+2025-09-30 14:01:11 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 1
+}
+2025-09-30 14:01:12 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1007
+}
+2025-09-30 14:01:14 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3012
+}
+2025-09-30 14:01:17 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6017
+}
+2025-09-30 14:01:18 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 5
+}
+2025-09-30 14:01:19 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1010
+}
+2025-09-30 14:01:21 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3016
+}
+2025-09-30 14:01:24 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6022
+}
+2025-09-30 14:01:26 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 2
+}
+2025-09-30 14:01:27 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1008
+}
+2025-09-30 14:01:27 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 1
+}
+2025-09-30 14:01:28 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1005
+}
+2025-09-30 14:01:29 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3012
+}
+2025-09-30 14:01:30 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3009
+}
+2025-09-30 14:01:32 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6016
+}
+2025-09-30 14:01:33 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6017
+}
+2025-09-30 14:01:34 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 2
+}
+2025-09-30 14:01:35 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1010
+}
+2025-09-30 14:01:36 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 3
+}
+2025-09-30 14:01:37 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1007
+}
+2025-09-30 14:01:37 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3014
+}
+2025-09-30 14:01:39 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3010
+}
+2025-09-30 14:01:40 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6017
+}
+2025-09-30 14:01:42 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002k9k6deibh29ez",
+  "stepName": "Create New Pet",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6015
+}
+2025-09-30 14:01:42 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 2
+}
+2025-09-30 14:01:42 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 4
+}
+2025-09-30 14:01:43 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1006
+}
+2025-09-30 14:01:43 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1007
+}
+2025-09-30 14:01:45 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3012
+}
+2025-09-30 14:01:45 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3015
+}
+2025-09-30 14:01:48 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6016
+}
+2025-09-30 14:01:48 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6019
+}
+2025-09-30 14:01:49 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 4
+}
+2025-09-30 14:01:50 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1008
+}
+2025-09-30 14:01:52 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3012
+}
+2025-09-30 14:01:52 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 2
+}
+2025-09-30 14:01:53 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1007
+}
+2025-09-30 14:01:55 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6016
+}
+2025-09-30 14:01:55 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3010
+}
+2025-09-30 14:01:57 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 2
+}
+2025-09-30 14:01:58 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1006
+}
+2025-09-30 14:01:58 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71lqi200499k6dq4645z9u",
+  "stepName": "Get Pets Data",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6014
+}
+2025-09-30 14:02:00 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3009
+}
+2025-09-30 14:02:03 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6016
+}
+2025-09-30 14:02:07 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 2
+}
+2025-09-30 14:02:08 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1005
+}
+2025-09-30 14:02:08 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 359
+}
+2025-09-30 14:02:09 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1445
+}
+2025-09-30 14:02:10 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3011
+}
+2025-09-30 14:02:11 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3534
+}
+2025-09-30 14:02:13 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "Missing or invalid secrets for connection: API_KEY; Issues: ",
+  "stack": "Error: Missing or invalid secrets for connection: API_KEY; Issues: \n    at n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:10867)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)",
+  "stepId": "cmg71kptc002l9k6d9slplihf",
+  "stepName": "Find Pets by Status",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6015
+}
+2025-09-30 14:02:14 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6617
+}
+2025-09-30 14:02:16 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 86
+}
+2025-09-30 14:02:17 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1169
+}
+2025-09-30 14:02:19 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3258
+}
+2025-09-30 14:02:22 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6349
+}
+2025-09-30 14:02:24 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 81
+}
+2025-09-30 14:02:25 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1164
+}
+2025-09-30 14:02:27 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3253
+}
+2025-09-30 14:02:30 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6336
+}
+2025-09-30 14:02:34 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 335
+}
+2025-09-30 14:02:36 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1486
+}
+2025-09-30 14:02:38 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3575
+}
+2025-09-30 14:02:41 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 400 Bad Request",
+  "stack": "Error: API call failed: 400 Bad Request\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71mlwd006i9k6dp6wf0abd",
+  "stepName": "Update Pet Information",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6663
+}
+2025-09-30 14:03:05 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71ntng007r9k6dwdlu6cm9",
+  "stepName": "Get Pets from Petstore",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 285
+}
+2025-09-30 14:03:06 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71ntng007r9k6dwdlu6cm9",
+  "stepName": "Get Pets from Petstore",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1369
+}
+2025-09-30 14:03:08 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71ntng007r9k6dwdlu6cm9",
+  "stepName": "Get Pets from Petstore",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3456
+}
+2025-09-30 14:03:11 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71ntng007r9k6dwdlu6cm9",
+  "stepName": "Get Pets from Petstore",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6537
+}
+2025-09-30 14:03:12 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71ntng007r9k6dwdlu6cm9",
+  "stepName": "Get Pets from Petstore",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 80
+}
+2025-09-30 14:03:13 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71ntng007r9k6dwdlu6cm9",
+  "stepName": "Get Pets from Petstore",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1169
+}
+2025-09-30 14:03:16 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71ntng007r9k6dwdlu6cm9",
+  "stepName": "Get Pets from Petstore",
+  "retryCount": 3,
+  "maxRetries": 3,
+  "duration": 3421
+}
+2025-09-30 14:03:19 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71ntng007r9k6dwdlu6cm9",
+  "stepName": "Get Pets from Petstore",
+  "retryCount": 4,
+  "maxRetries": 3,
+  "duration": 6502
+}
+2025-09-30 14:03:19 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71o4kh00829k6dlu0tqhe4",
+  "stepName": "Get Pet Data",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 74
+}
+2025-09-30 14:03:20 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71o4kh00829k6dlu0tqhe4",
+  "stepName": "Get Pet Data",
+  "retryCount": 2,
+  "maxRetries": 3,
+  "duration": 1159
+}
+2025-09-30 14:03:21 [ERROR]: API call step failed {
+  "service": "apiq-mvp",
+  "error": "API call failed: 404 Not Found",
+  "stack": "Error: API call failed: 404 Not Found\n    at n.makeApiCall (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:14359)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async n.execute (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:11805)\n    at async d.executeStep (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:20258)\n    at async h.executeStepWithRetry (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:24477)\n    at async h.executeStepsWithProgress (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:23948)\n    at async h.executeWorkflow (/Users/connorbowen/apiq-mvp/.next/server/chunks/6390.js:10:22202)\n    at async x (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:3854)\n    at async f (/Users/connorbowen/apiq-mvp/.next/server/pages/api/workflows/[id]/execute.js:1:1827)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570",
+  "stepId": "cmg71ntng007r9k6dwdlu6cm9",
+  "stepName": "Get Pets from Petstore",
+  "retryCount": 1,
+  "maxRetries": 3,
+  "duration": 73
+}
+2025-09-30 14:21:56 [ERROR]: Failed to fetch OpenAPI spec {
+  "service": "apiq-mvp",
+  "error": "getaddrinfo ENOTFOUND invalid-api.example.com",
+  "stack": "Error: getaddrinfo ENOTFOUND invalid-api.example.com\n    at AxiosError.from (file:///Users/connorbowen/apiq-mvp/node_modules/axios/lib/core/AxiosError.js:92:14)\n    at RedirectableRequest.handleRequestError (file:///Users/connorbowen/apiq-mvp/node_modules/axios/lib/adapters/http.js:620:25)\n    at RedirectableRequest.emit (node:events:519:35)\n    at eventHandlers.<computed> (/Users/connorbowen/apiq-mvp/node_modules/follow-redirects/index.js:49:24)\n    at ClientRequest.emit (node:events:507:28)\n    at emitErrorEvent (node:_http_client:104:11)\n    at TLSSocket.socketErrorListener (node:_http_client:518:5)\n    at TLSSocket.emit (node:events:507:28)\n    at emitErrorNT (node:internal/streams/destroy:170:8)\n    at emitErrorCloseNT (node:internal/streams/destroy:129:3)\n    at Axios.request (file:///Users/connorbowen/apiq-mvp/node_modules/axios/lib/core/Axios.js:45:41)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async u (/Users/connorbowen/apiq-mvp/.next/server/pages/api/connections.js:1:5291)\n    at async w (/Users/connorbowen/apiq-mvp/.next/server/pages/api/connections.js:1:2730)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)",
+  "url": "https://invalid-api.example.com/swagger.json"
+}
+2025-09-30 14:21:56 [ERROR]: Failed to process OpenAPI specification {
+  "service": "apiq-mvp",
+  "error": "Cannot reach the OpenAPI specification URL: getaddrinfo ENOTFOUND invalid-api.example.com",
+  "connectionId": "cmg72c4ra00519kuzjx4t2uk6",
+  "userId": "cmg72bn0b00009kdma3mxsvz0",
+  "documentationUrl": "https://invalid-api.example.com/swagger.json"
+}
+2025-09-30 14:22:08 [ERROR]: Failed to parse OpenAPI spec data {
+  "service": "apiq-mvp",
+  "error": "No endpoints found in OpenAPI specification",
+  "url": "https://httpbin.org/json"
+}
+2025-09-30 14:22:08 [ERROR]: Failed to fetch OpenAPI spec {
+  "service": "apiq-mvp",
+  "error": "No endpoints found in OpenAPI specification",
+  "url": "https://httpbin.org/json"
+}
+2025-09-30 14:22:08 [ERROR]: Failed to process OpenAPI specification {
+  "service": "apiq-mvp",
+  "error": "No endpoints found in OpenAPI specification",
+  "connectionId": "cmg72cdr5005b9kuzp6tlqbey",
+  "userId": "cmg72bn0b00009kdma3mxsvz0",
+  "documentationUrl": "https://httpbin.org/json"
+}
+2025-09-30 15:46:58 [ERROR]: Failed to fetch OpenAPI spec {
+  "service": "apiq-mvp",
+  "error": "getaddrinfo ENOTFOUND invalid-api.example.com",
+  "stack": "Error: getaddrinfo ENOTFOUND invalid-api.example.com\n    at AxiosError.from (file:///Users/connorbowen/apiq-mvp/node_modules/axios/lib/core/AxiosError.js:92:14)\n    at RedirectableRequest.handleRequestError (file:///Users/connorbowen/apiq-mvp/node_modules/axios/lib/adapters/http.js:620:25)\n    at RedirectableRequest.emit (node:events:519:35)\n    at eventHandlers.<computed> (/Users/connorbowen/apiq-mvp/node_modules/follow-redirects/index.js:49:24)\n    at ClientRequest.emit (node:events:507:28)\n    at emitErrorEvent (node:_http_client:104:11)\n    at TLSSocket.socketErrorListener (node:_http_client:518:5)\n    at TLSSocket.emit (node:events:507:28)\n    at emitErrorNT (node:internal/streams/destroy:170:8)\n    at emitErrorCloseNT (node:internal/streams/destroy:129:3)\n    at Axios.request (file:///Users/connorbowen/apiq-mvp/node_modules/axios/lib/core/Axios.js:45:41)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async u (/Users/connorbowen/apiq-mvp/.next/server/pages/api/connections.js:1:5291)\n    at async w (/Users/connorbowen/apiq-mvp/.next/server/pages/api/connections.js:1:2730)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)",
+  "url": "https://invalid-api.example.com/swagger.json"
+}
+2025-09-30 15:46:58 [ERROR]: Failed to process OpenAPI specification {
+  "service": "apiq-mvp",
+  "error": "Cannot reach the OpenAPI specification URL: getaddrinfo ENOTFOUND invalid-api.example.com",
+  "connectionId": "cmg75dhy8004x9kbxnyvlmzhd",
+  "userId": "cmg75bbo600009kdaeymxx5h2",
+  "documentationUrl": "https://invalid-api.example.com/swagger.json"
+}
+2025-09-30 15:47:13 [ERROR]: Failed to parse OpenAPI spec data {
+  "service": "apiq-mvp",
+  "error": "No endpoints found in OpenAPI specification",
+  "url": "https://httpbin.org/json"
+}
+2025-09-30 15:47:13 [ERROR]: Failed to fetch OpenAPI spec {
+  "service": "apiq-mvp",
+  "error": "No endpoints found in OpenAPI specification",
+  "url": "https://httpbin.org/json"
+}
+2025-09-30 15:47:13 [ERROR]: Failed to process OpenAPI specification {
+  "service": "apiq-mvp",
+  "error": "No endpoints found in OpenAPI specification",
+  "connectionId": "cmg75dsz100579kbxsx5fdd28",
+  "userId": "cmg75bbo600009kdaeymxx5h2",
+  "documentationUrl": "https://httpbin.org/json"
+}
+2025-09-30 16:00:39 [ERROR]: Failed to fetch OpenAPI spec {
+  "service": "apiq-mvp",
+  "error": "getaddrinfo ENOTFOUND invalid-api.example.com",
+  "stack": "Error: getaddrinfo ENOTFOUND invalid-api.example.com\n    at AxiosError.from (file:///Users/connorbowen/apiq-mvp/node_modules/axios/lib/core/AxiosError.js:92:14)\n    at RedirectableRequest.handleRequestError (file:///Users/connorbowen/apiq-mvp/node_modules/axios/lib/adapters/http.js:620:25)\n    at RedirectableRequest.emit (node:events:519:35)\n    at eventHandlers.<computed> (/Users/connorbowen/apiq-mvp/node_modules/follow-redirects/index.js:49:24)\n    at ClientRequest.emit (node:events:507:28)\n    at emitErrorEvent (node:_http_client:104:11)\n    at TLSSocket.socketErrorListener (node:_http_client:518:5)\n    at TLSSocket.emit (node:events:507:28)\n    at emitErrorNT (node:internal/streams/destroy:170:8)\n    at emitErrorCloseNT (node:internal/streams/destroy:129:3)\n    at Axios.request (file:///Users/connorbowen/apiq-mvp/node_modules/axios/lib/core/Axios.js:45:41)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async u (/Users/connorbowen/apiq-mvp/.next/server/pages/api/connections.js:1:5291)\n    at async w (/Users/connorbowen/apiq-mvp/.next/server/pages/api/connections.js:1:2730)\n    at async K (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:16881)\n    at async U.render (/Users/connorbowen/apiq-mvp/node_modules/next/dist/compiled/next-server/pages-api.runtime.prod.js:20:17520)\n    at async NextNodeServer.runApi (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:603:9)\n    at async NextNodeServer.handleCatchallRenderRequest (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/next-server.js:269:37)\n    at async NextNodeServer.handleRequestImpl (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/base-server.js:818:17)\n    at async invokeRender (/Users/connorbowen/apiq-mvp/node_modules/next/dist/server/lib/router-server.js:179:21)",
+  "url": "https://invalid-api.example.com/swagger.json"
+}
+2025-09-30 16:00:39 [ERROR]: Failed to process OpenAPI specification {
+  "service": "apiq-mvp",
+  "error": "Cannot reach the OpenAPI specification URL: getaddrinfo ENOTFOUND invalid-api.example.com",
+  "connectionId": "cmg75v3ak003z9kgf7qormozw",
+  "userId": "cmg75syg800009kgulcc5cpyw",
+  "documentationUrl": "https://invalid-api.example.com/swagger.json"
+}
+2025-09-30 16:00:52 [ERROR]: Failed to parse OpenAPI spec data {
+  "service": "apiq-mvp",
+  "error": "No endpoints found in OpenAPI specification",
+  "url": "https://httpbin.org/json"
+}
+2025-09-30 16:00:52 [ERROR]: Failed to fetch OpenAPI spec {
+  "service": "apiq-mvp",
+  "error": "No endpoints found in OpenAPI specification",
+  "url": "https://httpbin.org/json"
+}
+2025-09-30 16:00:52 [ERROR]: Failed to process OpenAPI specification {
+  "service": "apiq-mvp",
+  "error": "No endpoints found in OpenAPI specification",
+  "connectionId": "cmg75vd2h00499kgfu6d9g2qr",
+  "userId": "cmg75syg800009kgulcc5cpyw",
+  "documentationUrl": "https://httpbin.org/json"
+}
+2025-09-30 16:11:18 [ERROR]: 🔍 ApiRequirementService: JSON parsing failed {
+  "service": "apiq-mvp",
+  "error": "Failed to parse AI response: Unexpected token ',', ...\"dApis\": [ ,{      \"n\"... is not valid JSON. Original response: {\n  \"requiredApis\": [\n    {\n      \"name\": \"email\",\n      \"displayName\": \"Email Service\",\n      \"confidence\": 0.9,\n      \"reason\": \"To send a welcome email to the new customer.\",\n      \"suggestedEndpoi...",
+  "stack": "Error: Failed to parse AI response: Unexpected token ',', ...\"dApis\": [ ,{      \"n\"... is not valid JSON. Original response: {\n  \"requiredApis\": [\n    {\n      \"name\": \"email\",\n      \"displayName\": \"Email Service\",\n      \"confidence\": 0.9,\n      \"reason\": \"To send a welcome email to the new customer.\",\n      \"suggestedEndpoi...\n    at o.determineRequirementsWithAI (/Users/connorbowen/apiq-mvp/.next/server/pages/api/chat/process.js:57:4074)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async o.determineApiRequirements (/Users/connorbowen/apiq-mvp/.next/server/pages/api/chat/process.js:57:2685)\n    at async c.determineApiRequirements (/Users/connorbowen/apiq-mvp/.next/server/pages/api/chat/process.js:207:1989)\n    at async c.processMessage (/Users/connorbowen/apiq-mvp/.next/server/pages/api/chat/process.js:207:562)\n    at async c.processMessage (/Users/connorbowen/apiq-mvp/.next/server/pages/api/chat/process.js:1:15893)\n    at async p.analyzeConnectionsWithCentralizedOrchestrator (/Users/connorbowen/apiq-mvp/.next/server/pages/api/chat/process.js:260:5493)\n    at async p.processWorkflowRequest (/Users/connorbowen/apiq-mvp/.next/server/pages/api/chat/process.js:259:2631)\n    at async g (/Users/connorbowen/apiq-mvp/.next/server/pages/api/chat/process.js:1:9682)\n    at async /Users/connorbowen/apiq-mvp/.next/server/pages/api/auth/me.js:1:6570"
+}

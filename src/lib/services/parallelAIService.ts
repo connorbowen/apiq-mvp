@@ -395,7 +395,7 @@ export class ParallelAIService {
     try {
       const result = await Promise.race([
         this.classificationService.classifyMessage(message, {}, connections),
-        this.timeoutPromise(30000, 'Classification timeout')
+        this.timeoutPromise(60000, 'Classification timeout')
       ]);
       
       // Cache the result
@@ -476,7 +476,7 @@ export class ParallelAIService {
           userId,
           context: {}
         }),
-        this.timeoutPromise(30000, 'Connection analysis timeout')
+        this.timeoutPromise(60000, 'Connection analysis timeout')
       ]);
       
       console.log('🔍 ParallelAIService - Centralized orchestrator result:', JSON.stringify(result, null, 2));

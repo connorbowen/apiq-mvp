@@ -148,7 +148,22 @@ export class EnhancedConnectionGuidanceOrchestrator {
       context: context.context
     };
 
-    return await this.apiRequirementService.determineApiRequirements(requirementRequest);
+    logInfo('🔍 EnhancedConnectionGuidanceOrchestrator: About to call ApiRequirementService', {
+      message: requirementRequest.userMessage,
+      guidanceType: requirementRequest.userIntent.guidanceType,
+      connectionsCount: requirementRequest.availableConnections.length
+    });
+
+    const result = await this.apiRequirementService.determineApiRequirements(requirementRequest);
+    
+    logInfo('🔍 EnhancedConnectionGuidanceOrchestrator: ApiRequirementService result', {
+      success: result.success,
+      requiredApis: result.requirements?.requiredApis?.length || 0,
+      missingApis: result.requirements?.missingApis?.length || 0,
+      requiresGuidance: result.requirements?.requiresGuidance || false
+    });
+
+    return result;
   }
 
   /**

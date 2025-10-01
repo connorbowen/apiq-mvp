@@ -93,12 +93,12 @@ export class ConnectionGuidanceOrchestrator {
     try {
       console.log('🔍 ConnectionGuidanceOrchestrator - About to call enhancedOrchestrator.processMessage');
       
-      // Add timeout wrapper to prevent hanging
+      // Add timeout wrapper to prevent hanging - increased to 60 seconds for complex processing
       const timeoutPromise = new Promise<ConnectionGuidanceResponse>((_, reject) => {
         setTimeout(() => {
           console.log('⏰ ConnectionGuidanceOrchestrator - Timeout reached, rejecting promise');
-          reject(new Error('Guidance orchestrator timeout after 30 seconds'));
-        }, 30000);
+          reject(new Error('Guidance orchestrator timeout after 60 seconds'));
+        }, 60000);
       });
       
       console.log('🔍 ConnectionGuidanceOrchestrator - Creating guidance promise...');

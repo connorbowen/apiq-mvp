@@ -230,7 +230,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         hasApiCallResult: !!assistantMessage.apiCallResult,
         apiCallResult: assistantMessage.apiCallResult,
         content: assistantMessage.content,
-        suggestedAction: assistantMessage.suggestedAction
+        suggestedAction: assistantMessage.suggestedAction,
+        hasConnectionGuidance: !!assistantMessage.connectionGuidance,
+        connectionGuidance: assistantMessage.connectionGuidance
       });
       
 

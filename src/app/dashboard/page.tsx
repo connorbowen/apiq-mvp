@@ -109,13 +109,15 @@ const tabConfig = {
 };
 
 function DashboardContent() {
-  console.info('[dashboard] DashboardContent rendered');
-  
   const [user, setUser] = useState<User | null>(null);
   const [connections, setConnections] = useState<ApiConnection[]>([]);
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [secrets, setSecrets] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<TabType>('chat');
+  
+  console.info('[dashboard] DashboardContent rendered');
+  console.info('[dashboard] Current tab:', activeTab);
+  console.info('[dashboard] Connections count:', connections.length);
 
   const [showConnectionDetails, setShowConnectionDetails] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<any>(null);
@@ -334,9 +336,9 @@ function DashboardContent() {
       const response = await apiClient.getConnections();
       console.info('[dashboard] loadConnections API response:', JSON.stringify(response, null, 2));
       if (response.success && response.data) {
-        const connections = response.data.connections || [];
-        console.info('[dashboard] setConnections length:', connections.length);
-        console.info('[dashboard] setConnections data:', connections.map(c => ({
+        const newConnections = response.data.connections || [];
+        console.info('[dashboard] setConnections length:', newConnections.length);
+        console.info('[dashboard] setConnections data:', newConnections.map(c => ({
           id: c.id,
           name: c.name,
           authType: c.authType,
@@ -344,8 +346,8 @@ function DashboardContent() {
         })));
         
         // Add debugging to see if setConnections is actually called
-        console.info('[dashboard] About to call setConnections with', connections.length, 'connections');
-        setConnections(connections);
+        console.info('[dashboard] About to call setConnections with', newConnections.length, 'connections');
+        setConnections(newConnections);
         console.info('[dashboard] setConnections called successfully');
         
         // Clear any error messages if connections load successfully (even if empty)
@@ -370,7 +372,7 @@ function DashboardContent() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [connections.length]);
 
   const loadWorkflows = useCallback(async () => {
     try {
@@ -850,9 +852,12 @@ function DashboardContent() {
               <ConnectionsTab
                 connections={connections}
                 onConnectionCreated={async () => {
-                  // Add a small delay to ensure the API has processed the new connection
-                  await new Promise(resolve => setTimeout(resolve, 500));
+                  console.info('[dashboard] onConnectionCreated callback triggered');
+                  // Add a delay to ensure the API has processed the new connection
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  console.info('[dashboard] Calling loadConnections after connection creation');
                   await loadConnections();
+                  console.info('[dashboard] loadConnections completed, setting success message');
                   setSuccessMessage('Connection created successfully!');
                 }}
                 onConnectionEdited={() => {
@@ -881,9 +886,12 @@ function DashboardContent() {
               secrets={secrets}
               user={user}
               onConnectionCreated={async () => {
-                // Add a small delay to ensure the API has processed the new connection
-                await new Promise(resolve => setTimeout(resolve, 500));
+                console.info('[dashboard] onConnectionCreated callback triggered (SettingsTab)');
+                // Add a delay to ensure the API has processed the new connection
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                console.info('[dashboard] Calling loadConnections after connection creation (SettingsTab)');
                 await loadConnections();
+                console.info('[dashboard] loadConnections completed, setting success message (SettingsTab)');
                 setSuccessMessage('Connection created successfully!');
               }}
               onConnectionEdited={() => {

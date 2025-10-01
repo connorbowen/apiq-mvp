@@ -12,6 +12,7 @@ export interface TestConnection {
   baseUrl: string;
   authType: AuthType;
   userId: string;
+  documentationUrl?: string;
 }
 
 export interface TestEndpoint {
@@ -29,7 +30,8 @@ export const createTestConnection = async (
   name?: string,
   baseUrl?: string,
   authType: AuthType = 'NONE',
-  createEndpoints: boolean = true
+  createEndpoints: boolean = true,
+  documentationUrl?: string
 ): Promise<TestConnection> => {
   // Ensure the user exists in the database
   const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
@@ -52,6 +54,7 @@ export const createTestConnection = async (
       status: 'ACTIVE',
       connectionStatus: 'connected',
       description: `Test connection for ${testName}`,
+      documentationUrl: documentationUrl,
       authConfig: {
         test: true,
         createdBy: 'test-utils'

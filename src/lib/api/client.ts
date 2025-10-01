@@ -212,6 +212,7 @@ class ApiClient {
         (navigator.userAgent.includes('Chrome/138.0.7204.23') || 
          typeof (window as any).playwright !== 'undefined');
       
+      // Try using fetch first, even in E2E environment
       if (isPlaywrightE2E) {
         console.log('🔍 API Client: Detected Playwright E2E environment, using XMLHttpRequest fallback');
         
@@ -234,6 +235,8 @@ class ApiClient {
           
           xhr.onload = () => {
             console.log('🔍 API Client: XMLHttpRequest completed! Status:', xhr.status);
+            console.log('🔍 API Client: XMLHttpRequest response text:', xhr.responseText);
+            console.log('🔍 API Client: XMLHttpRequest readyState:', xhr.readyState);
             
             try {
               const responseData = JSON.parse(xhr.responseText);
@@ -246,6 +249,7 @@ class ApiClient {
                 headers: {} // XMLHttpRequest doesn't provide easy header access
               } as AxiosResponse<ApiResponse<T>>;
               
+              console.log('🔍 API Client: XMLHttpRequest resolving with data:', response.data);
               resolve(response.data);
             } catch (parseError) {
               console.log('🔍 API Client: XMLHttpRequest JSON parse error:', parseError);
@@ -259,6 +263,11 @@ class ApiClient {
           
           xhr.onerror = () => {
             console.log('🔍 API Client: XMLHttpRequest network error');
+            console.log('🔍 API Client: XMLHttpRequest error details:', {
+              readyState: xhr.readyState,
+              status: xhr.status,
+              statusText: xhr.statusText
+            });
             reject(new Error('Network error'));
           };
           
@@ -267,26 +276,50 @@ class ApiClient {
             reject(new Error('Request timeout'));
           };
           
-          xhr.timeout = 30000; // 30 second timeout
+          xhr.onabort = () => {
+            console.log('🔍 API Client: XMLHttpRequest aborted');
+            reject(new Error('Request aborted'));
+          };
+          
+          xhr.timeout = 60000; // 60 second timeout
           
           console.log('🔍 API Client: Starting XMLHttpRequest to:', fullUrl);
           xhr.send(config.data ? JSON.stringify(config.data) : undefined);
         });
       } else {
         // Standard fetch for non-E2E environments
-        const fetchResponse = await fetch(fullUrl, {
-          method: config.method || 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
-            ...config.headers,
-          },
-          credentials: 'include',
-          body: config.data ? JSON.stringify(config.data) : undefined
-        });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          console.log('🔍 API Client: Fetch request timed out, aborting...');
+          controller.abort();
+        }, 60000); // 60 second timeout
         
-        console.log('🔍 API Client: Fetch response status:', fetchResponse.status);
-        console.log('🔍 API Client: Fetch response ok:', fetchResponse.ok);
+        console.log('🔍 API Client: About to make fetch request...');
+        
+        let fetchResponse;
+        try {
+          fetchResponse = await fetch(fullUrl, {
+            method: config.method || 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
+              ...config.headers,
+            },
+            credentials: 'include',
+            body: config.data ? JSON.stringify(config.data) : undefined,
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          console.log('🔍 API Client: Fetch response status:', fetchResponse.status);
+          console.log('🔍 API Client: Fetch response ok:', fetchResponse.ok);
+          console.log('🔍 API Client: Fetch response headers:', Object.fromEntries(fetchResponse.headers.entries()));
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          console.log('🔍 API Client: Fetch request failed:', fetchError);
+          throw fetchError;
+        }
 
         if (!fetchResponse.ok) {
           const errorText = await fetchResponse.text();

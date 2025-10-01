@@ -168,20 +168,21 @@ RULES:
 1. Create 2-5 logical steps for complex requests
 2. Use ONLY the exact connection IDs provided above
 3. For api_call steps, apiConnectionId MUST be from the list above
-4. Include data flow between steps when possible
+4. For api_call steps, include method (GET/POST/PUT/DELETE) and endpoint (/api/path)
+5. Include data flow between steps when possible
 
 STEP TYPES:
-- api_call: Make API request (requires valid apiConnectionId)
+- api_call: Make API request (requires valid apiConnectionId, method, endpoint)
 - data_transform: Transform data between steps  
 - condition: Add conditional logic
 - webhook: Set up webhook monitoring
 
 EXAMPLES:
 User: "When GitHub issue created, send Slack notification"
-Steps: 1. Monitor GitHub (webhook) 2. Send Slack message (api_call with correct ID)
+Steps: 1. Monitor GitHub (webhook) 2. Send Slack message (api_call with correct ID, method: POST, endpoint: /chat.postMessage)
 
 User: "Create invoice and send email"
-Steps: 1. Create invoice (api_call) 2. Send email (api_call)
+Steps: 1. Create invoice (api_call with method: POST, endpoint: /invoices) 2. Send email (api_call with method: POST, endpoint: /send)
 
 Remember: Only use connection IDs from the provided list.`;
   }
@@ -219,6 +220,8 @@ Use the available connections and create a multi-step workflow with clear data f
                   order: { type: 'number' },
                   description: { type: 'string' },
                   apiConnectionId: { type: 'string' },
+                  method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] },
+                  endpoint: { type: 'string' },
                   parameters: { type: 'object' }
                 },
                 required: ['id', 'name', 'type', 'order', 'description']

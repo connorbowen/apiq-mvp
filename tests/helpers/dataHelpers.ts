@@ -55,7 +55,9 @@ export const createTestData = async (options: TestDataOptions = {}): Promise<{
       user,
       options.connection.name,
       options.connection.baseUrl,
-      options.connection.authType
+      options.connection.authType,
+      true, // createEndpoints
+      options.connection.documentationUrl
     );
   }
   if (options.workflow && user) {

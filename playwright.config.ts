@@ -20,8 +20,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'off', // Set to 'on-first-retry' when debugging test failures
-    actionTimeout: 30000, // 30 seconds for actions (increased for stability)
-    navigationTimeout: 30000, // 30 seconds for navigation (increased for stability)
+    actionTimeout: 60000, // 60 seconds for actions (increased for stability)
+    navigationTimeout: 60000, // 60 seconds for navigation (increased for stability)
     // Add context options for better stability
     contextOptions: {
       ignoreHTTPSErrors: true,

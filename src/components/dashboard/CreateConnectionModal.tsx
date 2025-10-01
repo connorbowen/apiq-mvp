@@ -93,6 +93,7 @@ export default function CreateConnectionModal({
   onSuccess, 
   onError 
 }: CreateConnectionModalProps) {
+  console.log('🔄 [CreateConnectionModal] Component rendered');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -289,8 +290,8 @@ export default function CreateConnectionModal({
 
   // Create rate-limited submission function
   const submitConnection = createRateLimitedSubmission(async () => {
-    console.info('[modal] Form submission triggered');
-    console.info('[modal] Form data:', formData);
+    console.log('🔄 [CreateConnectionModal] Form submission triggered');
+    console.log('🔄 [CreateConnectionModal] Form data:', formData);
     
     setIsSubmitting(true);
     setErrorMessage('');
@@ -338,10 +339,11 @@ export default function CreateConnectionModal({
       const response = await apiClient.createConnection(connectionData);
       console.log('🔍 API response:', JSON.stringify(response, null, 2));
       if (response.success) {
-        console.log('✅ Connection created successfully, calling onSuccess callback');
+        console.log('✅ [CreateConnectionModal] Connection created successfully, calling onSuccess callback');
         setSubmitSuccess(true);
-        onSuccess();
-        console.log('✅ onSuccess callback called, now calling onClose');
+        console.log('🔄 [CreateConnectionModal] About to call onSuccess callback');
+        await onSuccess();
+        console.log('✅ [CreateConnectionModal] onSuccess callback completed, now calling onClose');
         onClose();
       } else {
         // Rollback any created secrets
@@ -519,6 +521,7 @@ export default function CreateConnectionModal({
 
   return (
     <div
+      data-testid="create-connection-modal"
       ref={modalRef}
       role="dialog"
       aria-modal="true"

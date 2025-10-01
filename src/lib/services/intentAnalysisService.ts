@@ -222,12 +222,22 @@ GUIDANCE TYPES:
 - general: User needs general help or information
 - none: User can proceed without guidance (including workflow generation AND direct API call requests)
 
+VAGUE DESCRIPTION HANDLING:
+- If the user provides a vague or unclear description (e.g., "Do something", "Help me", "What can you do?"), classify this as guidanceType: "connection_setup" since they likely need to understand what APIs are available and how to set them up
+- Vague descriptions should be treated as requests for connection guidance, not as direct API calls or workflow generation
+
 EXAMPLES OF "none" GUIDANCE TYPE:
 - "Get available pets" → guidanceType: "none" (direct API call)
 - "Now get pending pets" → guidanceType: "none" (direct API call)
 - "Find user by ID 123" → guidanceType: "none" (direct API call)
 - "Create a new order" → guidanceType: "none" (direct API call)
 - "When a new order is created, send an email" → guidanceType: "none" (workflow generation)
+
+EXAMPLES OF "connection_setup" GUIDANCE TYPE:
+- "Do something" → guidanceType: "connection_setup" (vague description needs API guidance)
+- "Help me" → guidanceType: "connection_setup" (vague description needs API guidance)
+- "What can you do?" → guidanceType: "connection_setup" (vague description needs API guidance)
+- "I want to automate something" → guidanceType: "connection_setup" (vague automation needs API guidance)
 
 IMPORTANT: 
 - If the user is requesting workflow generation (e.g., "When X happens, do Y", "Create a workflow", "Automate this process"), and they have the necessary API connections available, classify this as guidanceType: "none" since they can proceed with workflow generation.

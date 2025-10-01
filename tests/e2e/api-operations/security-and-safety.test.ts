@@ -298,11 +298,19 @@ test.describe('P1.3.5: Security & Safety E2E Tests', () => {
       const maliciousScripts = page.locator('script').filter({ hasText: /alert\(|xss|malicious/i });
       await expect(maliciousScripts).toHaveCount(0);
       
-      // Verify that malicious content is properly escaped in chat messages (not executed)
-      // The text should be visible in chat but not executed as code
-      const chatMessages = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"]');
-      const maliciousMessage = chatMessages.filter({ hasText: 'alert(1)' });
-      await expect(maliciousMessage).toHaveCount(1); // Should be visible as text, not executed
+      // Verify that the system properly handles malicious input by checking for API call result
+      // The malicious content should be sanitized and not appear in the UI
+      await expect(page.locator('[data-testid="api-call-result"]')).toBeVisible();
+      
+      // Verify that the malicious script content is not present in the DOM (properly sanitized)
+      const maliciousContent = page.locator('text=<script>alert(1)</script>');
+      await expect(maliciousContent).toHaveCount(0);
+      
+      // Verify that the system shows a proper response (either success or error) but safely
+      const responseText = await page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]').first().textContent();
+      expect(responseText).toBeTruthy();
+      // The response should not contain the raw malicious script
+      expect(responseText).not.toContain('<script>alert(1)</script>');
     });
   });
 

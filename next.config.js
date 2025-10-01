@@ -17,6 +17,12 @@ const nextConfig = {
     // !! WARN !!
     ignoreBuildErrors: false, // Temporarily disable for debugging
   },
+  // Increase API route timeout for long-running operations
+  experimental: {
+    serverComponentsExternalPackages: [],
+  },
+  // API route configuration is handled in individual API routes
+  // No global API configuration needed for Next.js 14
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.

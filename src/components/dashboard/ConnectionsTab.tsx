@@ -49,8 +49,14 @@ function ConnectionsTab({
   onConnectionTested,
   onConnectionError 
 }: ConnectionsTabProps) {
+  console.log('🔄 [ConnectionsTab] Component rendered with connections:', connections.length);
   const { user } = useUser();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  
+  // Debug: Log modal state changes
+  useEffect(() => {
+    console.log('🔄 [ConnectionsTab] showCreateForm changed:', showCreateForm);
+  }, [showCreateForm]);
   const [editingConnection, setEditingConnection] = useState<ApiConnection | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -511,7 +517,12 @@ function ConnectionsTab({
         <div className="sm:w-48">
           <button
             data-testid="primary-action create-connection-header-btn"
-            onClick={() => setShowCreateForm(true)}
+            onClick={() => {
+              console.log('🔄 [ConnectionsTab] Add Connection button clicked, setting showCreateForm to true');
+              console.log('🔄 [ConnectionsTab] Current showCreateForm state before setting:', showCreateForm);
+              setShowCreateForm(true);
+              console.log('🔄 [ConnectionsTab] showCreateForm set to true');
+            }}
             className="w-full px-3 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px]"
           >
             Add Connection
@@ -662,6 +673,13 @@ function ConnectionsTab({
                         {testingConnection === connection.id ? 'Testing...' : 'Test Connection'}
                       </button>
                       <button
+                        data-testid={`explore-api-${connection.id}`}
+                        onClick={() => window.open(`/connections/${connection.id}`, '_blank')}
+                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 min-h-[44px]"
+                      >
+                        Explore API
+                      </button>
+                      <button
                         data-testid="edit-connection-btn"
                         onClick={() => handleEditClick(connection)}
                         className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 min-h-[44px]"
@@ -743,15 +761,17 @@ function ConnectionsTab({
       {showCreateForm && (
         <CreateConnectionModal
           onClose={() => {
-            console.log('🔄 Create modal onClose called, setting showCreateForm to false');
+            console.log('🔄 [ConnectionsTab] Create modal onClose called, setting showCreateForm to false');
             setShowCreateForm(false);
           }}
-          onSuccess={() => {
-            console.log('🔄 Connection success callback triggered, closing modal');
-            console.log('🔄 Current showCreateForm state before setting to false:', showCreateForm);
+          onSuccess={async () => {
+            console.log('🔄 [ConnectionsTab] Connection success callback triggered, closing modal');
+            console.log('🔄 [ConnectionsTab] Current showCreateForm state before setting to false:', showCreateForm);
             setShowCreateForm(false);
-            console.log('🔄 Called onConnectionCreated callback');
-            onConnectionCreated();
+            console.log('🔄 [ConnectionsTab] About to call onConnectionCreated callback');
+            console.log('🔄 [ConnectionsTab] onConnectionCreated function:', typeof onConnectionCreated);
+            await onConnectionCreated();
+            console.log('🔄 [ConnectionsTab] onConnectionCreated callback called successfully');
           }}
           onError={handleConnectionError}
         />
