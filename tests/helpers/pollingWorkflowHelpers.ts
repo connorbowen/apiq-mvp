@@ -1,5 +1,6 @@
 import { Page, expect } from '@playwright/test';
-import { getPrimaryActionButton, waitForElementToBeVisible } from './e2eHelpers.setup';
+import { waitForElement } from './uiHelpers';
+import { getPrimaryActionButton } from './e2eHelpers.navigation';
 
 /**
  * Polling Workflow Test Helpers
@@ -40,15 +41,15 @@ export async function createPollingWorkflow(
 ): Promise<string> {
   // Navigate to chat interface
   await page.goto('/dashboard?tab=chat');
-  await waitForElementToBeVisible(page, '[data-testid="chat-input"]');
+  await waitForElement(page, '[data-testid="chat-input"]');
 
   // Request polling workflow creation
   const workflowDescription = `Create a workflow that ${config.name}`;
   await page.fill('[data-testid="chat-input"]', workflowDescription);
-  await page.click(getPrimaryActionButton('send-message'));
+  await getPrimaryActionButton(page, 'send-message').click();
 
   // Wait for polling configuration UI
-  await waitForElementToBeVisible(page, '[data-testid="polling-configuration"]');
+  await waitForElement(page, '[data-testid="polling-configuration"]');
   
   // Configure polling interval
   await page.click(`[data-testid="polling-interval-${config.interval}"]`);
@@ -69,12 +70,12 @@ export async function createPollingWorkflow(
   }
   
   // Test polling configuration
-  await page.click(getPrimaryActionButton('test-polling'));
-  await waitForElementToBeVisible(page, '[data-testid="polling-test-success"]');
+  await getPrimaryActionButton(page, 'test-polling').click();
+  await waitForElement(page, '[data-testid="polling-test-success"]');
   
   // Save polling workflow
-  await page.click(getPrimaryActionButton('save-polling-workflow'));
-  await waitForElementToBeVisible(page, '[data-testid="workflow-saved-success"]');
+  await getPrimaryActionButton(page, 'save-polling-workflow').click();
+  await waitForElement(page, '[data-testid="workflow-saved-success"]');
   
   // Extract workflow ID from success message
   const successMessage = await page.textContent('[data-testid="workflow-saved-success"]');
@@ -87,7 +88,7 @@ export async function createPollingWorkflow(
  */
 export async function activatePollingWorkflow(page: Page, workflowId: string): Promise<void> {
   await page.goto('/dashboard?tab=workflows');
-  await waitForElementToBeVisible(page, '[data-testid="workflows-list"]');
+  await waitForElement(page, '[data-testid="workflows-list"]');
   
   // Find and click the polling workflow
   const workflowItem = page.locator(`[data-testid="workflow-item"][data-workflow-id="${workflowId}"]`);
@@ -95,8 +96,8 @@ export async function activatePollingWorkflow(page: Page, workflowId: string): P
   await workflowItem.click();
   
   // Activate polling
-  await page.click(getPrimaryActionButton('activate-polling'));
-  await waitForElementToBeVisible(page, '[data-testid="polling-status-active"]');
+  await getPrimaryActionButton(page, 'activate-polling').click();
+  await waitForElement(page, '[data-testid="polling-status-active"]');
 }
 
 /**
@@ -108,9 +109,9 @@ export async function pausePollingWorkflow(page: Page, workflowId: string): Prom
   await workflowItem.click();
   
   // Pause polling
-  await page.click(getPrimaryActionButton('pause-polling'));
-  await waitForElementToBeVisible(page, '[data-testid="polling-paused-confirmation"]');
-  await page.click(getPrimaryActionButton('confirm-pause'));
+  await getPrimaryActionButton(page, 'pause-polling').click();
+  await waitForElement(page, '[data-testid="polling-paused-confirmation"]');
+  await getPrimaryActionButton(page, 'confirm-pause').click();
   
   // Verify polling is paused
   await expect(page.locator('[data-testid="polling-status-paused"]')).toBeVisible();
@@ -125,8 +126,8 @@ export async function resumePollingWorkflow(page: Page, workflowId: string): Pro
   await workflowItem.click();
   
   // Resume polling
-  await page.click(getPrimaryActionButton('resume-polling'));
-  await waitForElementToBeVisible(page, '[data-testid="polling-resumed-confirmation"]');
+  await getPrimaryActionButton(page, 'resume-polling').click();
+  await waitForElement(page, '[data-testid="polling-resumed-confirmation"]');
   
   // Verify polling is active
   await expect(page.locator('[data-testid="polling-status-active"]')).toBeVisible();
@@ -141,11 +142,11 @@ export async function triggerPollingExecution(page: Page, workflowId: string): P
   await workflowItem.click();
   
   // Trigger manual execution
-  await page.click(getPrimaryActionButton('trigger-polling-now'));
-  await waitForElementToBeVisible(page, '[data-testid="polling-execution-started"]');
+  await getPrimaryActionButton(page, 'trigger-polling-now').click();
+  await waitForElement(page, '[data-testid="polling-execution-started"]');
   
   // Wait for execution to complete
-  await waitForElementToBeVisible(page, '[data-testid="polling-execution-complete"]');
+  await waitForElement(page, '[data-testid="polling-execution-complete"]');
   
   // Extract execution results
   const executionId = await page.textContent('[data-testid="execution-id"]') || 'unknown';
@@ -177,9 +178,9 @@ export async function testPollingConfiguration(
 ): Promise<void> {
   await page.goto('/dashboard?tab=chat');
   await page.fill('[data-testid="chat-input"]', `Create a workflow that ${config.name}`);
-  await page.click(getPrimaryActionButton('send-message'));
+  await getPrimaryActionButton(page, 'send-message').click();
   
-  await waitForElementToBeVisible(page, '[data-testid="polling-configuration"]');
+  await waitForElement(page, '[data-testid="polling-configuration"]');
   await page.click(`[data-testid="polling-interval-${config.interval}"]`);
   
   for (const scenario of testScenarios) {
@@ -198,12 +199,12 @@ export async function testPollingConfiguration(
         break;
     }
     
-    await page.click(getPrimaryActionButton('test-polling'));
+    await getPrimaryActionButton(page, 'test-polling').click();
     
     if (scenario === 'valid') {
-      await waitForElementToBeVisible(page, '[data-testid="polling-test-success"]');
+      await waitForElement(page, '[data-testid="polling-test-success"]');
     } else {
-      await waitForElementToBeVisible(page, '[data-testid="polling-test-error"]');
+      await waitForElement(page, '[data-testid="polling-test-error"]');
       await expect(page.locator('[data-testid="error-message"]')).toBeVisible();
     }
   }
@@ -226,8 +227,8 @@ export async function verifyPollingMetrics(
   await workflowItem.click();
   
   // View performance metrics
-  await page.click(getPrimaryActionButton('view-polling-metrics'));
-  await waitForElementToBeVisible(page, '[data-testid="polling-metrics"]');
+  await getPrimaryActionButton(page, 'view-polling-metrics').click();
+  await waitForElement(page, '[data-testid="polling-metrics"]');
   
   // Verify metrics are displayed
   await expect(page.locator('[data-testid="total-executions"]')).toBeVisible();
@@ -267,28 +268,28 @@ export async function testPollingErrorHandling(
   // Simulate different error types
   switch (errorType) {
     case 'network':
-      await page.click(getPrimaryActionButton('simulate-network-error'));
+      await getPrimaryActionButton(page, 'simulate-network-error').click();
       break;
     case 'timeout':
-      await page.click(getPrimaryActionButton('simulate-timeout'));
+      await getPrimaryActionButton(page, 'simulate-timeout').click();
       break;
     case 'auth':
-      await page.click(getPrimaryActionButton('simulate-auth-error'));
+      await getPrimaryActionButton(page, 'simulate-auth-error').click();
       break;
     case 'rate-limit':
-      await page.click(getPrimaryActionButton('simulate-rate-limit'));
+      await getPrimaryActionButton(page, 'simulate-rate-limit').click();
       break;
   }
   
   // Verify error handling
-  await waitForElementToBeVisible(page, '[data-testid="polling-execution-failed"]');
+  await waitForElement(page, '[data-testid="polling-execution-failed"]');
   await expect(page.locator('[data-testid="error-type"]')).toContainText(errorType);
   await expect(page.locator('[data-testid="retry-countdown"]')).toBeVisible();
   await expect(page.locator('[data-testid="next-retry-time"]')).toBeVisible();
   
   // Test retry functionality
-  await page.click(getPrimaryActionButton('retry-polling-now'));
-  await waitForElementToBeVisible(page, '[data-testid="polling-retry-in-progress"]');
+  await getPrimaryActionButton(page, 'retry-polling-now').click();
+  await waitForElement(page, '[data-testid="polling-retry-in-progress"]');
 }
 
 /**
@@ -297,9 +298,9 @@ export async function testPollingErrorHandling(
 export async function verifyPollingUXCompliance(page: Page): Promise<void> {
   await page.goto('/dashboard?tab=chat');
   await page.fill('[data-testid="chat-input"]', 'Create a polling workflow');
-  await page.click(getPrimaryActionButton('send-message'));
+  await getPrimaryActionButton(page, 'send-message').click();
   
-  await waitForElementToBeVisible(page, '[data-testid="polling-configuration"]');
+  await waitForElement(page, '[data-testid="polling-configuration"]');
   
   // Verify clear headings
   await expect(page.locator('h2:has-text("Configure Polling")')).toBeVisible();
@@ -315,13 +316,13 @@ export async function verifyPollingUXCompliance(page: Page): Promise<void> {
   await expect(page.locator('[data-testid="change-detection-field"]')).toHaveAttribute('aria-describedby');
   
   // Verify button states
-  await expect(getPrimaryActionButton('test-polling')).toBeVisible();
-  await expect(getPrimaryActionButton('save-polling-workflow')).toBeVisible();
+  await expect(getPrimaryActionButton(page, 'test-polling')).toBeVisible();
+  await expect(getPrimaryActionButton(page, 'save-polling-workflow')).toBeVisible();
   
   // Verify error states
   await page.fill('[data-testid="api-endpoint"]', 'invalid-url');
-  await page.click(getPrimaryActionButton('test-polling'));
-  await waitForElementToBeVisible(page, '[data-testid="polling-test-error"]');
+  await getPrimaryActionButton(page, 'test-polling').click();
+  await waitForElement(page, '[data-testid="polling-test-error"]');
   
   // Verify error message is accessible
   await expect(page.locator('[data-testid="error-message"]')).toHaveAttribute('role', 'alert');
@@ -337,9 +338,9 @@ export async function testPollingMobileResponsiveness(page: Page): Promise<void>
   
   await page.goto('/dashboard?tab=chat');
   await page.fill('[data-testid="chat-input"]', 'Create a polling workflow');
-  await page.click(getPrimaryActionButton('send-message'));
+  await getPrimaryActionButton(page, 'send-message').click();
   
-  await waitForElementToBeVisible(page, '[data-testid="polling-configuration"]');
+  await waitForElement(page, '[data-testid="polling-configuration"]');
   
   // Verify mobile-friendly layout
   await expect(page.locator('[data-testid="polling-interval-select"]')).toBeVisible();

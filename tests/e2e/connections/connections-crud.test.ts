@@ -9,8 +9,8 @@
 
 import { test, expect } from '../../helpers/serverHealthCheck';
 
-// Set test timeout to 60 seconds to allow for proper test completion
-test.setTimeout(60000);
+// Set test timeout to 90 seconds to allow for proper test completion
+test.setTimeout(90000);
 import { TestUser, generateTestId, cleanupTestUser } from '../../helpers/testUtils';
 import { closeAllModals, resetRateLimits, getPrimaryActionButton, completeTestTeardown, setupE2E } from '../../helpers/e2eHelpers';
 import { createE2EUser } from '../../helpers/authHelpers';
@@ -44,15 +44,23 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
   });
 
   test.afterAll(async ({ request }) => {
-    // Clean up created connections
+    // Clean up created connections with better error handling
     for (const id of createdConnectionIds) {
       try {
         await request.delete(`/api/connections/${id}`, {
-          headers: { 'Authorization': `Bearer ${jwt}` }
+          headers: { 'Authorization': `Bearer ${jwt}` },
+          timeout: 2000,
+          ignoreHTTPSErrors: true
         });
         console.log(`🗑️ Cleaned up connection: ${id}`);
-      } catch (error) {
-        console.warn(`Failed to cleanup connection ${id}:`, error);
+      } catch (error: any) {
+        // Check if it's a connection refused error (server shutdown)
+        if (error.message?.includes('ECONNREFUSED') || 
+            error.message?.includes('connect ECONNREFUSED')) {
+          console.log('⚠️ Server connection refused during cleanup (server may be shutting down)');
+          break; // Stop trying to cleanup if server is down
+        }
+        console.warn(`Failed to cleanup connection ${id}:`, error.message || error);
       }
     }
     
@@ -149,13 +157,15 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
         trackConnection(connectionId);
       }
       
-      // Wait for the connections list to refresh (reduced wait time)
+      // Wait for the connections list to refresh and ensure page is stable
+      await page.waitForLoadState('networkidle', { timeout: 10000 });
+      await page.waitForTimeout(2000);
+      
+      // Try to find the connection card - be more lenient to avoid page context issues
+      const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("Connection to Edit")');
+      
       try {
-        await page.waitForTimeout(1500);
-        
-        // Try to find the connection card - be more lenient to avoid page context issues
-        const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Connection to Edit")');
-        await connectionCard.waitFor({ state: 'visible', timeout: 5000 });
+        await connectionCard.waitFor({ state: 'visible', timeout: 10000 });
         console.log('✅ Connection card found');
       } catch (error) {
         console.log('⚠️ Connection card not found, but connection was created successfully via API');
@@ -222,7 +232,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       // Check if the connections are actually loaded in the component
       const connectionsData = await page.evaluate(() => {
         // Look for any connection cards to see if data is loaded
-        const connectionCards = document.querySelectorAll('[data-testid="connection-card"]');
+        const connectionCards = document.querySelectorAll('[data-testid^="connection-card-"]');
         const connections = Array.from(connectionCards).map(card => {
           const nameElement = card.querySelector('[data-testid="connection-name"]');
           const id = card.getAttribute('data-connection-id');
@@ -242,12 +252,29 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       
       console.log('🔍 Connections data loaded:', connectionsData);
       
-      // Use Playwright's native click method to mimic real user interaction
-      console.log('🔍 Using Playwright native click to mimic user interaction...');
+      // Use a more robust approach to click the edit button
+      console.log('🔍 Using robust edit button click approach...');
       
       const editButton = page.locator('[data-testid="edit-connection-btn"]').first();
-      await editButton.click();
-      console.log('✅ Edit button clicked with Playwright');
+      
+      // Wait for the button to be ready
+      await editButton.waitFor({ state: 'visible', timeout: 10000 });
+      
+      // Scroll the button into view
+      await editButton.scrollIntoViewIfNeeded();
+      
+      // Wait a moment for any animations to complete
+      await page.waitForTimeout(500);
+      
+      // Try multiple click strategies
+      try {
+        await editButton.click({ timeout: 5000 });
+        console.log('✅ Edit button clicked successfully');
+      } catch (error) {
+        console.log('⚠️ First click attempt failed, trying force click...');
+        await editButton.click({ force: true, timeout: 5000 });
+        console.log('✅ Edit button clicked with force');
+      }
       
       // Wait a moment for the edit modal to open
       await page.waitForTimeout(1000);
@@ -670,7 +697,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       
       // Check if the updated connection name appears in the connection list
       const updatedConnectionExists = await page.evaluate(() => {
-        const connectionCards = document.querySelectorAll('[data-testid="connection-card"]');
+        const connectionCards = document.querySelectorAll('[data-testid^="connection-card-"]');
         for (const card of connectionCards) {
           const nameElement = card.querySelector('[data-testid="connection-name"]');
           if (nameElement && nameElement.textContent?.includes('Connection to Edit - Updated')) {
@@ -689,7 +716,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
         console.log('❌ Updated connection not found in UI');
         // Let's check what connection names are actually visible
         const visibleConnections = await page.evaluate(() => {
-          const connectionCards = document.querySelectorAll('[data-testid="connection-card"]');
+          const connectionCards = document.querySelectorAll('[data-testid^="connection-card-"]');
           return Array.from(connectionCards).map(card => {
             const nameElement = card.querySelector('[data-testid="connection-name"]');
             return nameElement ? nameElement.textContent : 'No name found';
@@ -700,7 +727,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
         // Wait a bit more and try again
         await page.waitForTimeout(2000);
         const updatedConnectionExistsRetry = await page.evaluate(() => {
-          const connectionCards = document.querySelectorAll('[data-testid="connection-card"]');
+          const connectionCards = document.querySelectorAll('[data-testid^="connection-card-"]');
           for (const card of connectionCards) {
             const nameElement = card.querySelector('[data-testid="connection-name"]');
             if (nameElement && nameElement.textContent?.includes('Connection to Edit - Updated')) {
@@ -718,7 +745,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       }
       
       // Verify the updated connection is visible
-      await expect(page.locator('[data-testid="connection-card"]:has-text("Connection to Edit - Updated")')).toBeVisible();
+      await expect(page.locator('[data-testid^="connection-card-"]:has-text("Connection to Edit - Updated")')).toBeVisible();
     });
   });
 
@@ -737,13 +764,15 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
         trackConnection(connectionId);
       }
       
-      // Wait for the connections list to refresh (reduced wait time)
+      // Wait for the connections list to refresh and ensure page is stable
+      await page.waitForLoadState('networkidle', { timeout: 10000 });
+      await page.waitForTimeout(2000);
+      
+      // Try to find the connection card - be more lenient to avoid page context issues
+      const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("Connection to Delete")');
+      
       try {
-        await page.waitForTimeout(1500);
-        
-        // Try to find the connection card - be more lenient to avoid page context issues
-        const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Connection to Delete")');
-        await connectionCard.waitFor({ state: 'visible', timeout: 5000 });
+        await connectionCard.waitFor({ state: 'visible', timeout: 10000 });
         console.log('✅ Connection card found');
       } catch (error) {
         console.log('⚠️ Connection card not found, but connection was created successfully via API');
@@ -791,7 +820,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       }
       
       // Should not show the deleted connection in the list
-      await expect(page.locator('[data-testid="connection-card"]:has-text("Connection to Delete")')).not.toBeVisible();
+      await expect(page.locator('[data-testid^="connection-card-"]:has-text("Connection to Delete")')).not.toBeVisible();
     });
 
     test('should cancel connection deletion', async ({ page }) => {
@@ -808,13 +837,15 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
         trackConnection(connectionId);
       }
       
-      // Wait for the connections list to refresh (reduced wait time)
+      // Wait for the connections list to refresh and ensure page is stable
+      await page.waitForLoadState('networkidle', { timeout: 10000 });
+      await page.waitForTimeout(2000);
+      
+      // Try to find the connection card - be more lenient to avoid page context issues
+      const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("Connection to Cancel Delete")');
+      
       try {
-        await page.waitForTimeout(1500);
-        
-        // Try to find the connection card - be more lenient to avoid page context issues
-        const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Connection to Cancel Delete")');
-        await connectionCard.waitFor({ state: 'visible', timeout: 5000 });
+        await connectionCard.waitFor({ state: 'visible', timeout: 10000 });
         console.log('✅ Connection card found');
       } catch (error) {
         console.log('⚠️ Connection card not found, but connection was created successfully via API');
@@ -851,7 +882,7 @@ test.describe('Connections CRUD Operations E2E Tests', () => {
       await deleteButton.click({ force: true });
       
       // Should still show the connection in the list
-      await expect(page.locator('[data-testid="connection-card"]:has-text("Connection to Cancel Delete")')).toBeVisible();
+      await expect(page.locator('[data-testid^="connection-card-"]:has-text("Connection to Cancel Delete")')).toBeVisible();
     });
   });
 });

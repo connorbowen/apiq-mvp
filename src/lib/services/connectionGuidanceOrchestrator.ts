@@ -70,6 +70,8 @@ export class ConnectionGuidanceOrchestrator {
    * This method is called by ALL message processing entry points
    */
   async processMessage(context: MessageContext): Promise<ConnectionGuidanceResponse> {
+    let timeoutId: NodeJS.Timeout | undefined;
+    
     console.log('🔍 ConnectionGuidanceOrchestrator - Processing message with multi-prompt architecture:', {
       message: context.message,
       availableConnections: context.availableConnections.length,
@@ -95,7 +97,7 @@ export class ConnectionGuidanceOrchestrator {
       
       // Add timeout wrapper to prevent hanging - increased to 60 seconds for complex processing
       const timeoutPromise = new Promise<ConnectionGuidanceResponse>((_, reject) => {
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           console.log('⏰ ConnectionGuidanceOrchestrator - Timeout reached, rejecting promise');
           reject(new Error('Guidance orchestrator timeout after 60 seconds'));
         }, 60000);
@@ -111,6 +113,12 @@ export class ConnectionGuidanceOrchestrator {
       
       console.log('🔍 ConnectionGuidanceOrchestrator - Racing guidance promise against timeout...');
       const result = await Promise.race([guidancePromise, timeoutPromise]);
+      
+      // Clear the timeout since we got a result
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
       console.log('✅ ConnectionGuidanceOrchestrator - Promise race completed successfully');
 
       console.log('✅ ConnectionGuidanceOrchestrator - Multi-prompt guidance completed:', {
@@ -134,6 +142,11 @@ export class ConnectionGuidanceOrchestrator {
       console.error('❌ ConnectionGuidanceOrchestrator - Error in multi-prompt processing:', error);
       console.error('❌ ConnectionGuidanceOrchestrator - Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       console.error('❌ ConnectionGuidanceOrchestrator - Message that failed:', context.message);
+      
+      // Clear timeout if it exists
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       
       // Check if this looks like a direct API call request
       const isDirectApiCall = this.isDirectApiCallRequest(context.message);
@@ -166,11 +179,30 @@ export class ConnectionGuidanceOrchestrator {
 
   /**
    * Check if a message looks like a direct API call request
+   * This should NOT match workflow creation requests
    */
   private isDirectApiCallRequest(message: string): boolean {
+    const lowerMessage = message.toLowerCase();
+    
+    // First, check if this is a workflow creation request - these should NOT be treated as direct API calls
+    const workflowKeywords = [
+      'workflow', 'automation', 'process', 'steps', 'sequence', 'pipeline',
+      'when', 'then', 'if', 'trigger', 'action', 'task', 'job'
+    ];
+    
+    const isWorkflowRequest = workflowKeywords.some(keyword => lowerMessage.includes(keyword));
+    if (isWorkflowRequest) {
+      console.log('🔍 ConnectionGuidanceOrchestrator - Workflow request detected, not treating as direct API call');
+      return false;
+    }
+    
+    // Check for direct API call patterns (more specific patterns)
     const directApiPatterns = [
-      /^(get|find|search|list|show|display|retrieve|fetch)\s+/i,
-      /^(create|add|insert|post|put|update|edit|modify|delete|remove)\s+/i,
+      // Direct data retrieval patterns
+      /^(get|find|search|list|show|display|retrieve|fetch)\s+(?!workflow|automation|process)/i,
+      // Direct data manipulation patterns (but not workflow creation)
+      /^(create|add|insert|post|put|update|edit|modify|delete|remove)\s+(?!workflow|automation|process)/i,
+      // Specific API call patterns
       /^(now\s+)?(get|find|search|list|show|display|retrieve|fetch)\s+/i,
       /pets?\s+(available|pending|sold)/i,
       /users?\s+by\s+id/i,
@@ -178,13 +210,19 @@ export class ConnectionGuidanceOrchestrator {
       /^now\s+get\s+/i,
       /^get\s+pending\s+/i,
       /^get\s+available\s+/i,
-      /^get\s+sold\s+/i
+      /^get\s+sold\s+/i,
+      // Direct API endpoint patterns
+      /^\/api\//i,
+      /^https?:\/\/.*\/api\//i,
+      // Direct HTTP method patterns
+      /^(GET|POST|PUT|DELETE|PATCH)\s+/i
     ];
     
     const isDirectApi = directApiPatterns.some(pattern => pattern.test(message));
     console.log('🔍 ConnectionGuidanceOrchestrator - Direct API call detection:', {
       message,
       isDirectApi,
+      isWorkflowRequest,
       matchedPatterns: directApiPatterns.filter(pattern => pattern.test(message))
     });
     

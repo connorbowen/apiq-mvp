@@ -249,15 +249,20 @@ class ApiClient {
                 headers: {} // XMLHttpRequest doesn't provide easy header access
               } as AxiosResponse<ApiResponse<T>>;
               
-              console.log('🔍 API Client: XMLHttpRequest resolving with data:', response.data);
-              resolve(response.data);
+              console.log('🔍 API Client: XMLHttpRequest resolving with response.data:', response.data);
+              console.log('🔍 API Client: About to call resolve() with responseData');
+              // IMPORTANT: Return responseData directly, not response.data
+              // The response.data is the actual API response ({ success, data, error })
+              console.log('🔍 API Client: Resolving with responseData:', responseData);
+              resolve(responseData as any);
+              console.log('🔍 API Client: resolve() called successfully');
             } catch (parseError) {
               console.log('🔍 API Client: XMLHttpRequest JSON parse error:', parseError);
               // Even if JSON parsing fails, return the error response
               resolve({
                 success: false,
                 error: xhr.responseText || `HTTP ${xhr.status}: ${xhr.statusText}`
-              });
+              } as any);
             }
           };
           
@@ -777,12 +782,19 @@ class ApiClient {
     connectionGuidance?: any;
     suggestedAction?: string;
   }>> {
+    console.log('🔍 API Client: processMessage called with:', { message, contextLength: context.length });
+    
     try {
+      console.log('🔍 API Client: About to call this.request...');
       const result = await this.request({
         method: 'POST',
         url: '/api/chat/process',
         data: { message, context },
       });
+      
+      console.log('🔍 API Client: this.request completed, result:', result);
+      console.log('🔍 API Client: result type:', typeof result);
+      console.log('🔍 API Client: result keys:', result ? Object.keys(result) : 'null');
       
       // Validate response structure
       if (!result || typeof result !== 'object') {
@@ -801,7 +813,16 @@ class ApiClient {
       }
       
       console.log('🔍 API Client: Response validation passed, returning result');
-      return result as any;
+      console.log('🔍 API Client: Final result being returned:', {
+        success: result.success,
+        hasData: !!result.data,
+        dataType: (result.data as any)?.type,
+        hasConnectionGuidance: !!(result.data as any)?.connectionGuidance
+      });
+      
+      const finalResult = result as any;
+      console.log('🔍 API Client: Returning final result:', finalResult);
+      return finalResult;
     } catch (error) {
       console.error('🔍 API Client: Error in processMessage:', error);
       console.error('🔍 API Client: Error stack:', error instanceof Error ? error.stack : 'No stack trace');

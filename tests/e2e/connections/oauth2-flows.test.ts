@@ -239,14 +239,14 @@ test.describe('OAuth2 Flow E2E Tests', () => {
         console.log('🪵 UI stability delay completed');
         
         // Check current connection state safely without waiting for page load
-        const hasConnections = await page.locator('[data-testid="connection-card"]').count() > 0;
+        const hasConnections = await page.locator('[data-testid^="connection-card-"]').count() > 0;
         const showsNoConnections = await page.locator('text="No connections"').isVisible();
         
         console.log(`🪵 UI state: hasConnections=${hasConnections}, showsNoConnections=${showsNoConnections}`);
         
         if (hasConnections) {
           // Connection card found - validate it has correct OAuth2 information
-          const connectionCard = page.locator('[data-testid="connection-card"]:has-text("GitHub Calendar API")');
+          const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("GitHub Calendar API")');
           await expect(connectionCard).toBeVisible({ timeout: 5000 });
           await expect(connectionCard).toContainText('OAuth2');
           await expect(connectionCard).toContainText('GitHub');
@@ -452,14 +452,14 @@ test.describe('OAuth2 Flow E2E Tests', () => {
         console.log('🪵 UI stability delay completed');
         
         // Check current connection state safely without waiting for page load
-        const hasConnections = await page.locator('[data-testid="connection-card"]').count() > 0;
+        const hasConnections = await page.locator('[data-testid^="connection-card-"]').count() > 0;
         const showsNoConnections = await page.locator('text="No connections"').isVisible();
         
         console.log(`🪵 UI state: hasConnections=${hasConnections}, showsNoConnections=${showsNoConnections}`);
         
         if (hasConnections) {
           // Connection card found - validate it has correct OAuth2 information
-          const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Google Calendar API")');
+          const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("Google Calendar API")');
           await expect(connectionCard).toBeVisible({ timeout: 5000 });
           await expect(connectionCard).toContainText('OAuth2');
           await expect(connectionCard).toContainText('Google');
@@ -633,7 +633,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateSuccessContainer('Connection updated successfully');
       
       // Verify the updated connection appears in the list
-      await expect(page.locator('[data-testid="connection-card"]')).toContainText(`${connectionName} - Updated`);
+      await expect(page.locator('[data-testid^="connection-card-"]')).toContainText(`${connectionName} - Updated`);
       
       // Validate comprehensive UX compliance
       await uxHelper.validateARIACompliance();
@@ -707,7 +707,7 @@ test.describe('OAuth2 Flow E2E Tests', () => {
       await uxHelper.validateSuccessContainer('Connection deleted successfully');
       
       // Verify the connection is no longer visible
-      await expect(page.locator('[data-testid="connection-card"]:has-text("' + connectionName + '")')).not.toBeVisible({ timeout: 5000 });
+      await expect(page.locator('[data-testid^="connection-card-"]:has-text("' + connectionName + '")')).not.toBeVisible({ timeout: 5000 });
       
       // Validate comprehensive UX compliance
       await uxHelper.validateARIACompliance();
@@ -1626,14 +1626,14 @@ test.describe('OAuth2 Flow E2E Tests', () => {
         console.log('🪵 UI stability delay completed');
         
         // Check current connection state safely without waiting for page load
-        const hasConnections = await page.locator('[data-testid="connection-card"]').count() > 0;
+        const hasConnections = await page.locator('[data-testid^="connection-card-"]').count() > 0;
         const showsNoConnections = await page.locator('text="No connections"').isVisible();
         
         console.log(`🪵 UI state: hasConnections=${hasConnections}, showsNoConnections=${showsNoConnections}`);
         
         if (hasConnections) {
           // Connection card found - validate it has correct API Key information
-          const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Simple API Key Test")');
+          const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("Simple API Key Test")');
           await expect(connectionCard).toBeVisible({ timeout: 5000 });
           await expect(connectionCard).toContainText('API Key');
           await expect(connectionCard).toContainText('Simple API Key Test');

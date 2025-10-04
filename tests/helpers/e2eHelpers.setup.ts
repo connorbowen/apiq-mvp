@@ -65,8 +65,8 @@ export const setupE2E = async (
         reject(error);
       } finally {
         activeRequests--;
-        // Process next request in queue
-        setTimeout(processQueue, 50); // Small delay to prevent overwhelming
+        // Process next request in queue with longer delay to prevent overwhelming
+        setTimeout(processQueue, 200); // Increased delay to prevent resource exhaustion
       }
     };
     
@@ -345,9 +345,18 @@ export const closeAllModals = async (page: Page): Promise<void> => {
  */
 export const resetRateLimits = async (page: Page): Promise<void> => {
   try {
-    await page.request.post('/api/test/reset-rate-limits');
-  } catch (error) {
-    console.warn('Failed to reset rate limits:', error);
+    await page.request.post('/api/test/reset-rate-limits', {
+      timeout: 2000,
+      ignoreHTTPSErrors: true
+    });
+  } catch (error: any) {
+    // Check if it's a connection refused error (server shutdown)
+    if (error.message?.includes('ECONNREFUSED') || 
+        error.message?.includes('connect ECONNREFUSED')) {
+      console.log('⚠️ Server connection refused during rate limit reset (server may be shutting down)');
+    } else {
+      console.warn('Failed to reset rate limits:', error.message || error);
+    }
   }
 };
 
@@ -372,9 +381,18 @@ export const cleanupE2E = async (
   if (artifacts.connectionIds?.length) {
     for (const id of artifacts.connectionIds) {
       try {
-        await page.request.delete(`/api/connections/${id}`);
-      } catch (error) {
-        console.warn(`Failed to cleanup connection ${id}:`, error);
+        await page.request.delete(`/api/connections/${id}`, {
+          timeout: 2000,
+          ignoreHTTPSErrors: true
+        });
+      } catch (error: any) {
+        // Check if it's a connection refused error (server shutdown)
+        if (error.message?.includes('ECONNREFUSED') || 
+            error.message?.includes('connect ECONNREFUSED')) {
+          console.log('⚠️ Server connection refused during cleanup (server may be shutting down)');
+          break; // Stop trying to cleanup if server is down
+        }
+        console.warn(`Failed to cleanup connection ${id}:`, error.message || error);
       }
     }
   }
@@ -470,41 +488,55 @@ export const cleanupTestConnections = async (page: Page): Promise<void> => {
       return;
     }
     
+    // Add a small delay to ensure server is still responsive
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     // Get all connections via API instead of UI (much more reliable)
-    const response = await page.request.get('/api/connections', { timeout: 5000 });
+    const response = await page.request.get('/api/connections', { 
+      timeout: 3000,
+      ignoreHTTPSErrors: true 
+    });
+    
     if (response.ok()) {
       const connections = await response.json();
       
       if (connections && connections.length > 0) {
         console.log(`🗑️ Found ${connections.length} connections to clean up via API`);
         
-        // Delete connections in parallel with timeout
-        const deletePromises = connections.map(async (connection: any) => {
+        // Delete connections sequentially to avoid overwhelming the server
+        for (const connection of connections) {
           try {
             // Check if page is still valid before each request
             if (page.isClosed()) {
               console.log('⚠️ Page context closed during cleanup, stopping');
-              return;
+              break;
             }
             
-            const deleteResponse = await page.request.delete(`/api/connections/${connection.id}`, { timeout: 3000 });
+            // Add small delay between deletions
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            const deleteResponse = await page.request.delete(`/api/connections/${connection.id}`, { 
+              timeout: 2000,
+              ignoreHTTPSErrors: true 
+            });
+            
             if (deleteResponse.ok()) {
               console.log(`🗑️ Cleaned up connection: ${connection.id}`);
             } else {
               console.log(`⚠️ Failed to delete connection ${connection.id}: ${deleteResponse.status()}`);
             }
-          } catch (deleteError) {
-            console.log(`⚠️ Failed to delete connection ${connection.id}:`, deleteError);
+          } catch (deleteError: any) {
+            // Check if it's a connection refused error (server shutdown)
+            if (deleteError.message?.includes('ECONNREFUSED') || 
+                deleteError.message?.includes('connect ECONNREFUSED')) {
+              console.log('⚠️ Server connection refused during cleanup (server may be shutting down)');
+              break;
+            }
+            console.log(`⚠️ Failed to delete connection ${connection.id}:`, deleteError.message || deleteError);
           }
-        });
+        }
         
-        // Wait for all deletions with a timeout
-        await Promise.race([
-          Promise.allSettled(deletePromises),
-          new Promise(resolve => setTimeout(resolve, 10000)) // 10 second max wait
-        ]);
-        
-        console.log('✅ All test connections cleaned up via API');
+        console.log('✅ Connection cleanup completed');
       } else {
         console.log('✅ No test connections to clean up');
       }
@@ -512,8 +544,14 @@ export const cleanupTestConnections = async (page: Page): Promise<void> => {
       console.log('⚠️ Failed to fetch connections for cleanup:', response.status());
     }
     
-  } catch (error) {
-    console.warn('Failed to cleanup test connections:', error);
+  } catch (error: any) {
+    // Check if it's a connection refused error (server shutdown)
+    if (error.message?.includes('ECONNREFUSED') || 
+        error.message?.includes('connect ECONNREFUSED')) {
+      console.log('⚠️ Server connection refused during cleanup (server may be shutting down)');
+    } else {
+      console.warn('Failed to cleanup test connections:', error.message || error);
+    }
   }
 };
 

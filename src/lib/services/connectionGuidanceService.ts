@@ -345,7 +345,7 @@ export class ConnectionGuidanceService {
   private static getAuthTypeForApi(apiName: string): 'API_KEY' | 'BEARER_TOKEN' | 'OAUTH2' | 'BASIC_AUTH' {
     const authTypes: Record<string, 'API_KEY' | 'BEARER_TOKEN' | 'OAUTH2' | 'BASIC_AUTH'> = {
       'github': 'BEARER_TOKEN',
-      'slack': 'BEARER_TOKEN',
+      'slack': 'OAUTH2',
       'twitter': 'BEARER_TOKEN',
       'openai': 'BEARER_TOKEN',
       'google': 'OAUTH2',

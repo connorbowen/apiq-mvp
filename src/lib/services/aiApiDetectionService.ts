@@ -146,6 +146,66 @@ export class AIApiDetectionService {
       commonEndpoints: ['/mail/send', '/marketing/contacts', '/marketing/campaigns', '/marketing/segments'],
       capabilities: ['email delivery', 'email marketing', 'contact management', 'campaign management'],
       keywords: ['sendgrid', 'email', 'marketing', 'delivery', 'campaign', 'contact']
+    },
+    'google_drive': {
+      name: 'google_drive',
+      displayName: 'Google Drive',
+      description: 'Cloud storage and file management platform',
+      authType: 'OAUTH2',
+      baseUrl: 'https://www.googleapis.com/drive/v3',
+      commonEndpoints: ['/files', '/files/{fileId}', '/files/{fileId}/permissions', '/about'],
+      capabilities: ['file storage', 'file sharing', 'document collaboration', 'file synchronization'],
+      keywords: ['google drive', 'drive', 'file storage', 'cloud storage', 'documents', 'files']
+    },
+    'google_sheets': {
+      name: 'google_sheets',
+      displayName: 'Google Sheets',
+      description: 'Spreadsheet and data management platform',
+      authType: 'OAUTH2',
+      baseUrl: 'https://sheets.googleapis.com/v4',
+      commonEndpoints: ['/spreadsheets', '/spreadsheets/{spreadsheetId}', '/spreadsheets/{spreadsheetId}/values'],
+      capabilities: ['spreadsheet management', 'data analysis', 'collaborative editing', 'formulas'],
+      keywords: ['google sheets', 'sheets', 'spreadsheet', 'excel', 'data', 'tables']
+    },
+    'airtable': {
+      name: 'airtable',
+      displayName: 'Airtable',
+      description: 'Database and project management platform',
+      authType: 'API_KEY',
+      baseUrl: 'https://api.airtable.com/v0',
+      commonEndpoints: ['/{baseId}/{tableName}', '/{baseId}/{tableName}/{recordId}', '/{baseId}/tables'],
+      capabilities: ['database management', 'project tracking', 'data organization', 'collaboration'],
+      keywords: ['airtable', 'database', 'project management', 'tables', 'records', 'data']
+    },
+    'notion': {
+      name: 'notion',
+      displayName: 'Notion',
+      description: 'All-in-one workspace for notes, docs, and project management',
+      authType: 'OAUTH2',
+      baseUrl: 'https://api.notion.com/v1',
+      commonEndpoints: ['/pages', '/databases', '/blocks', '/users'],
+      capabilities: ['note taking', 'documentation', 'project management', 'database management'],
+      keywords: ['notion', 'notes', 'documentation', 'workspace', 'pages', 'databases']
+    },
+    'mailchimp': {
+      name: 'mailchimp',
+      displayName: 'Mailchimp',
+      description: 'Email marketing and automation platform',
+      authType: 'API_KEY',
+      baseUrl: 'https://us1.api.mailchimp.com/3.0',
+      commonEndpoints: ['/lists', '/campaigns', '/automations', '/reports'],
+      capabilities: ['email marketing', 'automation', 'audience management', 'campaign analytics'],
+      keywords: ['mailchimp', 'email marketing', 'newsletter', 'automation', 'campaigns', 'audience']
+    },
+    'trello': {
+      name: 'trello',
+      displayName: 'Trello',
+      description: 'Project management and task organization platform',
+      authType: 'API_KEY',
+      baseUrl: 'https://api.trello.com/1',
+      commonEndpoints: ['/boards', '/cards', '/lists', '/members'],
+      capabilities: ['project management', 'task tracking', 'boards', 'collaboration'],
+      keywords: ['trello', 'board', 'card', 'list', 'project', 'task', 'kanban']
     }
   };
 

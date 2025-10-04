@@ -116,7 +116,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   }, [messages, scrollToBottom]);
 
   // Auto-focus on chat input when component mounts
-  React.  useEffect(() => {
+  React.useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -175,8 +175,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
 
       // Let AI orchestrator handle everything
       console.log('🔍 ChatInterface: About to call apiClient.processMessage');
-      const response = await apiClient.processMessage(messageText, context);
-      console.log('🔍 ChatInterface: API response received:', response);
+      let response;
+      try {
+        response = await apiClient.processMessage(messageText, context);
+        console.log('🔍 ChatInterface: API response received:', response);
+      } catch (error) {
+        console.error('🔍 ChatInterface: Error calling apiClient.processMessage:', error);
+        throw error;
+      }
       console.log('🔍 ChatInterface: Response success:', response.success);
       console.log('🔍 ChatInterface: Response data:', response.data);
       console.log('🔍 ChatInterface: API call result:', response.data?.apiCallResult);
@@ -185,6 +191,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       console.log('🔍 ChatInterface: API call result error:', response.data?.apiCallResult?.error);
       console.log('🔍 ChatInterface: Response data type:', response.data?.type);
       console.log('🔍 ChatInterface: Has apiCallResult:', !!response.data?.apiCallResult);
+      console.log('🔍 ChatInterface: Has connectionGuidance:', !!response.data?.connectionGuidance);
+      console.log('🔍 ChatInterface: Connection guidance details:', response.data?.connectionGuidance);
+      console.log('🔍 ChatInterface: Full response data:', JSON.stringify(response.data, null, 2));
       
       // DEBUG: Log current messages state before adding new message
       console.log('🔍 ChatInterface: Current messages state before adding new message:', {
@@ -212,6 +221,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         timestamp: new Date(),
         intent: response.data.type === 'workflow' ? 'workflow_creation' : 
                 response.data.type === 'direct_api_call' ? 'api_call' : 
+                response.data.type === 'connection_guidance' ? 'connection_guidance' :
                 response.data.type || 'general_chat',
         workflow: response.data.workflow ? {
           ...response.data.workflow,
@@ -234,6 +244,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         hasConnectionGuidance: !!assistantMessage.connectionGuidance,
         connectionGuidance: assistantMessage.connectionGuidance
       });
+      
+      // Debug connection guidance specifically
+      if (assistantMessage.connectionGuidance) {
+        console.log('🔍 ChatInterface: Connection guidance details:', {
+          requiresGuidance: assistantMessage.connectionGuidance.requiresGuidance,
+          missingApisCount: assistantMessage.connectionGuidance.missingApis?.length || 0,
+          suggestedConnectionsCount: assistantMessage.connectionGuidance.suggestedConnections?.length || 0,
+          guidanceMessage: assistantMessage.connectionGuidance.guidanceMessage
+        });
+      }
       
 
       // Create formatted response for API call results
@@ -362,9 +382,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   }, []);
 
   const handleSetupConnection = useCallback((api: any) => {
+    console.log('🔍 ChatInterface: handleSetupConnection called with api:', api);
+    
+    // Find the message that contains the connection guidance for this API
+    const guidanceMessage = messages.find(msg => 
+      msg.type === 'assistant' && 
+      msg.connectionGuidance && 
+      msg.connectionGuidance.suggestedConnections?.some(conn => conn.name === api.name)
+    );
+    
+    console.log('🔍 ChatInterface: Found guidance message:', guidanceMessage?.id);
+    
     setConnectionSetupApi(api);
+    setConnectionSetupMessageId(guidanceMessage?.id || null);
     setShowConnectionSetup(true);
-  }, []);
+  }, [messages]);
 
   const handleCancelConnectionSetup = useCallback(() => {
     setShowConnectionSetup(false);
@@ -373,8 +405,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
   }, []);
 
   const handleSaveConnection = useCallback(async (credentials: Record<string, string>) => {
-    if (!connectionSetupApi || !connectionSetupMessageId) return;
+    console.log('🔍 ChatInterface: handleSaveConnection called with credentials:', credentials);
+    console.log('🔍 ChatInterface: connectionSetupApi:', connectionSetupApi);
+    console.log('🔍 ChatInterface: connectionSetupMessageId:', connectionSetupMessageId);
+    
+    if (!connectionSetupApi || !connectionSetupMessageId) {
+      console.log('🔍 ChatInterface: Missing connectionSetupApi or connectionSetupMessageId, returning early');
+      return;
+    }
 
+    console.log('🔍 ChatInterface: Starting to save connection...');
     setIsSavingConnection(true);
     try {
       // First, create the connection

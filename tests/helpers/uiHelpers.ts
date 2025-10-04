@@ -667,7 +667,27 @@ export const sendChatMessage = async (page: Page, message: string): Promise<void
   }
   
   console.log('🔍 sendChatMessage: Clicking send button...');
-  await sendButton.click();
+  
+  // Add timeout and retry logic for the click
+  try {
+    await sendButton.click({ timeout: 10000 });
+  } catch (error) {
+    // If click times out, check if we're stuck in loading state
+    const isLoading = await page.locator('.animate-spin').isVisible();
+    if (isLoading) {
+      console.log('🔍 sendChatMessage: Detected stuck loading state, waiting for it to clear...');
+      // Wait for loading to clear with a reasonable timeout
+      await page.waitForFunction(() => {
+        const spinner = document.querySelector('.animate-spin') as HTMLElement;
+        return !spinner || !spinner.offsetParent;
+      }, { timeout: 30000 });
+      
+      // Try clicking again
+      await sendButton.click({ timeout: 5000 });
+    } else {
+      throw error;
+    }
+  }
   
   console.log('🔍 sendChatMessage: Message sent successfully');
 };
@@ -681,6 +701,20 @@ export const waitForChatResponse = async (page: Page, timeout: number = 15000): 
     'div[class*="bg-gray-100"][class*="text-gray-900"], [data-testid="api-call-result"], .animate-spin', 
     { timeout }
   );
+};
+
+/**
+ * Wait for connection guidance UI to appear
+ */
+export const waitForConnectionGuidance = async (page: Page, timeout: number = 20000): Promise<void> => {
+  // First wait for any chat response
+  await waitForChatResponse(page, timeout);
+  
+  // Wait for the element to be visible
+  await page.waitForSelector('[data-testid="connection-guidance"]', { 
+    timeout: timeout,
+    state: 'visible'
+  });
 };
 
 /**

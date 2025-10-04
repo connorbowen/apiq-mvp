@@ -32,6 +32,63 @@ import { Role } from '../../../src/generated/prisma';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
+// Retry configuration for handling temporary API issues
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  retryDelay: 2000, // 2 seconds
+  retryableStatusCodes: [0, 500, 502, 503, 504, 429], // Temporary errors
+  retryableErrors: ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED']
+};
+
+// Helper function to retry API calls with exponential backoff
+async function retryApiCall(page: any, operation: () => Promise<void>, testName: string): Promise<void> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+    try {
+      console.log(`🔄 ${testName} - Attempt ${attempt}/${RETRY_CONFIG.maxRetries}`);
+      await operation();
+      console.log(`✅ ${testName} - Success on attempt ${attempt}`);
+      return; // Success, exit retry loop
+    } catch (error) {
+      lastError = error as Error;
+      console.log(`❌ ${testName} - Attempt ${attempt} failed:`, error);
+      
+      // Check if this is a retryable error
+      const errorMessage = error?.toString() || '';
+      const isRetryable = RETRY_CONFIG.retryableErrors.some(err => errorMessage.includes(err)) ||
+                         errorMessage.includes('500') || 
+                         errorMessage.includes('502') ||
+                         errorMessage.includes('503') ||
+                         errorMessage.includes('504') ||
+                         errorMessage.includes('429');
+      
+      if (!isRetryable || attempt === RETRY_CONFIG.maxRetries) {
+        console.log(`🚫 ${testName} - Not retryable or max retries reached`);
+        throw error; // Re-throw if not retryable or max retries reached
+      }
+      
+      // Wait before retrying with exponential backoff
+      const delay = RETRY_CONFIG.retryDelay * Math.pow(2, attempt - 1);
+      console.log(`⏳ ${testName} - Waiting ${delay}ms before retry...`);
+      await page.waitForTimeout(delay);
+    }
+  }
+  
+  // If we get here, all retries failed
+  throw lastError || new Error(`${testName} failed after ${RETRY_CONFIG.maxRetries} attempts`);
+}
+
+// Helper function to check if API response indicates a temporary error
+function isTemporaryError(responseStatus: string, responseBody: string): boolean {
+  const status = parseInt(responseStatus) || 0;
+  return RETRY_CONFIG.retryableStatusCodes.includes(status) || 
+         responseBody.includes('Internal Server Error') ||
+         responseBody.includes('Service Unavailable') ||
+         responseBody.includes('Gateway Timeout') ||
+         responseBody.includes('Too Many Requests');
+}
+
 // Helper function to create Petstore endpoint with proper parameters
 async function createPetstoreEndpointWithParameters(connection: any) {
   const { prisma } = await import('../../../lib/database/client');
@@ -227,63 +284,81 @@ test.describe('P1.3.3: Multi-Step API Call Sequences E2E Tests', () => {
 
   test.describe('Multi-Step API Call Sequences', () => {
     test('should execute successful multiple API calls in sequence with context', async ({ page }) => {
-      // First API call - get available pets
-      await sendChatMessage(page, 'Get all available pets from the petstore');
+      await retryApiCall(page, async () => {
+        // First API call - get available pets
+        await sendChatMessage(page, 'Get all available pets from the petstore');
 
-      // Wait for first API call to complete
-      await waitForChatResponse(page, 15000);
-      
-      // Wait for API call result
-      await waitForApiCallResult(page, { timeout: 10000 });
-      
-      // Expand the details section to make response headers and body visible
-      const detailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' });
-      await detailsElement.click();
-      
-      // Verify first API call succeeded
-      const responseStatus = page.locator('[data-testid="response-status"]');
-      const responseBody = page.locator('[data-testid="response-body"]');
-      
-      await expect(responseStatus).toBeVisible();
-      await expect(responseBody).toBeVisible();
-      await expect(responseStatus).toContainText('200'); // Expect successful GET
-      
-      const responseText = await responseBody.textContent();
-      expect(responseText).toMatch(/pets|available|id|name/i);
+        // Wait for first API call to complete
+        await waitForChatResponse(page, 15000);
+        
+        // Wait for API call result
+        await waitForApiCallResult(page, { timeout: 10000 });
+        
+        // Expand the details section to make response headers and body visible
+        const detailsElement = page.locator('details summary').filter({ hasText: 'Raw Response Data' });
+        await detailsElement.click();
+        
+        // Verify first API call succeeded
+        const responseStatus = page.locator('[data-testid="response-status"]');
+        const responseBody = page.locator('[data-testid="response-body"]');
+        
+        await expect(responseStatus).toBeVisible();
+        await expect(responseBody).toBeVisible();
+        
+        const statusText = await responseStatus.textContent();
+        const responseText = await responseBody.textContent();
+        
+        // Check if this is a temporary error that should be retried
+        if (isTemporaryError(statusText || '0', responseText || '')) {
+          throw new Error(`Temporary API error: Status ${statusText}, Body: ${responseText}`);
+        }
+        
+        await expect(responseStatus).toContainText('200'); // Expect successful GET
+        expect(responseText).toMatch(/pets|available|id|name/i);
+      }, 'First API call - Get available pets');
 
-      // Second API call - get pets with different status
-      await sendChatMessage(page, 'Now get all sold pets to see the difference');
+      await retryApiCall(page, async () => {
+        // Second API call - get pets with different status
+        await sendChatMessage(page, 'Now get all sold pets to see the difference');
 
-      // Wait for second API call to complete
-      await waitForChatResponse(page, 15000);
-      
-      // Wait for second API call result to appear
-      await waitForApiCallResult(page, { timeout: 15000 });
-      
-      // Wait a bit for the second API call result to be fully rendered
-      await page.waitForTimeout(2000);
-      
-      // Find all API call results and get the second one
-      const apiCallResults = page.locator('[data-testid="api-call-result"]');
-      const secondApiCallResult = apiCallResults.nth(1);
-      
-      // Expand the details section for the second API call
-      const secondDetailsElement = secondApiCallResult.locator('details summary').filter({ hasText: 'Raw Response Data' });
-      await secondDetailsElement.click();
-      
-      // Wait for the details to expand
-      await page.waitForTimeout(1000);
-      
-      // Verify second API call succeeded
-      const secondResponseStatus = secondApiCallResult.locator('[data-testid="response-status"]');
-      const secondResponseBody = secondApiCallResult.locator('[data-testid="response-body"]');
-      
-      await expect(secondResponseStatus).toBeVisible();
-      await expect(secondResponseBody).toBeVisible();
-      await expect(secondResponseStatus).toContainText('200'); // Expect successful GET
-      
-      const secondResponseText = await secondResponseBody.textContent();
-      expect(secondResponseText).toMatch(/pets|sold|id|name/i);
+        // Wait for second API call to complete
+        await waitForChatResponse(page, 15000);
+        
+        // Wait for second API call result to appear
+        await waitForApiCallResult(page, { timeout: 15000 });
+        
+        // Wait a bit for the second API call result to be fully rendered
+        await page.waitForTimeout(2000);
+        
+        // Find all API call results and get the second one
+        const apiCallResults = page.locator('[data-testid="api-call-result"]');
+        const secondApiCallResult = apiCallResults.nth(1);
+        
+        // Expand the details section for the second API call
+        const secondDetailsElement = secondApiCallResult.locator('details summary').filter({ hasText: 'Raw Response Data' });
+        await secondDetailsElement.click();
+        
+        // Wait for the details to expand
+        await page.waitForTimeout(1000);
+        
+        // Verify second API call succeeded
+        const secondResponseStatus = secondApiCallResult.locator('[data-testid="response-status"]');
+        const secondResponseBody = secondApiCallResult.locator('[data-testid="response-body"]');
+        
+        await expect(secondResponseStatus).toBeVisible();
+        await expect(secondResponseBody).toBeVisible();
+        
+        const secondStatusText = await secondResponseStatus.textContent();
+        const secondResponseText = await secondResponseBody.textContent();
+        
+        // Check if this is a temporary error that should be retried
+        if (isTemporaryError(secondStatusText || '0', secondResponseText || '')) {
+          throw new Error(`Temporary API error: Status ${secondStatusText}, Body: ${secondResponseText}`);
+        }
+        
+        await expect(secondResponseStatus).toContainText('200'); // Expect successful GET
+        expect(secondResponseText).toMatch(/pets|sold|id|name/i);
+      }, 'Second API call - Get sold pets');
     });
 
     test('should handle errors in multi-step API call sequences', async ({ page }) => {
@@ -555,37 +630,74 @@ test.describe('P1.3.3: Multi-Step API Call Sequences E2E Tests', () => {
     });
 
     test('should maintain parameter extraction consistency across multiple requests', async ({ page }) => {
-      // First request
-      await sendChatMessage(page, 'Find available pets');
-      await waitForChatResponse(page, 30000);
-      
-      // Wait for first API call result to appear
-      await waitForApiCallResult(page, { timeout: 30000 });
-      
-      // Wait a bit more to ensure the first API call is fully processed
-      await page.waitForTimeout(3000);
-      
-      // Second request - should maintain consistency
-      await sendChatMessage(page, 'Now find sold pets');
-      await waitForChatResponse(page, 30000);
-      
-      // Wait for second API call result to appear
-      await waitForApiCallResult(page, { timeout: 30000 });
-      
-      // Wait a bit more for the second API call to complete
-      await page.waitForTimeout(3000);
-      
-      // Verify both requests were handled consistently
-      const apiCallResults = page.locator('[data-testid="api-call-result"]');
-      await expect(apiCallResults).toHaveCount(2);
-      
-      // Verify both responses show proper parameter extraction
-      const responses = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]');
-      const firstResponse = await responses.nth(0).textContent();
-      const secondResponse = await responses.nth(1).textContent();
-      
-      expect(firstResponse).toContain('available');
-      expect(secondResponse).toContain('sold');
+      await retryApiCall(page, async () => {
+        // First request
+        await sendChatMessage(page, 'Find available pets');
+        await waitForChatResponse(page, 30000);
+        
+        // Wait for first API call result to appear
+        await waitForApiCallResult(page, { timeout: 30000 });
+        
+        // Wait a bit more to ensure the first API call is fully processed
+        await page.waitForTimeout(3000);
+        
+        // Check if first API call succeeded
+        const firstApiCallResults = page.locator('[data-testid="api-call-result"]');
+        const firstResultCount = await firstApiCallResults.count();
+        
+        if (firstResultCount > 0) {
+          const firstResponseStatus = firstApiCallResults.nth(0).locator('[data-testid="response-status"]');
+          const firstResponseBody = firstApiCallResults.nth(0).locator('[data-testid="response-body"]');
+          
+          const firstStatusText = await firstResponseStatus.textContent();
+          const firstResponseText = await firstResponseBody.textContent();
+          
+          // Check if this is a temporary error that should be retried
+          if (isTemporaryError(firstStatusText || '0', firstResponseText || '')) {
+            throw new Error(`Temporary API error on first call: Status ${firstStatusText}, Body: ${firstResponseText}`);
+          }
+        }
+      }, 'First request - Find available pets');
+
+      await retryApiCall(page, async () => {
+        // Second request - should maintain consistency
+        await sendChatMessage(page, 'Now find sold pets');
+        await waitForChatResponse(page, 30000);
+        
+        // Wait for second API call result to appear
+        await waitForApiCallResult(page, { timeout: 30000 });
+        
+        // Wait a bit more for the second API call to complete
+        await page.waitForTimeout(3000);
+        
+        // Check if second API call succeeded
+        const apiCallResults = page.locator('[data-testid="api-call-result"]');
+        const resultCount = await apiCallResults.count();
+        
+        if (resultCount >= 2) {
+          const secondResponseStatus = apiCallResults.nth(1).locator('[data-testid="response-status"]');
+          const secondResponseBody = apiCallResults.nth(1).locator('[data-testid="response-body"]');
+          
+          const secondStatusText = await secondResponseStatus.textContent();
+          const secondResponseText = await secondResponseBody.textContent();
+          
+          // Check if this is a temporary error that should be retried
+          if (isTemporaryError(secondStatusText || '0', secondResponseText || '')) {
+            throw new Error(`Temporary API error on second call: Status ${secondStatusText}, Body: ${secondResponseText}`);
+          }
+        }
+        
+        // Verify both requests were handled consistently
+        await expect(apiCallResults).toHaveCount(2);
+        
+        // Verify both responses show proper parameter extraction
+        const responses = page.locator('div[class*="max-w-xs"][class*="px-3"][class*="py-2"][class*="rounded-lg"][class*="bg-gray-100"][class*="text-gray-900"]');
+        const firstResponse = await responses.nth(0).textContent();
+        const secondResponse = await responses.nth(1).textContent();
+        
+        expect(firstResponse).toContain('available');
+        expect(secondResponse).toContain('sold');
+      }, 'Second request - Find sold pets');
     });
   });
 });

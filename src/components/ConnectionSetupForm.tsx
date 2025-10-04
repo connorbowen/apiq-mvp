@@ -111,13 +111,20 @@ export const ConnectionSetupForm: React.FC<ConnectionSetupFormProps> = ({
   };
 
   const handleSave = async () => {
+    console.log('🔍 ConnectionSetupForm: handleSave called');
+    console.log('🔍 ConnectionSetupForm: credentials:', credentials);
+    
     if (!validateForm()) {
+      console.log('🔍 ConnectionSetupForm: Form validation failed');
       return;
     }
 
+    console.log('🔍 ConnectionSetupForm: Form validation passed, calling onSave');
     try {
       await onSave(credentials);
+      console.log('🔍 ConnectionSetupForm: onSave completed successfully');
     } catch (error) {
+      console.log('🔍 ConnectionSetupForm: onSave failed:', error);
       setErrors({ save: error instanceof Error ? error.message : 'Failed to save connection' });
     }
   };
@@ -187,7 +194,18 @@ export const ConnectionSetupForm: React.FC<ConnectionSetupFormProps> = ({
             {isTesting ? 'Testing...' : 'Test Connection'}
           </button>
           <button
-            onClick={handleSave}
+            onClick={(e) => {
+              console.log('🔍 ConnectionSetupForm: Save button clicked!');
+              console.log('🔍 ConnectionSetupForm: Event:', e);
+              console.log('🔍 ConnectionSetupForm: isLoading:', isLoading);
+              console.log('🔍 ConnectionSetupForm: isTesting:', isTesting);
+              console.log('🔍 ConnectionSetupForm: Button disabled:', isLoading || isTesting);
+              if (!isLoading && !isTesting) {
+                handleSave();
+              } else {
+                console.log('🔍 ConnectionSetupForm: Button is disabled, not calling handleSave');
+              }
+            }}
             disabled={isLoading || isTesting}
             className="flex-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="save-connection-btn"

@@ -134,7 +134,7 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
           )
         ]);
         
-        if (connectionId) {
+        if (connectionId && typeof connectionId === 'string' && connectionId !== 'connection-created') {
           trackConnection(connectionId);
           console.log('✅ Performance test connection created successfully');
         }
@@ -165,7 +165,7 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
           apiKey: 'test-basic-key'
         });
         
-        if (connectionId) {
+        if (connectionId && typeof connectionId === 'string' && connectionId !== 'connection-created') {
           trackConnection(connectionId);
           console.log('✅ Basic connection creation successful');
         }
@@ -177,7 +177,7 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
       
       // Verify connection appears in the list (with graceful fallback)
       try {
-        await expect(page.locator(`[data-testid="connection-card"]:has-text("Basic Connection Test")`)).toBeVisible({ timeout: 5000 });
+        await expect(page.locator(`[data-testid^="connection-card-"]:has-text("Basic Connection Test")`)).toBeVisible({ timeout: 5000 });
         console.log('✅ Connection card found in list');
       } catch (error) {
         console.log('⚠️ Connection card not found, but connection was created successfully via API');
@@ -197,7 +197,7 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
           apiKey: 'test-test-api-key-12345'
         });
         
-        if (connectionId) {
+        if (connectionId && typeof connectionId === 'string' && connectionId !== 'connection-created') {
           trackConnection(connectionId);
         }
       } catch (error) {
@@ -214,7 +214,7 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
         
         // Wait for success message with timeout
         try {
-          await waitForVisible(page, '[data-testid="success-message"]', { timeout: 10000 });
+          await waitForVisible(page, '[data-testid="success-message"]', 10000);
           console.log('✅ Connection test successful');
         } catch (timeoutError) {
           console.log('⚠️ Success message timeout, but connection test may have completed');
@@ -249,7 +249,7 @@ test.describe('Connections Performance and Concurrent Operations E2E Tests', () 
           apiKey: 'load-test-api-key-12345'
         });
         
-        if (connectionId) {
+        if (connectionId && typeof connectionId === 'string' && connectionId !== 'connection-created') {
           trackConnection(connectionId);
         }
       } catch (error) {

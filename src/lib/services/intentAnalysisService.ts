@@ -205,9 +205,13 @@ export class IntentAnalysisService {
       `${conn.name} (${conn.id}): ${conn.endpoints?.length || 0} endpoints`
     ).join(', ');
 
+    const connectionCount = availableConnections.length;
+    const connectionStatus = connectionCount === 0 ? 'NO CONNECTIONS AVAILABLE' : `${connectionCount} connections available`;
+
     return `You are an expert intent analysis specialist. Your job is to understand what users want to accomplish and determine the type of guidance they need.
 
-Available Connections: ${connectionInfo}
+CONNECTION STATUS: ${connectionStatus}
+Available Connections: ${connectionInfo || 'None'}
 
 INTENT ANALYSIS RULES:
 1. Understand the user's primary goal and what they're trying to accomplish
@@ -238,15 +242,39 @@ EXAMPLES OF "connection_setup" GUIDANCE TYPE:
 - "Help me" → guidanceType: "connection_setup" (vague description needs API guidance)
 - "What can you do?" → guidanceType: "connection_setup" (vague description needs API guidance)
 - "I want to automate something" → guidanceType: "connection_setup" (vague automation needs API guidance)
+- "Create a workflow that sends a Slack notification when a new GitHub issue is created" + 0 connections → guidanceType: "connection_setup" (needs to set up Slack and GitHub connections first)
+- "When a new order is placed, send an email" + 0 connections → guidanceType: "connection_setup" (needs to set up order system and email connections first)
 
-IMPORTANT: 
-- If the user is requesting workflow generation (e.g., "When X happens, do Y", "Create a workflow", "Automate this process"), and they have the necessary API connections available, classify this as guidanceType: "none" since they can proceed with workflow generation.
-- If the user is making a direct API call request (e.g., "Get available pets", "Now get pending pets", "Find user by ID", "Create a new order"), and they have the necessary API connections available, classify this as guidanceType: "none" since they can proceed with direct API execution.
+🚨 CRITICAL RULE - CONNECTION AVAILABILITY CHECK 🚨:
+- ALWAYS check the CONNECTION STATUS above
+- If CONNECTION STATUS shows "NO CONNECTIONS AVAILABLE", the user CANNOT proceed with any API operations
+- If CONNECTION STATUS shows "NO CONNECTIONS AVAILABLE", the user MUST set up connections first
+- This is the MOST IMPORTANT factor in determining guidance type
+
+WORKFLOW GENERATION REQUESTS:
+- If user requests workflow generation (e.g., "When X happens, do Y", "Create a workflow", "Automate this process"):
+  * AND they have the necessary API connections available → guidanceType: "none" (can proceed)
+  * AND they have 0 connections available → guidanceType: "connection_setup" (must set up connections first)
+  * AND they have some connections but missing required ones → guidanceType: "connection_setup" (must set up missing connections)
+
+DIRECT API CALL REQUESTS:
+- If user makes direct API call request (e.g., "Get available pets", "Now get pending pets", "Find user by ID", "Create a new order"):
+  * AND they have the necessary API connections available → guidanceType: "none" (can proceed)
+  * AND they have 0 connections available → guidanceType: "connection_setup" (must set up connections first)
+  * AND they have some connections but missing required ones → guidanceType: "connection_setup" (must set up missing connections)
 
 COMPLEXITY LEVELS:
 - simple: Single API, basic operation
 - medium: Multiple steps, one API
 - complex: Multiple APIs, complex workflow
+
+MULTIPLE API DETECTION:
+- Look for mentions of multiple services (e.g., "Slack and GitHub", "email and database", "when X happens, send to Y")
+- If the workflow involves triggering one service based on events from another service, this requires multiple APIs
+- Examples of multiple API workflows:
+  * "When a new GitHub issue is created, send a Slack notification" (requires GitHub + Slack)
+  * "When a new order is placed, send an email and update the database" (requires order system + email + database)
+  * "Monitor Trello cards and create Jira tickets" (requires Trello + Jira)
 
 Respond with JSON in this format:
 {

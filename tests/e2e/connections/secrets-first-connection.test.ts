@@ -311,7 +311,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
       }
       
       // Check for connection card
-      const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Test Secrets-First Connection")');
+      const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("Test Secrets-First Connection")');
       console.log('🪵 Looking for connection card with text "Test Secrets-First Connection"');
       
       // Wait for connection card to appear
@@ -322,7 +322,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
         console.log('🪵 Connection card not found, checking all connection cards');
         
         // List all connection cards
-        const allCards = page.locator('[data-testid="connection-card"]');
+        const allCards = page.locator('[data-testid^="connection-card-"]');
         const cardCount = await allCards.count();
         console.log('🪵 Total connection cards found:', cardCount);
         
@@ -391,7 +391,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
       await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
       
       // Check for connection card
-      const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Bearer Token Secrets-First")');
+      const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("Bearer Token Secrets-First")');
       await expect(connectionCard).toBeVisible({ timeout: 10000 });
       
       // Verify that a secret was automatically created via API
@@ -451,7 +451,7 @@ test.describe('Secrets-First Connection Management E2E Tests', () => {
       await expect(page.locator('[data-testid="success-message"]')).toBeVisible();
       
       // Check for connection card
-      const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Basic Auth Secrets-First")');
+      const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("Basic Auth Secrets-First")');
       await expect(connectionCard).toBeVisible({ timeout: 10000 });
       
       // Verify that a secret was automatically created via API

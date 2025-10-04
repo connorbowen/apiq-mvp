@@ -271,7 +271,7 @@ test.describe('Connections Secrets-First Integration E2E Tests', () => {
       
       // Wait for the connection card to appear
       try {
-        const connectionCard = page.locator('[data-testid="connection-card"]:has-text("Secret Security Test")');
+        const connectionCard = page.locator('[data-testid^="connection-card-"]:has-text("Secret Security Test")');
         await expect(connectionCard).toBeVisible({ timeout: 10000 });
         
         // The secret value should not be visible in the UI

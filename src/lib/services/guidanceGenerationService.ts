@@ -97,7 +97,7 @@ export class GuidanceGenerationService {
       name: 'slack',
       displayName: 'Slack',
       description: 'Team communication and collaboration platform',
-      authType: 'BEARER_TOKEN',
+      authType: 'OAUTH2',
       setupInstructions: {
         step1: 'Go to https://api.slack.com/apps and create a new app',
         step2: 'Navigate to "OAuth & Permissions" and add the required scopes (chat:write, channels:read)',

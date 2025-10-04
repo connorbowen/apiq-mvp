@@ -68,7 +68,7 @@ export class ApiRequirementService {
       name: 'slack',
       displayName: 'Slack',
       description: 'Team communication and collaboration platform',
-      authType: 'BEARER_TOKEN',
+      authType: 'OAUTH2',
       capabilities: ['messaging', 'notifications', 'team_communication'],
       keywords: ['slack', 'message', 'notification', 'team', 'chat'],
       baseUrl: 'https://slack.com/api',
@@ -103,6 +103,76 @@ export class ApiRequirementService {
       keywords: ['email', 'mail', 'send', 'notification'],
       baseUrl: 'https://api.emailservice.com',
       commonEndpoints: ['/send', '/templates', '/contacts']
+    },
+    google_drive: {
+      name: 'google_drive',
+      displayName: 'Google Drive',
+      description: 'Cloud storage and file management platform',
+      authType: 'OAUTH2',
+      capabilities: ['file_storage', 'file_sharing', 'document_collaboration'],
+      keywords: ['google drive', 'drive', 'file storage', 'cloud storage', 'documents'],
+      baseUrl: 'https://www.googleapis.com/drive/v3',
+      commonEndpoints: ['/files', '/files/{fileId}', '/files/{fileId}/permissions']
+    },
+    google_sheets: {
+      name: 'google_sheets',
+      displayName: 'Google Sheets',
+      description: 'Spreadsheet and data management platform',
+      authType: 'OAUTH2',
+      capabilities: ['spreadsheet_management', 'data_analysis', 'collaborative_editing'],
+      keywords: ['google sheets', 'sheets', 'spreadsheet', 'excel', 'data'],
+      baseUrl: 'https://sheets.googleapis.com/v4',
+      commonEndpoints: ['/spreadsheets', '/spreadsheets/{spreadsheetId}']
+    },
+    airtable: {
+      name: 'airtable',
+      displayName: 'Airtable',
+      description: 'Database and project management platform',
+      authType: 'API_KEY',
+      capabilities: ['database_management', 'project_tracking', 'data_organization'],
+      keywords: ['airtable', 'database', 'project management', 'tables', 'records'],
+      baseUrl: 'https://api.airtable.com/v0',
+      commonEndpoints: ['/{baseId}/{tableName}', '/{baseId}/{tableName}/{recordId}']
+    },
+    notion: {
+      name: 'notion',
+      displayName: 'Notion',
+      description: 'All-in-one workspace for notes, docs, and project management',
+      authType: 'OAUTH2',
+      capabilities: ['note_taking', 'documentation', 'project_management', 'database_management'],
+      keywords: ['notion', 'notes', 'documentation', 'workspace', 'pages'],
+      baseUrl: 'https://api.notion.com/v1',
+      commonEndpoints: ['/pages', '/databases', '/blocks', '/users']
+    },
+    mailchimp: {
+      name: 'mailchimp',
+      displayName: 'Mailchimp',
+      description: 'Email marketing and automation platform',
+      authType: 'API_KEY',
+      capabilities: ['email_marketing', 'automation', 'audience_management'],
+      keywords: ['mailchimp', 'email marketing', 'newsletter', 'automation', 'campaigns'],
+      baseUrl: 'https://us1.api.mailchimp.com/3.0',
+      commonEndpoints: ['/lists', '/campaigns', '/automations', '/reports']
+    },
+    openai: {
+      name: 'openai',
+      displayName: 'OpenAI',
+      description: 'AI and machine learning services',
+      authType: 'API_KEY',
+      capabilities: ['text_generation', 'chat_completion', 'embeddings'],
+      keywords: ['openai', 'ai', 'gpt', 'chatgpt', 'completion', 'generation'],
+      baseUrl: 'https://api.openai.com/v1',
+      commonEndpoints: ['/chat/completions', '/completions', '/embeddings']
+    },
+    stripe: {
+      name: 'stripe',
+      displayName: 'Stripe',
+      description: 'Payment processing and subscription management',
+      authType: 'API_KEY',
+      capabilities: ['payment_processing', 'subscription_management', 'customer_management'],
+      keywords: ['stripe', 'payment', 'billing', 'subscription', 'customer'],
+      baseUrl: 'https://api.stripe.com/v1',
+      commonEndpoints: ['/charges', '/customers', '/subscriptions', '/invoices']
     }
   };
 
