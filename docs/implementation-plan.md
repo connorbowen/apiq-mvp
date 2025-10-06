@@ -614,15 +614,233 @@ AI: "Ordered Fluffy! Order ID: 789"
 #### **P3.3: Enhanced AI Detection for Unknown APIs** 🚧 **PLANNED**
 **Status**: Not started
 **Description**: Improve AI service to provide more detailed information about unknown APIs that aren't in the predefined knowledge base
-**Features**:
-- **Enhanced AI Detection**: Make the AI service provide more detailed information about unknown APIs
-- **Dynamic API Learning**: Allow the system to learn about new APIs from user interactions
-- **API Discovery**: Integrate with API discovery services to get real-time API information
-**Success Criteria**: 
-- AI can provide accurate setup instructions for unknown APIs
+**Timeline**: 4-5 weeks
+**Why Important**: Reduces generic fallback responses, improves user experience for custom APIs, enables dynamic learning
+
+**Implementation Steps**:
+1. **Create Enhanced AI Detection Service** (Week 1)
+   - New service: `src/lib/services/enhancedAiDetectionService.ts`
+   - AI-powered API analysis using OpenAI GPT-4
+   - Dynamic API learning from user interactions
+   - Integration with existing connection guidance system
+   - API discovery service integration (RapidAPI, Postman, etc.)
+
+2. **Build Dynamic Learning System** (Week 2)
+   - Database schema: `ApiLearningRecord`, `ApiDiscoveryCache` models
+   - User interaction tracking for API learning
+   - AI model fine-tuning based on successful connections
+   - API pattern recognition and classification
+   - Learning feedback loop implementation
+
+3. **Integrate with API Discovery Services** (Week 3)
+   - RapidAPI integration for real-time API information
+   - Postman API Network integration
+   - GitHub API discovery for open-source APIs
+   - Custom API discovery endpoints
+   - API metadata enrichment and validation
+
+4. **Create Enhanced UI Components** (Week 4)
+   - Enhanced connection guidance for unknown APIs
+   - AI-generated setup instructions
+   - Dynamic API documentation generation
+   - User feedback collection for API learning
+   - API discovery and suggestion interface
+
+5. **Comprehensive Testing** (Week 5)
+   - New file: `tests/e2e/enhanced-ai-detection.test.ts`
+   - Test AI detection accuracy for unknown APIs
+   - Test dynamic learning functionality
+   - Test API discovery service integration
+   - Test user experience improvements
+
+**Key Features**:
+- **Enhanced AI Detection**: AI analyzes unknown APIs and provides detailed setup instructions
+- **Dynamic Learning**: System learns from user interactions to improve API guidance
+- **API Discovery**: Integration with multiple API discovery services
+- **Pattern Recognition**: AI identifies common API patterns and provides relevant guidance
+- **User Feedback Loop**: Users can provide feedback to improve AI detection
+
+**Success Criteria**:
+- AI can provide accurate setup instructions for 80%+ of unknown APIs
 - System learns from user interactions to improve API guidance
-- Integration with API discovery services for real-time API information
-- Reduced generic fallback responses for unknown APIs
+- Integration with 3+ API discovery services for real-time API information
+- Reduced generic fallback responses by 70%
+- 100% E2E test coverage for enhanced AI detection
+- User satisfaction with unknown API guidance >85%
+
+### **P4: MOBILE & PLATFORM EXPANSION** (Future Priority)
+
+#### **P4.1: Mobile Application** 🚧 **PLANNED**
+**Status**: Not started
+**Description**: Native mobile applications for iOS and Android to provide full APIQ functionality on mobile devices
+**Timeline**: 8-10 weeks
+**Priority**: MEDIUM - Important for user accessibility and market reach
+
+**Implementation Steps**:
+1. **Create Mobile App Architecture** (Week 1)
+   - React Native project setup with TypeScript
+   - Navigation structure (Stack, Tab, Drawer)
+   - State management with Redux Toolkit
+   - API client configuration for mobile
+   - Authentication flow implementation
+   - Push notification setup
+
+2. **Implement Core Features** (Weeks 2-4)
+   - **Authentication**: Login, signup, password reset
+   - **Dashboard**: Mobile-optimized dashboard with tabs
+   - **Chat Interface**: Mobile chat with voice input support
+   - **Connections**: Mobile connection management
+   - **Workflows**: Mobile workflow creation and execution
+   - **API Catalog**: Mobile API discovery and connection
+
+3. **Create Mobile-Specific UI Components** (Weeks 3-5)
+   - **Mobile Navigation**: Bottom tab navigation
+   - **Mobile Forms**: Touch-optimized form components
+   - **Mobile Modals**: Full-screen modals for mobile
+   - **Mobile Lists**: Swipe actions and pull-to-refresh
+   - **Mobile Charts**: Touch-friendly data visualization
+   - **Mobile Notifications**: In-app notification system
+
+4. **Implement Mobile-Specific Features** (Weeks 4-6)
+   - **Offline Support**: Offline workflow viewing and basic functionality
+   - **Push Notifications**: Workflow execution notifications
+   - **Biometric Authentication**: Fingerprint/Face ID login
+   - **Camera Integration**: QR code scanning for API connections
+   - **File Sharing**: Share workflows and connections
+   - **Deep Linking**: Direct links to workflows and connections
+
+5. **Platform-Specific Features** (Weeks 5-7)
+   - **iOS Features**: 
+     - Siri Shortcuts for workflow execution
+     - Apple Watch companion app
+     - iOS-specific UI components
+     - App Store optimization
+   - **Android Features**:
+     - Android widgets for quick actions
+     - Android Auto integration
+     - Material Design components
+     - Google Play optimization
+
+6. **Testing & Optimization** (Weeks 7-8)
+   - **Device Testing**: Test on various iOS and Android devices
+   - **Performance Testing**: App performance and memory usage
+   - **User Experience Testing**: Mobile UX optimization
+   - **Accessibility Testing**: Mobile accessibility compliance
+   - **Security Testing**: Mobile security and data protection
+
+7. **App Store Deployment** (Weeks 8-10)
+   - **App Store Preparation**: iOS App Store submission
+   - **Google Play Preparation**: Google Play Store submission
+   - **Beta Testing**: TestFlight and Google Play Console beta
+   - **App Store Optimization**: ASO for both platforms
+   - **Launch Strategy**: Coordinated mobile app launch
+
+**Key Features**:
+- **Native Performance**: Full native app performance
+- **Offline Support**: Basic offline functionality
+- **Push Notifications**: Real-time workflow notifications
+- **Biometric Security**: Fingerprint/Face ID authentication
+- **Camera Integration**: QR code scanning for quick setup
+- **Voice Input**: Voice-to-text for chat interface
+- **Swipe Actions**: Mobile-optimized interactions
+- **Deep Linking**: Direct access to workflows and connections
+
+**Technical Architecture**:
+- **Framework**: React Native with TypeScript
+- **State Management**: Redux Toolkit with RTK Query
+- **Navigation**: React Navigation 6
+- **UI Library**: React Native Elements + Custom Components
+- **Authentication**: JWT with biometric support
+- **Push Notifications**: Firebase Cloud Messaging
+- **Offline Storage**: AsyncStorage + SQLite
+- **API Client**: Axios with offline queue
+- **Testing**: Jest + Detox for E2E testing
+
+**Success Criteria**:
+- Native iOS and Android apps published
+- Full feature parity with web application
+- Offline support for core functionality
+- Push notifications for workflow events
+- Biometric authentication working
+- Camera integration for QR codes
+- Voice input for chat interface
+- 100% E2E test coverage for mobile features
+- App Store ratings >4.5 stars
+- User adoption >30% of web users
+
+#### **P4.2: Advanced Workflow Features** 🚧 **PLANNED**
+**Status**: Not started
+**Next Steps**: See [Future Roadmap](docs/future-roadmap.md#p32-advanced-workflow-features)
+**Success Criteria**: Power users can create complex workflows with advanced features
+
+#### **P4.3: Enterprise Security Features** 🚧 **PLANNED**
+**Status**: Not started
+**Description**: Advanced enterprise security features for large organizations and compliance requirements
+**Timeline**: 6-8 weeks
+**Priority**: MEDIUM - Important for enterprise customers
+
+**Implementation Steps**:
+1. **Create Enterprise Security Framework** (Week 1-2)
+   - Database schema: `SecurityPolicy`, `AuditLog`, `ComplianceReport` models
+   - Security policy management system
+   - Advanced audit logging and monitoring
+   - Compliance reporting framework
+   - Security event detection and alerting
+
+2. **Implement Advanced Authentication** (Week 2-3)
+   - **Single Sign-On (SSO)**: SAML 2.0 and OAuth 2.0 support
+   - **Multi-Factor Authentication (MFA)**: TOTP, SMS, hardware tokens
+   - **Active Directory Integration**: LDAP and Azure AD support
+   - **Session Management**: Advanced session security and timeout
+   - **Password Policies**: Enterprise password requirements
+
+3. **Build Compliance Features** (Week 3-5)
+   - **SOC 2 Compliance**: Security controls and monitoring
+   - **GDPR Compliance**: Data protection and privacy controls
+   - **HIPAA Compliance**: Healthcare data protection
+   - **ISO 27001**: Information security management
+   - **Audit Trails**: Comprehensive activity logging
+
+4. **Create Enterprise Admin Features** (Week 4-6)
+   - **User Management**: Advanced user provisioning and deprovisioning
+   - **Role-Based Access Control (RBAC)**: Granular permission management
+   - **Data Governance**: Data classification and handling policies
+   - **Security Monitoring**: Real-time security dashboard
+   - **Incident Response**: Security incident management
+
+5. **Implement Data Protection** (Week 5-7)
+   - **Data Encryption**: End-to-end encryption for sensitive data
+   - **Data Loss Prevention (DLP)**: Prevent unauthorized data sharing
+   - **Backup and Recovery**: Enterprise-grade backup solutions
+   - **Data Retention**: Automated data lifecycle management
+   - **Data Anonymization**: Privacy-preserving data processing
+
+6. **Create Security Testing** (Week 7-8)
+   - **Penetration Testing**: Security vulnerability assessment
+   - **Compliance Testing**: Automated compliance validation
+   - **Security Auditing**: Regular security assessments
+   - **Threat Modeling**: Security threat analysis
+   - **Security Training**: Staff security awareness training
+
+**Key Features**:
+- **Enterprise SSO**: SAML 2.0, OAuth 2.0, LDAP integration
+- **Advanced MFA**: Multiple authentication factors
+- **Compliance Reporting**: SOC 2, GDPR, HIPAA compliance
+- **Audit Logging**: Comprehensive activity tracking
+- **Data Encryption**: End-to-end data protection
+- **Security Monitoring**: Real-time threat detection
+- **Incident Response**: Automated security incident handling
+- **Data Governance**: Enterprise data management
+
+**Success Criteria**:
+- SOC 2 Type II certification achieved
+- GDPR compliance validation complete
+- Enterprise SSO integration working
+- Advanced MFA implemented
+- Comprehensive audit logging active
+- Data encryption for all sensitive data
+- Security monitoring dashboard operational
+- 100% compliance with enterprise security requirements
 
 ## 🎨 **UX SIMPLIFICATION PLAN** ✅ **COMPLETED**
 
@@ -796,6 +1014,8 @@ AI: "Ordered Fluffy! Order ID: 789"
 **Business Impact**: Enables subscription-based pricing, predictable revenue, and user growth through freemium model
 **User Value**: Clear plan limits, usage visibility, and seamless upgrade experience
 **Technical Value**: Comprehensive usage tracking and subscription management infrastructure
+**Timeline**: 6-8 weeks
+**Priority**: HIGH - Critical for revenue generation and business sustainability
 
 ### **Pricing Model** (From PRD)
 - **Free Tier**: 5 API connections, 100 total executions/month
@@ -805,7 +1025,7 @@ AI: "Ordered Fluffy! Order ID: 789"
 
 ### **Implementation Plan**
 
-#### **Phase 1: Database Schema & Core Models** 🚧 **PLANNED**
+#### **Phase 1: Database Schema & Core Models** 🚧 **PLANNED** (Weeks 1-2)
 **Goal**: Create comprehensive database schema for subscription and usage tracking
 
 **Database Models**:
@@ -813,6 +1033,8 @@ AI: "Ordered Fluffy! Order ID: 789"
 - **UsageRecord**: Individual usage tracking (connections, workflows, direct API calls)
 - **UsageSummary**: Monthly aggregated usage for billing
 - **PlanLimits**: Plan configuration and limits
+- **BillingEvent**: Billing events and transaction history
+- **SubscriptionChange**: Plan upgrade/downgrade tracking
 
 **Key Features**:
 - Plan type tracking (FREE, STARTER, PROFESSIONAL, ENTERPRISE)
@@ -820,8 +1042,15 @@ AI: "Ordered Fluffy! Order ID: 789"
 - Monthly usage aggregation and reset
 - Plan upgrade/downgrade tracking
 - Billing cycle management
+- Prorated billing calculations
 
-#### **Phase 2: Usage Tracking Service** 🚧 **PLANNED**
+**Technical Implementation**:
+- Prisma schema updates for billing models
+- Database migrations for billing tables
+- Index optimization for usage queries
+- Data validation and constraints
+
+#### **Phase 2: Usage Tracking Service** 🚧 **PLANNED** (Weeks 2-3)
 **Goal**: Implement core usage tracking and plan enforcement service
 
 **Core Service Features**:
@@ -831,6 +1060,7 @@ AI: "Ordered Fluffy! Order ID: 789"
 - Plan limit enforcement and validation
 - Usage summary generation
 - Plan upgrade/downgrade logic
+- Real-time usage monitoring
 
 **Integration Points**:
 - API connection creation/management
@@ -838,8 +1068,16 @@ AI: "Ordered Fluffy! Order ID: 789"
 - Direct API call execution
 - Chat interface API calls
 - User registration (default to FREE plan)
+- Admin dashboard for usage monitoring
 
-#### **Phase 3: Subscription Management UI** 🚧 **PLANNED**
+**Technical Implementation**:
+- New service: `src/lib/services/billingService.ts`
+- Usage tracking middleware
+- Plan enforcement decorators
+- Usage analytics and reporting
+- Real-time usage updates
+
+#### **Phase 3: Subscription Management UI** 🚧 **PLANNED** (Weeks 4-5)
 **Goal**: Add subscription management to user dropdown and dashboard
 
 **UI Features**:
@@ -849,8 +1087,16 @@ AI: "Ordered Fluffy! Order ID: 789"
 - Billing history and invoices
 - Plan limit warnings and upgrade prompts
 - Stripe integration for payments
+- Usage analytics and insights
 
-#### **Phase 4: Billing Integration** 🚧 **PLANNED**
+**Technical Implementation**:
+- New components: `SubscriptionManager.tsx`, `UsageDashboard.tsx`
+- Enhanced user dropdown with billing info
+- Usage progress indicators
+- Plan comparison interface
+- Billing history viewer
+
+#### **Phase 4: Stripe Integration** 🚧 **PLANNED** (Weeks 5-6)
 **Goal**: Integrate with Stripe for subscription management and payments
 
 **Billing Features**:
@@ -860,6 +1106,52 @@ AI: "Ordered Fluffy! Order ID: 789"
 - Payment failure handling
 - Prorated billing for mid-cycle changes
 - Webhook handling for subscription events
+- Tax calculation and compliance
+
+**Technical Implementation**:
+- Stripe SDK integration
+- Webhook endpoint: `/api/billing/webhooks`
+- Payment processing service
+- Invoice generation system
+- Tax calculation service
+- Payment failure recovery
+
+#### **Phase 5: Advanced Billing Features** 🚧 **PLANNED** (Weeks 6-7)
+**Goal**: Implement advanced billing features and enterprise capabilities
+
+**Advanced Features**:
+- Annual billing discounts
+- Enterprise custom pricing
+- Usage-based overage billing
+- Team billing and invoicing
+- Billing analytics and reporting
+- Cost optimization recommendations
+
+**Technical Implementation**:
+- Annual billing calculations
+- Enterprise pricing engine
+- Overage billing system
+- Team billing management
+- Advanced analytics service
+- Cost optimization algorithms
+
+#### **Phase 6: Testing & Optimization** 🚧 **PLANNED** (Weeks 7-8)
+**Goal**: Comprehensive testing and performance optimization
+
+**Testing Strategy**:
+- New file: `tests/e2e/billing-system.test.ts`
+- Unit tests for billing service
+- Integration tests for Stripe
+- Performance tests for usage tracking
+- Security tests for payment processing
+- End-to-end billing flow tests
+
+**Optimization**:
+- Database query optimization
+- Caching for usage calculations
+- Real-time usage updates
+- Performance monitoring
+- Error handling and recovery
 
 ### **Technical Architecture**
 
@@ -870,6 +1162,7 @@ AI: "Ordered Fluffy! Order ID: 789"
 4. **Limit Enforcement** → Block action if limits exceeded
 5. **Usage Summary** → Update monthly usage summary
 6. **UI Update** → Update usage display in dashboard
+7. **Billing Check** → Check for overage and billing events
 
 #### **Database Schema**:
 ```sql
@@ -879,30 +1172,44 @@ UserPlan {
   apiConnectionsLimit, workflowExecutionsLimit, directApiCallsLimit, totalExecutionsLimit
   currentConnections, currentWorkflowExecutions, currentDirectApiCalls, currentTotalExecutions
   billingCycle (monthly|yearly), status (active|cancelled|expired)
-  stripeSubscriptionId, stripeCustomerId
+  stripeSubscriptionId, stripeCustomerId, stripePriceId
+  trialEndsAt, currentPeriodStart, currentPeriodEnd
   createdAt, updatedAt
 }
 
 -- Individual usage records
 UsageRecord {
   id, userId, usageType (api_connection|workflow_execution|direct_api_call)
-  resourceId, resourceType, metadata
-  createdAt
+  resourceId, resourceType, metadata, cost
+  createdAt, billingPeriod
 }
 
 -- Monthly usage summaries
 UsageSummary {
-  id, userId, year, month
+  id, userId, year, month, billingPeriod
   apiConnections, workflowExecutions, directApiCalls, totalExecutions
-  planLimits, overageAmount
+  planLimits, overageAmount, totalCost
   createdAt, updatedAt
 }
 
 -- Plan configuration
 PlanLimits {
   id, planType, apiConnectionsLimit, workflowExecutionsLimit, directApiCallsLimit, totalExecutionsLimit
-  priceMonthly, priceYearly, stripePriceId
-  isActive, createdAt, updatedAt
+  priceMonthly, priceYearly, stripePriceIdMonthly, stripePriceIdYearly
+  overagePrice, isActive, features
+  createdAt, updatedAt
+}
+
+-- Billing events
+BillingEvent {
+  id, userId, eventType, amount, currency, stripeEventId
+  metadata, processedAt, createdAt
+}
+
+-- Subscription changes
+SubscriptionChange {
+  id, userId, fromPlan, toPlan, changeType, effectiveDate
+  proratedAmount, stripeInvoiceId, createdAt
 }
 ```
 
@@ -915,6 +1222,12 @@ PlanLimits {
 - ✅ Plan upgrade/downgrade functionality
 - ✅ Monthly usage reset and billing cycles
 - ✅ Real-time usage monitoring and alerts
+- ✅ Prorated billing for plan changes
+- ✅ Enterprise custom pricing support
+- ✅ 100% E2E test coverage for billing system
+- ✅ Payment failure handling and recovery
+- ✅ Tax calculation and compliance
+- ✅ Billing analytics and reporting
 
 ---
 
@@ -1472,8 +1785,8 @@ Since your onboarding system is complete, you can now focus on:
 - **Month 2-3**: P3.2 Team Collaboration + P3.3 Enterprise Security Features
 
 ### **Q4 2025: Advanced Features** 🚧 **PLANNED**
-- **Month 1-2**: P4.1 AI-Powered API Extraction
-- **Month 3**: P4.2 Advanced Workflow Features + P4.3 Mobile Application
+- **Month 1-2**: P4.1 Mobile Application + P4.3 Enterprise Security Features
+- **Month 3**: P3.3 Enhanced AI Detection + P4.2 Advanced Workflow Features
 
 ## Success Metrics (Aligned with PRD)
 
