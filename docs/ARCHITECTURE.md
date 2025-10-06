@@ -118,6 +118,10 @@ User Input → ChatInterface → AI Orchestrator → Confidence Check → Servic
 /api/workflows/executions   # Workflow execution control
 /api/secrets               # Secrets vault management
 /api/audit-logs            # Audit log retrieval
+/api/catalog               # API Catalog - Browse and discover APIs
+/api/catalog/{id}          # API Catalog - Individual API details
+/api/catalog/{id}/connect  # API Catalog - Connect to catalog API
+/api/catalog/categories    # API Catalog - Category management
 ```
 
 ### 3. Database Layer (PostgreSQL + Prisma)
@@ -137,6 +141,9 @@ User Input → ChatInterface → AI Orchestrator → Confidence Check → Servic
 - **WorkflowExecution**: Execution history and state management
 - **Secret**: Encrypted secrets storage with versioning
 - **AuditLog**: Comprehensive audit trail
+- **ApiCatalog**: Shared API catalog entries
+- **CatalogEndpoint**: Catalog API endpoints
+- **CatalogCategory**: API categories for organization
 
 ### 4. AI Integration Layer (OpenAI)
 
@@ -235,7 +242,40 @@ User Input → ChatInterface → AI Orchestrator → Confidence Check → Servic
 - **Real-time Processing**: Immediate responses without mocking delays
 - **Production-Ready**: All services fully implemented and tested
 
-### 6. Secrets Management Layer
+### 6. API Catalog Layer 🆕
+
+**Technology Stack:**
+- **Database**: PostgreSQL with Prisma ORM
+- **Frontend**: React components with TypeScript
+- **API Routes**: Next.js API routes for CRUD operations
+- **Service Layer**: ApiCatalogService for business logic
+- **Seeding**: Automated catalog population scripts
+
+**Key Features:**
+- **Shared API Repository**: Centralized catalog of popular APIs
+- **Discovery & Search**: Advanced filtering by category, tags, auth type
+- **Direct Connection**: One-click connection from catalog to user connections
+- **Endpoint Documentation**: Complete OpenAPI spec integration
+- **Popularity Tracking**: Usage-based API ranking and recommendations
+- **Category Management**: Organized API categorization system
+- **Admin Management**: Full CRUD operations for catalog maintenance
+
+**Architecture Components:**
+- **ApiCatalog Model**: Core catalog entries with metadata
+- **CatalogEndpoint Model**: Individual API endpoints with full OpenAPI specs
+- **CatalogCategory Model**: Hierarchical API organization
+- **ApiCatalogService**: Business logic for catalog operations
+- **ApiCatalog Component**: React UI for browsing and discovery
+- **ApiCatalogDetail Component**: Detailed API view with connection options
+
+**Data Flow:**
+```
+User Browse Request → Catalog API → Database Query → Filtered Results → UI Rendering
+User Connect Request → Catalog Connect API → User Connection Creation → Endpoint Copying
+Admin Management → Catalog CRUD APIs → Database Updates → Cache Invalidation
+```
+
+### 7. Secrets Management Layer
 
 **Technology Stack:**
 - **Encryption**: AES-256-GCM for authenticated encryption

@@ -31,6 +31,7 @@ This index organizes all APIQ documentation into logical groups for easy navigat
 - **[Development Guide](DEVELOPMENT_GUIDE.md)** - Comprehensive development setup, coding standards, and best practices
 - **[Development Tools](DEVELOPMENT_TOOLS.md)** - Development scripts, testing tools, and workflow automation
 - **[API Reference](API_REFERENCE.md)** - Complete API endpoint documentation and specifications
+- **[API Catalog Guide](API_CATALOG_GUIDE.md)** - Comprehensive guide to the API Catalog system for discovery and connection
 - **[OAuth2 Guide](OAUTH2_GUIDE.md)** - Comprehensive OAuth2 setup, testing, and integration guide
 - **[Connection Guidance System](CONNECTION_GUIDANCE_SYSTEM.md)** - Intelligent API connection guidance and setup system
 

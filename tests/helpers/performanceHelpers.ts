@@ -7,6 +7,7 @@ export interface PerformanceOptions {
   timeout?: number;
   threshold?: number;
   measureNetwork?: boolean;
+  headers?: Record<string, string>;
 }
 
 /**
@@ -153,11 +154,11 @@ export const testAPIPerformance = async (
   apiEndpoint: string,
   options: PerformanceOptions = {}
 ): Promise<number> => {
-  const { timeout = 5000, threshold = 5000 } = options;
+  const { timeout = 5000, threshold = 5000, headers = {} } = options;
   
   const startTime = Date.now();
   
-  const response = await page.request.get(apiEndpoint);
+  const response = await page.request.get(apiEndpoint, { headers });
   const responseTime = Date.now() - startTime;
   
   expect(response.status()).toBe(200);

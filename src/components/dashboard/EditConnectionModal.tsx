@@ -621,7 +621,7 @@ export default function EditConnectionModal({
                 
                 <button
                   type="button"
-                  data-testid="delete-connection-btn"
+                  data-testid="delete-connection-modal-btn"
                   onClick={() => {
                     if (window.confirm(`Are you sure you want to delete the connection "${connection.name}"? This action cannot be undone.`)) {
                       // Call delete API

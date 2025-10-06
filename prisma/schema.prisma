@@ -204,9 +204,11 @@ model ApiConnection {
 
   // TODO: Add secretId field to reference Secret instead of storing credentials in authConfig
   secretId String? // Reference to the primary secret for this connection
+  catalogId String? // Reference to the API catalog entry
 
   // Relations
   user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  catalog     ApiCatalog?     @relation(fields: [catalogId], references: [id])
   endpoints   Endpoint[]
   workflows   WorkflowStep[]
   credentials ApiCredential[]
@@ -228,6 +230,9 @@ model Endpoint {
   requestBody     Json? // OpenAPI request body
   responses       Json // OpenAPI responses
   responseSchema  Json? // Dereferenced response schema (added for E2E and UI)
+  successSchema   Json? // 200/201 response schema for examples
+  tags            String[] // OpenAPI tags for grouping
+  isDeprecated    Boolean  @default(false)
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -237,6 +242,7 @@ model Endpoint {
   operations    ApiOperation[]
 
   @@unique([apiConnectionId, path, method])
+  @@index([tags])
   @@map("endpoints")
 }
 
@@ -675,4 +681,87 @@ model PlanLimits {
   updatedAt               DateTime    @updatedAt
 
   @@map("plan_limits")
+}
+
+// API Catalog - Shared API documentation separate from user credentials
+model ApiCatalog {
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  baseUrl         String
+  documentationUrl String?
+  logoUrl         String?
+  category        String?          // e.g., "Communication", "Development", "Business"
+  tags            String[]         // Array of tags for search/filtering
+  authTypes       AuthType[]       // Supported authentication types
+  status          CatalogStatus    @default(ACTIVE)
+  isVerified      Boolean          @default(false)
+  popularity      Int              @default(0) // Usage count for sorting
+  lastUpdated     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // OpenAPI specification data
+  rawSpec         String?          // Raw OpenAPI specification content
+  specHash        String?          // SHA-256 hash for change detection
+  specVersion     String?          // OpenAPI version (2.0, 3.0, 3.1, etc.)
+  endpointCount   Int              @default(0)
+
+  // Relations
+  endpoints       CatalogEndpoint[]
+  connections     ApiConnection[]  // User connections to this catalog API
+
+  @@unique([name])
+  @@index([category])
+  @@index([tags])
+  @@index([popularity])
+  @@map("api_catalog")
+}
+
+// Catalog API Endpoints - Shared endpoint documentation
+model CatalogEndpoint {
+  id              String   @id @default(cuid())
+  catalogId       String
+  path            String
+  method          String   // GET, POST, PUT, DELETE, PATCH
+  summary         String?
+  description     String?
+  parameters      Json     // OpenAPI parameters
+  requestBody     Json?    // OpenAPI request body
+  responses       Json     // OpenAPI responses
+  successSchema   Json?    // 200/201 response schema for examples
+  tags            String[] // OpenAPI tags for grouping
+  isDeprecated    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  catalog         ApiCatalog @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+
+  @@unique([catalogId, path, method])
+  @@index([tags])
+  @@map("catalog_endpoints")
+}
+
+// Catalog Categories for organization
+model CatalogCategory {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  description     String?
+  icon            String?  // Icon name or URL
+  color           String?  // Hex color code
+  sortOrder       Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("catalog_categories")
+}
+
+// Enums for API Catalog
+enum CatalogStatus {
+  ACTIVE
+  INACTIVE
+  DEPRECATED
+  MAINTENANCE
 }

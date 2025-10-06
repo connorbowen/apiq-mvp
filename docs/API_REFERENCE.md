@@ -512,6 +512,299 @@ Delete a workflow.
 }
 ```
 
+### API Catalog Management 🆕
+
+The API Catalog system provides a shared repository of popular APIs that users can discover, browse, and connect to directly. This system dramatically improves API discovery and reduces time-to-first-workflow.
+
+#### `GET /api/catalog`
+
+List all available APIs in the catalog with filtering, pagination, and search capabilities.
+
+**Query Parameters:**
+- `category` (optional): Filter by API category
+- `search` (optional): Search by name, description, or tags
+- `tags` (optional): Filter by specific tags
+- `authType` (optional): Filter by authentication type
+- `status` (optional): Filter by API status (default: ACTIVE)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20)
+- `sortBy` (optional): Sort by popularity, name, or createdAt (default: popularity)
+- `sortOrder` (optional): Sort order asc or desc (default: desc)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "catalogEntries": [
+      {
+        "id": "catalog_123",
+        "name": "Slack",
+        "description": "Slack API for messaging and team collaboration",
+        "baseUrl": "https://slack.com/api",
+        "documentationUrl": "https://api.slack.com/web",
+        "logoUrl": "https://a.slack-edge.com/...",
+        "category": "Communication",
+        "tags": ["messaging", "team", "collaboration"],
+        "authTypes": ["OAUTH2", "BEARER_TOKEN"],
+        "status": "ACTIVE",
+        "isVerified": true,
+        "popularity": 150,
+        "endpointCount": 25,
+        "endpoints": [
+          {
+            "id": "endpoint_123",
+            "path": "/conversations.list",
+            "method": "GET",
+            "summary": "List conversations",
+            "tags": ["conversations"]
+          }
+        ]
+      }
+    ],
+    "filters": {
+      "categories": [
+        {
+          "id": "cat_123",
+          "name": "Communication",
+          "description": "APIs for messaging and team collaboration",
+          "apiCount": 15
+        }
+      ],
+      "popularTags": [
+        { "tag": "messaging", "count": 25 },
+        { "tag": "payments", "count": 18 }
+      ],
+      "authTypes": ["API_KEY", "BEARER_TOKEN", "OAUTH2", "BASIC_AUTH", "NONE"]
+    }
+  },
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "pages": 8
+  }
+}
+```
+
+#### `GET /api/catalog/{id}`
+
+Get detailed information about a specific API in the catalog.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "catalog_123",
+    "name": "Slack",
+    "description": "Slack API for messaging and team collaboration",
+    "baseUrl": "https://slack.com/api",
+    "documentationUrl": "https://api.slack.com/web",
+    "logoUrl": "https://a.slack-edge.com/...",
+    "category": "Communication",
+    "tags": ["messaging", "team", "collaboration"],
+    "authTypes": ["OAUTH2", "BEARER_TOKEN"],
+    "status": "ACTIVE",
+    "isVerified": true,
+    "popularity": 150,
+    "endpointCount": 25,
+    "endpoints": [
+      {
+        "id": "endpoint_123",
+        "path": "/conversations.list",
+        "method": "GET",
+        "summary": "List conversations",
+        "description": "Retrieve a list of conversations in the workspace",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "requestBody": null,
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "channels": { "type": "array" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["conversations"],
+        "isDeprecated": false
+      }
+    ],
+    "userConnection": {
+      "id": "conn_456",
+      "name": "My Slack Connection",
+      "connectionStatus": "connected",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  }
+}
+```
+
+#### `POST /api/catalog`
+
+Create a new API in the catalog (admin only).
+
+**Request Body:**
+```json
+{
+  "name": "New API",
+  "description": "Description of the API",
+  "baseUrl": "https://api.example.com",
+  "documentationUrl": "https://docs.example.com",
+  "logoUrl": "https://example.com/logo.png",
+  "category": "Business",
+  "tags": ["api", "business"],
+  "authTypes": ["API_KEY", "OAUTH2"],
+  "rawSpec": "OpenAPI specification content",
+  "specVersion": "3.0.0"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "catalog_123",
+    "name": "New API",
+    "description": "Description of the API",
+    "baseUrl": "https://api.example.com",
+    "category": "Business",
+    "tags": ["api", "business"],
+    "authTypes": ["API_KEY", "OAUTH2"],
+    "status": "ACTIVE",
+    "isVerified": false,
+    "popularity": 0,
+    "endpointCount": 0,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### `PUT /api/catalog/{id}`
+
+Update an existing API in the catalog (admin only).
+
+**Request Body:**
+```json
+{
+  "name": "Updated API Name",
+  "description": "Updated description",
+  "status": "ACTIVE",
+  "isVerified": true
+}
+```
+
+#### `DELETE /api/catalog/{id}`
+
+Delete an API from the catalog (admin only).
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Catalog entry deleted successfully"
+}
+```
+
+#### `POST /api/catalog/{id}/connect`
+
+Connect to a catalog API by creating a user connection.
+
+**Request Body:**
+```json
+{
+  "connectionName": "My API Connection",
+  "authType": "API_KEY",
+  "authConfig": {
+    "apiKey": "your-api-key-here"
+  },
+  "description": "Optional description"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "connection": {
+      "id": "conn_123",
+      "name": "My API Connection",
+      "description": "Connected to Slack via API Catalog",
+      "baseUrl": "https://slack.com/api",
+      "authType": "API_KEY",
+      "connectionStatus": "disconnected",
+      "ingestionStatus": "SUCCEEDED",
+      "endpointCount": 25,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    "catalog": {
+      "id": "catalog_123",
+      "name": "Slack",
+      "description": "Slack API for messaging and team collaboration",
+      "category": "Communication",
+      "tags": ["messaging", "team", "collaboration"]
+    }
+  }
+}
+```
+
+#### `GET /api/catalog/categories`
+
+Get all available API categories.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "categories": [
+      {
+        "id": "cat_123",
+        "name": "Communication",
+        "description": "APIs for messaging and team collaboration",
+        "icon": "message-circle",
+        "color": "#3B82F6",
+        "sortOrder": 1,
+        "isActive": true,
+        "apiCount": 15
+      }
+    ]
+  }
+}
+```
+
+#### `POST /api/catalog/categories`
+
+Create a new API category (admin only).
+
+**Request Body:**
+```json
+{
+  "name": "AI & Machine Learning",
+  "description": "APIs for artificial intelligence and machine learning services",
+  "icon": "brain",
+  "color": "#EC4899",
+  "sortOrder": 5
+}
+```
+
 ### API Connection Management 🆕
 
 The API Connection Management system provides secure storage and management of API connections with comprehensive authentication support, enhanced logging, and intelligent connection guidance.

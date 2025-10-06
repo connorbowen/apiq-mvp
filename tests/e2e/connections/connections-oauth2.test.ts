@@ -704,7 +704,7 @@ test.describe('OAuth2 Connection Management E2E Tests', () => {
         console.log('✅ Edit modal opened');
         
         // Now click the delete button inside the modal
-        const deleteButton = page.locator('[data-testid="delete-connection-btn"]');
+        const deleteButton = page.locator('[data-testid="delete-connection-modal-btn"]');
         await deleteButton.click({ force: true, timeout: 5000 });
         console.log('✅ Delete button clicked in edit modal');
       } catch (error) {

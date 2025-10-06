@@ -30,6 +30,8 @@ import { useState, useEffect, memo, useRef } from 'react';
 import { apiClient, ApiConnection, Secret } from '../../lib/api/client';
 import CreateConnectionModal from './CreateConnectionModal';
 import EditConnectionModal from './EditConnectionModal';
+import ApiCatalog from '../ApiCatalog';
+import ApiCatalogDetail from '../ApiCatalogDetail';
 import { useUser } from '../../contexts/UserContext';
 
 interface ConnectionsTabProps {
@@ -41,6 +43,8 @@ interface ConnectionsTabProps {
   onConnectionError: (error: string) => void;
 }
 
+type ViewMode = 'connections' | 'catalog' | 'catalog-detail';
+
 function ConnectionsTab({ 
   connections, 
   onConnectionCreated, 
@@ -51,6 +55,8 @@ function ConnectionsTab({
 }: ConnectionsTabProps) {
   console.log('🔄 [ConnectionsTab] Component rendered with connections:', connections.length);
   const { user } = useUser();
+  const [viewMode, setViewMode] = useState<ViewMode>('connections');
+  const [selectedApi, setSelectedApi] = useState<any>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   
   // Debug: Log modal state changes
@@ -441,16 +447,140 @@ function ConnectionsTab({
     setViewingSecret(null);
   };
 
+  // Catalog connection handlers
+  const handleConnectFromCatalog = async (api: any) => {
+    try {
+      const connectionName = prompt(`Enter a name for your ${api.name} connection:`);
+      if (!connectionName) return;
+
+      const response = await fetch(`/api/catalog/${api.id}/connect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          connectionName,
+          authType: api.authTypes[0] || 'API_KEY',
+          authConfig: {},
+          description: `Connected to ${api.name} via API Catalog`
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        onConnectionCreated();
+        setViewMode('connections');
+        alert(`Successfully connected to ${api.name}!`);
+      } else {
+        onConnectionError(data.error || 'Failed to connect to API');
+      }
+    } catch (err) {
+      console.error('Connection failed:', err);
+      onConnectionError('Failed to connect to API');
+    }
+  };
+
+  const handleViewApiDetails = (api: any) => {
+    setSelectedApi(api);
+    setViewMode('catalog-detail');
+  };
+
+  const handleBackToCatalog = () => {
+    setSelectedApi(null);
+    setViewMode('catalog');
+  };
+
+  const handleBackToConnections = () => {
+    setViewMode('connections');
+  };
+
 
   return (
     <div data-testid="connections-management" className="h-full flex flex-col min-h-0">
-      {/* Header */}
+      {/* Header with Navigation */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Manage your API integrations and connections</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {viewMode !== 'connections' && (
+              <button
+                onClick={viewMode === 'catalog-detail' ? handleBackToCatalog : handleBackToConnections}
+                className="flex items-center text-gray-600 hover:text-gray-900"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back
+              </button>
+            )}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                {viewMode === 'connections' ? 'Manage your API integrations and connections' : 
+                 viewMode === 'catalog' ? 'API Catalog' : 
+                 'API Details'}
+              </h2>
+              <p className="text-gray-600 text-sm">
+                {viewMode === 'connections' ? `Manage your ${connections.length} API connections` :
+                 viewMode === 'catalog' ? 'Discover and connect to popular APIs' :
+                 `Details for ${selectedApi?.name}`}
+              </p>
+            </div>
+          </div>
+
+          {viewMode === 'connections' && (
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setViewMode('catalog')}
+                data-testid="primary-action browse-apis-btn"
+                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Browse Catalog
+              </button>
+            </div>
+          )}
+
+          {viewMode === 'catalog' && (
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setViewMode('connections')}
+                data-testid="primary-action back-to-connections-btn"
+                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                My Connections
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* View Mode Tabs */}
+        {viewMode === 'connections' && (
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit mt-4">
+            <button
+              onClick={() => setViewMode('connections')}
+              className="px-4 py-2 text-sm font-medium rounded-md bg-white text-gray-900 shadow-sm"
+            >
+              My Connections ({connections.length})
+            </button>
+            <button
+              onClick={() => setViewMode('catalog')}
+              className="px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-900"
+            >
+              API Catalog
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Connection Health Overview */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+      {/* Content based on view mode */}
+      {viewMode === 'connections' && (
+        <>
+          {/* Connection Health Overview */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-gray-700">Connection Health</h3>
           <button
@@ -756,6 +886,25 @@ function ConnectionsTab({
           </ul>
         )}
       </div>
+        </>
+      )}
+
+      {viewMode === 'catalog' && (
+        <div data-testid="api-catalog-section" aria-label="API Catalog - Browse and discover available APIs">
+          <ApiCatalog
+            onConnect={handleConnectFromCatalog}
+            onViewDetails={handleViewApiDetails}
+          />
+        </div>
+      )}
+
+      {viewMode === 'catalog-detail' && selectedApi && (
+        <ApiCatalogDetail
+          apiId={selectedApi.id}
+          onBack={handleBackToCatalog}
+          onConnect={handleConnectFromCatalog}
+        />
+      )}
 
       {/* Create Connection Modal */}
       {showCreateForm && (
