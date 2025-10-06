@@ -33,6 +33,8 @@ export default defineConfig({
       NODE_ENV: 'test',
       // Load the confidence-specific environment file
       DOTENV_CONFIG_PATH: '.env.test-confidence',
+      // Explicitly set the confidence threshold
+      CONFIDENCE_THRESHOLD: '0.95',
     },
   },
 });

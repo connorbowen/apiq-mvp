@@ -62,7 +62,7 @@ async function checkConfidenceAndGenerateConfirmation(
     console.log('🔍 AI services initialized successfully');
     
     // Run all AI services in parallel to get confidence scores
-    const [classificationResult, apiDetectionResult, intentResult] = await Promise.all([
+    const [classificationResult, apiDetectionResult, intentResult] = await Promise.allSettled([
       classificationService.classifyMessage(message, context, connections),
       apiDetectionService.analyzeUserRequest(message, connections),
       intentAnalysisService.analyzeIntent({
@@ -80,24 +80,39 @@ async function checkConfidenceAndGenerateConfirmation(
         context
       })
     ]);
+
+    // Handle failed AI service calls
+    const classification = classificationResult.status === 'fulfilled' ? classificationResult.value : { confidence: 0.5, type: 'general_chat' };
+    const apiDetection = apiDetectionResult.status === 'fulfilled' ? apiDetectionResult.value : { requiredApis: [], confidence: 0.5 };
+    const intent = intentResult.status === 'fulfilled' ? intentResult.value : { intent: { confidence: 0.5, guidanceType: 'general' } };
+
+    if (classificationResult.status === 'rejected') {
+      console.error('🔍 Classification service failed:', classificationResult.reason);
+    }
+    if (apiDetectionResult.status === 'rejected') {
+      console.error('🔍 API detection service failed:', apiDetectionResult.reason);
+    }
+    if (intentResult.status === 'rejected') {
+      console.error('🔍 Intent analysis service failed:', intentResult.reason);
+    }
     
     console.log('🔍 AI Service Results:', {
-      classification: { confidence: classificationResult.confidence, type: classificationResult.type },
-      apiDetection: { confidence: apiDetectionResult.requiredApis?.map(a => a.confidence) || [] },
-      intent: { confidence: intentResult.intent?.confidence || 0, guidanceType: intentResult.intent?.guidanceType }
+      classification: { confidence: classification.confidence, type: classification.type },
+      apiDetection: { confidence: apiDetection.requiredApis?.map(a => a.confidence) || [] },
+      intent: { confidence: intent.intent?.confidence || 0, guidanceType: intent.intent?.guidanceType }
     });
     
     // Check for low confidence in any service
     const lowConfidenceIssues = [];
     
     // Check message classification confidence
-    console.log('🔍 Checking classification confidence:', classificationResult.confidence, 'vs threshold:', CONFIDENCE_THRESHOLD);
-    if (classificationResult.confidence < CONFIDENCE_THRESHOLD) {
+    console.log('🔍 Checking classification confidence:', classification.confidence, 'vs threshold:', CONFIDENCE_THRESHOLD);
+    if (classification.confidence < CONFIDENCE_THRESHOLD) {
       console.log('🔍 Low confidence detected in classification, adding to issues');
       lowConfidenceIssues.push({
         type: 'intent' as const,
-        confidence: classificationResult.confidence,
-        message: `I'm not sure if you want a ${classificationResult.type} or something else.`,
+        confidence: classification.confidence,
+        message: `I'm not sure if you want a ${classification.type} or something else.`,
         suggestions: [
           { option: 'Create a workflow', description: 'Set up an automated process', confidence: 0.6 },
           { option: 'Make a direct API call', description: 'Execute a single API operation', confidence: 0.5 },
@@ -107,21 +122,21 @@ async function checkConfidenceAndGenerateConfirmation(
     }
     
     // Check API detection confidence with special logic for different guidance types
-    if (apiDetectionResult.requiredApis && apiDetectionResult.requiredApis.length > 0) {
-      const guidanceType = intentResult.intent?.guidanceType;
+    if (apiDetection.requiredApis && apiDetection.requiredApis.length > 0) {
+      const guidanceType = intent.intent?.guidanceType;
       
       // Use single threshold but different logic based on guidance type
-      const lowConfidenceApis = apiDetectionResult.requiredApis.filter(api => api.confidence < CONFIDENCE_THRESHOLD);
+      const lowConfidenceApis = apiDetection.requiredApis.filter(api => api.confidence < CONFIDENCE_THRESHOLD);
       
       console.log('🔍 API detection - Guidance type:', guidanceType);
-      console.log('🔍 API detection - API confidences:', apiDetectionResult.requiredApis.map(api => ({ name: api.name, confidence: api.confidence })));
+      console.log('🔍 API detection - API confidences:', apiDetection.requiredApis.map(api => ({ name: api.name, confidence: api.confidence })));
       console.log('🔍 API detection - Threshold:', CONFIDENCE_THRESHOLD);
       console.log('🔍 API detection - Low confidence APIs:', lowConfidenceApis.length);
       
       if (guidanceType === 'connection_setup') {
         // For connection setup: only check confidence if we're truly uncertain about which connections to set up
         // Skip confidence check if we have reasonable confidence about the connections needed
-        const hasReasonableConfidence = apiDetectionResult.requiredApis.some(api => api.confidence >= 0.8);
+        const hasReasonableConfidence = apiDetection.requiredApis.some(api => api.confidence >= 0.8);
         
         if (lowConfidenceApis.length > 0 && !hasReasonableConfidence) {
           console.log('🔍 Low confidence detected for connection setup, generating confirmation');
@@ -160,7 +175,7 @@ async function checkConfidenceAndGenerateConfirmation(
       } else if (guidanceType === 'none') {
         // For direct API calls and workflows: only check confidence if we're truly uncertain
         // Skip confidence check if we have reasonable confidence about the APIs needed
-        const hasReasonableConfidence = apiDetectionResult.requiredApis.some(api => api.confidence >= 0.8);
+        const hasReasonableConfidence = apiDetection.requiredApis.some(api => api.confidence >= 0.8);
         
         if (lowConfidenceApis.length > 0 && !hasReasonableConfidence) {
           console.log('🔍 Low confidence detected for direct API/workflow, generating confirmation');
@@ -199,23 +214,23 @@ async function checkConfidenceAndGenerateConfirmation(
     }
     
     // Check intent analysis confidence with special logic for different guidance types
-    if (intentResult.intent && intentResult.intent.confidence < CONFIDENCE_THRESHOLD) {
-      const guidanceType = intentResult.intent.guidanceType;
+    if (intent.intent && intent.intent.confidence < CONFIDENCE_THRESHOLD) {
+      const guidanceType = intent.intent.guidanceType;
       
       console.log('🔍 Intent analysis - Guidance type:', guidanceType);
-      console.log('🔍 Intent analysis - Confidence:', intentResult.intent.confidence);
+      console.log('🔍 Intent analysis - Confidence:', intent.intent.confidence);
       console.log('🔍 Intent analysis - Threshold:', CONFIDENCE_THRESHOLD);
       
       if (guidanceType === 'connection_setup') {
         // For connection setup: only check confidence if we're truly uncertain about the intent
         // Skip confidence check if we have reasonable confidence about the intent
-        const hasReasonableIntentConfidence = intentResult.intent.confidence >= 0.8;
+        const hasReasonableIntentConfidence = intent.intent.confidence >= 0.8;
         
         if (!hasReasonableIntentConfidence) {
           console.log('🔍 Low confidence detected for connection setup intent, generating confirmation');
           lowConfidenceIssues.push({
             type: 'intent' as const,
-            confidence: intentResult.intent.confidence,
+            confidence: intent.intent.confidence,
             message: `I'm not sure what connections you need to set up.`,
             suggestions: [
               { option: 'GitHub', description: 'Set up GitHub API connection', confidence: 0.8 },
@@ -233,7 +248,7 @@ async function checkConfidenceAndGenerateConfirmation(
         console.log('🔍 Low confidence detected for API-specific intent, generating confirmation');
         lowConfidenceIssues.push({
           type: 'intent' as const,
-          confidence: intentResult.intent.confidence,
+          confidence: intent.intent.confidence,
           message: `I'm not sure which specific API you need help with.`,
           suggestions: [
             { option: 'GitHub API', description: 'Get help with GitHub API usage', confidence: 0.8 },
@@ -247,7 +262,7 @@ async function checkConfidenceAndGenerateConfirmation(
         console.log('🔍 Low confidence detected for direct API/workflow intent, generating confirmation');
         lowConfidenceIssues.push({
           type: 'intent' as const,
-          confidence: intentResult.intent.confidence,
+          confidence: intent.intent.confidence,
           message: `I'm not entirely sure what you want to accomplish.`,
           suggestions: [
             { option: 'Create a workflow', description: 'Set up an automated process', confidence: 0.6 },
@@ -261,7 +276,7 @@ async function checkConfidenceAndGenerateConfirmation(
         console.log('🔍 Low confidence detected for general intent, generating confirmation');
         lowConfidenceIssues.push({
           type: 'intent' as const,
-          confidence: intentResult.intent.confidence,
+          confidence: intent.intent.confidence,
           message: `I'm not entirely sure what you're trying to accomplish.`,
           suggestions: [
             { option: 'Set up API connections', description: 'Connect to external services', confidence: 0.6 },

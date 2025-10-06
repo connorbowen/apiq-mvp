@@ -344,10 +344,16 @@ CRITICAL: Look for ALL APIs mentioned or implied in the request. If you see "Sla
       content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     }
     
-    const result = JSON.parse(content);
-    console.log('🔍 AIApiDetectionService - Raw AI response:', content);
-    console.log('🔍 AIApiDetectionService - Parsed result:', JSON.stringify(result, null, 2));
-    return result;
+    try {
+      const result = JSON.parse(content);
+      console.log('🔍 AIApiDetectionService - Raw AI response:', content);
+      console.log('🔍 AIApiDetectionService - Parsed result:', JSON.stringify(result, null, 2));
+      return result;
+    } catch (error) {
+      console.error('🔍 AIApiDetectionService - JSON parsing failed:', error);
+      console.error('🔍 AIApiDetectionService - Raw content that failed to parse:', content);
+      throw new Error(`Failed to parse AI response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
