@@ -265,12 +265,15 @@ test.describe('P1.3.4: Chat Interface Integration E2E Tests', () => {
       // Start API call
       await sendChatMessage(page, 'Get all available pets');
       
-      // Verify chat input remains responsive during execution
+      // Verify chat input is disabled during execution (correct behavior to prevent race conditions)
       const chatInput = page.locator('[data-testid="chat-input"]');
-      await expect(chatInput).toBeEnabled();
+      await expect(chatInput).toBeDisabled();
       
       // Wait for API call to complete
       await waitForApiCallResult(page, { timeout: 10000 });
+      
+      // Verify chat input is re-enabled after API call completes
+      await expect(chatInput).toBeEnabled();
       
       // Verify API call completed successfully
       await expect(page.locator('[data-testid="api-call-result"]')).toBeVisible();
@@ -296,6 +299,8 @@ test.describe('P1.3.4: Chat Interface Integration E2E Tests', () => {
       
       // Verify chat state is maintained after error
       const chatInput = page.locator('[data-testid="chat-input"]');
+      // Wait a bit for the loading state to be reset
+      await page.waitForTimeout(1000);
       await expect(chatInput).toBeEnabled();
       
       // Verify chat conversation flow is maintained

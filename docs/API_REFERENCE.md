@@ -144,6 +144,40 @@ Main AI orchestrator endpoint that processes user messages and routes them to ap
 }
 ```
 
+**Confidence Confirmation Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "type": "general_chat",
+    "content": "I'd like to help you, but I need some clarification.",
+    "confidenceConfirmation": {
+      "confidence": 0.45,
+      "uncertaintyType": "connection",
+      "explanation": "I'm not sure which APIs you need for this request.",
+      "suggestions": [
+        {
+          "option": "GitHub API",
+          "description": "Create issues and manage repositories",
+          "confidence": 0.8
+        },
+        {
+          "option": "Slack API", 
+          "description": "Send notifications to team channels",
+          "confidence": 0.7
+        },
+        {
+          "option": "Trello API",
+          "description": "Create cards and manage boards", 
+          "confidence": 0.6
+        }
+      ],
+      "originalResponse": "I'll help you with your request once I understand exactly what you need."
+    }
+  }
+}
+```
+
 **Error Response:**
 ```json
 {
@@ -176,6 +210,33 @@ Classify user messages to determine intent and routing.
     "suggestedActions": ["Show connection setup", "Provide guidance"]
   }
 }
+```
+
+#### Confidence Confirmation Configuration
+
+The confidence confirmation system can be configured using environment variables:
+
+**Environment Variables:**
+- `CONFIDENCE_THRESHOLD` - Confidence threshold for triggering confirmations (default: 0.95)
+  - Values below this threshold will trigger confidence confirmation
+  - Higher values = more confirmations, lower values = fewer confirmations
+  - Recommended range: 0.6 - 0.95
+
+**Uncertainty Types:**
+- `parameter` - Uncertainty about API call parameters
+- `connection` - Uncertainty about which API connections to use
+- `data_mapping` - Uncertainty about data mapping between steps
+- `intent` - Uncertainty about user intent
+- `endpoint` - Uncertainty about which API endpoint to use
+- `general` - General uncertainty about the request
+
+**Configuration Example:**
+```bash
+# High confidence threshold (more confirmations)
+CONFIDENCE_THRESHOLD=0.95
+
+# Lower confidence threshold (fewer confirmations)
+CONFIDENCE_THRESHOLD=0.7
 ```
 
 ### Legacy Workflow Generation (Deprecated)

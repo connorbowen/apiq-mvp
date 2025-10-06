@@ -2,6 +2,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { ParallelAIService } from '../../../src/lib/services/parallelAIService';
 import { ConnectionGuidanceOrchestrator } from '../../../src/lib/services/connectionGuidanceOrchestrator';
+import { HybridMessageClassificationService } from '../../../src/lib/services/hybridMessageClassificationService';
+import { AIApiDetectionService } from '../../../src/lib/services/aiApiDetectionService';
+import { IntentAnalysisService } from '../../../src/lib/services/intentAnalysisService';
+import { OpenAIService } from '../../../src/services/openaiService';
 import { errorHandler } from '../../../src/middleware/errorHandler';
 import { prisma } from '../../../lib/database/client';
 import { usageTrackingService } from '../../../src/lib/services/usageTrackingService';
@@ -19,8 +23,282 @@ interface ProcessMessageResponse {
     apiCallResult?: any;
     connectionGuidance?: any;
     suggestedAction?: string;
+    confidenceConfirmation?: {
+      confidence: number;
+      uncertaintyType: 'parameter' | 'connection' | 'data_mapping' | 'intent' | 'endpoint' | 'general';
+      explanation: string;
+      suggestions: Array<{
+        option: string;
+        description: string;
+        confidence: number;
+      }>;
+      originalResponse: string;
+    };
   };
   error?: string;
+}
+
+/**
+ * Check confidence scores from all AI services and generate confidence confirmation if needed
+ */
+async function checkConfidenceAndGenerateConfirmation(
+  message: string,
+  connections: any[],
+  userId: string,
+  context: any[]
+): Promise<ProcessMessageResponse['data'] | null> {
+  const CONFIDENCE_THRESHOLD = parseFloat(process.env.CONFIDENCE_THRESHOLD || '0.6');
+  
+  try {
+    console.log('🔍 Checking confidence scores from all AI services...');
+    console.log('🔍 Input parameters:', { message, connectionsCount: connections.length, userId, contextLength: context.length });
+    
+    // Initialize AI services
+    console.log('🔍 Initializing AI services...');
+    const openaiService = OpenAIService.createFromEnv();
+    const classificationService = new HybridMessageClassificationService(openaiService);
+    const apiDetectionService = new AIApiDetectionService(openaiService);
+    const intentAnalysisService = new IntentAnalysisService(openaiService);
+    console.log('🔍 AI services initialized successfully');
+    
+    // Run all AI services in parallel to get confidence scores
+    const [classificationResult, apiDetectionResult, intentResult] = await Promise.all([
+      classificationService.classifyMessage(message, context, connections),
+      apiDetectionService.analyzeUserRequest(message, connections),
+      intentAnalysisService.analyzeIntent({
+        userMessage: message,
+        availableConnections: connections.map(conn => ({
+          id: conn.id,
+          name: conn.name,
+          baseUrl: conn.baseUrl,
+          endpoints: conn.endpoints?.map((ep: any) => ({
+            path: ep.path,
+            method: ep.method,
+            summary: ep.summary || ''
+          })) || []
+        })),
+        context
+      })
+    ]);
+    
+    console.log('🔍 AI Service Results:', {
+      classification: { confidence: classificationResult.confidence, type: classificationResult.type },
+      apiDetection: { confidence: apiDetectionResult.requiredApis?.map(a => a.confidence) || [] },
+      intent: { confidence: intentResult.intent?.confidence || 0, guidanceType: intentResult.intent?.guidanceType }
+    });
+    
+    // Check for low confidence in any service
+    const lowConfidenceIssues = [];
+    
+    // Check message classification confidence
+    console.log('🔍 Checking classification confidence:', classificationResult.confidence, 'vs threshold:', CONFIDENCE_THRESHOLD);
+    if (classificationResult.confidence < CONFIDENCE_THRESHOLD) {
+      console.log('🔍 Low confidence detected in classification, adding to issues');
+      lowConfidenceIssues.push({
+        type: 'intent' as const,
+        confidence: classificationResult.confidence,
+        message: `I'm not sure if you want a ${classificationResult.type} or something else.`,
+        suggestions: [
+          { option: 'Create a workflow', description: 'Set up an automated process', confidence: 0.6 },
+          { option: 'Make a direct API call', description: 'Execute a single API operation', confidence: 0.5 },
+          { option: 'Get help with connections', description: 'Set up or manage API connections', confidence: 0.7 }
+        ]
+      });
+    }
+    
+    // Check API detection confidence with special logic for different guidance types
+    if (apiDetectionResult.requiredApis && apiDetectionResult.requiredApis.length > 0) {
+      const guidanceType = intentResult.intent?.guidanceType;
+      
+      // Use single threshold but different logic based on guidance type
+      const lowConfidenceApis = apiDetectionResult.requiredApis.filter(api => api.confidence < CONFIDENCE_THRESHOLD);
+      
+      console.log('🔍 API detection - Guidance type:', guidanceType);
+      console.log('🔍 API detection - API confidences:', apiDetectionResult.requiredApis.map(api => ({ name: api.name, confidence: api.confidence })));
+      console.log('🔍 API detection - Threshold:', CONFIDENCE_THRESHOLD);
+      console.log('🔍 API detection - Low confidence APIs:', lowConfidenceApis.length);
+      
+      if (guidanceType === 'connection_setup') {
+        // For connection setup: only check confidence if we're truly uncertain about which connections to set up
+        // Skip confidence check if we have reasonable confidence about the connections needed
+        const hasReasonableConfidence = apiDetectionResult.requiredApis.some(api => api.confidence >= 0.8);
+        
+        if (lowConfidenceApis.length > 0 && !hasReasonableConfidence) {
+          console.log('🔍 Low confidence detected for connection setup, generating confirmation');
+          lowConfidenceIssues.push({
+            type: 'connection' as const,
+            confidence: Math.min(...lowConfidenceApis.map(api => api.confidence)),
+            message: `I'm not sure which APIs you need to set up for this request.`,
+            suggestions: lowConfidenceApis.map(api => ({
+              option: api.displayName || api.name,
+              description: api.reason || `Set up ${api.displayName || api.name} connection`,
+              confidence: api.confidence
+            }))
+          });
+        } else {
+          console.log('🔍 High confidence for connection setup, proceeding with guidance');
+        }
+        
+      } else if (guidanceType === 'api_specific') {
+        // For API-specific guidance: check confidence normally
+        if (lowConfidenceApis.length > 0) {
+          console.log('🔍 Low confidence detected for API-specific guidance, generating confirmation');
+          lowConfidenceIssues.push({
+            type: 'connection' as const,
+            confidence: Math.min(...lowConfidenceApis.map(api => api.confidence)),
+            message: `I'm not sure which specific APIs you need help with for this request.`,
+            suggestions: lowConfidenceApis.map(api => ({
+              option: api.displayName || api.name,
+              description: api.reason || `Get help with ${api.displayName || api.name} API`,
+              confidence: api.confidence
+            }))
+          });
+        } else {
+          console.log('🔍 High confidence for API-specific guidance, proceeding with guidance');
+        }
+        
+      } else if (guidanceType === 'none') {
+        // For direct API calls and workflows: only check confidence if we're truly uncertain
+        // Skip confidence check if we have reasonable confidence about the APIs needed
+        const hasReasonableConfidence = apiDetectionResult.requiredApis.some(api => api.confidence >= 0.8);
+        
+        if (lowConfidenceApis.length > 0 && !hasReasonableConfidence) {
+          console.log('🔍 Low confidence detected for direct API/workflow, generating confirmation');
+          lowConfidenceIssues.push({
+            type: 'connection' as const,
+            confidence: Math.min(...lowConfidenceApis.map(api => api.confidence)),
+            message: `I'm not sure which APIs you need for this request.`,
+            suggestions: lowConfidenceApis.map(api => ({
+              option: api.displayName || api.name,
+              description: api.reason || `Use ${api.displayName || api.name} API`,
+              confidence: api.confidence
+            }))
+          });
+        } else {
+          console.log('🔍 High confidence for direct API/workflow, proceeding with execution');
+        }
+        
+      } else {
+        // For general guidance and other types: check confidence normally
+        if (lowConfidenceApis.length > 0) {
+          console.log('🔍 Low confidence detected for general guidance, generating confirmation');
+          lowConfidenceIssues.push({
+            type: 'connection' as const,
+            confidence: Math.min(...lowConfidenceApis.map(api => api.confidence)),
+            message: `I'm not sure which APIs you need for this request.`,
+            suggestions: lowConfidenceApis.map(api => ({
+              option: api.displayName || api.name,
+              description: api.reason || `Connect to ${api.displayName || api.name}`,
+              confidence: api.confidence
+            }))
+          });
+        } else {
+          console.log('🔍 High confidence for general guidance, proceeding with guidance');
+        }
+      }
+    }
+    
+    // Check intent analysis confidence with special logic for different guidance types
+    if (intentResult.intent && intentResult.intent.confidence < CONFIDENCE_THRESHOLD) {
+      const guidanceType = intentResult.intent.guidanceType;
+      
+      console.log('🔍 Intent analysis - Guidance type:', guidanceType);
+      console.log('🔍 Intent analysis - Confidence:', intentResult.intent.confidence);
+      console.log('🔍 Intent analysis - Threshold:', CONFIDENCE_THRESHOLD);
+      
+      if (guidanceType === 'connection_setup') {
+        // For connection setup: only check confidence if we're truly uncertain about the intent
+        // Skip confidence check if we have reasonable confidence about the intent
+        const hasReasonableIntentConfidence = intentResult.intent.confidence >= 0.8;
+        
+        if (!hasReasonableIntentConfidence) {
+          console.log('🔍 Low confidence detected for connection setup intent, generating confirmation');
+          lowConfidenceIssues.push({
+            type: 'intent' as const,
+            confidence: intentResult.intent.confidence,
+            message: `I'm not sure what connections you need to set up.`,
+            suggestions: [
+              { option: 'GitHub', description: 'Set up GitHub API connection', confidence: 0.8 },
+              { option: 'Slack', description: 'Set up Slack API connection', confidence: 0.8 },
+              { option: 'Email', description: 'Set up email service connection', confidence: 0.7 },
+              { option: 'Other', description: 'Tell me what API you need', confidence: 0.5 }
+            ]
+          });
+        } else {
+          console.log('🔍 High confidence for connection setup intent, proceeding with guidance');
+        }
+        
+      } else if (guidanceType === 'api_specific') {
+        // For API-specific guidance: check confidence normally
+        console.log('🔍 Low confidence detected for API-specific intent, generating confirmation');
+        lowConfidenceIssues.push({
+          type: 'intent' as const,
+          confidence: intentResult.intent.confidence,
+          message: `I'm not sure which specific API you need help with.`,
+          suggestions: [
+            { option: 'GitHub API', description: 'Get help with GitHub API usage', confidence: 0.8 },
+            { option: 'Slack API', description: 'Get help with Slack API usage', confidence: 0.8 },
+            { option: 'Other API', description: 'Tell me which API you need help with', confidence: 0.5 }
+          ]
+        });
+        
+      } else if (guidanceType === 'none') {
+        // For direct API calls and workflows: check confidence normally
+        console.log('🔍 Low confidence detected for direct API/workflow intent, generating confirmation');
+        lowConfidenceIssues.push({
+          type: 'intent' as const,
+          confidence: intentResult.intent.confidence,
+          message: `I'm not entirely sure what you want to accomplish.`,
+          suggestions: [
+            { option: 'Create a workflow', description: 'Set up an automated process', confidence: 0.6 },
+            { option: 'Make a direct API call', description: 'Execute a single API operation', confidence: 0.5 },
+            { option: 'Get help with connections', description: 'Set up or manage API connections', confidence: 0.7 }
+          ]
+        });
+        
+      } else {
+        // For general guidance and other types: check confidence normally
+        console.log('🔍 Low confidence detected for general intent, generating confirmation');
+        lowConfidenceIssues.push({
+          type: 'intent' as const,
+          confidence: intentResult.intent.confidence,
+          message: `I'm not entirely sure what you're trying to accomplish.`,
+          suggestions: [
+            { option: 'Set up API connections', description: 'Connect to external services', confidence: 0.6 },
+            { option: 'Create a workflow', description: 'Automate a process', confidence: 0.5 },
+            { option: 'Make a direct API call', description: 'Execute a single operation', confidence: 0.4 },
+            { option: 'Get general help', description: 'Learn about available features', confidence: 0.7 }
+          ]
+        });
+      }
+    }
+    
+    // If we have low confidence issues, return the most significant one
+    if (lowConfidenceIssues.length > 0) {
+      // Sort by confidence (lowest first) and take the most uncertain
+      const primaryIssue = lowConfidenceIssues.sort((a, b) => a.confidence - b.confidence)[0];
+      
+      console.log('🔍 Low confidence detected, generating confirmation:', primaryIssue);
+      
+      return {
+        type: 'general_chat',
+        content: `I'd like to help you, but I need some clarification.`,
+        confidenceConfirmation: {
+          confidence: primaryIssue.confidence,
+          uncertaintyType: primaryIssue.type,
+          explanation: primaryIssue.message,
+          suggestions: primaryIssue.suggestions,
+          originalResponse: `I'll help you with your request once I understand exactly what you need.`
+        }
+      };
+    }
+    
+    return null; // No confidence issues, proceed normally
+    
+  } catch (error) {
+    console.error('🔍 Error checking confidence scores:', error);
+    return null; // If confidence checking fails, proceed normally
+  }
 }
 
 async function executeDirectApiCall(apiCallData: any, connections: any[], userId: string) {
@@ -270,6 +548,26 @@ async function handler(req: AuthenticatedRequest, res: NextApiResponse<ProcessMe
         }
       }
     });
+
+    // Check confidence scores from all AI services first
+    console.log('🔍 Process endpoint: Checking confidence scores...');
+    try {
+      console.log('🔍 Process endpoint: About to call checkConfidenceAndGenerateConfirmation');
+      const confidenceResult = await checkConfidenceAndGenerateConfirmation(message, connections, user.id, context);
+      console.log('🔍 Process endpoint: Confidence check result:', confidenceResult);
+      console.log('🔍 Process endpoint: Confidence check result type:', typeof confidenceResult);
+      
+      if (confidenceResult) {
+        console.log('🔍 Process endpoint: Low confidence detected, returning confirmation');
+        return res.status(200).json({
+          success: true,
+          data: confidenceResult
+        });
+      }
+    } catch (error) {
+      console.error('🔍 Process endpoint: Error in confidence checking:', error);
+      console.error('🔍 Process endpoint: Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    }
 
     // Use optimized parallel AI service
     const parallelAIService = new ParallelAIService(process.env.OPENAI_API_KEY!);

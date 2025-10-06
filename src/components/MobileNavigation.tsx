@@ -137,7 +137,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   return (
     <nav
       data-testid="mobile-navigation"
-      className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden ${className}`}
+      className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 lg:hidden ${className}`}
       role="navigation"
       aria-label="Mobile navigation"
     >

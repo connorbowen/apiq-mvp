@@ -49,4 +49,6 @@ echo "🔄 Use Ctrl+C to stop the server"
 # Start server with better error handling
 echo "🚀 Starting Next.js server..."
 # Use node directly instead of exec to allow proper process management
+# Add signal handling for clean shutdown
+trap 'echo "🛑 Received shutdown signal, stopping server..."; exit 0' SIGINT SIGTERM
 node -r ./scripts/server-error-handler.js ./node_modules/.bin/next start -p 3000

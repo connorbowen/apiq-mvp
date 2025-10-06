@@ -1,4 +1,22 @@
-# E2E Test Suite Audit Report (2025-08-08)
+# E2E Test Suite Audit Report (2025-10-06)
+
+## 🚨 **CONFIDENCE CONFIRMATION E2E TESTS - CRITICAL ISSUE**
+- **New Test Suite**: `tests/e2e/chat/confidence-confirmation.test.ts` (13 comprehensive tests)
+- **Test Configuration**: `playwright.confidence.config.ts` - Dedicated config for confidence tests
+- **Test Helper**: `tests/helpers/confidenceConfirmationHelpers.ts` - Helper utilities for confidence testing
+- **Current Status**: 0/13 tests passing (0% success rate) 🚨 **CRITICAL**
+- **Issue**: Confidence confirmation elements not being rendered in chat interface
+  - Tests expect `[data-testid="confidence-confirmation"]` element to be visible
+  - Element not found during test execution
+  - Root cause: Component integration issue with chat flow
+- **Test Categories**:
+  - **Confidence Threshold Detection** (2 tests): Low/high confidence request handling
+  - **Confidence Confirmation In-Chat UI** (3 tests): Message display, action buttons, UX compliance
+  - **User Interaction Flows** (3 tests): Proceed Anyway, Cancel, Refine Request
+  - **Integration with AI Services** (1 test): Different uncertainty types
+  - **Error Handling and Edge Cases** (2 tests): Graceful error handling, context maintenance
+  - **Security and Data Validation** (2 tests): XSS prevention, data structure validation
+- **Next Steps**: Debug confidence confirmation rendering and integration
 
 ## 🆕 **REACT FORM ISSUE INVESTIGATION & HYBRID TESTING STRATEGY - COMPLETE**
 - **Comprehensive Investigation**: Tested 9 different methods to update React controlled component state
@@ -84,7 +102,8 @@
   - Connection creation, secret linking, rotation, rollback, and error handling
   - Audit log and compliance validation
 - Test script: `test:e2e:secrets-first` for targeted runs
-- E2E pass rate: 50.7% (218/480 tests passing) ⚠️
+- E2E pass rate: 50.7% (218/493 tests passing) ⚠️
+- **Confidence Confirmation Tests**: 0/13 passing (0% success rate) 🚨 **CRITICAL**
 - Secrets-first E2E: 100% passing (all new tests)
 
 ## 🆕 **NEW E2E HELPER INFRASTRUCTURE**

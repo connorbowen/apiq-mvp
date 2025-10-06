@@ -5,6 +5,7 @@ import { apiClient } from '../lib/api/client';
 import { ResponseFormatter, FormattedResponse } from '../lib/services/responseFormatter';
 import { ConnectionSetupForm } from './ConnectionSetupForm';
 import ConnectionGuidance from './ConnectionGuidance';
+import ConfidenceConfirmation from './ConfidenceConfirmation';
 import { createFormSubmissionHandler, createGlobalFormSubmissionFunction } from '../lib/utils/formSubmissionUtils';
 import { sanitizeForChat } from '../lib/utils/inputSanitization';
 
@@ -67,6 +68,18 @@ interface Message {
     guidanceMessage: string;
     setupInstructions: Record<string, any>;
     error?: string;
+  };
+  // Confidence confirmation properties
+  confidenceConfirmation?: {
+    confidence: number;
+    uncertaintyType: 'parameter' | 'connection' | 'data_mapping' | 'intent' | 'endpoint' | 'general';
+    explanation: string;
+    suggestions: Array<{
+      option: string;
+      description: string;
+      confidence: number;
+    }>;
+    originalResponse: string;
   };
 }
 
@@ -134,11 +147,63 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     return () => clearTimeout(forceResetTimeout);
   }, [isLoading]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  // Confidence confirmation handlers
+  const handleConfidenceConfirm = (messageId: string, selectedOption?: string) => {
+    console.log('🔍 ChatInterface: handleConfidenceConfirm called for message:', messageId, 'with option:', selectedOption);
+    
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === messageId && msg.confidenceConfirmation) {
+        // Replace the confidence confirmation message with the original response
+        return {
+          ...msg,
+          content: msg.confidenceConfirmation.originalResponse,
+          confidenceConfirmation: undefined
+        };
+      }
+      return msg;
+    }));
+  };
+
+  const handleConfidenceCancel = (messageId: string) => {
+    console.log('🔍 ChatInterface: handleConfidenceCancel called for message:', messageId);
+    
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === messageId && msg.confidenceConfirmation) {
+        // Remove the confidence confirmation and show a cancellation message
+        return {
+          ...msg,
+          content: "I've cancelled this request. Please let me know how I can help you better.",
+          confidenceConfirmation: undefined
+        };
+      }
+      return msg;
+    }));
+  };
+
+  const handleConfidenceRefine = (messageId: string) => {
+    console.log('🔍 ChatInterface: handleConfidenceRefine called for message:', messageId);
+    
+    setMessages(prev => prev.map(msg => {
+      if (msg.id === messageId && msg.confidenceConfirmation) {
+        // Replace with a message asking for clarification
+        return {
+          ...msg,
+          content: "I'd like to help you better. Could you provide more details about what you're trying to accomplish? For example:\n\n- What specific data do you need?\n- Which API endpoints are you interested in?\n- What should happen with the results?\n\nThis will help me give you a more accurate response.",
+          confidenceConfirmation: undefined
+        };
+      }
+      return msg;
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('🔍 ChatInterface: handleSubmit called, isLoading:', isLoading);
+    
     if (!inputMessage.trim() || isLoading) {
+      console.log('🔍 ChatInterface: Early return - inputMessage:', inputMessage.trim(), 'isLoading:', isLoading);
       return;
     }
 
@@ -161,6 +226,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
     }, 30000); // 30 second timeout - more reasonable for API calls
 
     try {
+      console.log('🔍 ChatInterface: Starting try block');
+      
       // Build context from previous messages - use the current messages state
       // Note: This will include the user message we just added
       const context = [...messages, userMessage].map(msg => ({
@@ -230,7 +297,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         steps: response.data.steps,
         apiCallResult: response.data.apiCallResult,
         connectionGuidance: response.data.connectionGuidance,
-        suggestedAction: response.data.suggestedAction
+        suggestedAction: response.data.suggestedAction,
+        confidenceConfirmation: response.data.confidenceConfirmation
       };
       
       console.log('🔍 ChatInterface: Assistant message created:', {
@@ -242,7 +310,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
         content: assistantMessage.content,
         suggestedAction: assistantMessage.suggestedAction,
         hasConnectionGuidance: !!assistantMessage.connectionGuidance,
-        connectionGuidance: assistantMessage.connectionGuidance
+        connectionGuidance: assistantMessage.connectionGuidance,
+        hasConfidenceConfirmation: !!assistantMessage.confidenceConfirmation,
+        confidenceConfirmation: assistantMessage.confidenceConfirmation
       });
       
       // Debug connection guidance specifically
@@ -290,8 +360,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       }
       
       // Reset loading state after successful processing
+      console.log('🔍 ChatInterface: About to clear timeout and set isLoading to false after success');
       clearTimeout(loadingTimeout);
+      console.log('🔍 ChatInterface: Setting isLoading to false after success');
       setIsLoading(false);
+      console.log('🔍 ChatInterface: Successfully set isLoading to false');
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -308,9 +381,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
       
       // Reset loading state after error processing
       clearTimeout(loadingTimeout);
+      console.log('🔍 ChatInterface: Setting isLoading to false after error');
       setIsLoading(false);
     }
-  }, [inputMessage, isLoading, onWorkflowGenerated]);
+  };
 
 
   const handleSaveWorkflow = useCallback(async (messageId: string) => {
@@ -672,6 +746,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = React.memo(({
                     message={message.content} 
                     connectionGuidance={message.connectionGuidance}
                     onSetupClick={handleSetupConnection}
+                  />
+                </div>
+              )}
+              
+              {/* Confidence Confirmation */}
+              {message.confidenceConfirmation && message.type === 'assistant' && (
+                <div className="mt-3">
+                  <ConfidenceConfirmation
+                    confidence={message.confidenceConfirmation.confidence}
+                    uncertaintyType={message.confidenceConfirmation.uncertaintyType}
+                    explanation={message.confidenceConfirmation.explanation}
+                    suggestions={message.confidenceConfirmation.suggestions}
+                    originalResponse={message.confidenceConfirmation.originalResponse}
+                    onConfirm={(selectedOption) => handleConfidenceConfirm(message.id, selectedOption)}
+                    onCancel={() => handleConfidenceCancel(message.id)}
+                    onRefine={() => handleConfidenceRefine(message.id)}
                   />
                 </div>
               )}

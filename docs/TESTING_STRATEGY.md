@@ -206,6 +206,77 @@ test('should handle AI service errors gracefully', async ({ page }) => {
 });
 ```
 
+#### **5. Confidence Confirmation Testing**
+```typescript
+// tests/e2e/chat/confidence-confirmation.test.ts
+test('should show confidence confirmation when AI has uncertainty', async ({ page }) => {
+  await loginAsTestUser(page);
+  
+  // Use high confidence threshold to trigger confirmations
+  await page.goto('/dashboard?tab=chat');
+  
+  // Send ambiguous message that should trigger confidence confirmation
+  await page.fill('[data-testid="chat-input"]', 'Create something with APIs');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  
+  // Verify confidence confirmation appears
+  await page.waitForSelector('[data-testid="confidence-confirmation"]');
+  
+  // Verify uncertainty type and explanation
+  const confirmation = page.locator('[data-testid="confidence-confirmation"]');
+  await expect(confirmation).toContainText('I\'m not sure');
+  
+  // Verify suggestions are present
+  const suggestions = page.locator('[data-testid^="suggestion-"]');
+  await expect(suggestions).toHaveCount.greaterThan(0);
+  
+  // Test user interaction with suggestions
+  await page.click('[data-testid="confirm-option-0"]');
+  
+  // Verify confirmation is handled
+  await expect(page.locator('[data-testid="confidence-confirmation"]')).not.toBeVisible();
+});
+
+test('should handle confidence confirmation user actions', async ({ page }) => {
+  await loginAsTestUser(page);
+  
+  // Trigger confidence confirmation
+  await page.fill('[data-testid="chat-input"]', 'Do something with data');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  
+  await page.waitForSelector('[data-testid="confidence-confirmation"]');
+  
+  // Test "Proceed Anyway" action
+  await page.click('[data-testid="primary-action proceed-anyway-btn"]');
+  await expect(page.locator('[data-testid="confidence-confirmation"]')).not.toBeVisible();
+  
+  // Test "Refine Request" action
+  await page.fill('[data-testid="chat-input"]', 'Do something with data');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  await page.waitForSelector('[data-testid="confidence-confirmation"]');
+  
+  await page.click('[data-testid="refine-request-btn"]');
+  await expect(page.locator('[data-testid="confidence-confirmation"]')).not.toBeVisible();
+  
+  // Test "Cancel" action
+  await page.fill('[data-testid="chat-input"]', 'Do something with data');
+  await page.click('[data-testid="primary-action chat-send-btn"]');
+  await page.waitForSelector('[data-testid="confidence-confirmation"]');
+  
+  await page.click('[data-testid="secondary-action cancel-btn"]');
+  await expect(page.locator('[data-testid="confidence-confirmation"]')).not.toBeVisible();
+});
+```
+
+**Confidence Confirmation Test Configuration:**
+- **Dedicated Test Config**: `playwright.confidence.config.ts` with `CONFIDENCE_THRESHOLD=0.95`
+- **Test Environment**: `.env.test-confidence` for high confidence threshold
+- **Test Commands**: 
+  ```bash
+  npx playwright test --config=playwright.confidence.config.ts
+  npm run test:e2e:confidence
+  ```
+
 ### **AI Orchestrator Test Environment**
 
 #### **Environment Setup**

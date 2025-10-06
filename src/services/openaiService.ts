@@ -59,7 +59,7 @@ export class OpenAIService {
     if (!apiKey) {
       throw new Error('OpenAI API key not found in environment variables');
     }
-    const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+    const model = process.env.OPENAI_MODEL || 'gpt-4-turbo-preview';
     return new OpenAIService(apiKey, model);
   }
 

@@ -46,24 +46,37 @@ APIQ is a semi-agentic, low-code web application designed to orchestrate complex
 ### AI Orchestrator Flow
 
 ```
-User Input → ChatInterface → AI Orchestrator → Service Routing → Response
+User Input → ChatInterface → AI Orchestrator → Confidence Check → Service Routing → Response
+     │              │              │              │              │
+     │              │              │              │              ▼
+     │              │              │              │    ┌─────────────────┐
+     │              │              │              │    │ Classification  │
+     │              │              │              │    │ Service         │
+     │              │              │              │    └─────────────────┘
+     │              │              │              │              │
+     │              │              │              │              ▼
+     │              │              │              │    ┌─────────────────┐
+     │              │              │              │    │ Workflow        │
+     │              │              │              │    │ Generation      │
+     │              │              │              │    └─────────────────┘
+     │              │              │              │              │
+     │              │              │              │              ▼
+     │              │              │              │    ┌─────────────────┐
+     │              │              │              │    │ Connection      │
+     │              │              │              │    │ Guidance        │
+     │              │              │              │    └─────────────────┘
      │              │              │              │
      │              │              │              ▼
      │              │              │    ┌─────────────────┐
-     │              │              │    │ Classification  │
-     │              │              │    │ Service         │
+     │              │              │    │ Confidence      │
+     │              │              │    │ Confirmation    │
+     │              │              │    │ (if low)        │
      │              │              │    └─────────────────┘
      │              │              │              │
      │              │              │              ▼
      │              │              │    ┌─────────────────┐
-     │              │              │    │ Workflow        │
-     │              │              │    │ Generation      │
-     │              │              │    └─────────────────┘
-     │              │              │              │
-     │              │              │              ▼
-     │              │              │    ┌─────────────────┐
-     │              │              │    │ Connection      │
-     │              │              │    │ Guidance        │
+     │              │              │    │ User Response   │
+     │              │              │    │ (Proceed/Refine)│
      │              │              │    └─────────────────┘
 ```
 
@@ -201,6 +214,13 @@ User Input → ChatInterface → AI Orchestrator → Service Routing → Respons
   - Connection guidance for setup help
   - Direct API execution for immediate actions
   - General chat responses for questions
+
+- **Confidence Confirmation System**: AI uncertainty handling
+  - **Confidence Threshold**: Configurable threshold (default: 0.95) for triggering confirmations
+  - **Uncertainty Types**: Parameter, connection, data_mapping, intent, endpoint, general
+  - **User Interaction**: In-chat confirmation with suggestions and options
+  - **Smart Fallbacks**: Proceed anyway, refine request, or cancel options
+  - **Real-time Processing**: Immediate confidence checking across all AI services
 
 - **No Mocking Policy**: All services use real implementations
   - Real OpenAI API calls for AI services

@@ -131,7 +131,8 @@
     "test:evaluate": "node scripts/evaluate-all-tests.js",
     "test:evaluate:e2e": "node scripts/evaluate-all-tests.js e2e",
     "test:evaluate:integration": "node scripts/evaluate-all-tests.js integration",
-    "test:evaluate:unit": "node scripts/evaluate-all-tests.js unit"
+    "test:evaluate:unit": "node scripts/evaluate-all-tests.js unit",
+    "test:kill": "./scripts/force-kill-tests.sh"
   },
   "keywords": [
     "api",

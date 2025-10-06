@@ -781,6 +781,17 @@ class ApiClient {
     apiCallResult?: any;
     connectionGuidance?: any;
     suggestedAction?: string;
+    confidenceConfirmation?: {
+      confidence: number;
+      uncertaintyType: 'parameter' | 'connection' | 'data_mapping' | 'intent' | 'endpoint' | 'general';
+      explanation: string;
+      suggestions: Array<{
+        option: string;
+        description: string;
+        confidence: number;
+      }>;
+      originalResponse: string;
+    };
   }>> {
     console.log('🔍 API Client: processMessage called with:', { message, contextLength: context.length });
     

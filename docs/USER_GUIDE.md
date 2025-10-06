@@ -322,6 +322,8 @@ Our AI orchestrator intelligently understands your intent and routes your messag
 
 3. **Real-Time Processing** - All services use real AI and real APIs (no mocking)
 
+4. **Confidence Confirmation** - When AI has uncertainty about your request, you'll see a helpful confirmation message with options to clarify or proceed
+
 #### How to Use the Chat Interface:
 
 1. **Start a Conversation** - Click the Chat tab or "New Workflow"
@@ -338,6 +340,38 @@ Our AI orchestrator intelligently understands your intent and routes your messag
 4. **Review & Confirm** - For workflows, we'll show you exactly what each step will do
 5. **Customize if Needed** - Modify any steps, add conditions, or adjust data mapping
 6. **Save & Activate** - Your workflow is ready to run!
+
+#### Confidence Confirmation System
+
+When our AI has uncertainty about any aspect of your request, you'll see a helpful confirmation message in the chat. This ensures you get exactly what you want while maintaining high accuracy.
+
+**When You'll See Confidence Confirmations:**
+- **Parameter Uncertainty** - "I'm not sure about the parameters for this API call"
+- **Connection Ambiguity** - "I found multiple API connections that could work"
+- **Data Mapping Questions** - "I'm uncertain about how to map the data between steps"
+- **Intent Clarification** - "I'm not entirely sure what you want to accomplish"
+- **Endpoint Selection** - "I'm unsure which API endpoint to use"
+
+**How to Respond:**
+1. **Review the Options** - See the AI's suggestions with confidence scores
+2. **Choose Your Preference** - Click on the option that best matches your intent
+3. **Proceed Anyway** - If you're confident, proceed with the AI's best guess
+4. **Refine Request** - Ask for clarification or provide more details
+5. **Cancel** - Stop the current request and try something different
+
+**Example Confidence Confirmation:**
+```
+🤔 I'm not sure which APIs you need for this request.
+
+Here are the options I'm considering:
+• GitHub API - Create issues and manage repositories
+• Slack API - Send notifications to team channels
+• Trello API - Create cards and manage boards
+
+[GitHub API] [Slack API] [Trello API] [Proceed Anyway] [Refine Request] [Cancel]
+```
+
+This system ensures you always get the most accurate results while maintaining a smooth user experience.
 
 #### Multi-Step Workflow Examples:
 
