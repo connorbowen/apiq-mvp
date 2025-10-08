@@ -37,16 +37,10 @@ interface CatalogApi {
   }>;
 }
 
-interface ProviderDetailProps {
-  onConnect?: (api: CatalogApi) => void;
-  onViewDetails?: (api: CatalogApi) => void;
-  onCreateConnection?: (api: CatalogApi) => void;
-}
-
-export default function ProviderDetail({ onConnect, onViewDetails, onCreateConnection }: ProviderDetailProps) {
+export default function ProviderDetail() {
   const params = useParams();
   const router = useRouter();
-  const providerId = params.id as string;
+  const providerId = params?.id as string;
   
   const [provider, setProvider] = useState<any>(null);
   const [apis, setApis] = useState<CatalogApi[]>([]);
@@ -95,39 +89,30 @@ export default function ProviderDetail({ onConnect, onViewDetails, onCreateConne
     try {
       console.log('🔗 [ProviderDetail] handleConnect called for:', api.name);
       
-      if (onCreateConnection) {
-        console.log('🔗 [ProviderDetail] Calling onCreateConnection');
-        onCreateConnection(api);
-      } else if (onConnect) {
-        console.log('🔗 [ProviderDetail] Calling onConnect');
-        onConnect(api);
+      // Default connection flow
+      const connectionName = prompt(`Enter a name for your ${api.name} connection:`);
+      if (!connectionName) return;
+
+      const response = await fetch(`/api/catalog/${api.id}/connect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          connectionName,
+          authType: api.authTypes[0] || 'API_KEY',
+          authConfig: {},
+          description: `Connected to ${api.name} via API Catalog`
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert(`Successfully connected to ${api.name}!`);
+        // Refresh the page or update UI
+        window.location.reload();
       } else {
-        console.log('🔗 [ProviderDetail] Using default connection flow');
-        // Default connection flow
-        const connectionName = prompt(`Enter a name for your ${api.name} connection:`);
-        if (!connectionName) return;
-
-        const response = await fetch(`/api/catalog/${api.id}/connect`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            connectionName,
-            authType: api.authTypes[0] || 'API_KEY',
-            authConfig: {},
-            description: `Connected to ${api.name} via API Catalog`
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          alert(`Successfully connected to ${api.name}!`);
-          // Refresh the page or update UI
-          window.location.reload();
-        } else {
-          alert(`Failed to connect: ${data.error}`);
-        }
+        alert(`Failed to connect: ${data.error}`);
       }
     } catch (error) {
       console.error('❌ [ProviderDetail] Error in handleConnect:', error);
@@ -136,12 +121,8 @@ export default function ProviderDetail({ onConnect, onViewDetails, onCreateConne
   };
 
   const handleViewDetails = (api: CatalogApi) => {
-    if (onViewDetails) {
-      onViewDetails(api);
-    } else {
-      // Default details view
-      window.open(`/api/catalog/${api.id}`, '_blank');
-    }
+    // Default details view
+    window.open(`/api/catalog/${api.id}`, '_blank');
   };
 
   if (loading) {

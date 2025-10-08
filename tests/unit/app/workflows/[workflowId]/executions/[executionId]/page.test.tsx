@@ -109,7 +109,7 @@ describe('ExecutionDetailsPage', () => {
       data: mockExecutionData
     });
 
-    const page = await ExecutionDetailsPage({ params: mockParams });
+    const page = await ExecutionDetailsPage({ params: Promise.resolve(mockParams) });
     render(page);
 
     // Check that the page title and workflow name are displayed
@@ -174,7 +174,7 @@ describe('ExecutionDetailsPage', () => {
       data: runningExecutionData
     });
 
-    const page = await ExecutionDetailsPage({ params: mockParams });
+    const page = await ExecutionDetailsPage({ params: Promise.resolve(mockParams) });
     render(page);
 
     // Check that the status badge shows RUNNING using specific testid
@@ -213,7 +213,7 @@ describe('ExecutionDetailsPage', () => {
       data: failedExecutionData
     });
 
-    const page = await ExecutionDetailsPage({ params: mockParams });
+    const page = await ExecutionDetailsPage({ params: Promise.resolve(mockParams) });
     render(page);
 
     // Check that the status badge shows FAILED using specific testid

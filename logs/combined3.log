@@ -37097,3 +37097,8 @@ Unknown field `avatar` for select statement on model `User`. Available options a
   "apiConnectionId": "cmgfmu1r8000v9k744h7z26q0",
   "filters": {}
 }
+2025-10-08 08:30:10 [INFO]: Workflows retrieved {
+  "service": "apiq-mvp",
+  "userId": "cmghecqlb00kc9kotej89wbf6",
+  "count": 0
+}

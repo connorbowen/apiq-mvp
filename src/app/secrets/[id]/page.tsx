@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { apiClient } from '../../../lib/api/client';
 
 interface SecretPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function SecretPage({ params }: SecretPageProps) {
@@ -15,10 +15,15 @@ export default function SecretPage({ params }: SecretPageProps) {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [secretId, setSecretId] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuthAndFetchSecret = async () => {
       try {
+        // Resolve params first
+        const resolvedParams = await params;
+        setSecretId(resolvedParams.id);
+
         // Check authentication first
         const authResponse = await apiClient.getCurrentUser();
         if (!authResponse.success || !authResponse.data?.user) {
@@ -29,7 +34,7 @@ export default function SecretPage({ params }: SecretPageProps) {
         setUser(authResponse.data.user);
 
         // User is authenticated, try to fetch the secret
-        const response = await fetch(`/api/secrets/${params.id}`);
+        const response = await fetch(`/api/secrets/${resolvedParams.id}`);
         
         if (response.status === 401) {
           // Handle unauthorized - redirect to login
@@ -55,7 +60,7 @@ export default function SecretPage({ params }: SecretPageProps) {
     };
 
     checkAuthAndFetchSecret();
-  }, [router, params.id]);
+  }, [router, params]);
 
   // Show loading state
   if (isLoading) {

@@ -6,10 +6,10 @@ import ExecutionLogs from './ExecutionLogs';
 import ExecutionProgress from './ExecutionProgress';
 
 interface ExecutionDetailsPageProps {
-  params: {
+  params: Promise<{
     workflowId: string;
     executionId: string;
-  };
+  }>;
 }
 
 async function getExecutionData(executionId: string) {
@@ -26,7 +26,7 @@ async function getExecutionData(executionId: string) {
 }
 
 export default async function ExecutionDetailsPage({ params }: ExecutionDetailsPageProps) {
-  const { workflowId, executionId } = params;
+  const { workflowId, executionId } = await params;
   
   const executionData = await getExecutionData(executionId);
   
