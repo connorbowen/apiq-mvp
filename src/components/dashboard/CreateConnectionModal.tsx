@@ -20,6 +20,7 @@ interface CreateConnectionModalProps {
   onClose: () => void;
   onSuccess: () => void;
   onError: (error: string) => void;
+  catalogApi?: any;
 }
 
 // OAuth2 Provider configurations
@@ -91,7 +92,8 @@ const OAUTH2_PROVIDERS = {
 export default function CreateConnectionModal({ 
   onClose, 
   onSuccess, 
-  onError 
+  onError,
+  catalogApi 
 }: CreateConnectionModalProps) {
   console.log('🔄 [CreateConnectionModal] Component rendered');
   const [formData, setFormData] = useState({
@@ -139,6 +141,31 @@ export default function CreateConnectionModal({
   useEffect(() => {
     nameInputRef.current?.focus();
   }, []);
+
+  // Pre-populate form when catalog API is provided
+  useEffect(() => {
+    if (catalogApi) {
+      setFormData({
+        name: `${catalogApi.name} Connection`,
+        description: catalogApi.description || `Connected to ${catalogApi.name} via API Catalog`,
+        baseUrl: catalogApi.baseUrl,
+        authType: catalogApi.authTypes?.[0] || 'API_KEY',
+        provider: '',
+        openApiUrl: '',
+        openApiSpec: '',
+        credentials: {
+          apiKey: '',
+          bearerToken: '',
+          username: '',
+          password: '',
+          clientId: '',
+          clientSecret: '',
+          redirectUri: '',
+          scopes: ''
+        }
+      });
+    }
+  }, [catalogApi]);
 
   // Focus trap: keep tab focus within modal
   useEffect(() => {
@@ -932,41 +959,68 @@ export default function CreateConnectionModal({
               </div>
             </section>
 
-            {/* Advanced Configuration Section (Optional) */}
-            <section>
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Advanced Configuration (Optional)</h4>
-              <div className="space-y-4">
-                {/* OpenAPI Import Mode Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    OpenAPI Specification Import
-                  </label>
-                  <div className="flex space-x-4">
-                                      <button
-                    type="button"
-                    data-testid="primary-action import-openapi-btn"
-                    onClick={() => setImportMode('url')}
-                    className={`px-4 py-3 text-sm font-medium rounded-md min-h-[44px] ${
-                      importMode === 'url'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Import from URL
-                  </button>
-                    <button
+            {/* Catalog API Info */}
+            {catalogApi && (
+              <section>
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h4 className="text-sm font-medium text-blue-800">
+                        API Catalog Connection
+                      </h4>
+                      <div className="mt-2 text-sm text-blue-700">
+                        <p>
+                          This API is from our curated catalog. The endpoints and documentation are already configured. 
+                          You only need to provide your authentication credentials.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Advanced Configuration Section (Optional) - Hidden for catalog APIs */}
+            {!catalogApi && (
+              <section>
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Advanced Configuration (Optional)</h4>
+                <div className="space-y-4">
+                  {/* OpenAPI Import Mode Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      OpenAPI Specification Import
+                    </label>
+                    <div className="flex space-x-4">
+                                        <button
                       type="button"
-                      onClick={() => setImportMode('manual')}
+                      data-testid="primary-action import-openapi-btn"
+                      onClick={() => setImportMode('url')}
                       className={`px-4 py-3 text-sm font-medium rounded-md min-h-[44px] ${
-                        importMode === 'manual'
+                        importMode === 'url'
                           ? 'bg-indigo-600 text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      Paste Specification
+                      Import from URL
                     </button>
+                      <button
+                        type="button"
+                        onClick={() => setImportMode('manual')}
+                        className={`px-4 py-3 text-sm font-medium rounded-md min-h-[44px] ${
+                          importMode === 'manual'
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Paste Specification
+                      </button>
+                    </div>
                   </div>
-                </div>
 
                 {importMode === 'url' ? (
                   <div>
@@ -1054,6 +1108,7 @@ export default function CreateConnectionModal({
                 )}
               </div>
             </section>
+            )}
             
             {/* Form Actions */}
             <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">

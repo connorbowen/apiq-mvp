@@ -24,7 +24,11 @@
 - **Test Reliability**: Improved form submission using `form.requestSubmit()` to avoid UI interception issues
 
 ## 🆕 DASHBOARD NAVIGATION & UX UPDATE
-- Dashboard navigation now uses Chat, Workflows, Connections as main tabs
+- **Header Navigation**: Desktop uses horizontal navigation in header (Chat, Workflows, Connections)
+- **Bottom Mobile Navigation**: Mobile uses bottom nav bar (Chat, Workflows, Connections)
+- **Clean Header Layout**: APIQ logo + navigation + user dropdown in single header
+- **No Redundant Navigation**: Single navigation method per device type
+- **Maximum Screen Real Estate**: Full-width content area with header navigation
 - Settings, Profile, Secrets, and Audit Log are only accessible via the user dropdown
 - All navigation and E2E tests updated to use new dropdown `data-testid` patterns
 - Documentation files synchronized to reflect new navigation and test structure

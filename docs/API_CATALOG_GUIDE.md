@@ -11,6 +11,13 @@ The API Catalog system is a comprehensive solution for API discovery, management
 - **Smart Filtering**: Filter by category, authentication type, status, and popularity
 - **Real-time Results**: Instant search with server-side pagination
 - **Popularity Ranking**: Usage-based API recommendations
+- **Provider Grouping**: APIs organized under providers (Google Workspace, Microsoft 365, AWS, etc.)
+
+### 🏢 **Provider Architecture**
+- **Provider Management**: Group related APIs under providers for better organization
+- **Logo Management**: Automatic logo fetching and management for providers and APIs
+- **Provider Navigation**: Browse APIs by provider for easier discovery
+- **Provider Verification**: Verified provider badges for trusted API sources
 
 ### 🎯 **Dashboard Integration**
 - **Browse Catalog Button**: Direct access from the main connections tab
@@ -40,6 +47,23 @@ The API Catalog system is a comprehensive solution for API discovery, management
 
 ### Database Schema
 
+#### ApiProvider Table
+```sql
+CREATE TABLE api_providers (
+  id TEXT PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  description TEXT,
+  logo_url TEXT,
+  website_url TEXT,
+  category TEXT,
+  is_verified BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
 #### ApiCatalog Table
 ```sql
 CREATE TABLE api_catalog (
@@ -61,7 +85,8 @@ CREATE TABLE api_catalog (
   raw_spec TEXT,
   spec_hash TEXT,
   spec_version TEXT,
-  endpoint_count INTEGER DEFAULT 0
+  endpoint_count INTEGER DEFAULT 0,
+  provider_id TEXT REFERENCES api_providers(id)
 );
 ```
 
@@ -137,6 +162,15 @@ Get all available API categories.
 
 #### POST /api/catalog/categories
 Create a new API category (admin only).
+
+#### GET /api/catalog/providers
+Get all available API providers.
+
+#### GET /api/catalog/providers/{id}
+Get detailed information about a specific provider.
+
+#### GET /api/catalog/providers/{id}/apis
+Get all APIs belonging to a specific provider.
 
 ### React Components
 
@@ -254,19 +288,25 @@ const createResponse = await fetch('/api/catalog', {
 
 ## Seeding the Catalog
 
-The catalog comes with a seeding script that populates it with popular APIs:
+The catalog comes with a comprehensive seeding script that populates it with real APIs and providers:
 
 ```bash
-# Run the seeding script
-node scripts/seed-catalog.js
+# Run the comprehensive seeding script
+node scripts/seed-comprehensive-catalog.js
 ```
 
-**Pre-populated APIs:**
-- **Slack** - Team communication and collaboration
-- **GitHub** - Repository management and automation
-- **Stripe** - Payment processing and financial services
-- **Twilio** - SMS, voice, and video communications
-- **SendGrid** - Email delivery and marketing
+**Pre-populated Data:**
+- **5 Providers**: Google Workspace, Microsoft 365, AWS, Stripe, Salesforce
+- **35 APIs**: Mix of provider-based and standalone APIs
+- **Provider APIs**: 15 APIs grouped under providers (Gmail, Sheets, Calendar, etc.)
+- **Standalone APIs**: 20 independent APIs (Slack, GitHub, Twilio, etc.)
+
+**Provider Breakdown:**
+- **Google Workspace**: 5 APIs (Gmail, Sheets, Calendar, Drive, Docs)
+- **Microsoft 365**: 1 API (Graph API)
+- **Amazon Web Services**: 4 APIs (S3, Lambda, EC2, CloudFormation)
+- **Stripe**: 3 APIs (Core, Connect, Billing)
+- **Salesforce**: 2 APIs (REST, Marketing Cloud)
 
 ## Testing
 

@@ -3,6 +3,7 @@ import { prisma } from '../../../lib/database/client';
 import { requireAuth, AuthenticatedRequest } from '../../../src/lib/auth/session';
 import { logInfo, logError } from '../../../src/utils/logger';
 import { ApplicationError } from '../../../src/lib/errors';
+import { autoFetchLogo } from '../../../src/lib/utils/logoService';
 
 export default async function handler(req: AuthenticatedRequest, res: NextApiResponse) {
   let user: any = null;
@@ -22,7 +23,8 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         page = '1',
         limit = '20',
         sortBy = 'popularity',
-        sortOrder = 'desc'
+        sortOrder = 'desc',
+        providerId
       } = req.query;
 
       const pageNum = parseInt(page as string, 10);
@@ -42,7 +44,8 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         where.OR = [
           { name: { contains: search as string, mode: 'insensitive' } },
           { description: { contains: search as string, mode: 'insensitive' } },
-          { tags: { has: search as string } }
+          { tags: { has: search as string } },
+          { provider: { name: { contains: search as string, mode: 'insensitive' } } }
         ];
       }
 
@@ -55,17 +58,15 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         where.authTypes = { has: authType as string };
       }
 
-      // Build orderBy clause
-      const orderBy: any = {};
-      if (sortBy === 'popularity') {
-        orderBy.popularity = sortOrder as string;
-      } else if (sortBy === 'name') {
-        orderBy.name = sortOrder as string;
-      } else if (sortBy === 'createdAt') {
-        orderBy.createdAt = sortOrder as string;
-      } else {
-        orderBy.popularity = 'desc';
+      if (providerId) {
+        where.providerId = providerId as string;
       }
+
+      // Build orderBy clause - always sort by popularity first, then name
+      const orderBy: any[] = [
+        { popularity: 'desc' }, // Popularity first (highest to lowest)
+        { name: 'asc' }         // Then alphabetically by name
+      ];
 
       // Get total count for pagination
       const totalCount = await prisma.apiCatalog.count({ where });
@@ -94,6 +95,18 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           updatedAt: true,
           specVersion: true,
           endpointCount: true,
+          providerId: true, // Include provider relationship
+          provider: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              logoUrl: true,
+              websiteUrl: true,
+              category: true,
+              isVerified: true
+            }
+          },
           endpoints: {
             select: {
               id: true,
@@ -222,6 +235,34 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
         specHash = crypto.createHash('sha256').update(rawSpec).digest('hex');
       }
 
+      // Auto-fetch logo if not provided
+      let finalLogoUrl = logoUrl;
+      if (!finalLogoUrl && baseUrl) {
+        try {
+          const fetchedLogoUrl = await autoFetchLogo(baseUrl, logoUrl);
+          if (fetchedLogoUrl) {
+            finalLogoUrl = fetchedLogoUrl;
+            logInfo('Auto-fetched logo for catalog entry', {
+              name,
+              baseUrl,
+              logoUrl: finalLogoUrl
+            });
+          } else {
+            logInfo('No logo found for API', {
+              name,
+              baseUrl
+            });
+          }
+        } catch (error) {
+          logInfo('Failed to auto-fetch logo', {
+            name,
+            baseUrl,
+            error: error instanceof Error ? error.message : String(error)
+          });
+          // Continue without logo - don't fail the creation
+        }
+      }
+
       // Create catalog entry
       const catalogEntry = await prisma.apiCatalog.create({
         data: {
@@ -229,7 +270,7 @@ export default async function handler(req: AuthenticatedRequest, res: NextApiRes
           description,
           baseUrl,
           documentationUrl,
-          logoUrl,
+          logoUrl: finalLogoUrl,
           category,
           tags,
           authTypes,

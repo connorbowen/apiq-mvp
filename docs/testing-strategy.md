@@ -196,6 +196,8 @@ tests/
 - **Connections**: API connections, OAuth2 flows
 - **Dashboard**: Navigation, data display, user management
 - **Security**: Rate limiting, authorization, audit logs
+- **API Catalog**: Provider management, catalog browsing, connection flow
+- **Logo Management**: Logo fetching, display, and management
 
 ## Continuous Integration
 

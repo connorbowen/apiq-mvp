@@ -37,9 +37,10 @@ interface ApiCatalogDetailProps {
   apiId: string;
   onBack?: () => void;
   onConnect?: (api: CatalogApi) => void;
+  onCreateConnection?: (api: CatalogApi) => void;
 }
 
-export default function ApiCatalogDetail({ apiId, onBack, onConnect }: ApiCatalogDetailProps) {
+export default function ApiCatalogDetail({ apiId, onBack, onConnect, onCreateConnection }: ApiCatalogDetailProps) {
   const [api, setApi] = useState<CatalogApi | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,38 +75,42 @@ export default function ApiCatalogDetail({ apiId, onBack, onConnect }: ApiCatalo
   const handleConnect = async () => {
     if (!api) return;
 
-    const connectionName = prompt(`Enter a name for your ${api.name} connection:`);
-    if (!connectionName) return;
+    if (onCreateConnection) {
+      onCreateConnection(api);
+    } else {
+      const connectionName = prompt(`Enter a name for your ${api.name} connection:`);
+      if (!connectionName) return;
 
-    try {
-      setConnecting(true);
-      const response = await fetch(`/api/catalog/${api.id}/connect`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          connectionName,
-          authType: api.authTypes[0] || 'API_KEY',
-          authConfig: {},
-          description: `Connected to ${api.name} via API Catalog`
-        })
-      });
+      try {
+        setConnecting(true);
+        const response = await fetch(`/api/catalog/${api.id}/connect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            connectionName,
+            authType: api.authTypes[0] || 'API_KEY',
+            authConfig: {},
+            description: `Connected to ${api.name} via API Catalog`
+          })
+        });
 
-      const data = await response.json();
-      if (data.success) {
-        alert(`Successfully connected to ${api.name}!`);
-        if (onConnect) {
-          onConnect(api);
+        const data = await response.json();
+        if (data.success) {
+          alert(`Successfully connected to ${api.name}!`);
+          if (onConnect) {
+            onConnect(api);
+          }
+        } else {
+          alert(`Failed to connect: ${data.error}`);
         }
-      } else {
-        alert(`Failed to connect: ${data.error}`);
+      } catch (err) {
+        console.error('Connection failed:', err);
+        alert('Failed to connect to API');
+      } finally {
+        setConnecting(false);
       }
-    } catch (err) {
-      console.error('Connection failed:', err);
-      alert('Failed to connect to API');
-    } finally {
-      setConnecting(false);
     }
   };
 
@@ -231,7 +236,7 @@ export default function ApiCatalogDetail({ apiId, onBack, onConnect }: ApiCatalo
               <span className="text-sm font-medium text-gray-900">{api.endpointCount}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Connections</span>
+              <span className="text-sm text-gray-500">Active Connections</span>
               <span className="text-sm font-medium text-gray-900">{api._count.connections}</span>
             </div>
           </div>

@@ -54,6 +54,7 @@ export default function SecretsTab({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -294,6 +295,15 @@ export default function SecretsTab({
     setAnnouncement(`Viewing details for secret "${secretName}"`);
   };
 
+  // Debounce search term
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
   const filteredSecrets = (secretList || []).filter(secret => {
     // Defensive check: ensure secret has required properties
     if (!secret?.id || !secret?.name) {
@@ -301,8 +311,7 @@ export default function SecretsTab({
       return false;
     }
     
-    const matchesSearch = secret.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         secret.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = secret.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     const matchesFilter = filterType === 'all' || secret.type === filterType;
     return matchesSearch && matchesFilter;
   });

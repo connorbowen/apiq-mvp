@@ -805,6 +805,136 @@ Create a new API category (admin only).
 }
 ```
 
+### API Provider Management 🆕
+
+The API Provider system groups related APIs under providers (e.g., Google Workspace, Microsoft 365, AWS) for better organization and discovery.
+
+#### `GET /api/catalog/providers`
+
+List all available API providers.
+
+**Query Parameters:**
+- `category` - Filter by provider category
+- `isActive` - Filter by active status (default: true)
+- `isVerified` - Filter by verification status
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 20)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "providers": [
+      {
+        "id": "provider_123",
+        "name": "Google Workspace",
+        "description": "Google's suite of productivity and collaboration tools",
+        "logoUrl": "https://example.com/google-logo.png",
+        "websiteUrl": "https://workspace.google.com",
+        "category": "Productivity",
+        "isVerified": true,
+        "isActive": true,
+        "sortOrder": 1,
+        "apiCount": 5,
+        "createdAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+#### `GET /api/catalog/providers/{id}`
+
+Get detailed information about a specific provider.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "provider_123",
+    "name": "Google Workspace",
+    "description": "Google's suite of productivity and collaboration tools",
+    "logoUrl": "https://example.com/google-logo.png",
+    "websiteUrl": "https://workspace.google.com",
+    "category": "Productivity",
+    "isVerified": true,
+    "isActive": true,
+    "sortOrder": 1,
+    "apis": [
+      {
+        "id": "api_123",
+        "name": "Gmail API",
+        "description": "Gmail API for email management",
+        "baseUrl": "https://gmail.googleapis.com",
+        "category": "Communication",
+        "tags": ["email", "gmail", "google"],
+        "authTypes": ["OAUTH2"],
+        "status": "ACTIVE",
+        "isVerified": true,
+        "popularity": 100
+      }
+    ],
+    "apiCount": 5,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+#### `GET /api/catalog/providers/{id}/apis`
+
+Get all APIs belonging to a specific provider.
+
+**Query Parameters:**
+- `search` - Search by API name, description, or tags
+- `category` - Filter by API category
+- `authType` - Filter by authentication type
+- `status` - Filter by API status (default: ACTIVE)
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 20)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "provider": {
+      "id": "provider_123",
+      "name": "Google Workspace",
+      "description": "Google's suite of productivity and collaboration tools"
+    },
+    "apis": [
+      {
+        "id": "api_123",
+        "name": "Gmail API",
+        "description": "Gmail API for email management",
+        "baseUrl": "https://gmail.googleapis.com",
+        "category": "Communication",
+        "tags": ["email", "gmail", "google"],
+        "authTypes": ["OAUTH2"],
+        "status": "ACTIVE",
+        "isVerified": true,
+        "popularity": 100,
+        "endpointCount": 25
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 5,
+      "totalPages": 1
+    }
+  }
+}
+```
+
 ### API Connection Management 🆕
 
 The API Connection Management system provides secure storage and management of API connections with comprehensive authentication support, enhanced logging, and intelligent connection guidance.

@@ -88,9 +88,17 @@ npm run test:e2e:p0
 ```bash
 npm run test:e2e:p1
 ```
-**Tests**: UI Components, Enhanced Workflow Engine, Natural Language Workflow Creation, Workflow Templates, Onboarding, Mobile Responsiveness, Connection Guidance
+**Tests**: UI Components, Enhanced Workflow Engine, Natural Language Workflow Creation, Workflow Templates, Onboarding, Mobile Responsiveness, Connection Guidance, API Catalog System
 **UX Compliance**: Comprehensive UX validation including accessibility and mobile responsiveness
 **When to use**: When working on user interface or workflow features
+
+### **API Catalog System Tests** (New Feature)
+```bash
+npm run test:e2e:api-catalog
+```
+**Tests**: Provider management, catalog browsing, connection flow, logo management, search and filtering
+**UX Compliance**: Catalog UI validation, search functionality, connection flow UX
+**When to use**: When working on API catalog features or provider management
 
 ### **P2: Enterprise Readiness** (Medium Priority)
 ```bash

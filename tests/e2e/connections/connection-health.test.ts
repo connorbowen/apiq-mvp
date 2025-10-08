@@ -150,16 +150,33 @@ test.describe('Connection Health Testing E2E Tests', () => {
           const testButton = page.locator('[data-testid^="test-connection-"]').first();
           await testButton.click();
           
-          // Wait for test to complete and health details to appear
+          // Wait for compact health status to appear
           await page.waitForSelector('[data-testid="connection-health-details"]', { timeout: 15000 });
           
-          // Verify health details are displayed
+          // Verify compact health status is displayed
           await expect(page.locator('[data-testid="connection-health-details"]')).toBeVisible();
           
-          // Verify specific health information is shown
+          // Verify quick status indicator is shown
           const healthDetails = page.locator('[data-testid="connection-health-details"]');
-          await expect(healthDetails).toContainText('Status');
-          await expect(healthDetails).toContainText('Response Time');
+          await expect(healthDetails).toContainText('healthy');
+          
+          // Test expand/collapse functionality
+          const expandButton = page.locator('button:has-text("Show Details")').first();
+          if (await expandButton.isVisible()) {
+            await expandButton.click();
+            
+            // Verify detailed health information is shown when expanded
+            await expect(healthDetails).toContainText('Status');
+            await expect(healthDetails).toContainText('Response Time');
+            await expect(healthDetails).toContainText('Last Checked');
+            
+            // Test collapse functionality
+            const collapseButton = page.locator('button:has-text("Hide Details")').first();
+            await collapseButton.click();
+            
+            // Verify details are collapsed
+            await expect(healthDetails).toContainText('healthy');
+          }
           
           console.log('✅ Health test completed successfully');
         } catch (error) {
@@ -228,15 +245,32 @@ test.describe('Connection Health Testing E2E Tests', () => {
           const testButton = page.locator('[data-testid^="test-connection-"]').first();
           await testButton.click();
           
-          // Wait for test to complete and health details to appear
+          // Wait for compact health status to appear
           await page.waitForSelector('[data-testid="connection-health-details"]', { timeout: 15000 });
           
-          // Verify health details are displayed (even for failed connections)
+          // Verify compact health status is displayed (even for failed connections)
           await expect(page.locator('[data-testid="connection-health-details"]')).toBeVisible();
           
-          // Verify error status is shown
+          // Verify error status is shown in compact view
           const healthDetails = page.locator('[data-testid="connection-health-details"]');
-          await expect(healthDetails).toContainText('Status');
+          await expect(healthDetails).toContainText('unhealthy');
+          
+          // Test expand/collapse functionality for error details
+          const expandButton = page.locator('button:has-text("Show Details")').first();
+          if (await expandButton.isVisible()) {
+            await expandButton.click();
+            
+            // Verify detailed error information is shown when expanded
+            await expect(healthDetails).toContainText('Status');
+            await expect(healthDetails).toContainText('Connection Error');
+            
+            // Test collapse functionality
+            const collapseButton = page.locator('button:has-text("Hide Details")').first();
+            await collapseButton.click();
+            
+            // Verify details are collapsed but error status still visible
+            await expect(healthDetails).toContainText('unhealthy');
+          }
           
           console.log('✅ Health test failure scenario completed successfully');
         } catch (error) {
@@ -308,8 +342,12 @@ test.describe('Connection Health Testing E2E Tests', () => {
           // Wait for test to complete (should timeout)
           await page.waitForTimeout(10000);
           
-          // Verify health details are displayed (even with timeout)
+          // Verify compact health status is displayed (even with timeout)
           await expect(page.locator('[data-testid="connection-health-details"]')).toBeVisible();
+          
+          // Verify timeout status is shown in compact view
+          const healthDetails = page.locator('[data-testid="connection-health-details"]');
+          await expect(healthDetails).toContainText('unhealthy');
           
           console.log('✅ Health test timeout scenario completed successfully');
         } catch (error) {
@@ -400,14 +438,19 @@ test.describe('Connection Health Testing E2E Tests', () => {
         // Wait for tests to complete (reduced timeout)
         await page.waitForTimeout(5000);
 
-        // Verify health overview shows results for all connections
+        // Verify compact health status shows results for all connections
         const healthDetails = page.locator('[data-testid="connection-health-details"]');
         const healthCount = await healthDetails.count();
         
         expect(healthCount).toBeGreaterThan(0);
         
-        // Verify at least one connection shows health details
+        // Verify at least one connection shows compact health status
         await expect(healthDetails.first()).toBeVisible();
+        
+        // Verify quick status indicators are shown
+        const statusIndicators = page.locator('[data-testid="connection-health-details"] .w-3.h-3.rounded-full');
+        const indicatorCount = await statusIndicators.count();
+        expect(indicatorCount).toBeGreaterThan(0);
         
         console.log(`✅ Bulk health test completed - tested ${healthCount} connections`);
       } else {
@@ -465,17 +508,34 @@ test.describe('Connection Health Testing E2E Tests', () => {
         // Wait for tests to complete (reduced timeout)
         await page.waitForTimeout(5000);
 
-        // Verify health details are displayed for all connections
+        // Verify compact health status is displayed for all connections
         const healthDetails = page.locator('[data-testid="connection-health-details"]');
         const healthCount = await healthDetails.count();
         
         expect(healthCount).toBeGreaterThan(0);
         
-        // Verify status indicators are displayed
+        // Verify quick status indicators are displayed
         const statusIndicators = page.locator('[data-testid="connection-health-details"] .w-3.h-3.rounded-full');
         const indicatorCount = await statusIndicators.count();
         
         expect(indicatorCount).toBeGreaterThan(0);
+        
+        // Test expand/collapse functionality on first connection
+        const expandButton = page.locator('button:has-text("Show Details")').first();
+        if (await expandButton.isVisible()) {
+          await expandButton.click();
+          
+          // Verify detailed health information is shown when expanded
+          await expect(healthDetails.first()).toContainText('Status');
+          await expect(healthDetails.first()).toContainText('Response Time');
+          
+          // Test collapse functionality
+          const collapseButton = page.locator('button:has-text("Hide Details")').first();
+          await collapseButton.click();
+          
+          // Verify details are collapsed
+          await expect(healthDetails.first()).toBeVisible();
+        }
         
         console.log(`✅ HTTP status code health test completed - tested ${healthCount} connections`);
       } else {
@@ -502,6 +562,45 @@ test.describe('Connection Health Testing E2E Tests', () => {
       await expect(testAllButton).toBeVisible();
     });
 
+    test('should display health status badges in connection cards', async ({ page }) => {
+      // Check if there are any connections
+      const hasConnections = await page.locator('[data-testid^="connection-card-"]').count() > 0;
+      
+      if (hasConnections) {
+        // Wait for connection to be visible
+        await page.waitForSelector('[data-testid^="connection-card-"]', { timeout: 10000 });
+
+        // Test the connection to generate health status
+        const testButton = page.locator('[data-testid^="test-connection-"]').first();
+        await testButton.click();
+
+        // Wait for health details to appear
+        await page.waitForSelector('[data-testid="connection-health-details"]', { timeout: 15000 });
+
+        // Verify health status badge appears in connection card
+        const connectionCard = page.locator('[data-testid^="connection-card-"]').first();
+        await expect(connectionCard).toBeVisible();
+        
+        // Look for health status badge with colored indicator
+        const healthBadge = connectionCard.locator('.inline-flex.items-center.px-2.py-1.rounded-full.text-xs.font-medium');
+        await expect(healthBadge).toBeVisible();
+        
+        // Verify status indicator dot is present
+        const statusDot = healthBadge.locator('.w-2.h-2.rounded-full');
+        await expect(statusDot).toBeVisible();
+        
+        // Verify status text is present
+        const statusText = healthBadge.locator('text=/healthy|unhealthy|testing/');
+        await expect(statusText).toBeVisible();
+        
+        console.log('✅ Health status badges displayed correctly in connection cards');
+      } else {
+        // If no connections, verify the "No connections" message is displayed
+        await expect(page.locator('text=No connections')).toBeVisible();
+        console.log('✅ No connections found - test passed by verifying empty state');
+      }
+    });
+
     test('should display connection health status correctly', async ({ page }) => {
       // Check if there are any connections
       const hasConnections = await page.locator('[data-testid^="connection-card-"]').count() > 0;
@@ -514,16 +613,39 @@ test.describe('Connection Health Testing E2E Tests', () => {
         const testButton = page.locator('[data-testid^="test-connection-"]').first();
         await testButton.click();
 
-        // Wait for health details
+        // Wait for compact health status
         await page.waitForSelector('[data-testid="connection-health-details"]', { timeout: 15000 });
 
-        // Verify status indicator
+        // Verify compact status indicator
         const statusIndicator = page.locator('[data-testid="connection-health-details"] .w-3.h-3.rounded-full');
         await expect(statusIndicator).toBeVisible();
 
-        // Verify response time is displayed
-        const responseTime = page.locator('[data-testid="connection-health-details"]').locator('text=/\\d+ms/');
-        await expect(responseTime).toBeVisible();
+        // Verify quick status text is displayed
+        const statusText = page.locator('[data-testid="connection-health-details"]').locator('text=/healthy|unhealthy|testing/');
+        await expect(statusText).toBeVisible();
+
+        // Test expand/collapse functionality
+        const expandButton = page.locator('button:has-text("Show Details")').first();
+        if (await expandButton.isVisible()) {
+          await expandButton.click();
+          
+          // Verify detailed information is shown when expanded
+          const healthDetails = page.locator('[data-testid="connection-health-details"]');
+          await expect(healthDetails).toContainText('Status');
+          await expect(healthDetails).toContainText('Response Time');
+          await expect(healthDetails).toContainText('Last Checked');
+          
+          // Verify response time is displayed in detailed view
+          const responseTime = healthDetails.locator('text=/\\d+ms/');
+          await expect(responseTime).toBeVisible();
+          
+          // Test collapse functionality
+          const collapseButton = page.locator('button:has-text("Hide Details")').first();
+          await collapseButton.click();
+          
+          // Verify details are collapsed but status still visible
+          await expect(statusText).toBeVisible();
+        }
       } else {
         // If no connections, verify the "No connections" message is displayed
         await expect(page.locator('text=No connections')).toBeVisible();
@@ -577,8 +699,29 @@ test.describe('Connection Health Testing E2E Tests', () => {
         // Wait for test to complete
         await page.waitForSelector('[data-testid="connection-health-details"]', { timeout: 10000 });
         
-        // Verify health details are displayed
+        // Verify compact health status is displayed
         await expect(page.locator('[data-testid="connection-health-details"]')).toBeVisible();
+        
+        // Verify quick status indicator is shown
+        const healthDetails = page.locator('[data-testid="connection-health-details"]');
+        await expect(healthDetails).toContainText('healthy');
+        
+        // Test expand/collapse functionality
+        const expandButton = page.locator('button:has-text("Show Details")').first();
+        if (await expandButton.isVisible()) {
+          await expandButton.click();
+          
+          // Verify detailed information is shown when expanded
+          await expect(healthDetails).toContainText('Status');
+          await expect(healthDetails).toContainText('Response Time');
+          
+          // Test collapse functionality
+          const collapseButton = page.locator('button:has-text("Hide Details")').first();
+          await collapseButton.click();
+          
+          // Verify details are collapsed
+          await expect(healthDetails).toContainText('healthy');
+        }
         
         console.log('✅ Visual feedback test completed successfully');
     });
@@ -649,8 +792,12 @@ test.describe('Connection Health Testing E2E Tests', () => {
           // Verify test completed within reasonable time (10 seconds)
           expect(duration).toBeLessThan(10000);
           
-          // Verify health details are displayed
+          // Verify compact health status is displayed
           await expect(page.locator('[data-testid="connection-health-details"]')).toBeVisible();
+          
+          // Verify quick status indicator is shown
+          const healthDetails = page.locator('[data-testid="connection-health-details"]');
+          await expect(healthDetails).toContainText('healthy');
           
           console.log(`✅ Performance test completed in ${duration}ms`);
         } else {

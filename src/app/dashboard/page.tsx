@@ -256,7 +256,8 @@ function DashboardContent() {
           } catch (logoutError) {
             console.warn('Failed to clear cookies via API:', logoutError);
           }
-          router.push('/login');
+          // Use window.location.href to prevent React router issues
+          window.location.href = '/login';
           return;
         }
       }
@@ -316,7 +317,8 @@ function DashboardContent() {
         } catch (logoutError) {
           console.warn('Failed to clear cookies via API:', logoutError);
         }
-        router.push('/login');
+        // Use window.location.href to prevent React router issues
+        window.location.href = '/login';
         return;
       }
       
@@ -463,6 +465,11 @@ function DashboardContent() {
   // Load initial data and set up polling in a single useEffect
   useEffect(() => {
     console.info('[dashboard] DashboardPage useEffect triggered - loading initial data');
+    
+    // Check if we're already on login page to prevent infinite redirects
+    if (window.location.pathname === '/login') {
+      return;
+    }
     
     // Initial load
     loadConnections();
@@ -649,58 +656,66 @@ function DashboardContent() {
       <ResponsiveLayoutHandler />
       <SupportModal open={showSupportModal} onClose={() => setShowSupportModal(false)} user={user ? { email: user.email, name: user.name || user.email } : { email: '', name: '' }} />
       
-      <header role="banner" className="dashboard-header bg-white shadow relative z-50">
-      <div className="w-full py-3 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            {/* Back to Dashboard link for settings/profile/admin tabs */}
-            {['settings', 'profile'].includes(activeTab) && (
-              <Link
-                href="/dashboard?tab=chat"
-                className="flex items-center text-indigo-600 hover:text-indigo-500 transition-colors"
-                data-testid="back-to-dashboard-link"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span className="text-xs sm:text-sm font-medium">Back</span>
-              </Link>
-            )}
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-              {activeTab === 'chat' ? 'Chat' : 
-               activeTab === 'workflows' ? 'Workflows' :
-               activeTab === 'connections' ? 'Connections' :
-               activeTab === 'settings' ? 'Settings' :
-               activeTab === 'profile' ? 'Profile' :
-               activeTab === 'subscription' ? 'Subscription' : 'Dashboard'}
-            </h1>
-          </div>
-          <div className="flex items-center justify-between sm:justify-end">
-            {/* Mobile tab navigation */}
-            {user && !['profile', 'settings', 'subscription'].includes(activeTab) && (
-              <div className="sm:hidden flex space-x-1 bg-gray-100 p-1 rounded-lg">
-                {filteredTabs.map((tab) => (
-                  <button
-                    key={tab}
-                    data-testid={`mobile-dashboard-tab-${tab}`}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                      activeTab === tab 
-                        ? 'bg-white text-indigo-700 shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => handleTabChange(tab)}
-                  >
-                    {tabConfig[tab].label}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="flex items-center space-x-2 sm:space-x-4">
+      {/* Desktop Header with Navigation */}
+      <header role="banner" className="hidden lg:block bg-white border-b border-gray-200">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-8">
+              <h1 className="text-2xl font-bold text-gray-900">APIQ</h1>
+              
+              {/* Desktop Navigation */}
+              {user && !['profile', 'settings', 'subscription'].includes(activeTab) && (
+                <nav className="flex space-x-1">
+                  {filteredTabs.map((tab) => (
+                    <button
+                      key={tab}
+                      data-testid={tabConfig[tab].testId}
+                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        activeTab === tab 
+                          ? 'bg-indigo-100 text-indigo-700' 
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                      onClick={() => handleTabChange(tab)}
+                    >
+                      <span className="flex items-center space-x-2">
+                        {tabConfig[tab].icon}
+                        <span>{tabConfig[tab].label}</span>
+                      </span>
+                    </button>
+                  ))}
+                </nav>
+              )}
+              
+              {['settings', 'profile'].includes(activeTab) && (
+                <Link
+                  href="/dashboard?tab=chat"
+                  className="flex items-center text-indigo-600 hover:text-indigo-500 transition-colors"
+                  data-testid="back-to-dashboard-link"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="text-sm font-medium">Back to Dashboard</span>
+                </Link>
+              )}
+            </div>
+            <div className="flex items-center space-x-4">
               {user && <UserDropdown user={{ ...user, name: user.name || user.email }} onLogout={handleLogout} onHelp={() => setShowSupportModal(true)} />}
             </div>
           </div>
         </div>
-      </div>
+      </header>
+
+      {/* Mobile Header */}
+      <header role="banner" className="lg:hidden bg-white border-b border-gray-200">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900">APIQ</h1>
+            <div className="flex items-center space-x-2">
+              {user && <UserDropdown user={{ ...user, name: user.name || user.email }} onLogout={handleLogout} onHelp={() => setShowSupportModal(true)} />}
+            </div>
+          </div>
+        </div>
       </header>
 
       <main role="main" className="dashboard-main-content dashboard-background dashboard-pattern">
@@ -717,46 +732,6 @@ function DashboardContent() {
         />
       )}
 
-      {/* Tab Navigation - Enhanced with better visual hierarchy */}
-      {user && !['profile', 'settings', 'subscription'].includes(activeTab) && (
-        <div className="mb-4 hidden lg:block">
-          <nav className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm border border-gray-200" aria-label="Tabs" role="tablist">
-            {filteredTabs.map((tab) => (
-              <button
-                key={tab}
-                data-testid={tabConfig[tab].testId}
-                aria-selected={activeTab === tab ? 'true' : 'false'}
-                role="tab"
-                className={`px-4 py-2.5 font-semibold text-sm rounded-md transition-all duration-200 min-h-[40px] flex-1 flex items-center justify-center ${
-                  activeTab === tab 
-                    ? 'bg-indigo-600 text-white shadow-md' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 hover:shadow-sm'
-                }`}
-                onClick={() => handleTabChange(tab)}
-              >
-                <span className="flex items-center space-x-2">
-                  {tab === 'chat' && (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                  )}
-                  {tab === 'workflows' && (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                  )}
-                  {tab === 'connections' && (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  )}
-                  <span>{tabConfig[tab].label}</span>
-                </span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      )}
 
       {/* Tab Content */}
       <div className="tab-content flex-1 flex flex-col min-h-0 dashboard-content relative z-0">

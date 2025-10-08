@@ -17,6 +17,16 @@ interface CatalogApi {
   isVerified: boolean;
   popularity: number;
   endpointCount: number;
+  providerId?: string;
+  provider?: {
+    id: string;
+    name: string;
+    description?: string;
+    logoUrl?: string;
+    websiteUrl?: string;
+    category?: string;
+    isVerified: boolean;
+  };
   endpoints: Array<{
     id: string;
     path: string;
@@ -38,12 +48,16 @@ interface CatalogCategory {
   apiCount: number;
 }
 
+
 interface ApiCatalogProps {
   onConnect?: (api: CatalogApi) => void;
   onViewDetails?: (api: CatalogApi) => void;
+  onAddNewApi?: () => void;
+  onBack?: () => void;
+  onCreateConnection?: (api: CatalogApi) => void;
 }
 
-export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps) {
+export default function ApiCatalog({ onConnect, onViewDetails, onAddNewApi, onBack, onCreateConnection }: ApiCatalogProps) {
   const [apis, setApis] = useState<CatalogApi[]>([]);
   const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,14 +67,16 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedAuthType, setSelectedAuthType] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'popularity' | 'name' | 'createdAt'>('popularity');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  // Fixed sorting: popularity first, then alphabetically
+  // No need for user controls since we have a standard sort order
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalCatalogCount, setTotalCatalogCount] = useState(0); // Total APIs in catalog (unfiltered)
+  const [perPage, setPerPage] = useState(12);
 
   const authTypeOptions = [
     { value: 'API_KEY', label: 'API Key' },
@@ -70,6 +86,25 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
     { value: 'NONE', label: 'No Auth' }
   ];
 
+  const perPageOptions = [
+    { value: 12, label: '12 per page' },
+    { value: 24, label: '24 per page' },
+    { value: 48, label: '48 per page' }
+  ];
+
+  // Fetch total catalog count (unfiltered)
+  const fetchTotalCatalogCount = async () => {
+    try {
+      const response = await fetch('/api/catalog?page=1&limit=1&status=ACTIVE');
+      const data = await response.json();
+      if (data.success) {
+        setTotalCatalogCount(data.pagination.total);
+      }
+    } catch (err) {
+      console.error('❌ ApiCatalog: Failed to fetch total catalog count:', err);
+    }
+  };
+
   // Fetch catalog data
   const fetchCatalogData = async () => {
     try {
@@ -78,9 +113,7 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
 
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: '20',
-        sortBy,
-        sortOrder,
+        limit: perPage.toString(),
         status: 'ACTIVE'
       });
 
@@ -115,6 +148,7 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
     }
   };
 
+
   // Fetch categories
   const fetchCategories = async () => {
     try {
@@ -131,27 +165,57 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
 
   useEffect(() => {
     fetchCategories();
+    fetchCatalogData();
   }, []);
 
+  // Reset to first page when perPage changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [perPage]);
+
+  // Fetch total catalog count on mount
+  useEffect(() => {
+    fetchTotalCatalogCount();
+  }, []);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchCatalogData();
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, selectedCategory, selectedAuthType, perPage]);
+
+  // Separate effect for pagination (no debounce needed)
   useEffect(() => {
     fetchCatalogData();
-  }, [currentPage, searchQuery, selectedCategory, selectedAuthType, sortBy, sortOrder]);
+  }, [currentPage]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
-    fetchCatalogData();
+    // fetchCatalogData will be called by the debounced useEffect
   };
 
   const handleConnect = async (api: CatalogApi) => {
-    if (onConnect) {
-      onConnect(api);
-    } else {
-      // Default connection flow
-      const connectionName = prompt(`Enter a name for your ${api.name} connection:`);
-      if (!connectionName) return;
+    try {
+      console.log('🔗 [ApiCatalog] handleConnect called for:', api.name);
+      console.log('🔗 [ApiCatalog] onCreateConnection available:', !!onCreateConnection);
+      console.log('🔗 [ApiCatalog] onConnect available:', !!onConnect);
+      
+      if (onCreateConnection) {
+        console.log('🔗 [ApiCatalog] Calling onCreateConnection');
+        onCreateConnection(api);
+      } else if (onConnect) {
+        console.log('🔗 [ApiCatalog] Calling onConnect');
+        onConnect(api);
+      } else {
+        console.log('🔗 [ApiCatalog] Using default connection flow');
+        // Default connection flow
+        const connectionName = prompt(`Enter a name for your ${api.name} connection:`);
+        if (!connectionName) return;
 
-      try {
         const response = await fetch(`/api/catalog/${api.id}/connect`, {
           method: 'POST',
           headers: {
@@ -173,10 +237,10 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
         } else {
           alert(`Failed to connect: ${data.error}`);
         }
-      } catch (err) {
-        console.error('Connection failed:', err);
-        alert('Failed to connect to API');
       }
+    } catch (error) {
+      console.error('❌ [ApiCatalog] Error in handleConnect:', error);
+      alert('Failed to connect to API');
     }
   };
 
@@ -188,6 +252,7 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
       window.open(`/api/catalog/${api.id}`, '_blank');
     }
   };
+
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -220,34 +285,9 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
 
   return (
     <div className="space-y-6" data-testid="api-catalog">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">API Catalog</h2>
-          <p className="text-gray-600 mt-1">
-            Discover and connect to {totalCount} popular APIs
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setViewMode('grid')}
-            data-testid="grid-view-button"
-            className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
-          >
-            <Grid className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            data-testid="list-view-button"
-            className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
-          >
-            <List className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
 
-      {/* Search and Filters */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
+      {/* Search and Filters - Full Width */}
+      <div className="bg-white p-6 border-b">
         <form onSubmit={handleSearch} className="space-y-4">
           {/* Search Bar */}
           <div className="relative">
@@ -256,7 +296,10 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
               type="text"
               placeholder="Search APIs by name, description, or tags..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1); // Reset to first page when searching
+              }}
               data-testid="api-search-input"
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -302,45 +345,63 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sort By
+                Sort Order
               </label>
-              <div className="flex space-x-2">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="popularity">Popularity</option>
-                  <option value="name">Name</option>
-                  <option value="createdAt">Date Added</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  {sortOrder === 'asc' ? '↑' : '↓'}
-                </button>
+              <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-600">
+                Popularity → Alphabetical
               </div>
             </div>
+
           </div>
 
-          {/* Filter Actions */}
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="text-sm text-gray-600 hover:text-gray-800"
-            >
-              Clear Filters
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Search
-            </button>
-          </div>
+            {/* Filter Actions */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-sm text-gray-600 hover:text-gray-800"
+                >
+                  Clear Filters
+                </button>
+                
+                {/* View Mode Toggle */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-700">View:</span>
+                  <div className="flex border border-gray-300 rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('grid')}
+                      className={`px-3 py-1 text-sm rounded-l-lg ${
+                        viewMode === 'grid'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Grid className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('list')}
+                      className={`px-3 py-1 text-sm rounded-r-lg ${
+                        viewMode === 'list'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <List className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Search
+              </button>
+            </div>
         </form>
       </div>
 
@@ -349,193 +410,306 @@ export default function ApiCatalog({ onConnect, onViewDetails }: ApiCatalogProps
         console.log('🔍 ApiCatalog: Rendering results - apis.length:', apis.length, 'loading:', loading, 'error:', error);
         return null;
       })()}
-      {apis.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">No APIs found matching your criteria</div>
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Clear Filters
-          </button>
-        </div>
-      ) : (
-        <>
-          {/* API Grid/List */}
-          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'} data-testid="search-results">
-            {apis.map((api) => (
-              <div
-                key={api.id}
-                data-testid={`api-card-${api.name}`}
-                className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow ${
-                  viewMode === 'list' ? 'p-6' : 'p-6'
-                }`}
-              >
-                {viewMode === 'grid' ? (
-                  <div className="space-y-4">
-                    {/* API Header */}
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
+      {(() => {
+        if (apis.length === 0) {
+          return (
+            <div className="text-center py-12 px-6">
+              <div className="text-gray-500 mb-4">No APIs found matching your criteria</div>
+              <div className="flex items-center justify-center space-x-3">
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Clear Filters
+                </button>
+                {onAddNewApi && (
+                  <button
+                    onClick={onAddNewApi}
+                    data-testid="empty-state add-new-api-btn"
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Add New API
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-6 px-6">
+            {/* Unified API List */}
+            <div 
+              className={viewMode === 'grid' ? 'grid gap-6 auto-rows-fr' : 'space-y-4'} 
+              style={viewMode === 'grid' ? { 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gridAutoRows: '1fr',
+                gridAutoFlow: 'row',
+                display: 'grid'
+              } : {}}
+            >
+              {apis.map((api) => (
+                <div
+                  key={api.id}
+                  data-testid={`api-card-${api.name}`}
+                  className={`bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer ${
+                    viewMode === 'list' ? 'p-6' : 'p-6 h-full flex flex-col'
+                  }`}
+                  onClick={() => handleViewDetails(api)}
+                >
+                  {viewMode === 'grid' ? (
+                    <div className="flex flex-col h-full">
+                      {/* Content Area - grows to fill space */}
+                      <div className="flex-1 space-y-3">
+                        {/* API Header */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            {api.logoUrl ? (
+                              <img
+                                src={api.logoUrl}
+                                alt={`${api.name} logo`}
+                                className="h-10 w-10 rounded-lg object-contain"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <Zap className="h-6 w-6 text-gray-400" />
+                              </div>
+                            )}
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{api.name}</h3>
+                              {api.isVerified && (
+                                <div className="flex items-center text-xs text-green-600">
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Verified
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <Users className="h-4 w-4 mr-1" />
+                            {api.popularity || 0}
+                          </div>
+                        </div>
+
+                        {/* Provider Context */}
+                        {api.provider && (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">Part of</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.location.href = `/catalog/provider/${api.provider?.id}`;
+                              }}
+                              className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              {api.provider.name}
+                            </button>
+                            {api.provider.isVerified && (
+                              <Star className="h-3 w-3 text-green-600" />
+                            )}
+                          </div>
+                        )}
+
+                        {/* Description */}
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {api.description || 'No description available'}
+                        </p>
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1">
+                          {api.tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {api.tags.length > 3 && (
+                            <span className="px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded">
+                              +{api.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Auth Types */}
+                        <div className="flex flex-wrap gap-1">
+                          {api.authTypes.map((authType) => (
+                            <span
+                              key={authType}
+                              className="px-2 py-1 bg-blue-100 text-xs text-blue-600 rounded"
+                            >
+                              {authType}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Actions - fixed at bottom */}
+                      <div className="pt-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleConnect(api)}
+                          data-testid="primary-action connect-api-btn"
+                          className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                        >
+                          <Plus className="h-4 w-4 inline mr-1" />
+                          Connect
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
                         {api.logoUrl ? (
                           <img
                             src={api.logoUrl}
                             alt={`${api.name} logo`}
-                            className="h-10 w-10 rounded-lg object-contain"
+                            className="h-12 w-12 rounded-lg object-contain"
                           />
                         ) : (
-                          <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
                             <Zap className="h-6 w-6 text-gray-400" />
                           </div>
                         )}
                         <div>
-                          <h3 className="font-semibold text-gray-900">{api.name}</h3>
-                          {api.isVerified && (
-                            <div className="flex items-center text-xs text-green-600">
-                              <Star className="h-3 w-3 mr-1" />
-                              Verified
+                          <div className="flex items-center space-x-2">
+                            <h3 className="font-semibold text-gray-900">{api.name}</h3>
+                            {api.isVerified && (
+                              <Star className="h-4 w-4 text-green-600" />
+                            )}
+                          </div>
+                          {api.provider && (
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500">Part of</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `/catalog/provider/${api.provider?.id}`;
+                                }}
+                                className="text-xs font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                {api.provider.name}
+                              </button>
                             </div>
                           )}
+                          <p className="text-sm text-gray-600">{api.description}</p>
+                          <div className="flex items-center space-x-4 mt-1">
+                            <span className="text-xs text-gray-500">
+                              {api.endpointCount} endpoints
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {api.popularity || 0} popularity
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Users className="h-4 w-4 mr-1" />
-                        {api.popularity || 0}
-                      </div>
-                    </div>
-
-                    {/* Description */}
-                    <p className="text-sm text-gray-600 line-clamp-2">
-                      {api.description || 'No description available'}
-                    </p>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-1">
-                      {api.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded"
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleConnect(api)}
+                          data-testid="primary-action connect-api-btn"
+                          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
                         >
-                          {tag}
-                        </span>
-                      ))}
-                      {api.tags.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded">
-                          +{api.tags.length - 3}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Auth Types */}
-                    <div className="flex flex-wrap gap-1">
-                      {api.authTypes.map((authType) => (
-                        <span
-                          key={authType}
-                          className="px-2 py-1 bg-blue-100 text-xs text-blue-600 rounded"
-                        >
-                          {authType}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex space-x-2 pt-2">
-                      <button
-                        onClick={() => handleConnect(api)}
-                        data-testid="primary-action connect-api-btn"
-                        className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-                      >
-                        <Plus className="h-4 w-4 inline mr-1" />
-                        Connect
-                      </button>
-                      <button
-                        onClick={() => handleViewDetails(api)}
-                        data-testid="primary-action view-endpoints-btn"
-                        className="px-3 py-2 border border-gray-300 text-sm rounded-lg hover:bg-gray-50"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      {api.logoUrl ? (
-                        <img
-                          src={api.logoUrl}
-                          alt={`${api.name} logo`}
-                          className="h-12 w-12 rounded-lg object-contain"
-                        />
-                      ) : (
-                        <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <Zap className="h-6 w-6 text-gray-400" />
-                        </div>
-                      )}
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h3 className="font-semibold text-gray-900">{api.name}</h3>
-                          {api.isVerified && (
-                            <Star className="h-4 w-4 text-green-600" />
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600">{api.description}</p>
-                        <div className="flex items-center space-x-4 mt-1">
-                          <span className="text-xs text-gray-500">
-                            {api.endpointCount} endpoints
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {api.popularity || 0} popularity
-                          </span>
-                        </div>
+                          Connect
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleConnect(api)}
-                        data-testid="primary-action connect-api-btn"
-                        className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-                      >
-                        Connect
-                      </button>
-                      <button
-                        onClick={() => handleViewDetails(api)}
-                        data-testid="primary-action view-endpoints-btn"
-                        className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center space-x-2" data-testid="pagination-controls">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                data-testid="previous-page-button"
-                className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-              >
-                Previous
-              </button>
-              <span className="px-4 py-2 text-sm text-gray-600">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                data-testid="next-page-button"
-                className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-              >
-                Next
-              </button>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
-        </>
+          </div>
+        );
+      })()}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white px-6 py-4 border-t">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-gray-900 font-medium">
+                {((currentPage - 1) * perPage) + 1} - {Math.min(currentPage * perPage, totalCount)} of {totalCount}
+              </div>
+              <div className="flex items-center space-x-2">
+                <select
+                  value={perPage}
+                  onChange={(e) => setPerPage(parseInt(e.target.value))}
+                  className="px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                >
+                  {perPageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {/* First and Previous buttons */}
+              {currentPage > 1 && (
+                <button
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded text-gray-900 hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+              )}
+              
+              {/* First button - only show if not on first or second page */}
+              {currentPage > 2 && (
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded text-gray-900 hover:bg-gray-50"
+                >
+                  First
+                </button>
+              )}
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                  if (pageNum > totalPages) return null;
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-1 text-sm border rounded font-medium ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'border-gray-300 text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {/* Next and Last buttons */}
+              {currentPage < totalPages && (
+                <button
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded text-gray-900 hover:bg-gray-50"
+                >
+                  Next
+                </button>
+              )}
+              
+              {/* Last button - only show if not on last or second-to-last page */}
+              {currentPage < totalPages - 1 && (
+                <button
+                  onClick={() => setCurrentPage(totalPages)}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded text-gray-900 hover:bg-gray-50"
+                >
+                  Last
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
+
     </div>
   );
 }

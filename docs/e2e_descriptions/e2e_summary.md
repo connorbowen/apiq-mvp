@@ -4,7 +4,7 @@ This document provides a comprehensive overview of all end-to-end (E2E) tests in
 
 ## Test Organization
 
-The E2E tests are organized into 9 main categories:
+The E2E tests are organized into 10 main categories:
 - **Onboarding** (1 test file)
 - **Connections** (4 test files)
 - **Authentication** (8 test files)
@@ -14,8 +14,9 @@ The E2E tests are organized into 9 main categories:
 - **Performance** (1 test file)
 - **API Explorer** (1 test file) - **NEW**
 - **Chat Guidance** (1 test file) - **NEW**
+- **API Catalog** (6 test files) - **NEW**
 
-**Total: 32 E2E test files**
+**Total: 38 E2E test files**
 
 ## Current Test Status (December 2024)
 
@@ -760,6 +761,86 @@ The `test:e2e:current` command includes the following test files:
 - Accessibility and mobile support
 - Performance requirements for guidance generation
 
+## 10. API Catalog Tests
+
+### 10.1 API Catalog UI (`api-catalog-ui.test.ts`)
+**File:** `tests/e2e/api-catalog/api-catalog-ui.test.ts`  
+**Lines:** 250+  
+**Purpose:** Tests API Catalog UI components and user interactions
+
+**Key Test Areas:**
+- Catalog browsing and navigation
+- Search functionality with debouncing
+- Filtering by category and authentication type
+- Pagination with smart button visibility
+- Provider-based organization
+- Logo display and management
+- Connection method selector
+- UX compliance and accessibility
+
+### 10.2 API Catalog API (`api-catalog-api.test.ts`)
+**File:** `tests/e2e/api-catalog/api-catalog-api.test.ts`  
+**Lines:** 500+  
+**Purpose:** Tests API Catalog backend endpoints and data management
+
+**Key Test Areas:**
+- Provider management endpoints
+- Catalog CRUD operations
+- Search and filtering APIs
+- Connection flow APIs
+- Logo management endpoints
+- Performance and security testing
+- Error handling and validation
+
+### 10.3 API Catalog Integration (`api-catalog-integration.test.ts`)
+**File:** `tests/e2e/api-catalog/api-catalog-integration.test.ts`  
+**Lines:** 300+  
+**Purpose:** Tests end-to-end catalog workflows and integration
+
+**Key Test Areas:**
+- Complete catalog browsing workflow
+- Provider-to-API navigation
+- Connection flow from catalog
+- Search and filter integration
+- Performance optimization testing
+- Cross-component integration
+
+### 10.4 Logo Fetching (`logo-fetching.test.ts`)
+**File:** `tests/e2e/api-catalog/logo-fetching.test.ts`  
+**Lines:** 200+  
+**Purpose:** Tests logo management and display functionality
+
+**Key Test Areas:**
+- Logo fetching from external sources
+- Logo display and caching
+- Fallback logo handling
+- Performance optimization
+- Error handling for failed logo fetches
+
+### 10.5 Catalog Connection Flow (`catalog-connection-flow.test.ts`)
+**File:** `tests/e2e/api-catalog/catalog-connection-flow.test.ts`  
+**Lines:** 250+  
+**Purpose:** Tests connection flow from catalog to user connections
+
+**Key Test Areas:**
+- Connection method selection
+- Provider-based connection setup
+- Connection validation and testing
+- Error handling and recovery
+- UX compliance throughout flow
+
+### 10.6 API Catalog Performance (`api-catalog-performance.test.ts`)
+**File:** `tests/e2e/api-catalog/api-catalog-performance.test.ts`  
+**Lines:** 200+  
+**Purpose:** Tests performance and optimization features
+
+**Key Test Areas:**
+- Search performance with debouncing
+- Pagination performance
+- Logo loading optimization
+- Database query performance
+- Caching effectiveness
+
 **Coverage:** P1.4 API Connection Guidance, Chat interface, Contextual help, Connection redirection, Step-by-step instructions, Error handling, UX compliance
 
 **Status:** ✅ **READY FOR IMPLEMENTATION** - Tests created but features not yet implemented
@@ -774,6 +855,7 @@ The `test:e2e:current` command includes the following test files:
 - **Workflow Engine:** End-to-end workflow creation, execution, and management with OpenAI integration
 - **Secrets Management:** Comprehensive secrets vault with security, audit, and UX compliance
 - **User Experience:** Onboarding, guided tours, progressive disclosure, accessibility compliance
+- **API Catalog System:** Provider management, catalog browsing, connection flow, logo management, search and filtering
 - **Performance & Security:** Load testing, rate limiting, security validation, performance budgets
 
 ### Quality Assurance
@@ -783,6 +865,7 @@ The `test:e2e:current` command includes the following test files:
 - **Accessibility:** ARIA compliance, keyboard navigation, screen reader support, touch targets
 - **Error Handling:** Comprehensive error scenarios, recovery testing, graceful degradation
 - **Real Data Testing:** No mocking - all tests use real database and API interactions
+- **API Catalog Testing:** Provider management, logo fetching, search performance, connection flow UX
 
 ### Test Infrastructure
 - **Real Data:** No mocking - all tests use real database and API interactions
@@ -791,7 +874,7 @@ The `test:e2e:current` command includes the following test files:
 - **Cross-Browser:** Playwright-based testing for multiple browser support
 - **CI/CD Ready:** Automated test execution and reporting
 - **Performance Monitoring:** Built-in performance testing and validation
-- **Security Validation:** Comprehensive security testing integrated into all test suites
+- **API Catalog Infrastructure:** Provider management, logo fetching, search optimization, connection flow testing
 
 ## Key Testing Patterns
 

@@ -40,7 +40,7 @@ export class UsageTrackingService {
    * Get current usage summary for a user
    */
   async getUserUsageSummary(userId: string): Promise<UsageSummary> {
-    const userPlan = await prisma.userPlan.findUnique({
+    let userPlan = await prisma.userPlan.findUnique({
       where: { userId },
       include: {
         user: true
@@ -48,7 +48,21 @@ export class UsageTrackingService {
     });
 
     if (!userPlan) {
-      throw new Error('User plan not found');
+      console.log('⚠️ UsageTrackingService: User plan not found in getUserUsageSummary, creating default FREE plan for userId:', userId);
+      // Automatically create a FREE plan for users who don't have one
+      await this.createOrUpdateUserPlan(userId, PlanType.FREE);
+      
+      // Fetch the newly created plan
+      userPlan = await prisma.userPlan.findUnique({
+        where: { userId },
+        include: {
+          user: true
+        }
+      });
+      
+      if (!userPlan) {
+        throw new Error('Failed to create user plan');
+      }
     }
 
     const limits: UsageLimits = {
@@ -107,14 +121,27 @@ export class UsageTrackingService {
     actionType: 'api_connection' | 'workflow_execution' | 'direct_api_call'
   ): Promise<{ allowed: boolean; reason?: string }> {
     console.log('🔍 UsageTrackingService: Looking for user plan for userId:', userId);
-    const userPlan = await prisma.userPlan.findUnique({
+    let userPlan = await prisma.userPlan.findUnique({
       where: { userId }
     });
     console.log('🔍 UsageTrackingService: Found user plan:', userPlan ? { id: userPlan.id, planType: userPlan.planType, status: userPlan.status } : 'null');
 
     if (!userPlan) {
-      console.log('❌ UsageTrackingService: User plan not found for userId:', userId);
-      return { allowed: false, reason: 'User plan not found' };
+      console.log('⚠️ UsageTrackingService: User plan not found, creating default FREE plan for userId:', userId);
+      // Automatically create a FREE plan for users who don't have one
+      await this.createOrUpdateUserPlan(userId, PlanType.FREE);
+      
+      // Fetch the newly created plan
+      userPlan = await prisma.userPlan.findUnique({
+        where: { userId }
+      });
+      
+      if (!userPlan) {
+        console.log('❌ UsageTrackingService: Failed to create user plan for userId:', userId);
+        return { allowed: false, reason: 'Failed to create user plan' };
+      }
+      
+      console.log('✅ UsageTrackingService: Created FREE plan for user:', { id: userPlan.id, planType: userPlan.planType, status: userPlan.status });
     }
 
     if (userPlan.status !== PlanStatus.ACTIVE) {

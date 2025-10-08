@@ -169,6 +169,74 @@ test.describe('API Catalog Integration', () => {
       }
     });
 
+    test('should complete provider-based API discovery and connection journey', async ({ page }) => {
+      // Page is already navigated to dashboard?tab=connections by setupE2E in beforeEach
+      await waitForDashboard(page);
+
+      // Step 1: Navigate to API catalog
+      console.log('🔍 Step 1: Navigating to API catalog');
+      const browseApisButton = page.locator('[data-testid="primary-action browse-apis-btn"]');
+      if (await browseApisButton.isVisible()) {
+        await browseApisButton.click();
+        await waitForElement(page, '[data-testid="api-catalog-section"]');
+        console.log('✅ API catalog section loaded');
+      } else {
+        console.log('⚠️ Browse APIs button not visible, skipping catalog navigation');
+        return;
+      }
+
+      // Step 2: Search for provider-based APIs (e.g., Google Workspace)
+      console.log('🔍 Step 2: Searching for provider-based APIs');
+      const searchInput = page.locator('[data-testid="api-search-input"]');
+      if (await searchInput.isVisible()) {
+        await searchInput.fill('Google');
+        await page.keyboard.press('Enter');
+        await waitForElement(page, '[data-testid="search-results"]');
+        console.log('✅ Provider search completed');
+      } else {
+        console.log('⚠️ Search input not visible, skipping provider search');
+      }
+
+      // Step 3: Verify provider context is displayed
+      console.log('🔍 Step 3: Checking provider context');
+      const providerContext = page.locator('text=Part of');
+      if (await providerContext.count() > 0) {
+        await expect(providerContext.first()).toBeVisible();
+        console.log('✅ Provider context displayed');
+      } else {
+        console.log('⚠️ No provider context found - may need seeded data');
+      }
+
+      // Step 4: Test provider navigation
+      console.log('🔍 Step 4: Testing provider navigation');
+      const providerLink = page.locator('a[href*="/catalog/provider/"]').first();
+      if (await providerLink.count() > 0) {
+        const href = await providerLink.getAttribute('href');
+        await providerLink.click();
+        
+        // Should navigate to provider detail page
+        await page.waitForURL(/\/catalog\/provider\//);
+        await expect(page.locator('h1')).toBeVisible();
+        console.log(`✅ Successfully navigated to provider page: ${href}`);
+        
+        // Step 5: Test back navigation from provider page
+        console.log('🔍 Step 5: Testing back navigation');
+        const backButton = page.locator('[data-testid="back-to-catalog-link"]');
+        if (await backButton.count() > 0) {
+          await expect(backButton).toBeVisible();
+          await backButton.click();
+          
+          // Should navigate back to catalog
+          await page.waitForURL(/\/catalog/);
+          console.log('✅ Back navigation working');
+        } else {
+          console.log('⚠️ Back navigation not found');
+        }
+      } else {
+        console.log('⚠️ No provider links found - may need seeded data');
+      }
+    });
+
     test('should handle catalog management workflow for admin users', async ({ page }) => {
       // Page is already navigated to dashboard?tab=connections by setupE2E in beforeEach
       await waitForDashboard(page);
@@ -429,6 +497,90 @@ test.describe('API Catalog Integration', () => {
       }
     });
 
+    test('should meet UX compliance standards for provider functionality', async ({ page }) => {
+      // Page is already navigated to dashboard?tab=connections by setupE2E in beforeEach
+      await waitForDashboard(page);
+
+      // Navigate to API catalog
+      const browseApisButton = page.locator('[data-testid="primary-action browse-apis-btn"]');
+      
+      if (await browseApisButton.isVisible()) {
+        await browseApisButton.click();
+        await waitForElement(page, '[data-testid="api-catalog-section"]');
+        
+        // Test provider search functionality
+        const searchInput = page.locator('[data-testid="api-search-input"]');
+        if (await searchInput.isVisible()) {
+          await searchInput.fill('Google');
+          await page.keyboard.press('Enter');
+          await waitForElement(page, '[data-testid="search-results"]');
+          
+          // Verify provider context is accessible
+          const providerContext = page.locator('text=Part of');
+          if (await providerContext.count() > 0) {
+            await expect(providerContext.first()).toBeVisible();
+            
+            // Test provider link accessibility
+            const providerLink = page.locator('a[href*="/catalog/provider/"]').first();
+            if (await providerLink.count() > 0) {
+              await expect(providerLink).toBeVisible();
+              
+              // Test keyboard navigation to provider link
+              await providerLink.focus();
+              await expect(providerLink).toBeFocused();
+              
+              // Test ARIA attributes
+              const ariaLabel = await providerLink.getAttribute('aria-label');
+              if (ariaLabel) {
+                expect(ariaLabel).toContain('provider');
+              }
+            }
+          }
+        }
+        
+        // Test pagination controls accessibility
+        const paginationContainer = page.locator('.bg-white.px-6.py-4.border-t');
+        if (await paginationContainer.count() > 0) {
+          // Test pagination button accessibility
+          const paginationButtons = paginationContainer.locator('button');
+          const buttonCount = await paginationButtons.count();
+          
+          for (let i = 0; i < buttonCount; i++) {
+            const button = paginationButtons.nth(i);
+            await expect(button).toBeVisible();
+            
+            // Test keyboard navigation
+            await button.focus();
+            await expect(button).toBeFocused();
+          }
+        }
+        
+        // Test view mode toggle accessibility
+        const gridButton = page.locator('button[class*="rounded-l-lg"]');
+        const listButton = page.locator('button[class*="rounded-r-lg"]');
+        
+        if (await gridButton.count() > 0 && await listButton.count() > 0) {
+          // Test keyboard navigation
+          await gridButton.focus();
+          await expect(gridButton).toBeFocused();
+          
+          await listButton.focus();
+          await expect(listButton).toBeFocused();
+          
+          // Test ARIA attributes
+          const gridAriaPressed = await gridButton.getAttribute('aria-pressed');
+          const listAriaPressed = await listButton.getAttribute('aria-pressed');
+          
+          if (gridAriaPressed !== null) {
+            expect(['true', 'false']).toContain(gridAriaPressed);
+          }
+          if (listAriaPressed !== null) {
+            expect(['true', 'false']).toContain(listAriaPressed);
+          }
+        }
+      }
+    });
+
     test('should provide accessible API catalog interface', async ({ page }) => {
       // Page is already navigated to dashboard?tab=connections by setupE2E in beforeEach
       await waitForDashboard(page);
@@ -456,6 +608,137 @@ test.describe('API Catalog Integration', () => {
         if (focusableCount > 0) {
           await focusableElements.first().focus();
           await expect(focusableElements.first()).toBeFocused();
+        }
+      }
+    });
+  });
+
+  test.describe('Provider Integration Workflows', () => {
+    test('should handle complete provider discovery to connection workflow', async ({ page }) => {
+      // Page is already navigated to dashboard?tab=connections by setupE2E in beforeEach
+      await waitForDashboard(page);
+
+      // Step 1: Navigate to API catalog
+      const browseApisButton = page.locator('[data-testid="primary-action browse-apis-btn"]');
+      if (await browseApisButton.isVisible()) {
+        await browseApisButton.click();
+        await waitForElement(page, '[data-testid="api-catalog-section"]');
+      } else {
+        console.log('⚠️ Browse APIs button not visible, skipping provider workflow');
+        return;
+      }
+
+      // Step 2: Search for provider-based APIs
+      const searchInput = page.locator('[data-testid="api-search-input"]');
+      if (await searchInput.isVisible()) {
+        await searchInput.fill('Microsoft');
+        await page.keyboard.press('Enter');
+        await waitForElement(page, '[data-testid="search-results"]');
+        
+        // Verify provider context is shown
+        const providerContext = page.locator('text=Part of Microsoft');
+        if (await providerContext.count() > 0) {
+          await expect(providerContext.first()).toBeVisible();
+          console.log('✅ Provider context displayed for Microsoft APIs');
+        }
+      }
+
+      // Step 3: Test provider page navigation
+      const providerLink = page.locator('a[href*="/catalog/provider/"]').first();
+      if (await providerLink.count() > 0) {
+        await providerLink.click();
+        await page.waitForURL(/\/catalog\/provider\//);
+        
+        // Verify provider page loads correctly
+        await expect(page.locator('h1')).toBeVisible();
+        console.log('✅ Provider detail page loaded');
+        
+        // Test API connection from provider page
+        const connectButton = page.locator('[data-testid="primary-action connect-api-btn"]').first();
+        if (await connectButton.count() > 0) {
+          await expect(connectButton).toBeVisible();
+          console.log('✅ Connect button available on provider page');
+        }
+      }
+    });
+
+    test('should handle provider search and filtering integration', async ({ page }) => {
+      // Page is already navigated to dashboard?tab=connections by setupE2E in beforeEach
+      await waitForDashboard(page);
+
+      // Navigate to API catalog
+      const browseApisButton = page.locator('[data-testid="primary-action browse-apis-btn"]');
+      if (await browseApisButton.isVisible()) {
+        await browseApisButton.click();
+        await waitForElement(page, '[data-testid="api-catalog-section"]');
+      } else {
+        console.log('⚠️ Browse APIs button not visible, skipping provider search test');
+        return;
+      }
+
+      // Test multiple provider searches
+      const searchInput = page.locator('[data-testid="api-search-input"]');
+      if (await searchInput.isVisible()) {
+        const providers = ['Google', 'Microsoft', 'AWS'];
+        
+        for (const provider of providers) {
+          await searchInput.fill(provider);
+          await page.keyboard.press('Enter');
+          await waitForElement(page, '[data-testid="search-results"]');
+          
+          // Check for provider context
+          const providerContext = page.locator(`text=Part of ${provider}`);
+          if (await providerContext.count() > 0) {
+            await expect(providerContext.first()).toBeVisible();
+            console.log(`✅ Provider context found for ${provider}`);
+          } else {
+            console.log(`⚠️ No provider context found for ${provider} - may need seeded data`);
+          }
+          
+          // Clear search for next iteration
+          await searchInput.clear();
+        }
+      }
+    });
+
+    test('should handle provider page performance and scalability', async ({ page }) => {
+      // Page is already navigated to dashboard?tab=connections by setupE2E in beforeEach
+      await waitForDashboard(page);
+
+      // Navigate to API catalog
+      const browseApisButton = page.locator('[data-testid="primary-action browse-apis-btn"]');
+      if (await browseApisButton.isVisible()) {
+        await browseApisButton.click();
+        await waitForElement(page, '[data-testid="api-catalog-section"]');
+      } else {
+        console.log('⚠️ Browse APIs button not visible, skipping provider performance test');
+        return;
+      }
+
+      // Test provider page load performance
+      const providerLink = page.locator('a[href*="/catalog/provider/"]').first();
+      if (await providerLink.count() > 0) {
+        const startTime = Date.now();
+        await providerLink.click();
+        await page.waitForURL(/\/catalog\/provider\//);
+        await page.waitForLoadState('networkidle');
+        const loadTime = Date.now() - startTime;
+        
+        // Verify provider page loads within 3 seconds
+        expect(loadTime).toBeLessThan(3000);
+        console.log(`✅ Provider page loaded in ${loadTime}ms`);
+        
+        // Test back navigation performance
+        const backButton = page.locator('[data-testid="back-to-catalog-link"]');
+        if (await backButton.count() > 0) {
+          const backStartTime = Date.now();
+          await backButton.click();
+          await page.waitForURL(/\/catalog/);
+          const backLoadTime = Date.now() - backStartTime;
+          
+          // Verify back navigation is fast
+          expect(backLoadTime).toBeLessThan(2000);
+          console.log(`✅ Back navigation completed in ${backLoadTime}ms`);
         }
       }
     });

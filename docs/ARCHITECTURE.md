@@ -261,12 +261,15 @@ User Input → ChatInterface → AI Orchestrator → Confidence Check → Servic
 - **Admin Management**: Full CRUD operations for catalog maintenance
 
 **Architecture Components:**
-- **ApiCatalog Model**: Core catalog entries with metadata
+- **ApiProvider Model**: Provider management for grouping related APIs
+- **ApiCatalog Model**: Core catalog entries with provider relationships
 - **CatalogEndpoint Model**: Individual API endpoints with full OpenAPI specs
 - **CatalogCategory Model**: Hierarchical API organization
 - **ApiCatalogService**: Business logic for catalog operations
 - **ApiCatalog Component**: React UI for browsing and discovery
 - **ApiCatalogDetail Component**: Detailed API view with connection options
+- **ConnectionMethodSelector Component**: Enhanced connection flow UX
+- **ProviderCatalog Component**: Provider-based catalog browsing
 
 **Data Flow:**
 ```

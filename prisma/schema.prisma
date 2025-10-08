@@ -683,6 +683,29 @@ model PlanLimits {
   @@map("plan_limits")
 }
 
+// API Providers - Groups of related APIs from the same service provider
+model ApiProvider {
+  id              String           @id @default(cuid())
+  name            String           // e.g., "Google Workspace", "Microsoft 365"
+  description     String?          // Description of the provider suite
+  logoUrl         String?          // Provider logo
+  websiteUrl      String?          // Provider website
+  category        String?          // Provider category
+  isVerified      Boolean          @default(false)
+  isActive        Boolean          @default(true)
+  sortOrder       Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relations
+  apis            ApiCatalog[]     // APIs belonging to this provider
+
+  @@unique([name])
+  @@index([category])
+  @@index([isActive])
+  @@map("api_providers")
+}
+
 // API Catalog - Shared API documentation separate from user credentials
 model ApiCatalog {
   id              String           @id @default(cuid())
@@ -707,6 +730,10 @@ model ApiCatalog {
   specVersion     String?          // OpenAPI version (2.0, 3.0, 3.1, etc.)
   endpointCount   Int              @default(0)
 
+  // Provider relationship (optional - only for admin-curated APIs)
+  providerId      String?          // Link to ApiProvider for grouped APIs
+  provider        ApiProvider?     @relation(fields: [providerId], references: [id])
+
   // Relations
   endpoints       CatalogEndpoint[]
   connections     ApiConnection[]  // User connections to this catalog API
@@ -715,6 +742,7 @@ model ApiCatalog {
   @@index([category])
   @@index([tags])
   @@index([popularity])
+  @@index([providerId])
   @@map("api_catalog")
 }
 

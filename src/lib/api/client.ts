@@ -635,7 +635,24 @@ class ApiClient {
     });
   }
 
-  async testConnection(id: string): Promise<ApiResponse<{ status: string; message: string; responseTime?: number; endpoints?: number }>> {
+  async testConnection(id: string): Promise<ApiResponse<{ 
+    status: string; 
+    message: string; 
+    responseTime?: number; 
+    endpoints?: number;
+    error?: string;
+    errorDetails?: {
+      type: string;
+      httpStatus: number | null;
+      troubleshooting: string[];
+      timestamp: string;
+      connectionInfo: {
+        baseUrl: string;
+        authType: string;
+        hasDocumentation: boolean;
+      };
+    };
+  }>> {
     return this.request({
       method: 'POST',
       url: `/api/connections/${id}/test`,

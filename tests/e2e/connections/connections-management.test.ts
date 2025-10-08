@@ -79,8 +79,16 @@ test.describe('Connections Management E2E Tests', () => {
       const uxHelper = new UXComplianceHelper(page);
       
       try {
-        // Open the create connection modal
-        await getPrimaryActionButton(page, 'create-connection-header').click();
+        // Navigate to catalog to create connection
+        await page.goto('/catalog');
+        await page.waitForSelector('[data-testid="search-results"]');
+        
+        // Click Connect button on first API
+        const connectButton = page.locator('[data-testid="primary-action connect-api-btn"]').first();
+        await connectButton.click();
+        
+        // Wait for modal
+        await page.waitForSelector('[role="dialog"]');
         
         // Fill the form with XSS attempt
         await page.fill('[data-testid="connection-name-input"]', '<script>alert("xss")</script>');
@@ -115,6 +123,10 @@ test.describe('Connections Management E2E Tests', () => {
       try {
         // Test single connection creation to verify the rate limiting infrastructure works
         // The actual rate limiting (100 per 15 minutes) is too high to test in a single test
+        // Navigate to catalog first
+        await page.goto('/catalog');
+        await page.waitForSelector('[data-testid="search-results"]');
+        
         const connectionId = await testConnectionCreation(page, {
           name: 'Rate Limit Test',
           baseUrl: 'https://api.example.com',
@@ -158,11 +170,16 @@ test.describe('Connections Management E2E Tests', () => {
       const uxHelper = new UXComplianceHelper(page);
       
       try {
-        // Test with HTTP URL (should be rejected)
-        await getPrimaryActionButton(page, 'create-connection-header').click();
+        // Navigate to catalog to create connection
+        await page.goto('/catalog');
+        await page.waitForSelector('[data-testid="search-results"]');
+        
+        // Click Connect button on first API
+        const connectButton = page.locator('[data-testid="primary-action connect-api-btn"]').first();
+        await connectButton.click();
         
         // Wait for modal to be fully loaded
-        await page.waitForLoadState('networkidle');
+        await page.waitForSelector('[role="dialog"]');
         
         // Hide mobile navigation to prevent interference
         await page.evaluate(() => {

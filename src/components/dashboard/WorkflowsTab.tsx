@@ -27,7 +27,7 @@
  * />
  */
 
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { apiClient } from '../../lib/api/client';
 
@@ -44,6 +44,7 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [workflowToDelete, setWorkflowToDelete] = useState<{ id: string, name: string } | null>(null);
@@ -189,9 +190,18 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
     }
   };
 
+  // Debounce search term
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
   const filteredWorkflows = workflows.filter(workflow => {
-    const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         workflow.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = workflow.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                         workflow.description?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || workflow.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -225,7 +235,6 @@ const WorkflowsTab: React.FC<WorkflowsTabProps> = React.memo(({
       
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Manage your automated workflows and integrations</h2>
       </div>
 
       {/* Search and Filter */}

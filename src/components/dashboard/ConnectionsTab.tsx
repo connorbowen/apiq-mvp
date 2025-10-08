@@ -27,11 +27,10 @@
 'use client';
 
 import { useState, useEffect, memo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiClient, ApiConnection, Secret } from '../../lib/api/client';
 import CreateConnectionModal from './CreateConnectionModal';
 import EditConnectionModal from './EditConnectionModal';
-import ApiCatalog from '../ApiCatalog';
-import ApiCatalogDetail from '../ApiCatalogDetail';
 import { useUser } from '../../contexts/UserContext';
 
 interface ConnectionsTabProps {
@@ -43,7 +42,7 @@ interface ConnectionsTabProps {
   onConnectionError: (error: string) => void;
 }
 
-type ViewMode = 'connections' | 'catalog' | 'catalog-detail';
+// Removed ViewMode - now using routing instead
 
 function ConnectionsTab({ 
   connections, 
@@ -55,9 +54,9 @@ function ConnectionsTab({
 }: ConnectionsTabProps) {
   console.log('🔄 [ConnectionsTab] Component rendered with connections:', connections.length);
   const { user } = useUser();
-  const [viewMode, setViewMode] = useState<ViewMode>('connections');
-  const [selectedApi, setSelectedApi] = useState<any>(null);
+  const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [catalogApiForConnection, setCatalogApiForConnection] = useState<any>(null);
   
   // Debug: Log modal state changes
   useEffect(() => {
@@ -66,6 +65,7 @@ function ConnectionsTab({
   const [editingConnection, setEditingConnection] = useState<ApiConnection | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
     show: boolean;
@@ -87,11 +87,23 @@ function ConnectionsTab({
   
   // Connection health testing state
   const [testingConnection, setTestingConnection] = useState<string | null>(null);
+  const [expandedHealth, setExpandedHealth] = useState<Record<string, boolean>>({});
   const [connectionHealth, setConnectionHealth] = useState<Record<string, {
     status: 'healthy' | 'unhealthy' | 'testing' | 'unknown';
     lastChecked: Date | null;
     responseTime: number | null;
     error: string | null;
+    errorDetails?: {
+      type: string;
+      httpStatus: number | null;
+      troubleshooting: string[];
+      timestamp: string;
+      connectionInfo: {
+        baseUrl: string;
+        authType: string;
+        hasDocumentation: boolean;
+      };
+    } | null;
   }>>({});
   
   // Ref to prevent duplicate API calls for the same connection set
@@ -258,6 +270,15 @@ function ConnectionsTab({
     onConnectionError(error);
   };
 
+  // Toggle health details expansion
+  const toggleHealthDetails = (connectionId: string) => {
+    setExpandedHealth(prev => ({
+      ...prev,
+      [connectionId]: !prev[connectionId]
+    }));
+  };
+
+
   const handleEditClick = (connection: ApiConnection) => {
     console.log('🔍 Edit button clicked for connection:', connection.id, connection.name);
     console.log('🔍 Setting editingConnection to:', connection);
@@ -302,10 +323,11 @@ function ConnectionsTab({
             status: 'unhealthy',
             lastChecked: new Date(),
             responseTime,
-            error: response.error || 'Connection test failed'
+            error: response.data?.error || response.error || 'Connection test failed',
+            errorDetails: response.data?.errorDetails || null
           }
         }));
-        onConnectionError(response.error || 'Connection test failed');
+        onConnectionError(response.data?.error || response.error || 'Connection test failed');
       }
     } catch (error) {
       setConnectionHealth(prev => ({
@@ -364,20 +386,29 @@ function ConnectionsTab({
     setDeleteConfirmDialog({ show: false, connectionId: '', connectionName: '' });
   };
 
+  // Debounce search term
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
   const filteredConnections = connections.filter(connection => {
     console.info('[connections] Filtering connection:', {
       id: connection.id,
       name: connection.name,
       authType: connection.authType,
-      searchTerm,
+      searchTerm: debouncedSearchTerm,
       filterType,
-      matchesSearch: connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                     connection.description?.toLowerCase().includes(searchTerm.toLowerCase()),
+      matchesSearch: connection.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                     connection.description?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()),
       matchesFilter: filterType === 'all' || connection.authType === filterType
     });
     
-    const matchesSearch = connection.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         connection.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = connection.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                         connection.description?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     const matchesFilter = filterType === 'all' || connection.authType === filterType;
     const result = matchesSearch && matchesFilter;
     
@@ -469,7 +500,6 @@ function ConnectionsTab({
       const data = await response.json();
       if (data.success) {
         onConnectionCreated();
-        setViewMode('connections');
         alert(`Successfully connected to ${api.name}!`);
       } else {
         onConnectionError(data.error || 'Failed to connect to API');
@@ -480,18 +510,19 @@ function ConnectionsTab({
     }
   };
 
-  const handleViewApiDetails = (api: any) => {
-    setSelectedApi(api);
-    setViewMode('catalog-detail');
-  };
+  // These functions are no longer needed since we're using routing
 
-  const handleBackToCatalog = () => {
-    setSelectedApi(null);
-    setViewMode('catalog');
-  };
-
-  const handleBackToConnections = () => {
-    setViewMode('connections');
+  // Handler for creating connection from catalog API
+  const handleCreateConnectionFromCatalog = (api: any) => {
+    try {
+      console.log('🔗 [ConnectionsTab] handleCreateConnectionFromCatalog called for:', api.name);
+      console.log('🔗 [ConnectionsTab] Setting catalog API and showing form');
+      setCatalogApiForConnection(api);
+      setShowCreateForm(true);
+      console.log('🔗 [ConnectionsTab] Form should now be visible');
+    } catch (error) {
+      console.error('❌ [ConnectionsTab] Error in handleCreateConnectionFromCatalog:', error);
+    }
   };
 
 
@@ -501,115 +532,87 @@ function ConnectionsTab({
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {viewMode !== 'connections' && (
-              <button
-                onClick={viewMode === 'catalog-detail' ? handleBackToCatalog : handleBackToConnections}
-                className="flex items-center text-gray-600 hover:text-gray-900"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back
-              </button>
-            )}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                {viewMode === 'connections' ? 'Manage your API integrations and connections' : 
-                 viewMode === 'catalog' ? 'API Catalog' : 
-                 'API Details'}
-              </h2>
-              <p className="text-gray-600 text-sm">
-                {viewMode === 'connections' ? `Manage your ${connections.length} API connections` :
-                 viewMode === 'catalog' ? 'Discover and connect to popular APIs' :
-                 `Details for ${selectedApi?.name}`}
-              </p>
-            </div>
           </div>
-
-          {viewMode === 'connections' && (
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setViewMode('catalog')}
-                data-testid="primary-action browse-apis-btn"
-                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Browse Catalog
-              </button>
-            </div>
-          )}
-
-          {viewMode === 'catalog' && (
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setViewMode('connections')}
-                data-testid="primary-action back-to-connections-btn"
-                className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-              >
-                <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                My Connections
-              </button>
-            </div>
-          )}
+          
         </div>
-
-        {/* View Mode Tabs */}
-        {viewMode === 'connections' && (
-          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit mt-4">
-            <button
-              onClick={() => setViewMode('connections')}
-              className="px-4 py-2 text-sm font-medium rounded-md bg-white text-gray-900 shadow-sm"
-            >
-              My Connections ({connections.length})
-            </button>
-            <button
-              onClick={() => setViewMode('catalog')}
-              className="px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-900"
-            >
-              API Catalog
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Content based on view mode */}
-      {viewMode === 'connections' && (
-        <>
-          {/* Connection Health Overview */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-medium text-gray-700">Connection Health</h3>
-          <button
-            data-testid="test-all-connections-btn"
-            onClick={() => testAllConnections()}
-            className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Test All Connections
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {Object.values(connectionHealth).filter(h => h.status === 'healthy').length}
+      {/* Connections Content */}
+      {/* Connection Health Overview */}
+      <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 shadow-sm">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Connection Health</h3>
+                <p className="text-sm text-gray-600">Monitor your API connection status</p>
+              </div>
             </div>
-            <div className="text-sm text-gray-600">Healthy</div>
+            <button
+              data-testid="test-all-connections-btn"
+              onClick={() => testAllConnections()}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Test All Connections
+            </button>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-red-600">
-              {Object.values(connectionHealth).filter(h => h.status === 'unhealthy').length}
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold text-green-600">
+                    {Object.values(connectionHealth).filter(h => h.status === 'healthy').length}
+                  </div>
+                  <div className="text-sm font-medium text-gray-600">Healthy</div>
+                </div>
+                <div className="p-3 bg-green-100 rounded-full">
+                  <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
             </div>
-            <div className="text-sm text-gray-600">Unhealthy</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-600">
-              {Object.values(connectionHealth).filter(h => h.status === 'unknown').length}
+            
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-red-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold text-red-600">
+                    {Object.values(connectionHealth).filter(h => h.status === 'unhealthy').length}
+                  </div>
+                  <div className="text-sm font-medium text-gray-600">Unhealthy</div>
+                </div>
+                <div className="p-3 bg-red-100 rounded-full">
+                  <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              </div>
             </div>
-            <div className="text-sm text-gray-600">Unknown</div>
+            
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-3xl font-bold text-gray-600">
+                    {Object.values(connectionHealth).filter(h => h.status === 'unknown').length}
+                  </div>
+                  <div className="text-sm font-medium text-gray-600">Unknown</div>
+                </div>
+                <div className="p-3 bg-gray-100 rounded-full">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -647,12 +650,7 @@ function ConnectionsTab({
         <div className="sm:w-48">
           <button
             data-testid="primary-action create-connection-header-btn"
-            onClick={() => {
-              console.log('🔄 [ConnectionsTab] Add Connection button clicked, setting showCreateForm to true');
-              console.log('🔄 [ConnectionsTab] Current showCreateForm state before setting:', showCreateForm);
-              setShowCreateForm(true);
-              console.log('🔄 [ConnectionsTab] showCreateForm set to true');
-            }}
+            onClick={() => router.push('/catalog')}
             className="w-full px-3 py-2 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors min-h-[44px]"
           >
             Add Connection
@@ -689,7 +687,7 @@ function ConnectionsTab({
               <div className="mt-8">
                 <button
                   data-testid="primary-action create-connection-empty-btn"
-                  onClick={() => setShowCreateForm(true)}
+                  onClick={() => router.push('/catalog')}
                   className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   <svg className="-ml-1 mr-3 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -723,6 +721,23 @@ function ConnectionsTab({
                           >
                             {getStatusDisplayText(connection)}
                           </span>
+                          {/* Quick Health Status Badge */}
+                          {connectionHealth[connection.id] && (
+                            <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              connectionHealth[connection.id].status === 'healthy' ? 'bg-green-100 text-green-800' :
+                              connectionHealth[connection.id].status === 'unhealthy' ? 'bg-red-100 text-red-800' :
+                              connectionHealth[connection.id].status === 'testing' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              <div className={`w-2 h-2 rounded-full mr-1 ${
+                                connectionHealth[connection.id].status === 'healthy' ? 'bg-green-500' :
+                                connectionHealth[connection.id].status === 'unhealthy' ? 'bg-red-500' :
+                                connectionHealth[connection.id].status === 'testing' ? 'bg-yellow-500' :
+                                'bg-gray-500'
+                              }`} />
+                              {connectionHealth[connection.id].status}
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-500">{connection.description}</p>
                         {/* Secrets summary */}
@@ -827,58 +842,149 @@ function ConnectionsTab({
                   </div>
                 </div>
                 
-                {/* Connection Health Details */}
+                {/* Compact Health Status */}
                 {connectionHealth[connection.id] && (
-                  <div className="border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
-                    <div data-testid="connection-health-details" className="mb-4">
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">Connection Health</h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-white p-4 rounded-lg border">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Status</h4>
-                          <div className="flex items-center">
-                            <div className={`w-3 h-3 rounded-full mr-2 ${
-                              connectionHealth[connection.id].status === 'healthy' ? 'bg-green-500' :
-                              connectionHealth[connection.id].status === 'unhealthy' ? 'bg-red-500' :
-                              connectionHealth[connection.id].status === 'testing' ? 'bg-yellow-500' :
-                              'bg-gray-500'
-                            }`} />
-                            <span className="text-sm font-medium capitalize">
-                              {connectionHealth[connection.id].status}
-                            </span>
-                          </div>
+                  <div className="border-t border-gray-200 bg-gray-50 px-4 py-3 sm:px-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        {/* Quick Status Indicator */}
+                        <div className="flex items-center">
+                          <div className={`w-3 h-3 rounded-full mr-2 ${
+                            connectionHealth[connection.id].status === 'healthy' ? 'bg-green-500' :
+                            connectionHealth[connection.id].status === 'unhealthy' ? 'bg-red-500' :
+                            connectionHealth[connection.id].status === 'testing' ? 'bg-yellow-500' :
+                            'bg-gray-500'
+                          }`} />
+                          <span className="text-sm font-medium text-gray-900 capitalize">
+                            {connectionHealth[connection.id].status}
+                          </span>
                         </div>
                         
-                        <div className="bg-white p-4 rounded-lg border">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Response Time</h4>
-                          <div className="text-sm">
-                            {connectionHealth[connection.id]?.responseTime ? 
-                              `${connectionHealth[connection.id].responseTime}ms` : 
-                              'Not tested'
-                            }
+                        {/* Quick Response Time */}
+                        {connectionHealth[connection.id]?.responseTime && (
+                          <div className="text-sm text-gray-600">
+                            {connectionHealth[connection.id].responseTime}ms
                           </div>
-                        </div>
+                        )}
                         
-                        <div className="bg-white p-4 rounded-lg border">
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">Last Checked</h4>
-                          <div className="text-sm">
-                            {(() => {
-                              const health = connectionHealth[connection.id];
-                              return health?.lastChecked ? health.lastChecked.toLocaleString() : 'Never';
-                            })()}
-                          </div>
-                        </div>
-                        
+                        {/* Quick Error Indicator */}
                         {connectionHealth[connection.id]?.error && (
-                          <div className="bg-white p-4 rounded-lg border border-red-200">
-                            <h4 className="text-sm font-medium text-red-700 mb-2">Error</h4>
-                            <div className="text-sm text-red-600">
-                              {connectionHealth[connection.id].error}
-                            </div>
+                          <div className="text-sm text-red-600">
+                            Error: {connectionHealth[connection.id].error?.split(':')[0]}
                           </div>
                         )}
                       </div>
+                      
+                      {/* Expand/Collapse Button */}
+                      <button
+                        onClick={() => toggleHealthDetails(connection.id)}
+                        className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+                      >
+                        <span className="mr-1">
+                          {expandedHealth[connection.id] ? 'Hide Details' : 'Show Details'}
+                        </span>
+                        <svg 
+                          className={`w-4 h-4 transform transition-transform ${
+                            expandedHealth[connection.id] ? 'rotate-180' : ''
+                          }`} 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
                     </div>
+                    
+                    {/* Expanded Health Details */}
+                    {expandedHealth[connection.id] && (
+                      <div data-testid="connection-health-details" className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-white p-4 rounded-lg border">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Status</h4>
+                            <div className="flex items-center">
+                              <div className={`w-3 h-3 rounded-full mr-2 ${
+                                connectionHealth[connection.id].status === 'healthy' ? 'bg-green-500' :
+                                connectionHealth[connection.id].status === 'unhealthy' ? 'bg-red-500' :
+                                connectionHealth[connection.id].status === 'testing' ? 'bg-yellow-500' :
+                                'bg-gray-500'
+                              }`} />
+                              <span className="text-sm font-medium text-gray-900 capitalize">
+                                {connectionHealth[connection.id].status}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white p-4 rounded-lg border">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Response Time</h4>
+                            <div className="text-sm text-gray-900">
+                              {connectionHealth[connection.id]?.responseTime ? 
+                                `${connectionHealth[connection.id].responseTime}ms` : 
+                                'Not tested'
+                              }
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white p-4 rounded-lg border">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Last Checked</h4>
+                            <div className="text-sm text-gray-900">
+                              {(() => {
+                                const health = connectionHealth[connection.id];
+                                return health?.lastChecked ? health.lastChecked.toLocaleString() : 'Never';
+                              })()}
+                            </div>
+                          </div>
+                          
+                          {connectionHealth[connection.id]?.error && (
+                            <div className="bg-white p-4 rounded-lg border border-red-200 md:col-span-2">
+                              <h4 className="text-sm font-medium text-red-700 mb-2">Connection Error</h4>
+                              <div className="text-sm text-red-600 mb-3">
+                                {connectionHealth[connection.id].error}
+                              </div>
+                              
+                              {/* Enhanced error details if available */}
+                              {connectionHealth[connection.id].errorDetails && (
+                                <div className="mt-3 space-y-3">
+                                  <div className="bg-red-50 p-3 rounded-md">
+                                    <h5 className="text-xs font-medium text-red-800 mb-2">Error Type</h5>
+                                    <div className="text-xs text-red-700">
+                                      {connectionHealth[connection.id].errorDetails?.type?.replace('_', ' ')}
+                                      {connectionHealth[connection.id].errorDetails?.httpStatus && 
+                                        ` (HTTP ${connectionHealth[connection.id].errorDetails?.httpStatus})`
+                                      }
+                                    </div>
+                                  </div>
+                                  
+                                  {connectionHealth[connection.id].errorDetails?.troubleshooting && (
+                                    <div className="bg-yellow-50 p-3 rounded-md">
+                                      <h5 className="text-xs font-medium text-yellow-800 mb-2">Troubleshooting Tips</h5>
+                                      <ul className="text-xs text-yellow-700 space-y-1">
+                                        {connectionHealth[connection.id].errorDetails?.troubleshooting?.map((tip: string, index: number) => (
+                                          <li key={index} className="flex items-start">
+                                            <span className="mr-2">•</span>
+                                            <span>{tip}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  
+                                  <div className="bg-gray-50 p-3 rounded-md">
+                                    <h5 className="text-xs font-medium text-gray-800 mb-2">Connection Details</h5>
+                                    <div className="text-xs text-gray-600 space-y-1">
+                                      <div>URL: {connectionHealth[connection.id].errorDetails?.connectionInfo?.baseUrl}</div>
+                                      <div>Auth: {connectionHealth[connection.id].errorDetails?.connectionInfo?.authType}</div>
+                                      <div>Documentation: {connectionHealth[connection.id].errorDetails?.connectionInfo?.hasDocumentation ? 'Yes' : 'No'}</div>
+                                      <div>Tested: {connectionHealth[connection.id].errorDetails?.timestamp ? new Date(connectionHealth[connection.id].errorDetails?.timestamp || '').toLocaleString() : 'Unknown'}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </li>
@@ -886,25 +992,11 @@ function ConnectionsTab({
           </ul>
         )}
       </div>
-        </>
-      )}
 
-      {viewMode === 'catalog' && (
-        <div data-testid="api-catalog-section" aria-label="API Catalog - Browse and discover available APIs">
-          <ApiCatalog
-            onConnect={handleConnectFromCatalog}
-            onViewDetails={handleViewApiDetails}
-          />
-        </div>
-      )}
+      {/* Catalog is now handled by routing to /catalog */}
 
-      {viewMode === 'catalog-detail' && selectedApi && (
-        <ApiCatalogDetail
-          apiId={selectedApi.id}
-          onBack={handleBackToCatalog}
-          onConnect={handleConnectFromCatalog}
-        />
-      )}
+      {/* API details are now handled by routing to /catalog/[id] */}
+
 
       {/* Create Connection Modal */}
       {showCreateForm && (
@@ -912,17 +1004,20 @@ function ConnectionsTab({
           onClose={() => {
             console.log('🔄 [ConnectionsTab] Create modal onClose called, setting showCreateForm to false');
             setShowCreateForm(false);
+            setCatalogApiForConnection(null);
           }}
           onSuccess={async () => {
             console.log('🔄 [ConnectionsTab] Connection success callback triggered, closing modal');
             console.log('🔄 [ConnectionsTab] Current showCreateForm state before setting to false:', showCreateForm);
             setShowCreateForm(false);
+            setCatalogApiForConnection(null);
             console.log('🔄 [ConnectionsTab] About to call onConnectionCreated callback');
             console.log('🔄 [ConnectionsTab] onConnectionCreated function:', typeof onConnectionCreated);
             await onConnectionCreated();
             console.log('🔄 [ConnectionsTab] onConnectionCreated callback called successfully');
           }}
           onError={handleConnectionError}
+          catalogApi={catalogApiForConnection}
         />
       )}
 

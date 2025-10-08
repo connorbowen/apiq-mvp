@@ -9,8 +9,9 @@ APIQ is a powerful, AI-driven platform that helps you orchestrate complex workfl
 1. [Getting Started](#getting-started)
 2. [Authentication & Account Management](#authentication--account-management)
 3. [Connecting APIs](#connecting-apis)
-4. [Exploring APIs](#exploring-apis)
-5. [Creating Workflows](#creating-workflows)
+4. [API Catalog System](#api-catalog-system)
+5. [Exploring APIs](#exploring-apis)
+6. [Creating Workflows](#creating-workflows)
 6. [Direct API Calls](#direct-api-calls)
 7. [Executing Workflows](#executing-workflows)
 8. [Managing Workflows](#managing-workflows)
@@ -250,6 +251,42 @@ The Secrets Vault provides secure storage for sensitive data such as API keys, O
    - Set expiration dates for temporary secrets
    - Regularly rotate sensitive credentials
    - Monitor secret access through audit logs
+
+## API Catalog System
+
+### Discover Popular APIs
+
+The API Catalog system provides a centralized repository of popular APIs that you can discover and connect to instantly:
+
+**Browse the Catalog**
+- Access the catalog from the Connections tab
+- Browse APIs by provider (Google Workspace, Microsoft 365, AWS, etc.)
+- Filter by category, authentication type, and popularity
+
+**Search and Filter**
+- Use the search bar to find specific APIs
+- Filter by category (Communication, Development, Business, etc.)
+- Sort by popularity or alphabetically
+
+**Connect to Catalog APIs**
+- Click "Connect" on any catalog API
+- Choose your connection method (Browse Catalog, Connect Custom API, Import OpenAPI)
+- Follow the setup instructions for your chosen API
+
+**Provider Organization**
+- APIs are organized under providers for easier discovery
+- Google Workspace APIs (Gmail, Sheets, Calendar, Drive, Docs)
+- Microsoft 365 APIs (Graph API)
+- AWS APIs (S3, Lambda, EC2, CloudFormation)
+- And many more popular APIs
+
+### Benefits of the Catalog System
+
+- **10x Faster API Discovery**: Pre-populated catalog vs manual API setup
+- **5x Faster Time-to-First-Workflow**: Direct connection from catalog
+- **Popularity-Based Recommendations**: See which APIs are most used
+- **Complete Documentation**: Full OpenAPI spec integration
+- **One-Click Connection**: Connect to catalog APIs directly
 
 ## Exploring APIs
 

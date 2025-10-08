@@ -16,7 +16,29 @@ This document provides comprehensive documentation for all development tools and
 
 ## Test Analysis & Optimization Tools
 
-### 1. Test Failure Analysis
+### 1. API Catalog Test Scripts
+
+**New Test Scripts**: API Catalog system testing
+- `test:e2e:api-catalog` - Run all API catalog tests
+- `test:e2e:api-catalog:ui` - UI component testing
+- `test:e2e:api-catalog:api` - API endpoint testing
+- `test:e2e:api-catalog:integration` - Integration testing
+- `test:e2e:api-catalog:performance` - Performance testing
+- `test:e2e:api-catalog:logo-fetching` - Logo management testing
+- `test:e2e:api-catalog:connection-flow` - Connection flow testing
+
+**Usage**:
+```bash
+# Run all API catalog tests
+npm run test:e2e:api-catalog
+
+# Run specific catalog test suites
+npm run test:e2e:api-catalog:ui
+npm run test:e2e:api-catalog:api
+npm run test:e2e:api-catalog:integration
+```
+
+### 2. Test Failure Analysis
 
 **Script**: `analyze-test-failures.js`
 

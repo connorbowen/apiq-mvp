@@ -14,6 +14,8 @@ We've implemented a comprehensive API Catalog system that dramatically improves 
 - **Complete Documentation:** Full OpenAPI spec integration ✅
 - **Popularity Tracking:** Usage-based API recommendations ✅
 - **Dashboard Integration:** Browse Catalog button in main connections tab ✅
+- **Provider Architecture:** Grouped APIs under providers (Google Workspace, Microsoft 365, AWS) ✅
+- **Enhanced UX:** Fixed sorting, improved pagination, debounced search ✅
 
 ### **📱 New Components** ✅ **COMPLETED**
 - `ApiCatalog` - Main catalog browsing component ✅

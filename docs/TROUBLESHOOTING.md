@@ -4,6 +4,81 @@ This guide covers common issues and their solutions when working with the APIQ p
 
 ## 🔐 Common Issues
 
+### API Catalog Issues 🆕
+
+#### Issue: Empty catalog or no APIs visible
+**Error**: Catalog shows "No APIs found" or appears empty
+
+**Root Cause**: Catalog not populated or database connection issues
+
+**Solution**: 
+- Ensure catalog seeding script has been run
+- Check database connection
+- Verify catalog entries exist in database
+
+**Verification**:
+```bash
+# Check catalog API endpoint
+curl -H "Authorization: Bearer <token>" /api/catalog
+
+# Should return catalog entries with providers and APIs
+```
+
+#### Issue: Search not working in catalog
+**Error**: Search returns no results or doesn't respond
+
+**Root Cause**: Search debouncing or database query issues
+
+**Solution**: 
+- Search has 300ms debouncing - wait after typing
+- Check search parameters and database indexes
+- Verify search terms are spelled correctly
+
+**Verification**:
+```bash
+# Test search API directly
+curl -H "Authorization: Bearer <token>" "/api/catalog?search=slack"
+
+# Should return relevant API results
+```
+
+#### Issue: Logo not displaying for APIs
+**Error**: API logos show as broken images or placeholders
+
+**Root Cause**: Logo fetching service issues or invalid URLs
+
+**Solution**: 
+- Check logo service configuration
+- Verify external logo URLs are accessible
+- Check for CORS issues with logo fetching
+
+**Verification**:
+```bash
+# Check logo service endpoint
+curl -H "Authorization: Bearer <token>" /api/catalog/providers
+
+# Should return providers with logoUrl fields
+```
+
+#### Issue: Connection flow not working from catalog
+**Error**: "Connect" button doesn't work or connection fails
+
+**Root Cause**: Connection method selector or API endpoint issues
+
+**Solution**: 
+- Check connection method selector component
+- Verify connection API endpoints are working
+- Ensure proper authentication for connection creation
+
+**Verification**:
+```bash
+# Test connection creation API
+curl -X POST -H "Authorization: Bearer <token>" /api/connections \
+  -d '{"name": "Test Connection", "baseUrl": "https://api.example.com"}'
+
+# Should create connection successfully
+```
+
 ### Performance Issues 🆕
 
 #### Issue: Slow workflow generation responses
